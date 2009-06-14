@@ -1,5 +1,0 @@
-twitvim-0.2.23.vba: call delete('/home/zaki/.vimlocal/plugin/twitvim.vim')|call delete('/home/zaki/.vimlocal/doc/twitvim.txt')
-twitvim-0.2.24.vba: call delete('/home/zaki/.vimlocal/plugin/twitvim.vim')|call delete('/home/zaki/.vimlocal/doc/twitvim.txt')
-twitvim-0.3.1.vba: call delete('/home/zaki/.vimlocal/plugin/twitvim.vim')|call delete('/home/zaki/.vimlocal/doc/twitvim.txt')
-twitvim-0.3.2.vba: call delete('/home/zaki/.vimlocal/plugin/twitvim.vim')|call delete('/home/zaki/.vimlocal/doc/twitvim.txt')
-twitvim-0.4.0.vba: call delete('/home/zaki/.vimlocal/plugin/twitvim.vim')|call delete('/home/zaki/.vimlocal/doc/twitvim.txt')
