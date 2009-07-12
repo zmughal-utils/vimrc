@@ -98,7 +98,7 @@ Key             Description~
 ,               Backward.
 .               Forward.
 ;c              Start a shell from current path.
-;e              Start another file manager(nautilus,konquer,explorer.exe)¡£
+;e              Start another file manager(nautilus,konquer,explorer.exe)Â¡Â£
 ;r              Open Renamer (Note 1)
 <2-LeftMouse>   Enter the directory or open the file by default association.
 <bs>            Go to upper directory.
@@ -108,7 +108,7 @@ Key             Description~
 <space>         Mark/unmark the file under cursor and move the cursor down.
 <tab>           Switch to the Tree Panel.
 =               Diff two files.
-Q               Quit VimExplorer¡£
+Q               Quit VimExplorerÂ¡Â£
 R               Rename the file under cursor.
 H               Toggle show hidden files.(files start with '.')
 U               Close the preview panel.
@@ -149,12 +149,12 @@ y               Copy files.
 >
     VE
 <
-Start VimExplorer¡£
+Start VimExplorerÂ¡Â£
 
 >
     VEC
 <
-Close VimExplorer£¬Hotkey |Q| has the same ability.
+Close VimExplorerÂ£Â¬Hotkey |Q| has the same ability.
 
 ==============================================================================
 3.  Directory Browsing                          *VimExplorer-browse*
