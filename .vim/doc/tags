@@ -58,6 +58,9 @@
 'Tlist_WinWidth'	taglist.txt	/*'Tlist_WinWidth'*
 'loaded_nerd_comments'	NERD_commenter.txt	/*'loaded_nerd_comments'*
 'loaded_nerd_tree'	NERD_tree.txt	/*'loaded_nerd_tree'*
+'syntastic_auto_loc_list'	syntastic.txt	/*'syntastic_auto_loc_list'*
+'syntastic_enable_signs'	syntastic.txt	/*'syntastic_enable_signs'*
+'syntastic_quiet_warnings'	syntastic.txt	/*'syntastic_quiet_warnings'*
 :AlignCenter	textformat.txt	/*:AlignCenter*
 :AlignJustify	textformat.txt	/*:AlignJustify*
 :AlignLeft	textformat.txt	/*:AlignLeft*
@@ -71,6 +74,7 @@
 :CVSWatchOn	vcscommand.txt	/*:CVSWatchOn*
 :CVSWatchRemove	vcscommand.txt	/*:CVSWatchRemove*
 :CVSWatchers	vcscommand.txt	/*:CVSWatchers*
+:Errors	syntastic.txt	/*:Errors*
 :FuzzyFinderAddBookmark	fuzzyfinder.txt	/*:FuzzyFinderAddBookmark*
 :FuzzyFinderAddBookmarkAsSelectedText	fuzzyfinder.txt	/*:FuzzyFinderAddBookmarkAsSelectedText*
 :FuzzyFinderBookmark	fuzzyfinder.txt	/*:FuzzyFinderBookmark*
@@ -253,6 +257,7 @@ NERDTreeOptionSummary	NERD_tree.txt	/*NERDTreeOptionSummary*
 NERDTreeOptions	NERD_tree.txt	/*NERDTreeOptions*
 NERD_commenter.txt	NERD_commenter.txt	/*NERD_commenter.txt*
 NERD_tree.txt	NERD_tree.txt	/*NERD_tree.txt*
+SyntasticMake()	syntastic.txt	/*SyntasticMake()*
 Tabula_BoldStatement	tabula.txt	/*Tabula_BoldStatement*
 Tabula_ColorPre	tabula.txt	/*Tabula_ColorPre*
 Tabula_CurColor	tabula.txt	/*Tabula_CurColor*
@@ -745,6 +750,18 @@ surround-mappings	surround.txt	/*surround-mappings*
 surround-replacements	surround.txt	/*surround-replacements*
 surround-targets	surround.txt	/*surround-targets*
 surround.txt	surround.txt	/*surround.txt*
+syntastic	syntastic.txt	/*syntastic*
+syntastic-about	syntastic.txt	/*syntastic-about*
+syntastic-contents	syntastic.txt	/*syntastic-contents*
+syntastic-error-signs	syntastic.txt	/*syntastic-error-signs*
+syntastic-error-window	syntastic.txt	/*syntastic-error-window*
+syntastic-functionality	syntastic.txt	/*syntastic-functionality*
+syntastic-intro	syntastic.txt	/*syntastic-intro*
+syntastic-license	syntastic.txt	/*syntastic-license*
+syntastic-options	syntastic.txt	/*syntastic-options*
+syntastic-statusline-flag	syntastic.txt	/*syntastic-statusline-flag*
+syntastic-syntax-checkers	syntastic.txt	/*syntastic-syntax-checkers*
+syntastic.txt	syntastic.txt	/*syntastic.txt*
 tabula	tabula.txt	/*tabula*
 tabula-contents	tabula.txt	/*tabula-contents*
 tabula-options	tabula.txt	/*tabula-options*
