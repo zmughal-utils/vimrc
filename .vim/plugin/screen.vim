@@ -1,19 +1,19 @@
-" Author: Eric Van Dewoestine
-" Version: 0.1
+" Author: Eric Van Dewoestine <ervandew@gmail.com>
+" Version: 0.4
 "
 " Description: {{{
+"   This plugin aims to simulate an embedded shell in vim by allowing you to
+"   easily convert your current vim session into one running in gnu screen
+"   with a split gnu screen window containing a shell, and to quickly send
+"   statements/code to whatever program is running in that shell (bash,
+"   python, irb, etc.).
+"
 "   Note: gvim is not supported. You must be running vim in a console.
 "
 "   Currently tested on Linux and cygwin, but should work on any unix based
 "   platform where screen is supported (OSX, BSD, Solaris, etc.).  Note that
 "   in my testing of cygwin, invocations of screen were significantly slower
 "   and less fluid than on Linux.
-"
-"   This plugin aims to simulate an embedded shell in vim by allowing you to
-"   easily convert your current vim session into one running in gnu screen
-"   with a split gnu screen window containing a shell, and to quickly send
-"   statements/code to whatever program is running in that shell (bash,
-"   python, irb, etc.).
 "
 "   Commands:
 "     :ScreenShell [cmd] - Opens the split shell by doing the following:
@@ -55,6 +55,24 @@
 "       :ScreenQuit
 "         or
 "       :qa
+"
+"   Configuration:
+"     - g:ScreenShellHeight (Default: 15): Sets the height of gnu screen
+"       region used for the shell.
+"     - g:ScreenShellQuitOnVimExit (Default: 1): When non-zero and the gnu
+"       screen session was started by this script, the screen session will be
+"       closed when vim exits.
+"     - g:ScreenShellServerName (Default: 'vim'): If the gnu screen session is
+"       started by this plugin, then the value of this setting will be used
+"       for the servername arg of the vim instance started in the new gnu
+"       screen session.
+"     - g:ScreenShellExternal (Default: 0): When non-zero and not already in a
+"       screen session, an external shell will be spawned instead of using a
+"       split region for the shell.
+"     - g:ScreenShellTerminal (Default: ''): When g:ScreenShellExternal is
+"       enabled, this value will be used as the name of the terminal
+"       executable to be used.  If this value is empty, a list of common
+"       terminals will be tried until one is found.
 "
 "   Gotchas:
 "     - While running vim in gnu screen, if you detach the session instead of
@@ -121,6 +139,41 @@ endif
     let g:ScreenShellQuitOnVimExit = 1
   endif
 
+  " Specifies the title used for the vim screen window (<cmd> will be replaced
+  " with a portion of the command supplied, if any).
+  if !exists('g:ScreenShellVimTitle')
+    "let g:ScreenShellVimTitle = 'ScreenShell <cmd>'
+    let g:ScreenShellVimTitle = 'vim'
+  endif
+
+  " Specifies a name to be supplied to vim's --servername arg when invoked in
+  " a new screen session.
+  if !exists('g:ScreenShellServerName')
+    let g:ScreenShellServerName = 'vim'
+  endif
+
+  " When not 0, open the spawned shell in an external window (not currently
+  " supported when running in cygwin).
+  if !exists('g:ScreenShellExternal')
+    let g:ScreenShellExternal = 0
+  endif
+
+  " When g:ScreenShellExternal is set, this variable specifies the prefered
+  " shell to use.  If not set, some common terminals will be tried.
+  if !exists('g:ScreenShellTerminal')
+    let g:ScreenShellTerminal = ''
+  endif
+
+" }}}
+
+" Script Variables {{{
+
+  let s:terminals = [
+      \ 'gnome-terminal', 'konsole',
+      \ 'urxvt', 'multi-aterm', 'aterm', 'mrxvt', 'rxvt',
+      \ 'xterm',
+    \ ]
+
 " }}}
 
 " Commands {{{
@@ -147,71 +200,80 @@ endif
 " s:ScreenShell(cmd) {{{
 " Open a split shell.
 function! s:ScreenShell(cmd)
-  let cwd = getcwd()
-  if expand('$TERM') =~ '^screen'
-    let g:ScreenShellWindow = 'shell'
+  try
+    if expand('$TERM') !~ '^screen'
+      call s:ScreenBootstrap(a:cmd)
+    else
+      call s:ScreenInit(a:cmd)
+    endif
+  finally
+    " wrapping in a try without catching anything just cleans up the vim error
+    " produced by an exception thrown from one of the above functions.
+  endtry
+endfunction " }}}
 
-    if exists('g:ScreenShell') && !exists(':ScreenQuit')
-      command -nargs=0 ScreenQuit :call <SID>ScreenQuit(0)
-      if g:ScreenShellQuitOnVimExit
-        augroup screen_shell
-          autocmd!
-          autocmd VimLeave * call <SID>ScreenQuit(1)
-        augroup END
+" s:ScreenBootstrap(cmd) {{{
+" Bootstrap a new screen session.
+function! s:ScreenBootstrap(cmd)
+  try
+    let g:ScreenShell = 1
+    wa
+    let save_sessionoptions = &sessionoptions
+    set sessionoptions+=globals
+    set sessionoptions-=tabpages
+    let sessionfile = tempname()
+    exec 'mksession ' . sessionfile
+
+    " support for taglist
+    if exists(':TlistSessionSave') &&
+     \ exists('g:TagList_title') &&
+     \ bufwinnr(g:TagList_title)
+      let g:ScreenShellTaglistSession = sessionfile . '.taglist'
+      exec 'TlistSessionSave ' . g:ScreenShellTaglistSession
+      exec 'silent! !echo "Tlist | TlistSessionLoad ' .
+        \ g:ScreenShellTaglistSession . '" >> "' . sessionfile . '"'
+    endif
+
+    let bufend = bufnr('$')
+    let bufnum = 1
+    while bufnum <= bufend
+      if bufnr(bufnum) != -1
+        call setbufvar(bufnum, 'save_swapfile', getbufvar(bufnum, '&swapfile'))
+        call setbufvar(bufnum, '&swapfile', 0)
       endif
+      let bufnum = bufnum + 1
+    endwhile
+
+    let title = g:ScreenShellVimTitle
+
+    " use a portion of the command in the title, if supplied
+    if title =~ '<cmd>'
+      let cmd = a:cmd != '' ? s:ScreenCmdName(a:cmd)[:12] : ''
+      let title = substitute(title, '<cmd>', cmd, '')
     endif
 
-    if !exists(':ScreenSend')
-      command -nargs=0 -range=% ScreenSend :call <SID>ScreenSend(<line1>, <line2>)
+    " strip leadin/trailing space and prevent an empty title.
+    let title = substitute(title, '^\s\+\|\s\+$', '', '')
+    if title == ''
+      let title = 'ScreenShell'
     endif
 
-    exec 'silent! !screen -X eval ' .
-      \ '"split" ' .
-      \ '"focus down" ' .
-      \ '"resize ' . g:ScreenShellHeight . '" ' .
-      \ '"chdir ' . cwd . '" ' .
-      \ '"screen -t shell" ' .
-      \ '"chdir"'
-
-    if a:cmd != ''
-      let cmd = a:cmd . ""
-      exec 'silent! !screen -p ' . g:ScreenShellWindow . ' -X stuff "' . cmd . '"'
+    " supply a servername when starting vim if supported
+    let server = ''
+    if has('clientserver') && g:ScreenShellServerName != ''
+      let server = '--servername "' . g:ScreenShellServerName . '" '
     endif
-  else
-    try
-      let g:ScreenShell = 1
-      wa
-      let save_sessionoptions = &sessionoptions
-      set sessionoptions+=globals
-      set sessionoptions-=tabpages
-      let sessionfile = tempname()
-      exec 'mksession ' . sessionfile
 
-      " support for taglist
-      if exists(':TlistSessionSave') &&
-       \ exists('g:TagList_title') &&
-       \ bufwinnr(g:TagList_title)
-        let g:ScreenShellTaglistSession = sessionfile . '.taglist'
-        exec 'TlistSessionSave ' . g:ScreenShellTaglistSession
-        exec 'silent! !echo "Tlist | TlistSessionLoad ' .
-          \ g:ScreenShellTaglistSession . '" >> "' . sessionfile . '"'
-      endif
+    exec 'silent! !screen -t "' . title . '" vim ' .
+      \ server .
+      \ '-c "silent source ' . sessionfile . '" ' .
+      \ '-c "ScreenShell ' . a:cmd . '"'
+  finally
+    unlet g:ScreenShell
 
-      let bufend = bufnr('$')
-      let bufnum = 1
-      while bufnum <= bufend
-        if bufnr(bufnum) != -1
-          call setbufvar(bufnum, 'save_swapfile', getbufvar(bufnum, '&swapfile'))
-          call setbufvar(bufnum, '&swapfile', 0)
-        endif
-        let bufnum = bufnum + 1
-      endwhile
-
-      exec 'silent! !screen vim ' .
-        \ '-c "silent source ' . sessionfile . '" ' .
-        \ '-c "ScreenShell ' . a:cmd . '"'
-    finally
-      unlet g:ScreenShell
+    " if there was an error writing files, then we didn't get far enough to
+    " need this cleanup.
+    if exists('save_sessionoptions')
       let &sessionoptions = save_sessionoptions
       call delete(sessionfile)
 
@@ -220,7 +282,7 @@ function! s:ScreenShell(cmd)
         call delete(g:ScreenShellTaglistSession)
       endif
 
-      exec "normal! \<c-l>"
+      redraw!
 
       let bufnum = 1
       while bufnum <= bufend
@@ -229,7 +291,74 @@ function! s:ScreenShell(cmd)
         endif
         let bufnum = bufnum + 1
       endwhile
-    endtry
+    endif
+  endtry
+endfunction " }}}
+
+" s:ScreenInit(cmd) {{{
+" Initialize the current screen session.
+function! s:ScreenInit(cmd)
+  let g:ScreenShellWindow = 'shell'
+  " use a portion of the command as the title, if supplied
+  if a:cmd != '' && a:cmd !~ '^\s*vim\>'
+    let g:ScreenShellWindow = s:ScreenCmdName(a:cmd)[:15]
+  endif
+
+  if exists('g:ScreenShell') && !exists(':ScreenQuit')
+    command -nargs=0 ScreenQuit :call <SID>ScreenQuit(0)
+    if g:ScreenShellQuitOnVimExit
+      augroup screen_shell
+        autocmd!
+        autocmd VimLeave * call <SID>ScreenQuit(1)
+      augroup END
+    endif
+  endif
+
+  if !exists(':ScreenSend')
+    command -nargs=0 -range=% ScreenSend :call <SID>ScreenSend(<line1>, <line2>)
+    " remove :ScreenShell command to avoid accidentally calling it again.
+    delcommand ScreenShell
+  endif
+
+  " use screen regions
+  if !g:ScreenShellExternal || has('win32unix')
+    let result = s:ScreenExec('screen -X eval ' .
+      \ '"split" ' .
+      \ '"focus down" ' .
+      \ '"resize ' . g:ScreenShellHeight . '" ' .
+      \ '"screen -t ' . g:ScreenShellWindow . '" ')
+
+    if !v:shell_error && a:cmd != ''
+      let cmd = a:cmd . "\<c-m>"
+      let result = s:ScreenExec(
+        \ 'screen -p ' . g:ScreenShellWindow . ' -X stuff "' . cmd . '"')
+    endif
+
+  " use an external terminal
+  else
+    let terminal = s:GetTerminal()
+
+    let result = system('screen -X eval ' .
+      \ '"screen -t ' . g:ScreenShellWindow . ' ' . a:cmd . '" ' .
+      \ '"other"')
+
+    if !v:shell_error && terminal != '' && executable(terminal)
+      " gnome-terminal needs quotes around the screen call, but konsole and
+      " rxvt based terms (urxvt, aterm, mrxvt, etc.) don't work properly with
+      " quotes.  xterm seems content either way, so we'll treat gnome-terminal
+      " as the odd ball here.
+      if terminal == 'gnome-terminal'
+        let result = system(terminal . ' -e "screen -x" &')
+      else
+        let result = system(terminal . ' -e screen -x &')
+      endif
+    else
+      echoerr 'Unable to find a suitable terminal, please set g:ScreenShellTerminal'
+    endif
+  endif
+
+  if v:shell_error
+    echoerr result
   endif
 endfunction " }}}
 
@@ -253,10 +382,23 @@ function! s:ScreenSend(line1, line2)
       call map(lines, 'v:val[start :]')
     endif
   endif
-  let str = join(lines, "") . ""
-  let str = escape(str, '"%#')
-  exec 'silent! !screen -p ' . g:ScreenShellWindow . ' -X stuff "' . str . '"'
-  exec "normal! \<c-l>"
+
+  let tmp = tempname()
+  call writefile(lines, tmp)
+  try
+    let result = s:ScreenExec(
+      \ 'screen -p ' . g:ScreenShellWindow .  ' -X eval ' .
+      \ '"msgminwait 0" ' .
+      \ '"readbuf ' . tmp . '" ' .
+      \ '"at ' . g:ScreenShellWindow . ' paste ." ' .
+      \ '"msgminwait 1"')
+  finally
+    call delete(tmp)
+  endtry
+
+  if v:shell_error
+    echoerr result
+  endif
 endfunction " }}}
 
 " s:ScreenQuit(onleave) {{{
@@ -274,7 +416,51 @@ function! s:ScreenQuit(onleave)
     endif
     let bufnum = bufnum + 1
   endwhile
-  silent! !screen -X quit
+
+  let result = s:ScreenExec('screen -X quit')
+
+  if v:shell_error
+    echoerr result
+  endif
+endfunction " }}}
+
+" s:ScreenExec(cmd) {{{
+" Execute a screen command, handling execution difference between cygwin and a
+" real unix system.
+function! s:ScreenExec(cmd)
+  if has('win32unix')
+    let result = ''
+    exec 'silent! !' . a:cmd
+    redraw!
+  else
+    let result = system(a:cmd)
+  endif
+  return result
+endfunction " }}}
+
+" s:ScreenCmdName(cmd) {{{
+" Generate a name for the given command.
+function! s:ScreenCmdName(cmd)
+  let cmd = substitute(a:cmd, '^\s*\(\S\+\)\s.*', '\1', '')
+  " if the command is a path to one, use the tail of the path
+  if cmd =~ '/'
+    let cmd = fnamemodify(cmd, ':t')
+  endif
+  return cmd
+endfunction " }}}
+
+" s:GetTerminal() {{{
+" Generate a name for the given command.
+function! s:GetTerminal()
+  if g:ScreenShellTerminal == ''
+    for term in s:terminals
+      if executable(term)
+        let g:ScreenShellTerminal = term
+        break
+      endif
+    endfor
+  endif
+  return g:ScreenShellTerminal
 endfunction " }}}
 
 " vim:ft=vim:fdm=marker
