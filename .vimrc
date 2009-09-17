@@ -1070,12 +1070,16 @@ endfunction
 call programming#QuickFixMaps(0)
 
 " Supertab thing
-let g:SuperTabDefaultCompletionType = "<C-N>"
-au VimEnter *	if exists("*CtrlXPP()")
-au VimEnter *		exe "im <C-X> <C-r>=CtrlXPP()<C-J>"
-"au VimEnter *		ino <C-n> <C-R>=<SID>SuperTab('n')<C-P><C-J>
-"au VimEnter *		ino <C-p> <C-R>=<SID>SuperTab('p')<C-N><C-J>
-au VimEnter *	endif
+"let g:SuperTabDefaultCompletionType = "<C-N>"
+"au VimEnter *	if exists("*CtrlXPP()")
+"au VimEnter *		exe "im <C-X> <C-r>=CtrlXPP()<C-J>"
+""au VimEnter *		ino <C-n> <C-R>=<SID>SuperTab('n')<C-P><C-J>
+""au VimEnter *		ino <C-p> <C-R>=<SID>SuperTab('p')<C-N><C-J>
+"au VimEnter *	endif
+"
+
+" IndexedSearch.vim breaks things
+au VimEnter *		cunmap <CR>
 
 digraph !? 8253	" Interrobang
 digraph ?! 8253
