@@ -67,13 +67,18 @@ let tlist_tex_settings   = 'latex;s:Contents;g:Graphics;i:Listings;l:\label;r:\r
 	"\	'info_file' : ''
 "\}
 
-" for v.2.1
-if !exists("g:FuzzyFinderOptions")
-	let g:FuzzyFinderOptions = { 'Base':{}, 'Buffer':{}, 'File':{},
-		\ 'MruFile':{}, 'Dir':{}, 'Tag':{},
-		\ 'TaggedFile':{}}
-endif
+" for v.2.1 {{{
+"if !exists("g:FuzzyFinderOptions")
+"        let g:FuzzyFinderOptions = { 'Base':{}, 'Buffer':{}, 'File':{},
+"                \ 'MruFile':{}, 'Dir':{}, 'Tag':{},
+"                \ 'TaggedFile':{}}
+"endif }}}
+
 "let g:FuzzyFinderOptions.Base.info_file=''
+
+" For v. 3.0
+let g:fuf_modesDisable = [ 'mrucmd', ]
+
 "}}}
 
 " WinManager {{{
