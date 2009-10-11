@@ -1085,7 +1085,9 @@ digraph !? 8253	" Interrobang
 digraph ?! 8253
 digraph .3 8230 " Ellipsis
 
-nnoremap <Leader>rf	:FuzzyFinderMruFile<CR>
+"nnoremap <Leader>rf	:FuzzyFinderMruFile<CR>
+" For v. 3.0
+nnoremap <Leader>rf	:FufMruFile<CR>
 
 
 "if exists("g:loaded_nerd_tree")
