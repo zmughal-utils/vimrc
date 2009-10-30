@@ -48,6 +48,10 @@ set runtimepath-=/usr/share/vim/addons/after
 set runtimepath-=/var/lib/vim/addons/after
 "}}}
 
+if !exists("vim_script_path")
+	let g:vim_script_path=expand("$HOME")	" Enviroment variable is set by z.bat
+endif
+
 " Specific config {{{
 if has("menu")
 	let g:my_menu=1
@@ -91,11 +95,11 @@ if has("unix")
 	" if filereadable(localfile)
 	"	exe "so ".localfile
 	" endif
-	if !exists("vim_script_path")
-		"let g:vim_script_path="/mnt/sda1"
-		"let g:vim_script_path="/media/sdb1"
-		let g:vim_script_path=resolve($HOME."/flash_drive")
-	endif
+	"if !exists("vim_script_path")
+		""let g:vim_script_path="/mnt/sda1"
+		""let g:vim_script_path="/media/sdb1"
+		""let g:vim_script_path=resolve($HOME."/flash_drive")
+	"endif
 
 	" $TERM=='linux' {{{
 	if expand("$TERM")=~#'linux'		" TODO get this to work

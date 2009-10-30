@@ -8,3 +8,5 @@ au BufNewFile,BufRead *.rem	setf remind
 " Not idlang
 au BufNewFile,BufRead *.pro	setf prolog
 au BufNewFile,BufRead *.prolog	setf prolog
+
+runtime! ftdetect/*.vim

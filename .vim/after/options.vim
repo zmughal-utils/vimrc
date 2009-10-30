@@ -37,6 +37,7 @@ let g:NERDTreeWinSize=15
 let g:NERDTreeIgnore=['.class$','.\(log\|aux\|out\|snm\|toc\|nav\|vrb\)$','\~$']
 
 let g:NERDTreeSortOrder=['\/$', '\.sh$', '\.bat$', '\.java$', '\.html$', '*', '^\(\u\|\A\)\+$', '^tags$', '\.swp$', '\.bak$', '\~$']
+let g:NERDTreeHijackNetrw=0
 "}}}
 
 " NERD_comments {{{
