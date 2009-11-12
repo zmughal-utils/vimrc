@@ -83,7 +83,7 @@ setlocal tw=78
 setlocal noexpandtab
 setlocal nosmarttab
 setlocal softtabstop=0 
-setlocal foldlevel=20
+"setlocal foldlevel=20
 setlocal foldcolumn=1		" turns on "+" at the begining of close folds
 setlocal tabstop=4			" tabstop and shiftwidth must match
 setlocal shiftwidth=4		" values from 2 to 8 work well
@@ -540,7 +540,7 @@ endif
 "}}}2
 " This should be a setlocal but that doesn't work when switching to a new .otl file
 " within the same buffer. Using :e has demonstrates this.
-set foldtext=MyFoldText()
+setlocal foldtext=MyFoldText()
 
 setlocal fillchars=|, 
 
