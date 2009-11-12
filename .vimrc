@@ -1020,6 +1020,9 @@ nnoremap \w :w !wc -w<CR>
 vnoremap \rc :w !recode ..dump<CR>
 nnoremap \rc :w !recode ..dump<CR>
 
+vnoremap \u :w !urlview<CR>
+nnoremap \u :w !urlview<CR>
+
 command! -nargs=0 CurlyBraceFold	syntax region Curly start="{" end="}" transparent fold|set fdm=syntax
 
 " TODO make this better
