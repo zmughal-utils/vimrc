@@ -203,7 +203,7 @@ endif
 nnoremap ,p		:setlocal path+=<C-R>=expand("%:p:h")<CR>
 nnoremap <Leader>hl	:nohlsearch<CR>
 nnoremap ,l		:LCD<CR>
-nnoremap <Leader>nt	:CNERDTreeToggle<CR>
+nnoremap <Leader>nt	:NERDTreeToggle<CR>
 nnoremap <Leader>bw	:bwipeout<CR>
 nnoremap <Leader>bd	:bdelete<CR>
 
@@ -803,13 +803,13 @@ command! -nargs=0 Term256colors		if expand("$TERM")=~#'xterm'|set t_Co=256|endif
 " Commands {{{
 command! -nargs=0 URLHighlight	runtime syntax/URL.vim
 command! -nargs=0 MakeprgReset	set makeprg&
-if has("unix")
-	command! -nargs=0 CNERDTree		exe "NERDTree ".escape(getcwd(),' \\')
-	command! -nargs=0 CNERDTreeToggle	exe "NERDTreeToggle ".escape(getcwd(),' \\')
-elseif has("win32")
-	command! -nargs=0 CNERDTree		exe "NERDTree ".getcwd()
-	command! -nargs=0 CNERDTreeToggle	exe "NERDTreeToggle ".getcwd()
-endif
+"if has("unix")
+"        command! -nargs=0 CNERDTree		exe "NERDTree ".escape(getcwd(),' \\')
+"        command! -nargs=0 CNERDTreeToggle	exe "NERDTreeToggle ".escape(getcwd(),' \\')
+"elseif has("win32")
+"        command! -nargs=0 CNERDTree		exe "NERDTree ".getcwd()
+"        command! -nargs=0 CNERDTreeToggle	exe "NERDTreeToggle ".getcwd()
+"endif
 "}}}
 "**********************************************************************************"
 " Tabs {{{
@@ -959,16 +959,7 @@ function! SetUpEnv()
 	call EnvSideBars()
 endfunction
 
-function! NERDTreeOpen()
-	try
-		call NERDTreeGetCurrentPath()
-	catch
-		return 0
-	endtry
-	return 1
-endfunction
-
-function! IsNERDTree()
+function! IsNERDTreeOpen()
 	let l:curwin=winnr()
 	let l:ntopen=0
 	windo if bufname('%')=~".*NERD_tree_" |let l:ntopen=1|endif
@@ -978,8 +969,8 @@ endfunction
 
 function! EnvSideBarsToggle()
 	let closed=0
-	if NERDTreeOpen()
-		NERDTreeToggle
+	if IsNERDTreeOpen()
+		NERDTreeClose
 		let closed=1
 	endif
 	if bufwinnr('__Tag_List__')!=-1
@@ -992,8 +983,8 @@ function! EnvSideBarsToggle()
 endfunction
 
 function! EnvSideBars()
-	"NERDTree
-	CNERDTree
+	NERDTreeToggle
+	"CNERDTree
 	if exists(':TlistOpen')
 		TlistOpen
 	endif
