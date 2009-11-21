@@ -19,6 +19,11 @@ function fuf#taggedfile#createHandler(base)
 endfunction
 
 "
+function fuf#taggedfile#getSwitchOrder()
+  return g:fuf_taggedfile_switchOrder
+endfunction
+
+"
 function fuf#taggedfile#renewCache()
   let s:cache = {}
 endfunction
@@ -46,7 +51,7 @@ function s:getTaggedFileList(tagfile)
   call map(readfile(a:tagfile), 'fnamemodify(v:val, ":p")')
   cd -
   call map(readfile(a:tagfile), 'fnamemodify(v:val, ":~:.")')
-  return filter(result, 'v:val =~ ''[^/\\ ]$''')
+  return filter(result, 'v:val =~# ''[^/\\ ]$''')
 endfunction
 
 "
@@ -58,7 +63,7 @@ function s:enumTaggedFiles(tagFiles)
   " cache not created or tags file updated? 
   if !exists('s:cache[key]') || max(map(copy(a:tagFiles), 'getftime(v:val) >= s:cache[key].time'))
     let items = fuf#unique(fuf#concat(map(copy(a:tagFiles), 's:getTaggedFileList(v:val)')))
-    call map(items, 'fuf#makePathItem(v:val, 0)')
+    call map(items, 'fuf#makePathItem(v:val, "", 0)')
     call fuf#mapToSetSerialIndex(items, 1)
     call fuf#mapToSetAbbrWithSnippedWordAsPath(items)
     let s:cache[key] = { 'time'  : localtime(), 'items' : items }
@@ -83,8 +88,8 @@ function s:handler.getPrompt()
 endfunction
 
 "
-function s:handler.getPromptHighlight()
-  return g:fuf_taggedfile_promptHighlight
+function s:handler.getPreviewHeight()
+  return g:fuf_previewHeight
 endfunction
 
 "
@@ -93,15 +98,24 @@ function s:handler.targetsPath()
 endfunction
 
 "
-function s:handler.onComplete(patternSet)
-  return fuf#filterMatchesAndMapToSetRanks(
-        \ self.cache, a:patternSet,
-        \ self.getFilteredStats(a:patternSet.raw), self.targetsPath())
+function s:handler.makePatternSet(patternBase)
+  return fuf#makePatternSet(a:patternBase, 's:parsePrimaryPatternForPath',
+        \                   self.partialMatching)
 endfunction
 
 "
-function s:handler.onOpen(expr, mode)
-  call fuf#openFile(a:expr, a:mode, g:fuf_reuseWindow)
+function s:handler.makePreviewLines(word, count)
+  return fuf#makePreviewLinesForFile(a:word, count, self.getPreviewHeight())
+endfunction
+
+"
+function s:handler.getCompleteItems(patternPrimary)
+  return self.items
+endfunction
+
+"
+function s:handler.onOpen(word, mode)
+  call fuf#openFile(a:word, a:mode, g:fuf_reuseWindow)
 endfunction
 
 "
@@ -112,8 +126,8 @@ endfunction
 "
 function s:handler.onModeEnterPost()
   " NOTE: Don't do this in onModeEnterPre()
-  "       because it should return in a short time 
-  let self.cache =
+  "       because that should return in a short time.
+  let self.items =
         \ filter(copy(s:enumTaggedFiles(self.tagFiles)),
         \        'bufnr("^" . v:val.word . "$") != self.bufNrPrev')
 endfunction

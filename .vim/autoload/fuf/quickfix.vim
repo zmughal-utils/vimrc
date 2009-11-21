@@ -4,46 +4,38 @@
 "=============================================================================
 " LOAD GUARD {{{1
 
-if exists('g:loaded_autoload_fuf_mrucmd') || v:version < 702
+if exists('g:loaded_autoload_fuf_quickfix') || v:version < 702
   finish
 endif
-let g:loaded_autoload_fuf_mrucmd = 1
+let g:loaded_autoload_fuf_quickfix = 1
 
 " }}}1
 "=============================================================================
 " GLOBAL FUNCTIONS {{{1
 
 "
-function fuf#mrucmd#createHandler(base)
+function fuf#quickfix#createHandler(base)
   return a:base.concretize(copy(s:handler))
 endfunction
 
 "
-function fuf#mrucmd#getSwitchOrder()
-  return g:fuf_mrucmd_switchOrder
+function fuf#quickfix#getSwitchOrder()
+  return g:fuf_quickfix_switchOrder
 endfunction
 
 "
-function fuf#mrucmd#renewCache()
+function fuf#quickfix#renewCache()
 endfunction
 
 "
-function fuf#mrucmd#requiresOnCommandPre()
-  return 1
+function fuf#quickfix#requiresOnCommandPre()
+  return 0
 endfunction
 
 "
-function fuf#mrucmd#onInit()
-  call fuf#defineLaunchCommand('FufMruCmd', s:MODE_NAME, '""')
+function fuf#quickfix#onInit()
+  call fuf#defineLaunchCommand('FufQuickfix', s:MODE_NAME, '""')
 endfunction
-
-"
-function fuf#mrucmd#onCommandPre(cmd)
-  if getcmdtype() =~# '^[:/?]'
-    call s:updateInfo(a:cmd)
-  endif
-endfunction
-
 
 " }}}1
 "=============================================================================
@@ -52,12 +44,30 @@ endfunction
 let s:MODE_NAME = expand('<sfile>:t:r')
 
 "
-function s:updateInfo(cmd)
-  let info = fuf#loadInfoFile(s:MODE_NAME)
-  let info.data = fuf#updateMruList(
-        \ info.data, { 'word' : a:cmd, 'time' : localtime() },
-        \ g:fuf_mrucmd_maxItem, g:fuf_mrucmd_exclude)
-  call fuf#saveInfoFile(s:MODE_NAME, info)
+function s:getJumpsLines()
+  redir => result
+  :silent jumps
+  redir END
+  return split(result, "\n")
+endfunction
+
+"
+function s:parseJumpsLine(line)
+  return matchlist(a:line, '^\(.\)\s\+\(\d\+\)\s\(.*\)$')
+endfunction
+
+"
+function s:makeItem(qfItem)
+  if !a:qfItem.valid
+    return {}
+  endif
+  let item = fuf#makeNonPathItem(
+        \ printf('%s|%d:%d|%s', bufname(a:qfItem.bufnr), a:qfItem.lnum,
+        \        a:qfItem.col, matchstr(a:qfItem.text, '\s*\zs.*\S'))
+        \ , '')
+  let item.bufnr = a:qfItem.bufnr
+  let item.lnum = a:qfItem.lnum
+  return item
 endfunction
 
 " }}}1
@@ -73,12 +83,12 @@ endfunction
 
 "
 function s:handler.getPrompt()
-  return g:fuf_mrucmd_prompt
+  return g:fuf_quickfix_prompt
 endfunction
 
 "
 function s:handler.getPreviewHeight()
-  return 0
+  return g:fuf_previewHeight
 endfunction
 
 "
@@ -94,7 +104,13 @@ endfunction
 
 "
 function s:handler.makePreviewLines(word, count)
-  return []
+  let items = filter(copy(self.items), 'v:val.word ==# a:word')
+  if empty(items)
+    return []
+  endif
+  let lines = fuf#getFileLines(items[0].bufnr)
+  return fuf#makePreviewLinesAround(
+        \ lines, [items[0].lnum - 1], a:count, self.getPreviewHeight())
 endfunction
 
 "
@@ -104,9 +120,11 @@ endfunction
 
 "
 function s:handler.onOpen(word, mode)
-  call s:updateInfo(a:word)
-  call histadd(a:word[0], a:word[1:])
-  call feedkeys(a:word . "\<CR>", 'n')
+  call fuf#prejump(a:mode)
+  call filter(self.items, 'v:val.word ==# a:word')
+  if !empty(self.items)
+    execute 'cc ' . self.items[0].index
+  endif
 endfunction
 
 "
@@ -115,9 +133,10 @@ endfunction
 
 "
 function s:handler.onModeEnterPost()
-  let self.items = copy(self.info.data)
-  call map(self.items, 'fuf#makeNonPathItem(v:val.word, strftime(g:fuf_timeFormat, v:val.time))')
+  let self.items = getqflist()
+  call map(self.items, 's:makeItem(v:val)')
   call fuf#mapToSetSerialIndex(self.items, 1)
+  call filter(self.items, 'exists("v:val.word")')
   call map(self.items, 'fuf#setAbbrWithFormattedWord(v:val)')
 endfunction
 
@@ -128,3 +147,4 @@ endfunction
 " }}}1
 "=============================================================================
 " vim: set fdm=marker:
+

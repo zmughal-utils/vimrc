@@ -63,56 +63,6 @@ function fuf#getCurrentTagFiles()
   return sort(filter(map(tagfiles(), 'fnamemodify(v:val, '':p'')'), 'filereadable(v:val)'))
 endfunction
 
-" 'str' -> '\V\.\*s\.\*t\.\*r\.\*'
-function s:makeFuzzyRegexpPattern(pattern)
-  let wi = ''
-  for c in split(a:pattern, '\zs')
-    if wi =~ '[^*?]$' && c !~ '[*?]'
-      let wi .= '*'
-    endif
-    let wi .= c
-  endfor
-  return s:convertWildcardToRegexp(wi)
-        \ . s:makeAdditionalMigemoPattern(a:pattern)
-endfunction
-
-" 'str' -> '\Vstr'
-" 'st*r' -> '\Vst\.\*r'
-function s:makePartialRegexpPattern(pattern)
-  return s:convertWildcardToRegexp(a:pattern)
-        \ . s:makeAdditionalMigemoPattern(a:pattern)
-endfunction
-
-" 
-function s:makeRefiningExpr(pattern)
-  if a:pattern =~ '\D'
-    return printf('v:val.word =~ %s', string(s:makePartialRegexpPattern(a:pattern)))
-  endif
-  return printf('(v:val.word =~ %s || v:val.index == %d)',
-        \       string(s:makePartialRegexpPattern(a:pattern)), a:pattern)
-endfunction
-
-" 
-function s:makePatternSet(patternBase, forPath, makeRegexpPattern)
-  let patternSet = {}
-  let [patternSet.raw; refinings] =
-        \ split(a:patternBase, g:fuf_patternSeparator, 1)
-  if a:forPath
-    let patternSet.raw = fuf#expandTailDotSequenceToParentDir(patternSet.raw)
-    let pair = fuf#splitPath(patternSet.raw)
-    let patternSet.rawHead = pair.head
-    let patternSet.rawTail = pair.tail
-    let patternSet.re = a:makeRegexpPattern(patternSet.rawTail)
-    let primaryExpr = 'v:val.tail =~ ' . string(patternSet.re)
-  else
-    let patternSet.re = a:makeRegexpPattern(patternSet.raw)
-    let primaryExpr = 'v:val.word =~ ' . string(patternSet.re)
-  endif
-  let refiningExprs = map(refinings, 's:makeRefiningExpr(v:val)')
-  let patternSet.filteringExpr = join([primaryExpr] + refiningExprs, ' && ')
-  return patternSet
-endfunction
-
 "
 function fuf#mapToSetSerialIndex(in, offset)
   for i in range(len(a:in))
@@ -122,11 +72,11 @@ function fuf#mapToSetSerialIndex(in, offset)
 endfunction
 
 "
-function fuf#updateMruList(mrulist, newItem, maxItem, excluded)
+function fuf#updateMruList(mrulist, newItem, maxItem, exclude)
   let result = copy(a:mrulist)
   let result = filter(result,'v:val.word != a:newItem.word')
   let result = insert(result, a:newItem)
-  let result = filter(result, 'v:val.word !~ a:excluded')
+  let result = filter(result, 'v:val.word !~ a:exclude')
   return result[0 : a:maxItem - 1]
 endfunction
 
@@ -152,21 +102,51 @@ function fuf#expandTailDotSequenceToParentDir(pattern)
 endfunction
 
 "
-function fuf#filterMatchesAndMapToSetRanks(items, patternSet, stats, forPath)
-  " NOTE: To know an excess, plus 1 to limit number
-  let result = fuf#filterWithLimit(
-        \ a:items, a:patternSet.filteringExpr, g:fuf_enumeratingLimit + 1)
-  if a:forPath
-    let key = 'tail'
-    let patternRaw = a:patternSet.rawTail
-  else
-    let key = 'word'
-    let patternRaw = a:patternSet.raw
+function fuf#getFileLines(file)
+  let bufnr = (type(a:file) ==# type(0) ? a:file : bufnr('^' . a:file . '$'))
+  let lines = getbufline(bufnr, 1, '$')
+  if !empty(lines)
+    return lines
   endif
-  let patternPartial = s:makePartialRegexpPattern(patternRaw)
-  let patternFuzzy   = s:makeFuzzyRegexpPattern(patternRaw)
-  let boundaryMatching = (patternRaw !~ '\U')
-  return map(result, 's:setRanks(v:val, key, patternPartial, patternFuzzy, boundaryMatching, a:stats)')
+  try
+    return readfile(expand(a:file))
+  catch /.*/ 
+  endtry
+  return []
+endfunction
+
+"
+function fuf#makePreviewLinesAround(lines, indices, page, maxHeight)
+  let index = ((empty(a:indices) ? 0 : a:indices[0])
+        \ + a:page * a:maxHeight) % len(a:lines)
+  if empty(a:lines) || a:maxHeight <= 0
+    return []
+  endif
+  let beg = max([0, index - a:maxHeight / 2])
+  let end = min([beg + a:maxHeight, len(a:lines)])
+  let beg = max([0, end - a:maxHeight])
+  let lines = []
+  for i in range(beg, end - 1)
+    let mark = (count(a:indices, i) ? '>' : ' ')
+    call add(lines, printf('%s%4d ', mark, i + 1) . a:lines[i])
+  endfor
+  return lines
+endfunction
+
+" a:file: a path string or a buffer number
+function fuf#makePreviewLinesForFile(file, count, maxHeight)
+  let lines = fuf#getFileLines(a:file)
+  if empty(lines)
+    return []
+  endif
+  let bufnr = (type(a:file) ==# type(0) ? a:file : bufnr('^' . a:file . '$'))
+  if exists('s:bufferCursorPosMap[bufnr]')
+    let indices = [s:bufferCursorPosMap[bufnr][1] - 1]
+  else
+    let indices = []
+  endif
+  return fuf#makePreviewLinesAround(
+        \ lines, indices, a:count, a:maxHeight)
 endfunction
 
 "
@@ -186,19 +166,19 @@ endfunction
 
 "
 function fuf#openBuffer(bufNr, mode, reuse)
-  if a:reuse && ((a:mode == s:OPEN_MODE_SPLIT &&
+  if a:reuse && ((a:mode == s:OPEN_TYPE_SPLIT &&
         \         s:moveToWindowOfBufferInCurrentTabPage(a:bufNr)) ||
-        \        (a:mode == s:OPEN_MODE_VSPLIT &&
+        \        (a:mode == s:OPEN_TYPE_VSPLIT &&
         \         s:moveToWindowOfBufferInCurrentTabPage(a:bufNr)) ||
-        \        (a:mode == s:OPEN_MODE_TAB &&
+        \        (a:mode == s:OPEN_TYPE_TAB &&
         \         s:moveToWindowOfBufferInOtherTabPage(a:bufNr)))
     return
   endif
   execute printf({
-        \   s:OPEN_MODE_CURRENT : ':%sbuffer'           ,
-        \   s:OPEN_MODE_SPLIT   : ':%ssbuffer'          ,
-        \   s:OPEN_MODE_VSPLIT  : ':vertical :%ssbuffer',
-        \   s:OPEN_MODE_TAB     : ':tab :%ssbuffer'     ,
+        \   s:OPEN_TYPE_CURRENT : '%sbuffer'          ,
+        \   s:OPEN_TYPE_SPLIT   : '%ssbuffer'         ,
+        \   s:OPEN_TYPE_VSPLIT  : 'vertical %ssbuffer',
+        \   s:OPEN_TYPE_TAB     : 'tab %ssbuffer'     ,
         \ }[a:mode], a:bufNr)
 endfunction
 
@@ -209,10 +189,10 @@ function fuf#openFile(path, mode, reuse)
     call fuf#openBuffer(bufNr, a:mode, a:reuse)
   else
     execute {
-          \   s:OPEN_MODE_CURRENT : ':edit '   ,
-          \   s:OPEN_MODE_SPLIT   : ':split '  ,
-          \   s:OPEN_MODE_VSPLIT  : ':vsplit ' ,
-          \   s:OPEN_MODE_TAB     : ':tabedit ',
+          \   s:OPEN_TYPE_CURRENT : 'edit '   ,
+          \   s:OPEN_TYPE_SPLIT   : 'split '  ,
+          \   s:OPEN_TYPE_VSPLIT  : 'vsplit ' ,
+          \   s:OPEN_TYPE_TAB     : 'tabedit ',
           \ }[a:mode] . fnameescape(fnamemodify(a:path, ':~:.'))
   endif
 endfunction
@@ -220,11 +200,21 @@ endfunction
 "
 function fuf#openTag(tag, mode)
   execute {
-        \   s:OPEN_MODE_CURRENT : ':tjump '           ,
-        \   s:OPEN_MODE_SPLIT   : ':stjump '          ,
-        \   s:OPEN_MODE_VSPLIT  : ':vertical :stjump ',
-        \   s:OPEN_MODE_TAB     : ':tab :stjump '     ,
+        \   s:OPEN_TYPE_CURRENT : 'tjump '          ,
+        \   s:OPEN_TYPE_SPLIT   : 'stjump '         ,
+        \   s:OPEN_TYPE_VSPLIT  : 'vertical stjump ',
+        \   s:OPEN_TYPE_TAB     : 'tab stjump '     ,
         \ }[a:mode] . a:tag
+endfunction
+
+"
+function fuf#prejump(mode)
+  execute {
+        \   s:OPEN_TYPE_CURRENT : ''         ,
+        \   s:OPEN_TYPE_SPLIT   : 'split'    ,
+        \   s:OPEN_TYPE_VSPLIT  : 'vsplit'   ,
+        \   s:OPEN_TYPE_TAB     : 'tab split',
+        \ }[a:mode] 
 endfunction
 
 "
@@ -241,20 +231,101 @@ function fuf#compareRanks(i1, i2)
   return 0
 endfunction
 
-" returns { 'word', 'boundaries', 'head', 'tail' }
-function fuf#makePathItem(fname, appendsDirSuffix)
-  let item = fuf#splitPath(a:fname)
-  let item.boundaries = s:getWordBoundaries(item.tail)
-  if a:appendsDirSuffix
-    let suffix = (isdirectory(a:fname) ? s:PATH_SEPARATOR : '')
-    return extend({ 'word' : a:fname . suffix }, item, 'error') 
-  else
-    return extend({ 'word' : a:fname }, item, 'error') 
-  endif
+"
+function fuf#makePathItem(fname, menu, appendsDirSuffix)
+  let pathPair = fuf#splitPath(a:fname)
+  let dirSuffix = (a:appendsDirSuffix && isdirectory(a:fname)
+        \          ? s:PATH_SEPARATOR
+        \          : '')
+  return {
+        \   'word'              : a:fname . dirSuffix,
+        \   'wordForPrimaryHead': s:toLowerForIgnoringCase(pathPair.head),
+        \   'wordForPrimaryTail': s:toLowerForIgnoringCase(pathPair.tail),
+        \   'wordForBoundary'   : s:toLowerForIgnoringCase(s:getWordBoundaries(pathPair.tail)),
+        \   'wordForRefining'   : s:toLowerForIgnoringCase(a:fname . dirSuffix),
+        \   'wordForRank'       : s:toLowerForIgnoringCase(pathPair.tail),
+        \   'menu'              : a:menu,
+        \ }
 endfunction
 
 "
-function fuf#enumExpandedDirsEntries(dir, excluded)
+function fuf#makeNonPathItem(word, menu)
+  let wordL = s:toLowerForIgnoringCase(a:word)
+  return {
+        \   'word'           : a:word,
+        \   'wordForPrimary' : wordL,
+        \   'wordForBoundary': s:toLowerForIgnoringCase(s:getWordBoundaries(a:word)),
+        \   'wordForRefining': wordL,
+        \   'wordForRank'    : wordL,
+        \   'menu'           : a:menu,
+        \ }
+endfunction
+
+"
+function s:parsePrimaryPatternForPathTail(pattern)
+  let pattern = fuf#expandTailDotSequenceToParentDir(a:pattern)
+  let pair = fuf#splitPath(pattern)
+  return [
+        \   pattern,
+        \   pair.tail,
+        \   [
+        \     ['v:val.wordForPrimaryTail', pair.tail],
+        \   ],
+        \ ]
+endfunction
+
+"
+function s:parsePrimaryPatternForPath(pattern)
+  let pattern = fuf#expandTailDotSequenceToParentDir(a:pattern)
+  let pair = fuf#splitPath(pattern)
+  if g:fuf_splitPathMatching
+    let matches = [
+        \     ['v:val.wordForPrimaryHead', pair.head],
+        \     ['v:val.wordForPrimaryTail', pair.tail],
+        \   ]
+  else
+    let matches = [
+          \     ['v:val.wordForPrimaryHead . v:val.wordForPrimaryTail', pattern],
+          \   ]
+  endif
+  return [
+        \   pattern,
+        \   pair.tail,
+        \   matches,
+        \ ]
+endfunction
+
+"
+function s:parsePrimaryPatternForNonPath(pattern)
+  return [
+        \   a:pattern,
+        \   a:pattern,
+        \   [
+        \     ['v:val.wordForPrimary', a:pattern],
+        \   ],
+        \ ]
+endfunction
+
+"
+function fuf#makePatternSet(patternBase, parser, partialMatching)
+  let MakeMatchingExpr = function(a:partialMatching
+        \                         ? 's:makePartialMatchingExpr'
+        \                         : 's:makeFuzzyMatchingExpr')
+  let [primary; refinings] =
+        \ split(s:toLowerForIgnoringCase(a:patternBase),
+        \       g:fuf_patternSeparator, 1)
+  let [primary, primaryForRank, matchingPairs] = call(a:parser, [primary])
+  let primaryExprs  = map(matchingPairs, 'MakeMatchingExpr(v:val[0], v:val[1])')
+  let refiningExprs = map(refinings, 's:makeRefiningExpr(v:val)')
+  return  {
+        \   'primary'       : primary,
+        \   'primaryForRank': primaryForRank,
+        \   'filteringExpr' : join(primaryExprs + refiningExprs, ' && '),
+        \ }
+endfunction
+
+"
+function fuf#enumExpandedDirsEntries(dir, exclude)
   " Substitutes "\" because on Windows, "**\" doesn't include ".\",
   " but "**/" include "./". I don't know why.
   let dirNormalized = substitute(a:dir, '\', '/', 'g')
@@ -262,9 +333,9 @@ function fuf#enumExpandedDirsEntries(dir, excluded)
         \       split(glob(dirNormalized . ".*"), "\n")
   " removes "*/." and "*/.."
   call filter(entries, 'v:val !~ ''\v(^|[/\\])\.\.?$''')
-  call map(entries, 'fuf#makePathItem(v:val, 1)')
-  if len(a:excluded)
-    call filter(entries, 'v:val.word !~ a:excluded')
+  call map(entries, 'fuf#makePathItem(v:val, "", 1)')
+  if len(a:exclude)
+    call filter(entries, 'v:val.word !~ a:exclude')
   endif
   return entries
 endfunction
@@ -279,12 +350,6 @@ function fuf#mapToSetAbbrWithSnippedWordAsPath(items)
 endfunction
 
 "
-function fuf#setMenuWithFormattedTime(item)
-  let a:item.menu = strftime(g:fuf_timeFormat, a:item.time)
-  return a:item
-endfunction
-
-"
 function fuf#setAbbrWithFormattedWord(item)
   let lenMenu = (exists('a:item.menu') ? len(a:item.menu) + 2 : 0)
   let abbrPrefix = (exists('a:item.abbrPrefix') ? a:item.abbrPrefix : '')
@@ -294,15 +359,17 @@ function fuf#setAbbrWithFormattedWord(item)
 endfunction
 
 "
-function fuf#setBoundariesWithWord(item)
-  let a:item.boundaries = s:getWordBoundaries(a:item.word)
-  return a:item
-endfunction
-
-"
 function fuf#defineLaunchCommand(CmdName, modeName, prefixInitialPattern)
   execute printf('command! -bang -narg=? %s call fuf#launch(%s, %s . <q-args>, len(<q-bang>))',
         \        a:CmdName, string(a:modeName), a:prefixInitialPattern)
+endfunction
+
+"
+function fuf#defineKeyMappingInHandler(key, func)
+    " hacks to be able to use feedkeys().
+    execute printf(
+          \ 'inoremap <buffer> <silent> %s <C-r>=fuf#getRunningHandler().%s ? "" : ""<CR>',
+          \ a:key, a:func)
 endfunction
 
 "
@@ -316,39 +383,45 @@ function fuf#launch(modeName, initialPattern, partialMatching)
   endif
   let s:runningHandler = fuf#{a:modeName}#createHandler(copy(s:handlerBase))
   let s:runningHandler.info = fuf#loadInfoFile(s:runningHandler.getModeName())
-  let s:runningHandler.makeRegexpPattern = function(a:partialMatching
-        \                                           ? 's:makePartialRegexpPattern'
-        \                                           : 's:makeFuzzyRegexpPattern')
+  let s:runningHandler.partialMatching = a:partialMatching
   let s:runningHandler.bufNrPrev = bufnr('%')
   let s:runningHandler.lastCol = -1
   call s:runningHandler.onModeEnterPre()
-  call s:activateFufBuffer()
   call s:setTemporaryGlobalOption('completeopt', 'menuone')
-  call s:setTemporaryGlobalOption('ignorecase', g:fuf_ignoreCase)
+  call s:setTemporaryGlobalOption('ignorecase', 0)
+  if s:runningHandler.getPreviewHeight() > 0
+    call s:setTemporaryGlobalOption(
+          \ 'cmdheight', s:runningHandler.getPreviewHeight() + 1)
+  endif
+  call s:activateFufBuffer()
   " local autocommands
-  augroup FuzzyfinderLocal
+  augroup FufLocal
     autocmd!
     autocmd CursorMovedI <buffer>        call s:runningHandler.onCursorMovedI()
     autocmd InsertLeave  <buffer> nested call s:runningHandler.onInsertLeave()
   augroup END
   " local mapping
-  for [lhs, rhs] in [
-        \   [ g:fuf_keyOpen       , 'onCr(' . s:OPEN_MODE_CURRENT . ', 0)' ],
-        \   [ g:fuf_keyOpenSplit  , 'onCr(' . s:OPEN_MODE_SPLIT   . ', 0)' ],
-        \   [ g:fuf_keyOpenVsplit , 'onCr(' . s:OPEN_MODE_VSPLIT  . ', 0)' ],
-        \   [ g:fuf_keyOpenTabpage, 'onCr(' . s:OPEN_MODE_TAB     . ', 0)' ],
+  for [key, func] in [
+        \   [ g:fuf_keyOpen       , 'onCr(' . s:OPEN_TYPE_CURRENT . ', 0)' ],
+        \   [ g:fuf_keyOpenSplit  , 'onCr(' . s:OPEN_TYPE_SPLIT   . ', 0)' ],
+        \   [ g:fuf_keyOpenVsplit , 'onCr(' . s:OPEN_TYPE_VSPLIT  . ', 0)' ],
+        \   [ g:fuf_keyOpenTabpage, 'onCr(' . s:OPEN_TYPE_TAB     . ', 0)' ],
         \   [ '<BS>'              , 'onBs()'                               ],
         \   [ '<C-h>'             , 'onBs()'                               ],
+        \   [ g:fuf_keyPreview    , 'onPreviewBase()'                      ],
+        \   [ g:fuf_keyNextMode   , 'onSwitchMode(+1)'                     ],
+        \   [ g:fuf_keyPrevMode   , 'onSwitchMode(-1)'                     ],
+        \   [ g:fuf_keyPrevPattern, 'onRecallPattern(+1)'                  ],
+        \   [ g:fuf_keyNextPattern, 'onRecallPattern(-1)'                  ],
         \ ]
-    " hacks to be able to use feedkeys().
-    execute printf('inoremap <buffer> <silent> %s <C-r>=%s%s ? "" : ""<CR>',
-          \        lhs, s:getSidPrefix(), rhs)
+    call fuf#defineKeyMappingInHandler(key, func)
   endfor
   " Starts Insert mode and makes CursorMovedI event now. Command prompt is
   " needed to forces a completion menu to update every typing.
   call setline(1, s:runningHandler.getPrompt() . a:initialPattern)
   call s:runningHandler.onModeEnterPost()
   call feedkeys("A", 'n') " startinsert! does not work in InsertLeave event handler
+  redraw
 endfunction
 
 "
@@ -388,7 +461,7 @@ endfunction
 "
 function fuf#editInfoFile()
   new
-  file `='[fuf-info]'`
+  silent file `='[fuf-info]'`
   let s:bufNrInfo = bufnr('%')
   setlocal filetype=vim
   setlocal bufhidden=delete
@@ -403,8 +476,13 @@ function fuf#editInfoFile()
 endfunction
 
 " 
+function fuf#getRunningHandler()
+  return s:runningHandler
+endfunction
+
+" 
 function fuf#onComplete(findstart, base)
-  return s:runningHandler.complete(a:findstart, a:base)
+  return s:runningHandler.onComplete(a:findstart, a:base)
 endfunction
 
 " }}}1
@@ -414,15 +492,10 @@ endfunction
 let s:INFO_FILE_VERSION_LINE = "VERSION\t300"
 let s:PATH_SEPARATOR = (!&shellslash && (has('win32') || has('win64')) ? '\' : '/')
 let s:ABBR_SNIP_MASK = '...'
-let s:OPEN_MODE_CURRENT = 1
-let s:OPEN_MODE_SPLIT   = 2
-let s:OPEN_MODE_VSPLIT  = 3
-let s:OPEN_MODE_TAB     = 4
-
-"
-function s:getSidPrefix()
-  return matchstr(expand('<sfile>'), '<SNR>\d\+_')
-endfunction
+let s:OPEN_TYPE_CURRENT = 1
+let s:OPEN_TYPE_SPLIT   = 2
+let s:OPEN_TYPE_VSPLIT  = 3
+let s:OPEN_TYPE_TAB     = 4
 
 " wildcard -> regexp
 function s:convertWildcardToRegexp(expr)
@@ -433,9 +506,43 @@ function s:convertWildcardToRegexp(expr)
   return '\V' . re
 endfunction
 
+" a:pattern: 'str' -> '\V\.\*s\.\*t\.\*r\.\*'
+function s:makeFuzzyMatchingExpr(target, pattern)
+  let wi = ''
+  for c in split(a:pattern, '\zs')
+    if wi =~# '[^*?]$' && c !~ '[*?]'
+      let wi .= '*'
+    endif
+    let wi .= c
+  endfor
+  return s:makePartialMatchingExpr(a:target, wi)
+endfunction
+
+" a:pattern: 'str' -> '\Vstr'
+"            'st*r' -> '\Vst\.\*r'
+function s:makePartialMatchingExpr(target, pattern)
+  let patternMigemo = s:makeAdditionalMigemoPattern(a:pattern)
+  if a:pattern !~ '[*?]' && empty(patternMigemo)
+    " NOTE: stridx is faster than regexp matching
+    return 'stridx(' . a:target . ', ' . string(a:pattern) . ') >= 0'
+  endif
+  return a:target . ' =~# ' .
+        \ string(s:convertWildcardToRegexp(a:pattern)) . patternMigemo
+endfunction
+
+" 
+function s:makeRefiningExpr(pattern)
+  let expr = s:makePartialMatchingExpr('v:val.wordForRefining', a:pattern)
+  if a:pattern =~# '\D'
+    return expr
+  else
+    return '(' . expr . ' || v:val.index == ' . string(a:pattern) . ')'
+  endif
+endfunction
+
 " 
 function s:makeAdditionalMigemoPattern(pattern)
-  if !g:fuf_useMigemo || a:pattern =~ '[^\x01-\x7e]'
+  if !g:fuf_useMigemo || a:pattern =~# '[^\x01-\x7e]'
     return ''
   endif
   return '\|\m' . substitute(migemo(a:pattern), '\\_s\*', '.*', 'g')
@@ -480,16 +587,18 @@ function s:getWordBoundaries(word)
 endfunction
 
 "
-function s:setRanks(item, key, patternPartial, patternFuzzy, boundaryMatching, stats)
+function s:toLowerForIgnoringCase(str)
+    return (g:fuf_ignoreCase ? tolower(a:str) : a:str)
+endfunction
+
+"
+function s:setRanks(item, pattern, exprBoundary, stats)
   "let word2 = substitute(a:eval_word, '\a\zs\l\+\|\zs\A', '', 'g')
   let a:item.ranks = [
         \   s:evaluateLearningRank(a:item.word, a:stats),
-        \   (a:boundaryMatching
-        \    ? -s:scoreBoundaryMatching(a:item.boundaries, 
-        \                               a:patternPartial, a:patternFuzzy)
-        \    : 1.0),
-        \   -s:scoreSequentialMatching(a:item[a:key],
-        \                              a:patternPartial),
+        \   -s:scoreSequentialMatching(a:item.wordForRank, a:pattern),
+        \   -s:scoreBoundaryMatching(a:item.wordForBoundary, 
+        \                            a:pattern, a:exprBoundary),
         \   a:item.index,
         \ ]
   return a:item
@@ -505,28 +614,35 @@ function s:evaluateLearningRank(word, stats)
   return len(a:stats)
 endfunction
 
+let g:s = ""
 " range of return value is [0.0, 1.0]
-function s:scoreSequentialMatching(word, patternPartial)
-  let pos = match(a:word, a:patternPartial)
-  if pos < 0
-    return 0
+function s:scoreSequentialMatching(word, pattern)
+  if empty(a:pattern)
+    return 0.0
   endif
-  return 0.5 * (len(a:word) - matchend(a:word, a:patternPartial)) / len(a:word) +
-        \ (pos == 0 ? 0.5 : 0.0)
+  let pos = stridx(a:word, a:pattern)
+  if pos < 0
+    return 0.0
+  endif
+  let lenRest = len(a:word) - len(a:pattern) - pos
+  return (pos == 0 ? 0.5 : 0.0) + 0.5 / (lenRest + 1)
 endfunction
 
 " range of return value is [0.0, 1.0]
-function s:scoreBoundaryMatching(word, patternPartial, patternFuzzy)
-  if a:word !~ a:patternFuzzy
+function s:scoreBoundaryMatching(wordForBoundary, pattern, exprBoundary)
+  if empty(a:pattern)
+    return 0.0
+  endif
+  if !eval(a:exprBoundary)
     return 0
   endif
-  return 0.5 + 0.5 * s:scoreSequentialMatching(a:word, a:patternPartial)
+  return 0.5 + 0.5 * s:scoreSequentialMatching(a:wordForBoundary, a:pattern)
 endfunction
 
 "
-function s:highlightPrompt(prompt, highlight)
+function s:highlightPrompt(prompt)
   syntax clear
-  execute printf('syntax match %s /^\V%s/', a:highlight, escape(a:prompt, '\'))
+  execute printf('syntax match %s /^\V%s/', g:fuf_promptHighlight, escape(a:prompt, '\'))
 endfunction
 
 "
@@ -613,11 +729,11 @@ let s:bufNrFuf = -1
 function s:openFufBuffer()
   if !bufexists(s:bufNrFuf)
     topleft 1new
-    file `='[fuf]'`
+    silent file `='[fuf]'`
     let s:bufNrFuf = bufnr('%')
   elseif bufwinnr(s:bufNrFuf) == -1
     topleft 1split
-    execute s:bufNrFuf . 'buffer'
+    execute 'silent ' . s:bufNrFuf . 'buffer'
     delete _
   elseif bufwinnr(s:bufNrFuf) != bufwinnr('%')
     execute bufwinnr(s:bufNrFuf) . 'wincmd w'
@@ -644,15 +760,23 @@ function s:activateFufBuffer()
   let cwd = getcwd()
   call s:openFufBuffer()
   " lcd ... : countermeasure against auto-cd script
-  execute ':lcd ' . escape(cwd, ' ')
+  lcd `=cwd`
   call s:setLocalOptionsForFufBuffer()
   redraw " for 'lazyredraw'
-  if exists(':AutoComplPopLock') | execute ':AutoComplPopLock' | endif
+  if exists(':AcpLock')
+    AcpLock
+  elseif exists(':AutoComplPopLock')
+    AutoComplPopLock
+  endif
 endfunction
 
 "
 function s:deactivateFufBuffer()
-  if exists(':AutoComplPopUnlock') | execute ':AutoComplPopUnlock' | endif
+  if exists(':AcpUnlock')
+    AcpUnlock
+  elseif exists(':AutoComplPopUnlock')
+    AutoComplPopUnlock
+  endif
   " must close after returning to previous window
   wincmd p
   execute s:bufNrFuf . 'bdelete'
@@ -711,7 +835,6 @@ function s:deserializeInfoMap(lines)
     endif
     call add(infoMap[e[1]][e[2]], eval(e[3]))
   endfor
-  let g:lim = copy(infoMap)
   return infoMap
 endfunction
 
@@ -721,16 +844,6 @@ function s:onBufWriteCmdInfoFile()
   setlocal nomodified
   execute printf('%dbdelete! ', s:bufNrInfo)
   echo "Information file updated"
-endfunction
-
-"
-function s:onCr(typeOpen, fCheckDir)
-  call s:runningHandler.onCr(a:typeOpen, a:fCheckDir)
-endfunction
-
-"
-function s:onBs()
-  call s:runningHandler.onBs()
 endfunction
 
 " }}}1
@@ -748,17 +861,14 @@ let s:handlerBase = {}
 " "
 " s:handler.getPrompt()
 " 
-" "
-" s:handler.getPromptHighlight()
-" 
 " " returns true if the mode deals with file paths.
 " s:handler.targetsPath()
 "
 " "
-" s:handler.onComplete(patternSet)
+" s:handler.getCompleteItems(patternSet)
 " 
 " "
-" s:handler.onOpen(expr, mode)
+" s:handler.onOpen(word, mode)
 " 
 " " Before entering FuzzyFinder buffer. This function should return in a short time.
 " s:handler.onModeEnterPre()
@@ -787,35 +897,47 @@ function s:handlerBase.addStat(pattern, word)
 endfunction
 
 "
-function s:handlerBase.complete(findstart, base)
+function s:handlerBase.getMatchingCompleteItems(patternBase)
+  let MakeMatchingExpr = function(self.partialMatching
+        \                         ? 's:makePartialMatchingExpr'
+        \                         : 's:makeFuzzyMatchingExpr')
+  let patternSet = self.makePatternSet(a:patternBase)
+  let exprBoundary = s:makeFuzzyMatchingExpr('a:wordForBoundary', patternSet.primaryForRank)
+  let stats = filter(
+        \ copy(self.info.stats), 'v:val.pattern ==# patternSet.primaryForRank')
+  let items = self.getCompleteItems(patternSet.primary)
+  " NOTE: In order to know an excess, plus 1 to limit number
+  let items = fuf#filterWithLimit(
+        \ items, patternSet.filteringExpr, g:fuf_enumeratingLimit + 1)
+  return map(items,
+        \ 's:setRanks(v:val, patternSet.primaryForRank, exprBoundary, stats)')
+endfunction
+
+"
+function s:handlerBase.onComplete(findstart, base)
   if a:findstart
     return 0
   elseif  !self.existsPrompt(a:base)
     return []
   endif
-  call s:highlightPrompt(self.getPrompt(), self.getPromptHighlight())
-  let result = []
+  call s:highlightPrompt(self.getPrompt())
+  let items = []
   for patternBase in s:expandAbbrevMap(self.removePrompt(a:base), g:fuf_abbrevMap)
-    let patternSet = s:makePatternSet(patternBase, self.targetsPath(), self.makeRegexpPattern)
-    let result += self.onComplete(patternSet)
-    if len(result) > g:fuf_enumeratingLimit
-      let result = result[ : g:fuf_enumeratingLimit - 1]
+    let items += self.getMatchingCompleteItems(patternBase)
+    if len(items) > g:fuf_enumeratingLimit
+      let items = items[ : g:fuf_enumeratingLimit - 1]
       call s:highlightError()
       break
     endif
   endfor
-  if empty(result)
+  if empty(items)
     call s:highlightError()
   else
-    call sort(result, 'fuf#compareRanks')
+    call sort(items, 'fuf#compareRanks')
     call feedkeys("\<C-p>\<Down>", 'n')
+    let self.lastFirstWord = items[0].word
   endif
-  return result
-endfunction
-
-"
-function s:handlerBase.getFilteredStats(pattern)
-  return filter(copy(self.info.stats), 'v:val.pattern ==# a:pattern')
+  return items
 endfunction
 
 "
@@ -856,33 +978,39 @@ endfunction
 
 "
 function s:handlerBase.onInsertLeave()
+  unlet s:runningHandler
   let lastPattern = self.removePrompt(getline('.'))
   call s:restoreTemporaryGlobalOptions()
   call s:deactivateFufBuffer()
-  let reserved = exists('s:reservedCommand')
-  if reserved
+  call fuf#saveInfoFile(self.getModeName(), self.info)
+  let fOpen = exists('s:reservedCommand')
+  if fOpen
     call self.onOpen(s:reservedCommand[0], s:reservedCommand[1])
     unlet s:reservedCommand
   endif
-  call self.onModeLeavePost(reserved)
-  call fuf#saveInfoFile(s:runningHandler.getModeName(), s:runningHandler.info)
-  unlet s:runningHandler
+  call self.onModeLeavePost(fOpen)
+  if exists('s:reservedMode')
+    call fuf#launch(s:reservedMode, lastPattern, self.partialMatching)
+    unlet s:reservedMode
+  endif
 endfunction
 
 "
-function s:handlerBase.onCr(typeOpen, fCheckDir)
+function s:handlerBase.onCr(openType, fCheckDir)
   if pumvisible()
-    call feedkeys(printf("\<C-y>\<C-r>=%sonCr(%d, 1) ? '' : ''\<CR>",
-          \       s:getSidPrefix(), a:typeOpen), 'n')
+    call feedkeys(printf("\<C-y>\<C-r>=fuf#getRunningHandler().onCr(%d, %d) ? '' : ''\<CR>",
+          \              a:openType, self.targetsPath()), 'n')
     return
   endif
   if !empty(self.lastPattern)
     call self.addStat(self.lastPattern, self.removePrompt(getline('.')))
   endif
-  if a:fCheckDir && getline('.') =~ '[/\\]$'
+  if a:fCheckDir && getline('.') =~# '[/\\]$'
+    " To clear i_<C-r> expression (fuf#getRunningHandler().onCr...)
+    echo ''
     return
   endif
-  let s:reservedCommand = [self.removePrompt(getline('.')), a:typeOpen]
+  let s:reservedCommand = [self.removePrompt(getline('.')), a:openType]
   call feedkeys("\<Esc>", 'n') " stopinsert behavior is strange...
 endfunction
 
@@ -893,16 +1021,86 @@ function s:handlerBase.onBs()
     let numBs = 0
   elseif !g:fuf_smartBs
     let numBs = 1
-  elseif pattern[-len(g:fuf_patternSeparator) : ] == g:fuf_patternSeparator
+  elseif pattern[-len(g:fuf_patternSeparator) : ] ==# g:fuf_patternSeparator
     let numBs = len(split(pattern, g:fuf_patternSeparator, 1)[-2])
           \   + len(g:fuf_patternSeparator)
-  elseif self.targetsPath() && pattern[-1 : ] =~ '[/\\]'
+  elseif self.targetsPath() && pattern[-1 : ] =~# '[/\\]'
     let numBs = len(matchstr(pattern, '[^/\\]*.$'))
   else
     let numBs = 1
   endif
   call feedkeys((pumvisible() ? "\<C-e>" : "") . repeat("\<BS>", numBs), 'n')
 endfunction
+
+"
+function s:handlerBase.onPreviewBase()
+  if self.getPreviewHeight() <= 0
+    return
+  elseif !pumvisible()
+    return
+  elseif !self.existsPrompt(getline('.'))
+    let word = self.removePrompt(getline('.'))
+  elseif !exists('self.lastFirstWord')
+    return
+  else
+    let word = self.lastFirstWord
+  endif
+  redraw
+  if exists('self.lastPreviewInfo') && self.lastPreviewInfo.word ==# word
+    let self.lastPreviewInfo.count += 1
+  else
+    let self.lastPreviewInfo = {'word': word, 'count': 0}
+  endif
+  let lines = self.makePreviewLines(word, self.lastPreviewInfo.count)
+  let lines = lines[: self.getPreviewHeight() - 1]
+  call map(lines, 'substitute(v:val, "\t", repeat(" ", &tabstop), "g")')
+  call map(lines, 's:snipTail(v:val, &columns - 1, s:ABBR_SNIP_MASK)')
+  echo join(lines, "\n")
+endfunction
+
+"
+function s:handlerBase.onSwitchMode(shift)
+  let modes = copy(g:fuf_modes)
+  call map(modes, '{ "ranks": [ fuf#{v:val}#getSwitchOrder(), v:val ] }')
+  call filter(modes, 'v:val.ranks[0] >= 0')
+  call sort(modes, 'fuf#compareRanks')
+  let s:reservedMode = self.getModeName()
+  for i in range(len(modes))
+    if modes[i].ranks[1] ==# self.getModeName()
+      let s:reservedMode = modes[(i + a:shift) % len(modes)].ranks[1]
+      break
+    endif
+  endfor
+  call feedkeys("\<Esc>", 'n') " stopinsert doesn't work.
+endfunction
+
+"
+function s:handlerBase.onRecallPattern(shift)
+  let patterns = map(copy(self.info.stats), 'v:val.pattern')
+  if !exists('self.indexRecall')
+    let self.indexRecall = -1
+  endif
+  let self.indexRecall += a:shift
+  if self.indexRecall < 0
+    let self.indexRecall = -1
+  elseif self.indexRecall >= len(patterns)
+    let self.indexRecall = len(patterns) - 1
+  else
+    call setline('.', self.getPrompt() . patterns[self.indexRecall])
+    call feedkeys("\<End>", 'n')
+  endif
+endfunction
+
+" }}}1
+"=============================================================================
+" INITIALIZATION {{{1
+
+augroup FufGlobal
+  autocmd!
+  autocmd BufLeave * let s:bufferCursorPosMap[bufnr('')] = getpos('.')
+augroup END
+
+let s:bufferCursorPosMap = {}
 
 " }}}1
 "=============================================================================

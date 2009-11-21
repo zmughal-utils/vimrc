@@ -19,6 +19,11 @@ function fuf#callbackfile#createHandler(base)
 endfunction
 
 "
+function fuf#callbackfile#getSwitchOrder()
+  return -1
+endfunction
+
+"
 function fuf#callbackfile#renewCache()
   let s:cache = {}
 endfunction
@@ -33,7 +38,9 @@ function fuf#callbackfile#onInit()
 endfunction
 
 "
-function fuf#callbackfile#launch(initialPattern, partialMatching, listener)
+function fuf#callbackfile#launch(initialPattern, partialMatching, prompt, exclude, listener)
+  let s:prompt = (empty(a:prompt) ? '>' : a:prompt)
+  let s:exclude = a:exclude
   let s:listener = a:listener
   call fuf#launch(s:MODE_NAME, a:initialPattern, a:partialMatching)
 endfunction
@@ -46,11 +53,11 @@ let s:MODE_NAME = expand('<sfile>:t:r')
 
 "
 function s:enumItems(dir)
-  let key = getcwd() . "\n" . a:dir
+  let key = getcwd() . s:exclude . "\n" . a:dir
   if !exists('s:cache[key]')
-    let s:cache[key] = fuf#enumExpandedDirsEntries(a:dir, g:fuf_callbackfile_exclude)
+    let s:cache[key] = fuf#enumExpandedDirsEntries(a:dir, s:exclude)
     if isdirectory(a:dir)
-      call insert(s:cache[key], fuf#makePathItem(a:dir . '.', 0))
+      call insert(s:cache[key], fuf#makePathItem(a:dir . '.', '', 0))
     endif
     call fuf#mapToSetSerialIndex(s:cache[key], 1)
     call fuf#mapToSetAbbrWithSnippedWordAsPath(s:cache[key])
@@ -71,12 +78,12 @@ endfunction
 
 "
 function s:handler.getPrompt()
-  return g:fuf_callbackfile_prompt
+  return s:prompt
 endfunction
 
 "
-function s:handler.getPromptHighlight()
-  return g:fuf_callbackfile_promptHighlight
+function s:handler.getPreviewHeight()
+  return g:fuf_previewHeight
 endfunction
 
 "
@@ -85,17 +92,25 @@ function s:handler.targetsPath()
 endfunction
 
 "
-function s:handler.onComplete(patternSet)
-  let items = copy(s:enumItems(a:patternSet.rawHead))
-  let items = filter(items, 'bufnr("^" . v:val.word . "$") != self.bufNrPrev')
-  return fuf#filterMatchesAndMapToSetRanks(
-        \ items, a:patternSet,
-        \ self.getFilteredStats(a:patternSet.raw), self.targetsPath())
+function s:handler.makePatternSet(patternBase)
+  return fuf#makePatternSet(a:patternBase, 's:parsePrimaryPatternForPathTail',
+        \                   self.partialMatching)
 endfunction
 
 "
-function s:handler.onOpen(expr, mode)
-  call s:listener.onComplete(a:expr, a:mode)
+function s:handler.makePreviewLines(word, count)
+  return fuf#makePreviewLinesForFile(a:word, count, self.getPreviewHeight())
+endfunction
+
+"
+function s:handler.getCompleteItems(patternPrimary)
+  let items = copy(s:enumItems(fuf#splitPath(a:patternPrimary).head))
+  return filter(items, 'bufnr("^" . v:val.word . "$") != self.bufNrPrev')
+endfunction
+
+"
+function s:handler.onOpen(word, mode)
+  call s:listener.onComplete(a:word, a:mode)
 endfunction
 
 "

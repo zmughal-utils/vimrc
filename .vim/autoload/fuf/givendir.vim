@@ -19,6 +19,11 @@ function fuf#givendir#createHandler(base)
 endfunction
 
 "
+function fuf#givendir#getSwitchOrder()
+  return -1
+endfunction
+
+"
 function fuf#givendir#renewCache()
 endfunction
 
@@ -32,9 +37,10 @@ function fuf#givendir#onInit()
 endfunction
 
 "
-function fuf#givendir#launch(initialPattern, partialMatching, items)
+function fuf#givendir#launch(initialPattern, partialMatching, prompt, items)
+  let s:prompt = (empty(a:prompt) ? '>' : a:prompt)
   let s:items = map(copy(a:items), 'substitute(v:val, ''[/\\]\?$'', "", "")')
-  let s:items = map(s:items, 'fuf#makePathItem(v:val, 0)')
+  let s:items = map(s:items, 'fuf#makePathItem(v:val, "", 0)')
   call fuf#mapToSetSerialIndex(s:items, 1)
   call fuf#mapToSetAbbrWithSnippedWordAsPath(s:items)
   call fuf#launch(s:MODE_NAME, a:initialPattern, a:partialMatching)
@@ -59,12 +65,12 @@ endfunction
 
 "
 function s:handler.getPrompt()
-  return g:fuf_givendir_prompt
+  return s:prompt
 endfunction
 
 "
-function s:handler.getPromptHighlight()
-  return g:fuf_givendir_promptHighlight
+function s:handler.getPreviewHeight()
+  return g:fuf_previewHeight
 endfunction
 
 "
@@ -73,15 +79,27 @@ function s:handler.targetsPath()
 endfunction
 
 "
-function s:handler.onComplete(patternSet)
-  return fuf#filterMatchesAndMapToSetRanks(
-        \ s:items, a:patternSet,
-        \ self.getFilteredStats(a:patternSet.raw), self.targetsPath())
+function s:handler.makePatternSet(patternBase)
+  return fuf#makePatternSet(a:patternBase, 's:parsePrimaryPatternForPath',
+        \                   self.partialMatching)
 endfunction
 
 "
-function s:handler.onOpen(expr, mode)
-  execute ':cd ' . fnameescape(a:expr)
+function s:handler.makePreviewLines(word, count)
+  return fuf#makePreviewLinesAround(
+        \ split(glob(fnamemodify(a:word, ':p') . '*'), "\n"),
+        \ [], a:count, self.getPreviewHeight())
+  return 
+endfunction
+
+"
+function s:handler.getCompleteItems(patternPrimary)
+  return s:items
+endfunction
+
+"
+function s:handler.onOpen(word, mode)
+  execute ':cd ' . fnameescape(a:word)
 endfunction
 
 "

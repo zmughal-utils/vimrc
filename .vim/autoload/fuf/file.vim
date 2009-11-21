@@ -19,6 +19,11 @@ function fuf#file#createHandler(base)
 endfunction
 
 "
+function fuf#file#getSwitchOrder()
+  return g:fuf_file_switchOrder
+endfunction
+
+"
 function fuf#file#renewCache()
   let s:cache = {}
 endfunction
@@ -43,13 +48,27 @@ let s:MODE_NAME = expand('<sfile>:t:r')
 
 "
 function s:enumItems(dir)
-  let key = getcwd() . "\n" . a:dir
+  let key = getcwd() . g:fuf_file_exclude . "\n" . a:dir
   if !exists('s:cache[key]')
     let s:cache[key] = fuf#enumExpandedDirsEntries(a:dir, g:fuf_file_exclude)
     call fuf#mapToSetSerialIndex(s:cache[key], 1)
     call fuf#mapToSetAbbrWithSnippedWordAsPath(s:cache[key])
   endif
   return s:cache[key]
+endfunction
+
+"
+function s:enumNonCurrentItems(dir, bufNr, cache)
+  let key = a:dir . 'AVOIDING EMPTY KEY'
+  if !exists('a:cache[key]')
+    " NOTE: filtering should be done with
+    "       'bufnr("^" . v:val.word . "$") != a:bufNr'.
+    "       But it takes a lot of time!
+    let bufName = bufname(a:bufNr)
+    let a:cache[key] =
+          \ filter(copy(s:enumItems(a:dir)), 'v:val.word != bufName')
+  endif
+  return a:cache[key]
 endfunction
 
 " }}}1
@@ -69,8 +88,8 @@ function s:handler.getPrompt()
 endfunction
 
 "
-function s:handler.getPromptHighlight()
-  return g:fuf_file_promptHighlight
+function s:handler.getPreviewHeight()
+  return g:fuf_previewHeight
 endfunction
 
 "
@@ -79,23 +98,25 @@ function s:handler.targetsPath()
 endfunction
 
 "
-function s:handler.onComplete(patternSet)
-  let key = a:patternSet.rawHead . 'AVOIDING EMPTY KEY'
-  if !exists('self.cache[key]')
-    " NOTE: filtering should be done with 'bufnr("^" . v:val.word . "$") != self.bufNrPrev'.
-    "       But it takes a lot of time!
-    let bufName = bufname(self.bufNrPrev)
-    let self.cache[key] = filter(copy(s:enumItems(a:patternSet.rawHead)),
-          \                      'v:val.word != bufName')
-  endif
-  return fuf#filterMatchesAndMapToSetRanks(
-        \ self.cache[key], a:patternSet,
-        \ self.getFilteredStats(a:patternSet.raw), self.targetsPath())
+function s:handler.makePatternSet(patternBase)
+  return fuf#makePatternSet(a:patternBase, 's:parsePrimaryPatternForPathTail',
+        \                   self.partialMatching)
 endfunction
 
 "
-function s:handler.onOpen(expr, mode)
-  call fuf#openFile(a:expr, a:mode, g:fuf_reuseWindow)
+function s:handler.makePreviewLines(word, count)
+  return fuf#makePreviewLinesForFile(a:word, count, self.getPreviewHeight())
+endfunction
+
+"
+function s:handler.getCompleteItems(patternPrimary)
+  return s:enumNonCurrentItems(
+        \ fuf#splitPath(a:patternPrimary).head, self.bufNrPrev, self.cache)
+endfunction
+
+"
+function s:handler.onOpen(word, mode)
+  call fuf#openFile(a:word, a:mode, g:fuf_reuseWindow)
 endfunction
 
 "

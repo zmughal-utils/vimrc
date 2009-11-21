@@ -19,6 +19,11 @@ function fuf#callbackitem#createHandler(base)
 endfunction
 
 "
+function fuf#callbackitem#getSwitchOrder()
+  return -1
+endfunction
+
+"
 function fuf#callbackitem#renewCache()
 endfunction
 
@@ -32,18 +37,19 @@ function fuf#callbackitem#onInit()
 endfunction
 
 "
-function fuf#callbackitem#launch(initialPattern, partialMatching, listener, items, forPath)
+function fuf#callbackitem#launch(initialPattern, partialMatching, prompt, listener, items, forPath)
+  let s:prompt = (empty(a:prompt) ? '>' : a:prompt)
   let s:listener = a:listener
   let s:forPath = a:forPath
+  let s:items = copy(a:items)
   if s:forPath
-    let s:items = map(copy(a:items), 'fuf#makePathItem(v:val, 1)')
+    call map(s:items, 'fuf#makePathItem(v:val, "", 1)')
     call fuf#mapToSetSerialIndex(s:items, 1)
     call fuf#mapToSetAbbrWithSnippedWordAsPath(s:items)
   else
-    let s:items = map(copy(a:items), '{ "word" : v:val }')
-    let s:items = map(s:items, 'fuf#setBoundariesWithWord(v:val)')
+    call map(s:items, 'fuf#makeNonPathItem(v:val, "")')
     call fuf#mapToSetSerialIndex(s:items, 1)
-    let s:items = map(s:items, 'fuf#setAbbrWithFormattedWord(v:val)')
+    call map(s:items, 'fuf#setAbbrWithFormattedWord(v:val)')
   endif
   call fuf#launch(s:MODE_NAME, a:initialPattern, a:partialMatching)
 endfunction
@@ -67,12 +73,15 @@ endfunction
 
 "
 function s:handler.getPrompt()
-  return g:fuf_callbackitem_prompt
+  return s:prompt
 endfunction
 
 "
-function s:handler.getPromptHighlight()
-  return g:fuf_callbackitem_promptHighlight
+function s:handler.getPreviewHeight()
+  if s:forPath
+    return g:fuf_previewHeight
+  endif
+  return 0
 endfunction
 
 "
@@ -81,21 +90,29 @@ function s:handler.targetsPath()
 endfunction
 
 "
-function s:handler.onComplete(patternSet)
-  if s:forPath
-    return fuf#filterMatchesAndMapToSetRanks(
-          \ s:items, a:patternSet,
-          \ self.getFilteredStats(a:patternSet.raw), self.targetsPath())
-  else
-    return fuf#filterMatchesAndMapToSetRanks(
-          \ s:items, a:patternSet,
-          \ self.getFilteredStats(a:patternSet.raw), self.targetsPath())
-  endif
+function s:handler.makePatternSet(patternBase)
+  let parser = (s:forPath
+        \       ? 's:parsePrimaryPatternForPath'
+        \       : 's:parsePrimaryPatternForNonPath')
+  return fuf#makePatternSet(a:patternBase, parser, self.partialMatching)
 endfunction
 
 "
-function s:handler.onOpen(expr, mode)
-  call s:listener.onComplete(a:expr, a:mode)
+function s:handler.makePreviewLines(word, count)
+  if s:forPath
+    return fuf#makePreviewLinesForFile(a:word, count, self.getPreviewHeight())
+  endif
+  return []
+endfunction
+
+"
+function s:handler.getCompleteItems(patternPrimary)
+  return s:items
+endfunction
+
+"
+function s:handler.onOpen(word, mode)
+  call s:listener.onComplete(a:word, a:mode)
 endfunction
 
 "
