@@ -25,6 +25,20 @@ endfunction
 
 function! JavapGetClassName(class)
 	let classfqn=""
+
+	" Test current package
+	let packageregex='^package\s\+'.'\(\%(\h\w*\.\)*\%(\h\w*\)\)'.'\s*;'
+	let winview=winsaveview()
+	call cursor(1,1)
+	let [lnum, startcol]=searchpos(packageregex,'n')
+	let packageline=getline(lnum)
+	let packagetest=matchlist(packageline,packageregex)[1].'.'.a:class
+	call winrestview(winview)
+	if JavapClassExists(packagetest)
+		return packagetest	" classfqn = packagetest
+	endif
+
+	
 	" Not FQN
 	if !JavapClassExists(a:class) && stridx(a:class,".")==-1
 		" Does it exist in java.lang.* ?
@@ -38,7 +52,7 @@ function! JavapGetClassName(class)
 			let importregex='^import\s\+\%(static\s+\)\@!\('.importfqnregex.'\)\s*;'
 			while lnum <= line("$") && classfqn==""
 				let curline=getline(lnum)
-				if curline =~ importregex
+				if curline =~# importregex
 					let fqnpart=matchlist(curline,importregex)[1]
 					let fqnlist=matchlist(fqnpart,importfqnregex)
 					if fqnlist[2] == a:class
@@ -68,6 +82,9 @@ endfunction
 command! -nargs=1 Javap	call Javap(<f-args>)
 function! Javap(class)
 	let classfqn=JavapGetClassName(a:class)
+	if classfqn !~ '.*'.a:class.'$'
+		return
+	endif
 	let bn="~/".classfqn
 	if !bufexists(bufname(expand(bn)))
 		silent exe "new +r!javap\\ ".classfqn
