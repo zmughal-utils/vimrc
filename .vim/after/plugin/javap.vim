@@ -1,4 +1,3 @@
-
 " javap {{{
 " NOTE Math.tan(arg) works for java.lang.Math
 " TODO	Java allow the syntax to go across multiple
@@ -31,13 +30,14 @@ function! JavapGetClassName(class)
 	let winview=winsaveview()
 	call cursor(1,1)
 	let [lnum, startcol]=searchpos(packageregex,'n')
-	let packageline=getline(lnum)
-	let packagetest=matchlist(packageline,packageregex)[1].'.'.a:class
-	call winrestview(winview)
-	if JavapClassExists(packagetest)
-		return packagetest	" classfqn = packagetest
+	if lnum != 0
+		let packageline=getline(lnum)
+		let packagetest=matchlist(packageline,packageregex)[1].'.'.a:class
+		call winrestview(winview)
+		if JavapClassExists(packagetest)
+			return packagetest	" classfqn = packagetest
+		endif
 	endif
-
 	
 	" Not FQN
 	if !JavapClassExists(a:class) && stridx(a:class,".")==-1
