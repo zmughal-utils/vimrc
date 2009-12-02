@@ -1,6 +1,7 @@
 " GVIM configuration file
 " Author:	Zaki Mughal
 
+set guioptions-=e	" no GUI tabs
 set guioptions-=L
 set guioptions-=c
 set guioptions-=m
