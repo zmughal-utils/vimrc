@@ -228,6 +228,8 @@ nnoremap <silent> <F8>	:TlistToggle<CR>
 " TODO does not work on Debian Linux
 noremap <S-Space>	:update<CR>
 imap <S-Space>	<Esc><S-Space>
+noremap <C-CR>	:update<CR>
+imap <C-CR>	<Esc><C-CR>a
 nnoremap ZA	:update<CR>
 
 " GUI register
