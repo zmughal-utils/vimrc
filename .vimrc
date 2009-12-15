@@ -492,6 +492,8 @@ augroup MyFileType
 	autocmd FileType tex	nnoremap <buffer>	<F6>	:call TeXSmartOpen()<CR>
 	autocmd FileType tex	imap	<buffer>	<F6>	<Esc><F6>
 	autocmd FileType tex	if &makeprg!='make' && executable("pdflatex")|exe "PDFLaTeX"|endif
+	autocmd FileType tex	let b:surround_69 = "\\[\r\\]"
+	autocmd FileType tex	let b:surround_101 = "\\(\r\\)"
 augroup END
 "if has('win32') &&  executable('yap.exe') "{{{
 "	command! -nargs=1 -complete=file Yap	silent !start yap -1 <args>
