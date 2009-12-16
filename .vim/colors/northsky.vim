@@ -2,7 +2,7 @@
 " Maintainer:   Sergey Khorev <sergey.khorev@gmail.com>
 " Last Change: Dec 04 2009
 " URL:	http://sites.google.com/site/khorser/opensource/vim
-" vim: sw=2:sts=2:
+" vim: sw=2:sts=2:ff=unix
 " if your text terminal supports font attributes like bold you might want 
 " to set g:CtermAttrs = 1 for better results
 
@@ -19,11 +19,12 @@ hi Search	guibg=#3D5B8C guifg=yellow gui=bold
 hi IncSearch	guifg=bg guibg=cyan gui=bold
 
 hi Cursor	guibg=#D74141 guifg=#e3e3e3
-hi lCursor	guibg=SeaGreen1 guifg=NONE   "
+hi lCursor	guibg=SeaGreen1 guifg=NONE
 
-hi VertSplit	guibg=#C0FFFF guifg=#075554 gui=none
+hi VertSplit	guibg=#800080 guifg=tan gui=none
+
 hi Folded	guifg=plum1 guibg=#061A3E
-hi FoldColumn	guibg=#800080 guifg=tan
+hi FoldColumn	guibg=#241572 guifg=DimGrey gui=none
 hi ModeMsg	guifg=#404040 guibg=#C0C0C0
 hi MoreMsg	guifg=darkturquoise guibg=#188F90
 hi NonText	guibg=#334C75 guifg=#9FADC5
@@ -33,7 +34,8 @@ hi SpecialKey	guifg=#BF9261
 hi StatusLine	guibg=#067C7B guifg=cyan gui=none
 hi StatusLineNC	guibg=#004443 guifg=DimGrey gui=none
 hi Title	guifg=#8DB8C3
-hi Visual	gui=bold guifg=black guibg=#84AF84
+hi Visual	gui=none guibg=#2b5547
+hi VisualNOS	guibg=#628262 gui=bold
 hi WarningMsg	guifg=#F60000 gui=underline
 
 hi Comment	guifg=DarkGray
@@ -53,24 +55,30 @@ hi WildMenu	guifg=Black guibg=Yellow
 hi ErrorMsg	guifg=White guibg=Red
 hi DiffAdd	guibg=DarkBlue
 hi DiffDelete	gui=bold guifg=Yellow guibg=DarkBlue
-hi DiffChange	guibg=aquamarine4
+hi DiffChange	guibg=#565076
 hi DiffText	gui=bold guibg=firebrick3
 
 hi Directory	guifg=Cyan
 hi LineNr	guifg=DarkGreen
 
-hi VisualNOS	gui=underline,bold
-hi SignColumn   guibg=Grey guifg=Cyan
+hi SignColumn   guibg=gray39 guifg=Cyan
 
-hi PmenuThumb	guibg=black
-hi PmenuSbar	guibg=lightgray
+hi PmenuThumb	guifg=gray20
+hi PmenuSbar	guibg=gray39 
 hi PmenuSel	guifg=lightcyan guibg=blue gui=bold
 hi PMenu	guibg=darkgray guifg=black
 
 hi Error	guifg=White guibg=Red
 hi Underlined	gui=underline guifg=#80a0ff
 
-hi MatchParen   guifg=bg guibg=DarkGray
+hi MatchParen   guifg=bg guibg=#2365B6 gui=none
+
+hi CursorColumn	guibg=#102F54
+hi CursorLine	guibg=#071F49
+
+hi TabLine	guibg=gray20 guifg=white gui=none
+hi TabLineSel	guibg=white guifg=black gui=bold
+hi TabLineFill	guibg=gray20 gui=none
 
 " terminal with bold, italic etc attrs
 if exists('g:CtermAttrs') && g:CtermAttrs
@@ -202,4 +210,5 @@ else " usual terminal
   hi TabLineFill cterm=reverse
 endif
 
+hi User1 guibg=#004443 guifg=black gui=none
 
