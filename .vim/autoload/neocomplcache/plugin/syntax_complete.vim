@@ -1,7 +1,7 @@
 "=============================================================================
 " FILE: syntax_complete.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-" Last Modified: 12 Nov 2009
+" Last Modified: 11 Jun 2010
 " Usage: Just source this file.
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
@@ -23,9 +23,20 @@
 "     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
-" Version: 1.26, for Vim 7.0
+" Version: 1.28, for Vim 7.0
 "-----------------------------------------------------------------------------
 " ChangeLog: "{{{
+"   1.29:
+"    - Improved for same filetype.
+"
+"   1.28:
+"    - Improved caching.
+"    - Use caching helper.
+"    - Improved analyze.
+"
+"   1.27:
+"    - Disabled in vim.
+"
 "   1.26:
 "    - Fixed dup check bug.
 "
@@ -100,13 +111,6 @@
 "   1.00:
 "    - Initial version.
 " }}}
-"-----------------------------------------------------------------------------
-" TODO: "{{{
-"     - Nothing.
-""}}}
-" Bugs"{{{
-"     - Nothing.
-""}}}
 "=============================================================================
 
 function! neocomplcache#plugin#syntax_complete#initialize()"{{{
@@ -118,7 +122,7 @@ function! neocomplcache#plugin#syntax_complete#initialize()"{{{
     autocmd neocomplcache FileType * call s:caching()
 
     " Add command.
-    command! -nargs=? NeoComplCacheCachingSyntax call s:recaching(<q-args>)
+    command! -nargs=? -complete=customlist,neocomplcache#filetype_complete NeoComplCacheCachingSyntax call s:recaching(<q-args>)
 
     " Create cache directory.
     if !isdirectory(g:NeoComplCache_TemporaryDir . '/syntax_cache')
@@ -131,53 +135,57 @@ function! neocomplcache#plugin#syntax_complete#finalize()"{{{
 endfunction"}}}
 
 function! neocomplcache#plugin#syntax_complete#get_keyword_list(cur_keyword_str)"{{{
-    if &filetype == '' || !has_key(s:syntax_list, &filetype)
-        return []
-    endif
+    let l:list = []
+    
+    for l:source in neocomplcache#get_sources_list(s:syntax_list, &filetype)
+        if len(a:cur_keyword_str) < s:completion_length ||
+                    \neocomplcache#check_match_filter(a:cur_keyword_str, s:completion_length)
+            let l:list += neocomplcache#keyword_filter(neocomplcache#unpack_dictionary(l:source), a:cur_keyword_str)
+        else
+            let l:key = tolower(a:cur_keyword_str[: s:completion_length-1])
 
-    let l:key = tolower(a:cur_keyword_str[: s:completion_length-1])
-    if len(a:cur_keyword_str) < s:completion_length || neocomplcache#check_match_filter(l:key)
-        return neocomplcache#keyword_filter(neocomplcache#unpack_list(values(s:syntax_list[&filetype])), a:cur_keyword_str)
-    elseif !has_key(s:syntax_list[&filetype], l:key)
-        return []
-    elseif len(a:cur_keyword_str) == s:completion_length
-        return s:syntax_list[&filetype][l:key]
-    else
-        return neocomplcache#keyword_filter(copy(s:syntax_list[&filetype][l:key]), a:cur_keyword_str)
-    endif
-endfunction"}}}
+            if has_key(l:source, l:key)
+                if len(a:cur_keyword_str) == s:completion_length
+                    let l:list += l:source[l:key]
+                else
+                    let l:list += neocomplcache#keyword_filter(copy(l:source[l:key]), a:cur_keyword_str)
+                endif
+            endif
+        endif
+    endfor
 
-" Dummy function.
-function! neocomplcache#plugin#syntax_complete#calc_rank(cache_keyword_buffer_list)"{{{
-    return
-endfunction"}}}
-function! neocomplcache#plugin#syntax_complete#calc_prev_rank(cache_keyword_buffer_list, prev_word, prepre_word)"{{{
-    return
+    return l:list
 endfunction"}}}
 
 function! s:caching()"{{{
-    " Caching.
-    if &filetype != '' && buflisted(bufnr('%')) && !has_key(s:syntax_list, &filetype)
-        if g:NeoComplCache_CachingPercentInStatusline
-            let l:statusline_save = &l:statusline
-            let &l:statusline = 'Caching syntax "' . &filetype . '"... please wait.'
-            redrawstatus
-
-            let s:syntax_list[&filetype] = s:initialize_syntax()
-
-            let &l:statusline = l:statusline_save
-            redrawstatus
-        else
-            redraw
-            echo 'Caching syntax "' . &filetype . '"... please wait.'
-
-            let s:syntax_list[&filetype] = s:initialize_syntax()
-
-            redraw
-            echo ''
-            redraw
-        endif
+    if &filetype == '' || &filetype == 'vim'
+        return
     endif
+    
+    for l:filetype in keys(neocomplcache#get_source_filetypes(&filetype))
+        if !has_key(s:syntax_list, l:filetype)
+            let l:keyword_lists = neocomplcache#cache#index_load_from_cache('syntax_cache', l:filetype, s:completion_length)
+            if !empty(l:keyword_lists)
+                " Caching from cache.
+                let s:syntax_list[l:filetype] = l:keyword_lists
+            elseif l:filetype == &filetype
+                if g:NeoComplCache_CachingPercentInStatusline
+                    let l:statusline_save = &l:statusline
+                endif
+                
+                call neocomplcache#print_caching('Caching syntax "' . l:filetype . '"... please wait.')
+                
+                " Caching from syn list.
+                let s:syntax_list[l:filetype] = s:caching_from_syn()
+                
+                call neocomplcache#print_caching('Caching done.')
+
+                if g:NeoComplCache_CachingPercentInStatusline
+                    let &l:statusline = l:statusline_save
+                endif
+            endif
+        endif
+    endfor
 endfunction"}}}
 
 function! s:recaching(filetype)"{{{
@@ -188,23 +196,18 @@ function! s:recaching(filetype)"{{{
     endif
 
     " Caching.
-    if l:filetype != ''
-        redraw
-        echo 'Caching syntax... please wait.'
-        let s:syntax_list[l:filetype] = s:caching_from_syn()
-        redraw
-        echo 'Caching done.'
-    endif
-endfunction"}}}
-
-function! s:initialize_syntax()"{{{
-    let l:keyword_lists = s:caching_from_cache()
-    if !empty(l:keyword_lists)
-        " Caching from cache.
-        return l:keyword_lists
+    if g:NeoComplCache_CachingPercentInStatusline
+        let l:statusline_save = &l:statusline
     endif
 
-    return s:caching_from_syn()
+    call neocomplcache#print_caching('Caching syntax "' . l:filetype . '"... please wait.')
+    let s:syntax_list[l:filetype] = s:caching_from_syn()
+    
+    call neocomplcache#print_caching('Caching done.')
+
+    if g:NeoComplCache_CachingPercentInStatusline
+        let &l:statusline = l:statusline_save
+    endif
 endfunction"}}}
 
 function! s:caching_from_syn()"{{{
@@ -219,11 +222,8 @@ function! s:caching_from_syn()"{{{
 
     let l:group_name = ''
     let l:abbr_pattern = printf('%%.%ds..%%s', g:NeoComplCache_MaxKeywordWidth-10)
-    if has_key(g:NeoComplCache_KeywordPatterns, &filetype)
-        let l:keyword_pattern = g:NeoComplCache_KeywordPatterns[&filetype]
-    else
-        let l:keyword_pattern = g:NeoComplCache_KeywordPatterns['default']
-    endif
+    let l:keyword_pattern = neocomplcache#get_keyword_pattern()
+    
     let l:dup_check = {}
     let l:menu = '[S] '
 
@@ -246,7 +246,6 @@ function! s:caching_from_syn()"{{{
 
         if l:line =~ '^\s*match'
             let l:line = s:substitute_candidate(matchstr(l:line, '/\zs[^/]\+\ze/'))
-            "echomsg l:line
         elseif l:line =~ '^\s*start='
             let l:line = 
                         \s:substitute_candidate(matchstr(l:line, 'start=/\zs[^/]\+\ze/')) . ' ' .
@@ -255,19 +254,13 @@ function! s:caching_from_syn()"{{{
 
         " Add keywords.
         let l:match_num = 0
-        let l:line_max = len(l:line) - g:NeoComplCache_MinSyntaxLength
-        while 1
-            let l:match_str = matchstr(l:line, l:keyword_pattern, l:match_num)
-            if l:match_str == ''
-                break
-            endif
-
+        let l:match_str = matchstr(l:line, l:keyword_pattern, l:match_num)
+        while l:match_str != ''
             " Ignore too short keyword.
             if len(l:match_str) >= g:NeoComplCache_MinSyntaxLength && !has_key(l:dup_check, l:match_str)
                         \&& l:match_str =~ '^[[:print:]]\+$'
                 let l:keyword = {
-                            \ 'word' : l:match_str, 'menu' : l:menu, 'icase' : 1,
-                            \ 'rank' : 1, 'prev_rank' : 0, 'prepre_rank' : 0
+                            \ 'word' : l:match_str, 'menu' : l:menu, 'icase' : 1
                             \}
                 let l:keyword.abbr = 
                             \ (len(l:match_str) > g:NeoComplCache_MaxKeywordWidth)? 
@@ -281,53 +274,15 @@ function! s:caching_from_syn()"{{{
 
                 let l:dup_check[l:match_str] = 1
             endif
-
+            
             let l:match_num += len(l:match_str)
-            if l:match_num > l:line_max
-                break
-            endif
+            
+            let l:match_str = matchstr(l:line, l:keyword_pattern, l:match_num)
         endwhile
     endfor
 
     " Save syntax cache.
-    let l:save_list = []
-    for keyword_list in values(l:keyword_lists)
-        for keyword in keyword_list
-            call add(l:save_list, keyword.word .','. keyword.menu)
-        endfor
-    endfor
-    let l:cache_name = printf('%s/syntax_cache/%s=', g:NeoComplCache_TemporaryDir, &filetype)
-    call writefile(l:save_list, l:cache_name)
-
-    return l:keyword_lists
-endfunction"}}}
-
-function! s:caching_from_cache()"{{{
-    let l:cache_name = printf('%s/syntax_cache/%s=', g:NeoComplCache_TemporaryDir, &filetype)
-    let l:syntax_files = split(globpath(&runtimepath, 'syntax/'.&filetype.'.vim'), '\n')
-    if getftime(l:cache_name) == -1 || (!empty(l:syntax_files) && getftime(l:cache_name) <= getftime(l:syntax_files[-1]))
-        return []
-    endif
-
-    let l:syntax_lines = readfile(l:cache_name)
-    let l:abbr_pattern = printf('%%.%ds..%%s', g:NeoComplCache_MaxKeywordWidth-10)
-    let l:keyword_lists = {}
-    for syntax in l:syntax_lines
-        let l:splited = split(syntax, ',')
-        let l:keyword =  {
-                    \ 'word' : l:splited[0], 'menu' : l:splited[1], 'icase' : 1,
-                    \ 'rank' : 1, 'prev_rank' : 0, 'prepre_rank' : 0
-                    \}
-        let l:keyword.abbr = 
-                    \ (len(l:splited[0]) > g:NeoComplCache_MaxKeywordWidth)? 
-                    \ printf(l:abbr_pattern, l:splited[0], l:splited[0][-8:]) : l:splited[0]
-
-        let l:key = tolower(l:keyword.word[: s:completion_length-1])
-        if !has_key(l:keyword_lists, l:key)
-            let l:keyword_lists[l:key] = []
-        endif
-        call add(l:keyword_lists[l:key], l:keyword)
-    endfor
+    call neocomplcache#cache#save_cache('syntax_cache', &filetype, neocomplcache#unpack_dictionary(l:keyword_lists))
 
     return l:keyword_lists
 endfunction"}}}
@@ -342,26 +297,116 @@ function! s:substitute_candidate(candidate)"{{{
 
     " Collection.
     let l:candidate = substitute(l:candidate,
-                \'\%(\\\\\|[^\\]\)\zs\[.*\]', ' ', 'g')
-    if l:candidate =~ '\\v'
-        " Delete.
-        let l:candidate = substitute(l:candidate,
-                    \'\%(\\\\\|[^\\]\)\zs\%([=?+*]\|%[\|\\s\*\)', '', 'g')
-        " Space.
-        let l:candidate = substitute(l:candidate,
-                    \'\%(\\\\\|[^\\]\)\zs\%([<>{()|$^]\|\\z\?\a\)', ' ', 'g')
-    else
-        " Delete.
-        let l:candidate = substitute(l:candidate,
-                    \'\%(\\\\\|[^\\]\)\zs\%(\\[=?+]\|\\%[\|\\s\*\|\*\)', '', 'g')
-        " Space.
-        let l:candidate = substitute(l:candidate,
-                    \'\%(\\\\\|[^\\]\)\zs\%(\\[<>{()|]\|[$^]\|\\z\?\a\)', ' ', 'g')
-    endif
+                \'\\\@<!\[[^\]]*\]', ' ', 'g')
+    
+    " Delete.
+    let l:candidate = substitute(l:candidate,
+                \'\\\@<!\%(\\[=?+]\|\\%[\|\\s\*\)', '', 'g')
+    " Space.
+    let l:candidate = substitute(l:candidate,
+                \'\\\@<!\%(\\[<>{}]\|[$^]\|\\z\?\a\)', ' ', 'g')
 
+    if l:candidate =~ '\\%\?('
+        let l:candidate = join(s:split_pattern(l:candidate))
+    endif
+    
     " \
     let l:candidate = substitute(l:candidate, '\\\\', '\\', 'g')
+    " *
+    let l:candidate = substitute(l:candidate, '\\\*', '*', 'g')
     return l:candidate
+endfunction"}}}
+
+function! s:split_pattern(keyword_pattern)"{{{
+    let l:original_pattern = a:keyword_pattern
+    let l:result_patterns = []
+    let l:analyzing_patterns = [ '' ]
+
+    let l:i = 0
+    let l:max = len(l:original_pattern)
+    while l:i < l:max
+        if match(l:original_pattern, '^\\%\?(', l:i) >= 0
+            " Grouping.
+            let l:end = s:match_pair(l:original_pattern, '\\%\?(', '\\)', l:i)
+            if l:end < 0
+                "call neocomplcache#print_error('Unmatched (.')
+                return [ a:keyword_pattern ]
+            endif
+            
+            let l:save_pattern = l:analyzing_patterns
+            let l:analyzing_patterns = []
+            for l:keyword in split(l:original_pattern[matchend(l:original_pattern, '^\\%\?(', l:i) : l:end], '\\|')
+                for l:prefix in l:save_pattern
+                    call add(l:analyzing_patterns, l:prefix . l:keyword)
+                endfor
+            endfor
+
+            let l:i = l:end + 1
+        elseif match(l:original_pattern, '^\\|', l:i) >= 0
+            " Select.
+            let l:result_patterns += l:analyzing_patterns
+            let l:analyzing_patterns = [ '' ]
+            let l:original_pattern = l:original_pattern[l:i+2 :]
+            let l:max = len(l:original_pattern)
+
+            let l:i = 0
+        elseif l:original_pattern[l:i] == '\' && l:i+1 < l:max
+            let l:save_pattern = l:analyzing_patterns
+            let l:analyzing_patterns = []
+            for l:prefix in l:save_pattern
+                call add(l:analyzing_patterns, l:prefix . l:original_pattern[l:i] . l:original_pattern[l:i+1])
+            endfor
+            
+            " Escape.
+            let l:i += 2
+        else
+            let l:save_pattern = l:analyzing_patterns
+            let l:analyzing_patterns = []
+            for l:prefix in l:save_pattern
+                call add(l:analyzing_patterns, l:prefix . l:original_pattern[l:i])
+            endfor
+            
+            let l:i += 1
+        endif
+    endwhile
+
+    let l:result_patterns += l:analyzing_patterns
+    return l:result_patterns
+endfunction"}}}
+
+function! s:match_pair(string, start_pattern, end_pattern, start_cnt)"{{{
+    let l:end = -1
+    let l:start_pattern = '\%(' . a:start_pattern . '\)'
+    let l:end_pattern = '\%(' . a:end_pattern . '\)'
+
+    let l:i = a:start_cnt
+    let l:max = len(a:string)
+    let l:nest_level = 0
+    while l:i < l:max
+        let l:start = match(a:string, l:start_pattern, l:i)
+        let l:end = match(a:string, l:end_pattern, l:i)
+
+        if l:start >= 0 && (l:end < 0 || l:start < l:end)
+            let l:i = matchend(a:string, l:start_pattern, l:i)
+            let l:nest_level += 1
+        elseif l:end >= 0 && (l:start < 0 || l:end < l:start)
+            let l:nest_level -= 1
+
+            if l:nest_level == 0
+                return l:end
+            endif
+
+            let l:i = matchend(a:string, l:end_pattern, l:i)
+        else
+            break
+        endif
+    endwhile
+
+    if l:nest_level != 0
+        return -1
+    else
+        return l:end
+    endif
 endfunction"}}}
 
 " Global options definition."{{{
