@@ -306,6 +306,8 @@ augroup MyAutocmds "{{{
 
 	autocmd FileType URL		URLHighlight
 	autocmd FileType txt		URLHighlight
+	autocmd FileType txt		UniCycleOn
+	autocmd FileType txt		let b:match_words = '<:>,“:”'
 
 	autocmd BufRead idea		set fdm=marker
 	function! IdeaFoldtext()
