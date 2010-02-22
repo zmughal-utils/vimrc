@@ -804,6 +804,7 @@ augroup ColorAdjust
 augroup END
 
 command! -nargs=0 Term256colors		if expand("$TERM")=~#'xterm'|set t_Co=256|endif
+command! -nargs=0 TermXTerm		let $TERM='xterm'
 "}}}
 "**********************************************************************************"
 " Commands {{{
