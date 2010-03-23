@@ -490,6 +490,7 @@ nmap <silent> \jd :call Javadoc(expand("<cword>"))<CR>
 " TeX {{{
 command! -nargs=0 PDFTeX	let &l:makeprg= 'pdftex -interaction=nonstopmode'
 command! -nargs=0 PDFLaTeX	let &l:makeprg= 'pdflatex -interaction=nonstopmode'
+command! -nargs=0 LaTeX		let &l:makeprg= 'latex -interaction=nonstopmode'
 augroup MyFileType
 	autocmd FileType tex	nnoremap <buffer>	<F6>	:call TeXSmartOpen()<CR>
 	autocmd FileType tex	imap	<buffer>	<F6>	<Esc><F6>
@@ -769,14 +770,14 @@ endfunction
 "}}}
 "**********************************************************************************"
 " Backgrounds {{{
-command! -nargs=0 Peachpuff	highlight Normal guifg=Black guibg=PeachPuff | call LightColors()
-command! -nargs=0 AliceBlue	highlight Normal guifg=Black guibg=AliceBlue | call LightColors()
-command! -nargs=0 AntiqueWhite	highlight Normal guifg=Black guibg=AntiqueWhite | call LightColors()
-command! -nargs=0 Khaki		highlight Normal guifg=Black guibg=khaki1 | call LightColors()
-command! -nargs=0 LightPurple	highlight Normal guifg=Black guibg=#EEEEFF | call LightColors()
-command! -nargs=0 Grey50	highlight Normal guibg=Grey50
-command! -nargs=0 LightYellow	highlight Normal guifg=Black guibg=#FFFFDA | call LightColors()
-command! -nargs=0 RedText	highlight Normal guifg=#A67A7A
+command! -nargs=0 -bar Peachpuff	highlight Normal guifg=Black guibg=PeachPuff | call LightColors()
+command! -nargs=0 -bar AliceBlue	highlight Normal guifg=Black guibg=AliceBlue | call LightColors()
+command! -nargs=0 -bar AntiqueWhite	highlight Normal guifg=Black guibg=AntiqueWhite | call LightColors()
+command! -nargs=0 -bar Khaki		highlight Normal guifg=Black guibg=khaki1 | call LightColors()
+command! -nargs=0 -bar LightPurple	highlight Normal guifg=Black guibg=#EEEEFF | call LightColors()
+command! -nargs=0 -bar Grey50	highlight Normal guibg=Grey50
+command! -nargs=0 -bar LightYellow	highlight Normal guifg=Black guibg=#FFFFDA | call LightColors()
+command! -nargs=0 -bar RedText	highlight Normal guifg=#A67A7A
 function! LightColors()
 	highlight CursorLine guibg=grey
 	highlight CursorColumn guibg=grey75
@@ -803,13 +804,13 @@ augroup ColorAdjust
 	autocmd ColorScheme * endif
 augroup END
 
-command! -nargs=0 Term256colors		if expand("$TERM")=~#'xterm'|set t_Co=256|endif
-command! -nargs=0 TermXTerm		let $TERM='xterm'
+command! -nargs=0 -bar Term256colors		if expand("$TERM")=~#'xterm'|set t_Co=256|endif
+command! -nargs=0 -bar TermXTerm		let $TERM='xterm'
 "}}}
 "**********************************************************************************"
 " Commands {{{
-command! -nargs=0 URLHighlight	runtime syntax/URL.vim
-command! -nargs=0 MakeprgReset	set makeprg&
+command! -nargs=0 -bar URLHighlight	runtime syntax/URL.vim
+command! -nargs=0 -bar MakeprgReset	set makeprg&
 "if has("unix")
 "        command! -nargs=0 CNERDTree		exe "NERDTree ".escape(getcwd(),' \\')
 "        command! -nargs=0 CNERDTreeToggle	exe "NERDTreeToggle ".escape(getcwd(),' \\')
@@ -864,7 +865,7 @@ endfunction
 " in and out and the previous window is not maintained
 "
 let g:prevword=0
-command! -nargs=0 AutoPrevWordToggle	let g:prevword=!g:prevword
+command! -nargs=0 -bar AutoPrevWordToggle	let g:prevword=!g:prevword
 " actually a bit annoying
 " using it with CursorMoved is slow
 " from CursorHold-example
@@ -937,7 +938,7 @@ endif
 "}}}
 "**********************************************************************************"
 " Stuff {{{
-command! -nargs=0 BoxesList	if bufexists('Boxes list') |
+command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
 			\ let delnr=bufnr('Boxes list') |
 			\ exe delnr."bd" |
 			\ endif |
@@ -1000,7 +1001,7 @@ function! EnvSideBars()
 endfunction
 nnoremap <Leader>sb	:call EnvSideBarsToggle()<CR>
 
-command! -nargs=0 SetUpEnv	call SetUpEnv()
+command! -nargs=0 -bar SetUpEnv	call SetUpEnv()
 
 command! -nargs=0 PrintSize	set co? lines?
 command! -nargs=0 UpdateTime	set updatetime& updatetime?
@@ -1021,7 +1022,7 @@ nnoremap \rc :w !recode ..dump<CR>
 vnoremap \u :w !urlview<CR>
 nnoremap \u :w !urlview<CR>
 
-command! -nargs=0 CurlyBraceFold	syntax region Curly start="{" end="}" transparent fold|set fdm=syntax
+command! -nargs=0 -bar CurlyBraceFold	syntax region Curly start="{" end="}" transparent fold|set fdm=syntax
 
 " TODO make this better
 function! BC(list)
