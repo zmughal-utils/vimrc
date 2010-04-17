@@ -1090,6 +1090,7 @@ au VimEnter *		cunmap <CR>
 digraph !? 8253	" Interrobang
 digraph ?! 8253
 digraph .3 8230 " Ellipsis
+digraph ~= 8773 " Approximately equal to
 
 "nnoremap <Leader>rf	:FuzzyFinderMruFile<CR>
 " For v. 3.0
