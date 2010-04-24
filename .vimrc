@@ -949,6 +949,7 @@ command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
 			\ setl buftype=nofile noma nomod
 
 nmap <Leader>gu	:Utl<CR>
+vmap <Leader>gu	:Utl o v<CR>
 
 
 function! ReverseLines(line1,line2)
