@@ -304,10 +304,8 @@ augroup MyAutocmds "{{{
 	autocmd BufRead b		call URL_ft()
 	autocmd BufRead file.txt.look	call URL_ft()
 
-	autocmd BufRead *		silent! UniCycleOff
 	autocmd FileType URL		URLHighlight
 	autocmd FileType txt		URLHighlight
-	autocmd FileType txt		UniCycleOn
 	autocmd FileType txt		let b:match_words = '<:>,“:”'
 
 	autocmd BufRead idea		set fdm=marker
