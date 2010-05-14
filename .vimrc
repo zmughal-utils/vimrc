@@ -643,7 +643,7 @@ endif
 if has("unix")
 	command! -nargs=0 Shell		silent execute "!xterm&"| redraw!
 	command! -nargs=0 Clear		silent execute "!clear"|redraw!
-	let g:utl_cfg_hdl_scm_http="!firefox %u &"
+	let g:utl_cfg_hdl_scm_http="silent !firefox %u &"
 endif
 
 nnoremap <Leader>sh	<Esc>:Shell<CR>
