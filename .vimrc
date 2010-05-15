@@ -950,6 +950,7 @@ command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
 nmap <Leader>gu	:Utl<CR>
 vmap <Leader>gu	:Utl o v<CR>
 
+command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 
 function! ReverseLines(line1,line2)
 	let oldp=@/
