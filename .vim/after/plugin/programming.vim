@@ -17,7 +17,7 @@ function SmartMakeCall()
 	if &makeprg=~'^.\?make' || &makeprg=~'.*%.*'
 		exe 'make'
 	else
-		exe 'make '.expand('%')
+		exe 'make '.fnameescape(expand('%'))
 	endif
 endfunction
 nmap <F5> :call SmartMakeCall()<CR>
