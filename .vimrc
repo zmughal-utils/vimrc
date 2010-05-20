@@ -395,6 +395,8 @@ augroup MyFileType " {{{
 	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
 	autocmd FileType c	call PreviewMaps()
 
+	autocmd FileType cpp	set makeprg=g++\ -o\ %:r\ %\ -Wall
+
 	autocmd FileType sh	nnoremap <buffer> <F6>	:call SheBangRun()<CR>
 
 	autocmd FileType remind setlocal isfname+=],[,(,),34
@@ -949,6 +951,8 @@ command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
 
 nmap <Leader>gu	:Utl<CR>
 vmap <Leader>gu	:Utl o v<CR>
+nmap <Leader>gU	:split<bar>Utl<CR>
+vmap <Leader>gU	:split<bar>Utl o v<CR>
 
 command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 
