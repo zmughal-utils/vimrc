@@ -395,7 +395,11 @@ augroup MyFileType " {{{
 	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
 	autocmd FileType c	call PreviewMaps()
 
-	autocmd FileType cpp	set makeprg=g++\ -o\ %:r\ %\ -Wall
+	autocmd FileType cpp	if !filereadable('Makefile')
+	autocmd FileType cpp		if has("win32") | let exeext=".exe" | endif
+	autocmd FileType cpp		exe 'setlocal makeprg=g++\ -o\ %:r'.exeext.'\ %\ -Wall'
+	autocmd FileType cpp	endif
+
 
 	autocmd FileType sh	nnoremap <buffer> <F6>	:call SheBangRun()<CR>
 
