@@ -400,6 +400,8 @@ augroup MyFileType " {{{
 	autocmd FileType cpp		exe 'setlocal makeprg=g++\ -o\ %:r'.exeext.'\ %\ -Wall'
 	autocmd FileType cpp	endif
 
+	autocmd FileType html	vmap <buffer> ,del s<del datetime="<C-R>=strftime('%Y-%m-%dT%H:%M:%S%z')<CR>"<CR>
+	autocmd FileType html	vmap <buffer> ,ins s<ins datetime="<C-R>=strftime('%Y-%m-%dT%H:%M:%S%z')<CR>"<CR>
 
 	autocmd FileType sh	nnoremap <buffer> <F6>	:call SheBangRun()<CR>
 
