@@ -395,6 +395,8 @@ augroup MyFileType " {{{
 	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
 	autocmd FileType c	call PreviewMaps()
 
+	autocmd FileType c,cpp,java	let b:surround_indent=1
+
 	autocmd FileType cpp	if !filereadable('Makefile')
 	autocmd FileType cpp	if has("win32") | let exeext=".exe" | else | let exeext="" | endif
 	autocmd FileType cpp		exe 'setlocal makeprg=g++\ -o\ %:r'.exeext.'\ %\ -Wall'
