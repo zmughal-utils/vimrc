@@ -203,6 +203,8 @@ IHT	alternate.txt	/*IHT*
 IHV	alternate.txt	/*IHV*
 IMDY	visincr.txt	/*IMDY*
 IYMD	visincr.txt	/*IYMD*
+LargeFile-copyright	LargeFile.txt	/*LargeFile-copyright*
+LargeFile.txt	LargeFile.txt	/*LargeFile.txt*
 MatchError	matchit.txt	/*MatchError*
 NERDComAlignedComment	NERD_commenter.txt	/*NERDComAlignedComment*
 NERDComAltDelim	NERD_commenter.txt	/*NERDComAltDelim*
@@ -862,6 +864,8 @@ javacomplete-thanks	javacomplete.txt	/*javacomplete-thanks*
 javacomplete-todo	javacomplete.txt	/*javacomplete-todo*
 javacomplete-usage	javacomplete.txt	/*javacomplete-usage*
 javacomplete.txt	javacomplete.txt	/*javacomplete.txt*
+largefile	LargeFile.txt	/*largefile*
+largefile-history	LargeFile.txt	/*largefile-history*
 manpage-pagedown	manpageview.txt	/*manpage-pagedown*
 manpage-pageup	manpageview.txt	/*manpage-pageup*
 manpageview	manpageview.txt	/*manpageview*
