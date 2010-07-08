@@ -414,8 +414,10 @@ augroup MyFileType " {{{
 
 	autocmd FileType mail	setlocal spell
 augroup END "}}}
-let g:alternateExtensionsDict['CXX'] .= ",HXX,hxx"
-let g:alternateExtensionsDict['cxx'] .= ",hxx,HXX"
+let g:alternateExtensions_CXX = "HXX,hxx"
+let g:alternateExtensions_HXX = "CXX,cxx"
+let g:alternateExtensions_cxx = "hxx,HXX"
+let g:alternateExtensions_hxx = "cxx,CXX"
 "}}}
 "**********************************************************************************"
 " Java {{{
