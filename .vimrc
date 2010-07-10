@@ -395,6 +395,11 @@ augroup MyFileType " {{{
 	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
 	autocmd FileType c	call PreviewMaps()
 
+	" C++
+	autocmd FileType cpp	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
+	autocmd FileType cpp	compiler gcc
+	autocmd FileType cpp	call PreviewMaps()
+
 	autocmd FileType c,cpp,java	let b:surround_indent=1
 
 	autocmd FileType cpp	if !filereadable('Makefile')
@@ -692,6 +697,7 @@ let g:alt_ft_css='CSS'
 let g:alt_ft_tex='TeX'
 let g:alt_ft_make='Makefile'
 let g:alt_ft_man='Man page'
+let g:alt_ft_cpp='C++'
 set statusline=%<%f\ %{SLFiletype()}%h%{'['.&ff.']'}%{SLModified()}%r%=%-14.(%l,%c%V%)\ %P
 function! SLFiletype()
 	if strlen(&ft)>0 &&  &ft !=# 'help'
