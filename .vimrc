@@ -392,11 +392,11 @@ augroup MyFileType " {{{
 	if has("win32") || has("dos32") || has("dos16")
 		autocmd FileType dosbatch	setlocal keywordprg=help
 	endif
-	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
+	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
 	autocmd FileType c	call PreviewMaps()
 
 	" C++
-	autocmd FileType cpp	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
+	autocmd FileType cpp	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
 	autocmd FileType cpp	compiler gcc
 	autocmd FileType cpp	call PreviewMaps()
 
