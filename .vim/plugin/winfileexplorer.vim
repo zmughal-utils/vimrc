@@ -124,6 +124,11 @@ if !exists("g:defaultExplorer")
 	let g:defaultExplorer = 1
 end
 
+" whether or not to show hidden files in the file-explorer plugin.
+if !exists("g:explShowHiddenFiles")
+	let g:explShowHiddenFiles = 0
+end
+
 if !exists('g:favDirs')
 	if exists('$HOME')
 		let s:favDirs = expand('$HOME').'/'
@@ -437,6 +442,7 @@ function! s:EditDir(...)
 	nnoremap <buffer> R   :call <SID>RenameFile()<cr>
 	nnoremap <buffer> c   :exec "cd ".b:completePathEsc<cr>:pwd<cr>
 	nnoremap <buffer> S   :call <SID>ShellExecute()<cr>
+	nnoremap <buffer> x   :call <SID>ToggleShowHiddenFiles()<cr>
 	let &cpo = cpo_save
 
 	" If directory is already loaded, don't open it again!
@@ -777,10 +783,17 @@ function! s:ShowDirectory()
 		let files = files . "\n"
 	endif
 
-	" Add the dot files now, making sure "." is not included!
-	let files = files . substitute(s:Path(glob(b:completePath.".*")), "[^\n]*/./\\=\n", '' , '')
-	if files != "" && files !~ '\n$'
-		let files = files . "\n"
+	if g:explShowHiddenFiles
+		" Add the dot files now, making sure "." and ".." are not included!
+		let files = files . substitute(s:Path(glob(b:completePath.".*"))."\n", "[^\n]*/..\\=/\\=\n", '' , 'g')
+		if files != "" && files !~ '\n$'
+			let files = files . "\n"
+		endif
+	endif
+
+	" Append ".." is not at the root directory.
+	if b:completePath != "/"
+		let files = files . "..\n"
 	endif
 
 	" Are there any files left after filtering?
@@ -947,6 +960,7 @@ function! s:AddHeader()
 			\."\" O : open file in previously visited window\n"
 			\."\" p : preview the file\n"
 			\."\" i : toggle size/date listing\n"
+			\."\" x : toggle show hidden files/directories\n"
 			\."\" s : select sort field    r : reverse sort\n"
 			\."\" - : go up one level      c : cd to this dir\n"
 			\."\" R : rename file          D : delete file\n"
@@ -1513,6 +1527,12 @@ end
 function! <SID>CleanUpHistory()
   call histdel("/", -1)
   let @/ = histget("/", -1)
+endfunction
+
+function! <SID>ToggleShowHiddenFiles()
+  let g:explShowHiddenFiles = !g:explShowHiddenFiles
+  call <SID>EditDir(b:completePath,1)
+  call <SID>RestoreFileDisplay()
 endfunction
 
 " restore 'cpo'
