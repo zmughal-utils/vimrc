@@ -41,6 +41,9 @@ if isdirectory(expand("~/.vimlocal"))
 	let &rtp=substitute(&rtp,",",",".expand("~/.vimlocal").",","")
 endif
 
+" Disable syntastic for now
+let g:loaded_syntastic_plugin = 1
+
 " No LaTeX-Suite under Debian {{{
 set runtimepath-=/var/lib/vim/addons
 set runtimepath-=/usr/share/vim/addons
@@ -967,10 +970,10 @@ command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
 			\ file Boxes\ list |
 			\ setl buftype=nofile noma nomod
 
-nmap <Leader>gu	:Utl<CR>
-vmap <Leader>gu	:Utl o v<CR>
-nmap <Leader>gU	:split<bar>Utl<CR>
-vmap <Leader>gU	:split<bar>Utl o v<CR>
+nmap <Leader>gu	:Utl<CR>zv
+vmap <Leader>gu	:Utl o v<CR>zv
+nmap <Leader>gU	:split<bar>Utl<CR>zv
+vmap <Leader>gU	:split<bar>Utl o v<CR>zv
 
 command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 
