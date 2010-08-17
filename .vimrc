@@ -665,7 +665,12 @@ endif
 if has("unix")
 	command! -nargs=0 Shell		silent execute "!xterm&"| redraw!
 	command! -nargs=0 Clear		silent execute "!clear"|redraw!
-	let g:utl_cfg_hdl_scm_http="silent !firefox '%u' &"
+	if exists("$DISPLAY")
+		let g:utl_cfg_hdl_scm_http="silent !firefox '%u' &"
+	else
+		let g:utl_cfg_hdl_scm_http="silent !lynx '%u'"
+	endif
+	let g:utl_cfg_hdl_mt_generic = "silent !see '%p'"
 endif
 
 nnoremap <Leader>sh	<Esc>:Shell<CR>
