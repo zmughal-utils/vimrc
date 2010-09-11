@@ -1119,7 +1119,7 @@ call programming#QuickFixMaps(0)
 "
 
 " IndexedSearch.vim breaks things
-au VimEnter *		cunmap <CR>
+au VimEnter *		silent! cunmap <CR>
 
 digraph !? 8253	" Interrobang
 digraph ?! 8253
@@ -1155,9 +1155,9 @@ let g:CSApprox_verbose_level=0
 " A.vim things {{{
 augroup MyAutocmds
 	autocmd VimEnter * "if hasmapto("<Leader>ih","i")
-	autocmd VimEnter * 	iunmap <Leader>ih
-	autocmd VimEnter * 	iunmap <Leader>is
-	autocmd VimEnter * 	iunmap <Leader>ihn
+	autocmd VimEnter * 	silent! iunmap <Leader>ih
+	autocmd VimEnter * 	silent! iunmap <Leader>is
+	autocmd VimEnter * 	silent! iunmap <Leader>ihn
 	autocmd VimEnter * "endif
 augroup END
 "}}}
