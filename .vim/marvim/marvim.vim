@@ -227,6 +227,7 @@ if exists('marvim_store')
         let s:macro_home = g:marvim_store
     endif
 endif
+let s:macro_home = expand(s:macro_home)
 
 " create the repository directory if it does not exist
 if !isdirectory(s:macro_home)
@@ -278,7 +279,7 @@ function! Marvim_completion(ArgLead, CmdLine, CursorPos)
         let l:item_count = l:item_count + 1
 
         " get the filename
-        let l:file_split = strpart(l:item, strlen(expand(s:macro_home)))
+        let l:file_split = strpart(l:item, strlen(s:macro_home))
         let l:filename = tr(l:file_split, s:path_seperator, ":")
 
         " remove trailing extension TODO: can break on multiple .
