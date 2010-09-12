@@ -188,6 +188,7 @@
 <Plug>(neocomplcache_snippets_expand)	neocomplcache.txt	/*<Plug>(neocomplcache_snippets_expand)*
 <Plug>(neocomplcache_snippets_jump)	neocomplcache.txt	/*<Plug>(neocomplcache_snippets_jump)*
 AN	alternate.txt	/*AN*
+ANmenu	AsNeeded.txt	/*ANmenu*
 AS	alternate.txt	/*AS*
 AT	alternate.txt	/*AT*
 AV	alternate.txt	/*AV*
@@ -205,7 +206,9 @@ IMDY	visincr.txt	/*IMDY*
 IYMD	visincr.txt	/*IYMD*
 LargeFile-copyright	LargeFile.txt	/*LargeFile-copyright*
 LargeFile.txt	LargeFile.txt	/*LargeFile.txt*
+MakeANtags	AsNeeded.txt	/*MakeANtags*
 MatchError	matchit.txt	/*MatchError*
+MkAsNeeded	AsNeeded.txt	/*MkAsNeeded*
 NERDComAlignedComment	NERD_commenter.txt	/*NERDComAlignedComment*
 NERDComAltDelim	NERD_commenter.txt	/*NERDComAltDelim*
 NERDComAppendComment	NERD_commenter.txt	/*NERDComAppendComment*
@@ -478,6 +481,12 @@ alternate-support	alternate.txt	/*alternate-support*
 alternate.txt	alternate.txt	/*alternate.txt*
 anokha-options	mimicpak.txt	/*anokha-options*
 anokha.vim	mimicpak.txt	/*anokha.vim*
+asneeded	AsNeeded.txt	/*asneeded*
+asneeded-contents	AsNeeded.txt	/*asneeded-contents*
+asneeded-copyright	AsNeeded.txt	/*asneeded-copyright*
+asneeded-history	AsNeeded.txt	/*asneeded-history*
+asneeded-var	AsNeeded.txt	/*asneeded-var*
+asneeded.txt	AsNeeded.txt	/*asneeded.txt*
 astroboy-options	mimicpak.txt	/*astroboy-options*
 astroboy-variants	mimicpak.txt	/*astroboy-variants*
 astroboy.vim	mimicpak.txt	/*astroboy.vim*
@@ -674,6 +683,8 @@ fuf-vimrc-example	fuf.txt	/*fuf-vimrc-example*
 fuf.txt	fuf.txt	/*fuf.txt*
 fuzzyfinder	fuf.txt	/*fuzzyfinder*
 g%	matchit.txt	/*g%*
+g:AsNeededAutoMake	AsNeeded.txt	/*g:AsNeededAutoMake*
+g:AsNeededSuccess	AsNeeded.txt	/*g:AsNeededSuccess*
 g:CSApprox_approximator_function	CSApprox.txt	/*g:CSApprox_approximator_function*
 g:CSApprox_attr_map	CSApprox.txt	/*g:CSApprox_attr_map*
 g:CSApprox_eterm	CSApprox.txt	/*g:CSApprox_eterm*
