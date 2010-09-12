@@ -72,6 +72,7 @@ if has("win32")
 		let g:vim_script_path=expand("$HOME")	" Enviroment variable is set by z.bat
 	endif
 	set spellfile+=$HOME\vim\vimfiles\spell\en.ascii.add
+	let marvim_store = '$HOME\vim\vimfiles\marvim'
 	if executable('grep')||executable('grep.exe')
 		set grepprg=grep\ -Hn
 	endif
@@ -130,6 +131,7 @@ if has("unix")
 	"}}}
 
 	set spellfile+=~/.vim/spell/en.ascii.add
+	let marvim_store = '~/.vim/marvim'
 
 	if !exists("$DISPLAY") || !executable("~/scripts/fork_see.sh")
 		let g:netrw_browsex_viewer="see"
