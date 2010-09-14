@@ -1200,6 +1200,7 @@ utl-writeUrls	utl_usr.txt	/*utl-writeUrls*
 utl_chgcfgscm	utl_usr.txt	/*utl_chgcfgscm*
 utl_usr.txt	utl_usr.txt	/*utl_usr.txt*
 vS	surround.txt	/*vS*
+v_:B	vis.txt	/*v_:B*
 v_[%	matchit.txt	/*v_[%*
 v_]%	matchit.txt	/*v_]%*
 v_a%	matchit.txt	/*v_a%*
@@ -1231,6 +1232,18 @@ vgS	surround.txt	/*vgS*
 vim_complete	neocomplcache.txt	/*vim_complete*
 vimhut.vim	mimicpak.txt	/*vimhut.vim*
 vimoutliner	vo_readme.txt	/*vimoutliner*
+vis	vis.txt	/*vis*
+vis-S	vis.txt	/*vis-S*
+vis-contents	vis.txt	/*vis-contents*
+vis-copyright	vis.txt	/*vis-copyright*
+vis-history	vis.txt	/*vis-history*
+vis-manual	vis.txt	/*vis-manual*
+vis-required	vis.txt	/*vis-required*
+vis-search	vis.txt	/*vis-search*
+vis-sort	vis.txt	/*vis-sort*
+vis-srch	vis.txt	/*vis-srch*
+vis.txt	vis.txt	/*vis.txt*
+vis.vim	vis.txt	/*vis.vim*
 viscinr-I	visincr.txt	/*viscinr-I*
 viscinr-contents	visincr.txt	/*viscinr-contents*
 visincr	visincr.txt	/*visincr*
@@ -1272,6 +1285,8 @@ visincr-raggedright	visincr.txt	/*visincr-raggedright*
 visincr-restrict	visincr.txt	/*visincr-restrict*
 visincr-usage	visincr.txt	/*visincr-usage*
 visincr.txt	visincr.txt	/*visincr.txt*
+visman	vis.txt	/*visman*
+vismanual	vis.txt	/*vismanual*
 vo	vo_readme.txt	/*vo*
 vo-activities	vo_readme.txt	/*vo-activities*
 vo-advanced	vo_readme.txt	/*vo-advanced*
