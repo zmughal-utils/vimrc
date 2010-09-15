@@ -29,6 +29,7 @@ let Tlist_Use_Right_Window=1
 
 " Netrw {{{
 let g:netrw_list_hide= '^\..*'
+let g:netrw_keepdir=0	" change pwd while browsing
 "}}}
 
 " NERD_Tree {{{
