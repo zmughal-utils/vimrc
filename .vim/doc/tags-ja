@@ -65,6 +65,7 @@ fuf-help-mode	fuf.jax	/*fuf-help-mode*
 fuf-hiding-menu	fuf.jax	/*fuf-hiding-menu*
 fuf-information-file	fuf.jax	/*fuf-information-file*
 fuf-installation	fuf.jax	/*fuf-installation*
+fuf-installation	l9.jax	/*fuf-installation*
 fuf-introduction	fuf.jax	/*fuf-introduction*
 fuf-jumplist-mode	fuf.jax	/*fuf-jumplist-mode*
 fuf-line-mode	fuf.jax	/*fuf-line-mode*
@@ -204,6 +205,13 @@ g:fuf_timeFormat	fuf.jax	/*g:fuf_timeFormat*
 g:fuf_useMigemo	fuf.jax	/*g:fuf_useMigemo*
 include_complete	neocomplcache.jax	/*include_complete*
 keyword_complete	neocomplcache.jax	/*keyword_complete*
+l9	l9.jax	/*l9*
+l9-about	l9.jax	/*l9-about*
+l9-author	l9.jax	/*l9-author*
+l9-contact	l9.jax	/*l9-contact*
+l9-introduction	l9.jax	/*l9-introduction*
+l9-usage	l9.jax	/*l9-usage*
+l9.txt	l9.jax	/*l9.txt*
 neocomplcache	neocomplcache.jax	/*neocomplcache*
 neocomplcache#cancel_popup	neocomplcache.jax	/*neocomplcache#cancel_popup*
 neocomplcache#close_popup	neocomplcache.jax	/*neocomplcache#close_popup*

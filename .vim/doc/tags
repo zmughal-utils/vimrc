@@ -662,6 +662,7 @@ fuf-help-mode	fuf.txt	/*fuf-help-mode*
 fuf-hiding-menu	fuf.txt	/*fuf-hiding-menu*
 fuf-information-file	fuf.txt	/*fuf-information-file*
 fuf-installation	fuf.txt	/*fuf-installation*
+fuf-installation	l9.txt	/*fuf-installation*
 fuf-introduction	fuf.txt	/*fuf-introduction*
 fuf-jumplist-mode	fuf.txt	/*fuf-jumplist-mode*
 fuf-line-mode	fuf.txt	/*fuf-line-mode*
@@ -946,6 +947,14 @@ javacomplete-thanks	javacomplete.txt	/*javacomplete-thanks*
 javacomplete-todo	javacomplete.txt	/*javacomplete-todo*
 javacomplete-usage	javacomplete.txt	/*javacomplete-usage*
 javacomplete.txt	javacomplete.txt	/*javacomplete.txt*
+l9	l9.txt	/*l9*
+l9-about	l9.txt	/*l9-about*
+l9-author	l9.txt	/*l9-author*
+l9-changelog	l9.txt	/*l9-changelog*
+l9-contact	l9.txt	/*l9-contact*
+l9-introduction	l9.txt	/*l9-introduction*
+l9-usage	l9.txt	/*l9-usage*
+l9.txt	l9.txt	/*l9.txt*
 largefile	LargeFile.txt	/*largefile*
 largefile-history	LargeFile.txt	/*largefile-history*
 list-snippets	snipMate.txt	/*list-snippets*
