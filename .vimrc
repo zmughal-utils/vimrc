@@ -1042,6 +1042,9 @@ command! -nargs=0 -bar SetUpEnv	call SetUpEnv()
 command! -nargs=0 PrintSize	set co? lines?
 command! -nargs=0 UpdateTime	set updatetime& updatetime?
 
+command! -nargs=0 -range=% AutoFormat <line1>,<line2>!perl -MText::Autoformat -e'autoformat({all => 1})'
+command! -nargs=0 AutoFormatPara .,$!perl -MText::Autoformat -e'autoformat'
+
 let RunLineChangePre=""
 if has("win32")
 	let RunLineChangePre='sed "s/.*/cmd \/C &/"|'
