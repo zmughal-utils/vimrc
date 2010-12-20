@@ -983,6 +983,7 @@ nmap <Leader>gU	:split<bar>Utl<CR>zv
 vmap <Leader>gU	:split<bar>Utl o v<CR>zv
 
 command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
+command! Wsudo	:w !sudo tee % >/dev/null
 
 function! ReverseLines(line1,line2)
 	let oldp=@/
