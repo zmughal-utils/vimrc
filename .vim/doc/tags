@@ -1005,6 +1005,7 @@ manpageview-open	manpageview.txt	/*manpageview-open*
 manpageview-options	manpageview.txt	/*manpageview-options*
 manpageview-perl	manpageview.txt	/*manpageview-perl*
 manpageview-php	manpageview.txt	/*manpageview-php*
+manpageview-python	manpageview.txt	/*manpageview-python*
 manpageview-usage	manpageview.txt	/*manpageview-usage*
 manpageview.txt	manpageview.txt	/*manpageview.txt*
 manpageview_extend	manpageview.txt	/*manpageview_extend*

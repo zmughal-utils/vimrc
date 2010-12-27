@@ -1,7 +1,7 @@
 " manpageview.vim : extra commands for manual-handling
 " Author:	Charles E. Campbell, Jr.
-" Date:		Oct 26, 2009
-" Version:	23d	ASTRO-ONLY
+" Date:		Oct 25, 2010
+" Version:	23
 "
 " Please read :help manpageview for usage, options, etc
 "
@@ -12,7 +12,7 @@
 if &cp || exists("g:loaded_manpageview")
  finish
 endif
-let g:loaded_manpageview = "v23d"
+let g:loaded_manpageview = "v23"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of manpageview needs vim 7.2"
@@ -66,6 +66,7 @@ if !exists("g:manpageview_options")
  let g:manpageview_options= ""
 endif
 if !exists("g:manpageview_pgm_i")
+" call Decho("installed info help support via manpageview")
  let g:manpageview_pgm_i     = "info"
  let g:manpageview_options_i = "--output=-"
  let g:manpageview_syntax_i  = "info"
@@ -78,21 +79,30 @@ if !exists("g:manpageview_pgm_i")
  let s:linkpat4 = '^\* [^:]*:\s*\([^.]*\)\.$'      " index
 endif
 if !exists("g:manpageview_pgm_pl")
+" call Decho("installed perl help support via manpageview")
  let g:manpageview_pgm_pl     = "perldoc"
  let g:manpageview_options_pl = ";-f;-q"
 endif
 if !exists("g:manpageview_pgm_php") && executable("links")
+" call Decho("installed php help support via manpageview")
  let g:manpageview_pgm_php     = "links -dump http://www.php.net/"
  let g:manpageview_syntax_php  = "manphp"
  let g:manpageview_nospace_php = 1
  let g:manpageview_K_php       = "manpageview#ManPagePhp()"
 endif
+if !exists("g:manpageview_pgm_py") && executable("pydoc")
+" call Decho("installed python help support via manpageview")
+ let g:manpageview_pgm_py     = "pydoc"
+ let g:manpageview_K_py       = "manpageview#ManPagePython()"
+endif
 if exists("g:manpageview_hypertext_tex") && executable("links") && !exists("g:manpageview_pgm_tex")
+" call Decho("installed tex help support via manpageview")
  let g:manpageview_pgm_tex    = "links ".g:manpageview_hypertext_tex
  let g:manpageview_lookup_tex = "manpageview#ManPageTexLookup"
  let g:manpageview_K_tex      = "manpageview#ManPageTex()"
 endif
 if has("win32") && !exists("g:manpageview_rsh")
+" call Decho("installed rsh help support via manpageview")
  let g:manpageview_rsh= "rsh"
 endif
 
@@ -312,6 +322,10 @@ fun! manpageview#ManPageView(viamap,bknum,...) range
    " filetype:  php
    elseif &ft == "php"
    	let ext = "php"
+
+	" filetype:  python
+   elseif &ft == "python"
+   	let ext = "py"
 
    " filetype: tex
   elseif &ft == "tex"
@@ -1066,6 +1080,15 @@ fun! manpageview#ManPagePhp()
 "  call Dfunc("manpageview#ManPagePhp() topic<".topic.">")
   call manpageview#ManPageView(1,0,topic)
 "  call Dret("manpageview#ManPagePhp")
+endfun
+
+" ---------------------------------------------------------------------
+" manpageview#:ManPagePython: {{{2
+fun! manpageview#ManPagePython()
+  let topic=substitute(expand("<cWORD>"),'()\=.*$','.py','')
+"  call Dfunc("manpageview#ManPagePython() topic<".topic.">")
+  call manpageview#ManPageView(1,0,topic)
+"  call Dret("manpageview#ManPagePython")
 endfun
 
 " ---------------------------------------------------------------------
