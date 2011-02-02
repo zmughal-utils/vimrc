@@ -664,6 +664,28 @@ if has("win32")
 	command! -nargs=0 Clear		silent execute "!cls"
 endif
 
+let g:utl_cfg_hdl_mt_application_pdf__xpdf="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f')"
+fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
+	if !filereadable(a:path)
+		redraw | echom "File '".a:path."' not found"
+		return
+	endif
+	let page = ''
+	if a:fragment != ''
+		let ufrag = UtlUri_unescape(a:fragment)
+		if ufrag =~ '^page='
+			let page = substitute(ufrag, '^page=', '', '')
+		else 
+			echohl ErrorMsg
+			echo "Unsupported fragment `#".ufrag."' Valid only `#page='"
+			echohl None
+			return
+		endif
+	endif
+
+	let cmd = ':silent !xpdf -q '.'"'.a:path.'"'.' '.l:page.' &'
+	exe cmd
+endfu
 if has("unix")
 	command! -nargs=0 Shell		silent execute "!xterm&"| redraw!
 	command! -nargs=0 Clear		silent execute "!clear"|redraw!
@@ -672,8 +694,10 @@ if has("unix")
 	else
 		let g:utl_cfg_hdl_scm_http="silent !lynx '%u'"
 	endif
+	let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
 	let g:utl_cfg_hdl_mt_generic = "silent !see '%p'"
 endif
+
 
 nnoremap <Leader>sh	<Esc>:Shell<CR>
 
