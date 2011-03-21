@@ -1656,6 +1656,7 @@ vo-color	vo_readme.txt	/*vo-color*
 vo-command	vo_readme.txt	/*vo-command*
 vo-debian	vo_readme.txt	/*vo-debian*
 vo-executable-lines	vo_readme.txt	/*vo-executable-lines*
+vo-history	vo_readme.txt	/*vo-history*
 vo-hoisting	vo_readme.txt	/*vo-hoisting*
 vo-install	vo_readme.txt	/*vo-install*
 vo-license	vo_readme.txt	/*vo-license*
@@ -1674,6 +1675,7 @@ vo-testing	vo_readme.txt	/*vo-testing*
 vo-troubleshooting	vo_readme.txt	/*vo-troubleshooting*
 vo-updating	vo_readme.txt	/*vo-updating*
 vo-version	vo_readme.txt	/*vo-version*
+vo_cheatsheet.txt	vo_cheatsheet.txt	/*vo_cheatsheet.txt*
 vo_readme.txt	vo_readme.txt	/*vo_readme.txt*
 vs	surround.txt	/*vs*
 winmanager	winmanager.txt	/*winmanager*

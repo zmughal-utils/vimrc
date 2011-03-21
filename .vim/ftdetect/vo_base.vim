@@ -1,6 +1,6 @@
 "# #######################################################################
 "# filetype.vim: filetype loader
-"#   VimOutliner functions, commands and settings, version 0.2.0
+"#   version 0.3.5
 "#   Copyright (C) 2001,2003 by Steve Litt (slitt@troubleshooters.com)
 "#
 "#   This program is free software; you can redistribute it and/or modify
@@ -74,9 +74,6 @@
 "Revision 1.1  2003/02/08 21:11:26  noel
 "Initial revision
 "
-if exists("did_load_filetypes")
-  finish
-endif
 augroup filetypedetect
   au! BufRead,BufNewFile *.otl		setfiletype vo_base
   au! BufRead,BufNewFile *.oln		setfiletype xoutliner

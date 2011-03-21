@@ -1,6 +1,6 @@
 "#########################################################################
 "# ftplugin/vo_base.vim: VimOutliner functions, commands and settings
-"# version 0.3.0
+"# version 0.3.5
 "#   Copyright (C) 2001,2003 by Steve Litt (slitt@troubleshooters.com)
 "#   Copyright (C) 2004 by Noel Henson (noel@noels-lab.com)
 "#
@@ -83,7 +83,7 @@ setlocal tw=78
 setlocal noexpandtab
 setlocal nosmarttab
 setlocal softtabstop=0 
-"setlocal foldlevel=20
+setlocal foldlevel=20
 setlocal foldcolumn=1		" turns on "+" at the begining of close folds
 setlocal tabstop=4			" tabstop and shiftwidth must match
 setlocal shiftwidth=4		" values from 2 to 8 work well
@@ -184,9 +184,12 @@ endfunction
 " Compare this heading and the next
 " Return 1: next is greater, 0 next is same, -1 next is less
 function! CompHead(line)
+	let nexthead = NextHead(a:line)
 	let l:thisline=getline(a:line)
-	let l:nextline=getline(NextHead(a:line))
-	if l:thisline <# l:nextline
+	let l:nextline=getline(nexthead)
+	if indent(a:line) != indent(nexthead)
+		return 0
+	elseif l:thisline <# l:nextline
 		return 1
 	elseif l:thisline ># l:nextline
 		return -1
@@ -194,6 +197,7 @@ function! CompHead(line)
 		return 0
 	endif
 endfunction
+
 "}}}3
 " Sort1Line(line) {{{3
 " Compare this heading and the next and swap if out of order
@@ -540,7 +544,7 @@ endif
 "}}}2
 " This should be a setlocal but that doesn't work when switching to a new .otl file
 " within the same buffer. Using :e has demonstrates this.
-setlocal foldtext=MyFoldText()
+set foldtext=MyFoldText()
 
 setlocal fillchars=|, 
 
@@ -560,9 +564,9 @@ imap <buffer> <localleader>t ~<esc>x:call InsertTime(0)<cr>a
 nmap <buffer> <localleader>T ^:call InsertTime(1)<cr>a <esc>
 
 " sort a list naturally
-map <buffer> <localleader>s :call SortChildren(0)<cr>
+map <silent> <buffer> <localleader>s :silent call SortChildren(0)<cr>
 " sort a list, but you supply the options
-map <buffer> <localleader>S :call SortChildren(1)<cr>
+map <silent> <buffer> <localleader>S :silent call SortChildren(1)<cr>
 
 " invoke the file explorer
 map <buffer> <localleader>f :e .<cr>
@@ -624,8 +628,19 @@ amenu &VO.Expand\ Level\ &8 :set foldlevel=7<cr>
 amenu &VO.Expand\ Level\ &9 :set foldlevel=8<cr>
 amenu &VO.Expand\ Level\ &All :set foldlevel=99999<cr>
 amenu &VO.-Sep1- :
-amenu &VO.&Tools.&otl2thml\.py\	(otl2html\.py\ thisfile\ -S\ nnnnnn\.css\ >\ thisfile\.html) :!otl2html.py -S nnnnnn.css % > %.html<cr>
-amenu &VO.&Tools.&myotl2thml\.sh\	(myotl2html\.sh\ thisfile) :!myotl2html.sh %<cr>
+"Tools sub-menu
+let s:path2scripts = expand('<sfile>:p:h:h').'/vimoutliner/scripts'
+" otl2html
+exec 'amenu &VO.&Tools.otl2&html\.py\	(otl2html\.py\ thisfile\ -S\ html2otl_nnnnnn\.css\ >\ thisfile\.html) :!'.s:path2scripts.'/otl2html.py -S html2otl_nnnnnn.css % > %.html<CR>'
+" otl2docbook
+exec 'amenu &VO.&Tools.otl2&docbook\.pl\	(otl2docbook\.pl\ thisfile\ >\ thisfile\.dbk) :!'.s:path2scripts.'/otl2docbook.pl % > %.dbk<CR>'
+" otl2table
+exec 'amenu &VO.&Tools.otl2&table\.py\	(otl2table\.py\ thisfile\ >\ thisfile\.txt) :!'.s:path2scripts.'/otl2table.py % > %.txt<CR>'
+" otl2tags => FreeMind
+exec 'amenu &VO.&Tools.otl2tags\.py\ =>\ &FreeMind\	(otl2tags\.py\ \-c\ otl2tags_freemind\.conf\ thisfile\ >\ thisfile\.mm) :!'.s:path2scripts.'/otl2tags.py -c '.s:path2scripts.'/otl2tags_freemind.conf % > %.mm<CR>'
+" otl2tags => Graphviz
+exec 'amenu &VO.&Tools.otl2tags\.py\ =>\ &Graphviz\	(otl2tags\.py\ \-c\ otl2tags_graphviz\.conf\ thisfile\ >\ thisfile\.gv) :!'.s:path2scripts.'/otl2tags.py -c '.s:path2scripts.'/otl2tags_graphviz.conf % > %.gv<CR>'
+amenu &VO.&Tools.&myotl2thml\.sh\	(myotl2html\.sh\ thisfile) :!myotl2html.sh %<CR>
 amenu &VO.-Sep2- :
 amenu &VO.&Color\ Scheme :popup Edit.Color\ Scheme<cr>
 amenu &VO.-Sep3- :
@@ -650,14 +665,17 @@ endif
 "}}}1
 
 " this command needs to be run every time so Vim doesn't forget where to look
-setlocal tags^=$HOME/.vimoutliner/vo_tags.tag
+setlocal tags^=$HOME/.vim/vimoutliner/vo_tags.tag
 
 " Added an indication of current syntax as per Dillon Jones' request
 let b:current_syntax = "outliner"
- 
+
 " Personal configuration options files as per Matej Cepl
-setlocal runtimepath+=$HOME/.vimoutliner,$HOME
-ru! .vimoutlinerrc vimoutlinerrc
+" Don't add $HOME to rtp
+for rc in split(globpath('$HOME,$HOME/.vimoutliner','.vimoutlinerrc'), "\n") + split(globpath('$HOME,$HOME/.vimouliner', 'vimoutlinerrc'), "\n")
+	exec "source " . rc
+endfor
+ru! vimoutlinerrc vimoutliner/vimoutlinerrc
 " More sophisticated version of the modules loading; thanks to Preben 'Peppe'
 " Guldberg for telling me how to split string and make semi-lists with vim.
 " - Matej Cepl
@@ -668,8 +686,7 @@ while (s:idx != -1)
     let s:part = strpart(s:tmp, 0, s:idx)
     let s:tmp = strpart(s:tmp, s:idx + 1)
     let s:idx = stridx(s:tmp, ':')
-    "exec 'ru! ftplugin/vo_' . part . '.vim'
-    exec "runtime! plugins/vo_" . s:part . ".vim"
+    exec "runtime! vimoutliner/plugin/vo_" . s:part . ".vim"
 endwhile
 
 " The End
