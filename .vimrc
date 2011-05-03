@@ -1124,8 +1124,8 @@ function! DictLoad(word)
 	setf txt
 endfunction
 command! -nargs=1 DictLookup	call DictLoad(<f-args>)
-nnoremap \d	:DictLookup <C-R>=expand("<cword>")<CR><CR>
-vnoremap \d	y:DictLookup <C-R>"<CR>
+nnoremap \dl	:DictLookup <C-R>=expand("<cword>")<CR><CR>
+vnoremap \dl	y:DictLookup <C-R>"<CR>
 
 function! ZiptoJar(zipfile)
 	if a:zipfile =~ "^zipfile:"
