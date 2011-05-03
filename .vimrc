@@ -1090,8 +1090,10 @@ endif
 exe "command! -nargs=0 RunCurrentLine	.w !".RunLineChangePre."sh"
 nnoremap \rl	:RunCurrentLine<CR>
 
-vnoremap \w :w !wc -w<CR>
-nnoremap \w :w !wc -w<CR>
+vnoremap \wc :w !wc -w<CR>
+nnoremap \wc :w !wc -w<CR>
+vnoremap \st :w !style\|$PAGER <CR>
+nnoremap \st :w !style\|$PAGER<CR>
 
 vnoremap \rc :w !recode ..dump<CR>
 nnoremap \rc :w !recode ..dump<CR>
