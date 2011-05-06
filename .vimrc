@@ -1094,7 +1094,7 @@ vnoremap \wc :w !wc -w<CR>
 nnoremap \wc :w !wc -w<CR>
 vnoremap \st :w !style\|$PAGER <CR>
 nnoremap \st :w !style\|$PAGER<CR>
-command! -nargs=0 ExplodePara	'{,'}join | '{,'}s/\([.?!]\)\s*/\1\r/g | normal {
+command! -nargs=0 ExplodePara	'{,'}join | exe "normal O\<Esc>jo\<Esc>k" | '{,'}s/\([.?!]\)\s*/\1\r/g | exe "normal {j"
 
 vnoremap \rc :w !recode ..dump<CR>
 nnoremap \rc :w !recode ..dump<CR>
