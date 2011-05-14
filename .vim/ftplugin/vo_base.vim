@@ -542,9 +542,10 @@ function Spawn()
 endfunction
 endif
 "}}}2
+" PATCH HERE
 " This should be a setlocal but that doesn't work when switching to a new .otl file
 " within the same buffer. Using :e has demonstrated this.
-set foldtext=MyFoldText()
+setlocal foldtext=MyFoldText()
 
 setlocal fillchars=|, 
 

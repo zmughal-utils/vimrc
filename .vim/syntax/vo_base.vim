@@ -124,9 +124,10 @@ if &background == "light"
 	hi UB8 guifg=darkgray	ctermfg=cyan
 	hi UB9 guifg=darkgray	ctermfg=cyan
 
+	" PATCH HERE
 	" colors for folded sections
-	hi Folded guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=white
-	hi FoldColumn guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=white
+	"hi Folded guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=white
+	"hi FoldColumn guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=white
 
 	" colors for experimental spelling error highlighting
 	" this only works for spellfix.vim which will cease to exist soon
@@ -202,9 +203,10 @@ else
 	hi UB8 guifg=darkgray	ctermfg=cyan
 	hi UB9 guifg=darkgray	ctermfg=cyan
 
+	" PATCH HERE
 	" colors for folded sections
-	hi Folded guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=black
-	hi FoldColumn guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=black
+	"hi Folded guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=black
+	"hi FoldColumn guifg=darkcyan guibg=bg	ctermfg=cyan ctermbg=black
 
 	" colors for experimental spelling error highlighting
 	" this only works for spellfix.vim which will cease to exist soon
