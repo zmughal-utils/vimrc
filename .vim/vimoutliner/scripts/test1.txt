@@ -1,0 +1,17 @@
+Pets
+Indoor
+	Cats
+		Sophia
+		Hillary
+	Rats
+		Finley
+		Oliver
+	Dogs
+		Kirby
+Outdoor
+	Dogs
+		Kirby
+		Hoover
+	Goats
+		Primrose
+		Joey
