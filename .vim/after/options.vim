@@ -42,7 +42,6 @@ let g:NERDTreeHijackNetrw=0
 "}}}
 
 " NERD_comments {{{
-let g:NERDShutUp=1
 "let g:NERDSpaceDelims=1
 "}}}
 
