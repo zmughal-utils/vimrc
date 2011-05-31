@@ -665,6 +665,9 @@ endfunction
 command! -nargs=1 Perldoc	call Perldoc(<f-args>)
 "}}}
 
+com! PerlCore	!corelist <cword>
+autocmd FileType perl	nmap <buffer> ,pc	:PerlCore<Return>
+
 if has("win32")
 	command! -nargs=0 ExploreCurDir	silent execute "!start explorer ".expand(".")
 	command! -nargs=0 ExploreFileDir	silent execute "!start explorer ".expand("%:p:h")
