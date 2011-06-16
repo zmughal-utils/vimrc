@@ -706,13 +706,27 @@ if has("unix")
 	command! -nargs=0 Shell		silent execute "!xterm&"| redraw!
 	command! -nargs=0 Clear		silent execute "!clear"|redraw!
 	if exists("$DISPLAY")
-		let g:utl_cfg_hdl_scm_http="silent !firefox '%u' &"
+		let g:utl_cfg_hdl_scm_http__system = "silent !firefox '%u' &"
 	else
-		let g:utl_cfg_hdl_scm_http="silent !lynx '%u'"
+		if executable("elinks")
+			let g:utl_cfg_hdl_scm_http__system = "silent !elinks '%u'"
+		elseif executable("lynx")
+			let g:utl_cfg_hdl_scm_http__system = "silent !lynx '%u'"
+		else
+			let g:utl_cfg_hdl_scm_http__system = "echoerr 'No browser found for terminal'"
+		endif
 	endif
 	let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
 	let g:utl_cfg_hdl_mt_generic = "silent !see '%p'"
 endif
+
+func! Set_utl_system()
+	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__system
+endfunc
+
+func! Set_utl_vim()
+	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__wget
+endfunc
 
 
 nnoremap <Leader>sh	<Esc>:Shell<CR>
@@ -1020,10 +1034,17 @@ command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
 			\ file Boxes\ list |
 			\ setl buftype=nofile noma nomod
 
-nmap <Leader>gu	:Utl<CR>zv
-vmap <Leader>gu	:Utl o v<CR>zv
-nmap <Leader>gU	:split<bar>Utl<CR>zv
-vmap <Leader>gU	:split<bar>Utl o v<CR>zv
+" Use system to open
+nmap <Leader>gu	:call Set_utl_system()<bar>Utl<CR>zv
+vmap <Leader>gu	:call Set_utl_system()<bar>Utl o v<CR>zv
+
+" Use vim to open
+nmap <Leader>Gu	:call Set_utl_vim()<bar>Utl<CR>zv
+vmap <Leader>Gu	:call Set_utl_vim()<bar>Utl o v<CR>zv
+
+" Split and use vim to open
+nmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl<CR>zv
+vmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl o v<CR>zv
 
 command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 command! Wsudo	:w !sudo tee % >/dev/null
