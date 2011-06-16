@@ -9,4 +9,6 @@ au BufNewFile,BufRead *.rem	setf remind
 au BufNewFile,BufRead *.pro	setf prolog
 au BufNewFile,BufRead *.prolog	setf prolog
 
+autocmd BufNewFile,BufRead *.ahk	setf ahk
+
 runtime! ftdetect/*.vim

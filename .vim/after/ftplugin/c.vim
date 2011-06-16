@@ -15,3 +15,6 @@ endif
 
 nmap <buffer> <F6> :!%:p:r<CR>
 imap <buffer> <F6> <Esc><F6>
+
+autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
+call PreviewMaps()

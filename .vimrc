@@ -154,34 +154,6 @@ endif
 "}}}
 "}}}
 "**********************************************************************************"
-" Templates {{{
-" Opens template files in correct directory {{{
-function! Read_template(type)
-	if has("win32")
-		let dir_pre=expand("$VIM\\vimfiles\\after\\template\\")
-	elseif has("unix")
-		let dir_pre=expand("~/.vim/after/template/")
-	endif
-	let file_name=dir_pre."template.".a:type
-	if filereadable(file_name)
-		execute "read ++edit ".file_name
-		normal gg"_dd
-		" Ugly looking
-		" TODO only error is when there is an extra line at the end
-	endif
-endfunction
-"}}}
-augroup Templates "{{{
-	au!
-	autocmd BufNewFile *.c		call Read_template("c")
-	autocmd BufNewFile *.html,*.htm	call Read_template("html")
-	autocmd BufNewFile *.sh		call Read_template("sh")
-	autocmd BufNewFile *.bat	call Read_template("bat")
-	autocmd BufNewFile *.java	call Read_template("java")
-	autocmd BufNewFile *.py		call Read_template("py")
-augroup END "}}}
-"}}}
-"**********************************************************************************"
 " Colors {{{
 if !exists("loaded_color_vimrc")
 	let loaded_color_vimrc=1
@@ -313,10 +285,8 @@ augroup MyAutocmds "{{{
 	"autocmd BufRead,BufEnter	*.pdf	setl nomodifiable
 
 	" AutoHotkey
-	autocmd BufRead *.ahk	setf ahk
 
 	autocmd BufRead *.class	set binary
-
 
 	if has("balloon_eval")
 		autocmd BufEnter *NERD_tree_	call setbufvar(expand('<afile>'),'&balloonexpr','substitute(getbufline(v:beval_bufnr,v:beval_lnum)[0],"^[|`][+~-]","","")')
@@ -369,304 +339,22 @@ augroup MyFileType " {{{
 	if has("win32") || has("dos32") || has("dos16")
 		autocmd FileType dosbatch	setlocal keywordprg=help
 	endif
-	autocmd FileType c	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
-	autocmd FileType c	call PreviewMaps()
-
-	" C++
-	autocmd FileType cpp	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
-	autocmd FileType cpp	compiler gcc
-	autocmd FileType cpp	call PreviewMaps()
 
 	autocmd FileType c,cpp,java	let b:surround_indent=1
-
-	autocmd FileType cpp	if !filereadable('Makefile')
-	autocmd FileType cpp	if has("win32") | let exeext=".exe" | else | let exeext="" | endif
-	autocmd FileType cpp		exe 'setlocal makeprg=g++\ -o\ %:r'.exeext.'\ %\ -Wall'
-	autocmd FileType cpp	endif
-
-	autocmd FileType html	vmap <buffer> ,del s<del datetime="<C-R>=strftime('%Y-%m-%dT%H:%M:%S%z')<CR>"<CR>
-	autocmd FileType html	vmap <buffer> ,ins s<ins datetime="<C-R>=strftime('%Y-%m-%dT%H:%M:%S%z')<CR>"<CR>
-
-	autocmd FileType sh	nnoremap <buffer> <F6>	:call SheBangRun()<CR>
-
-	autocmd FileType remind setlocal isfname+=],[,(,),34
-	"autocmd FileType remind setlocal include=\\c^\\s*include\\s\\+\\zs\\(\\f\\\|[()\\[\\]\"]\\)\\+
-	autocmd FileType remind setlocal include=\\c^\\s*include
-	autocmd FileType remind setlocal includeexpr=substitute(system(\"remind\ -k\'echo\ -n\ %s\'\ -\",v:fname),'\ $','','')
-
-	autocmd FileType mail	setlocal spell
 augroup END "}}}
-"}}}
-"**********************************************************************************"
-" Java {{{
-"let g:omni_syntax_group_include_java = 'javaC_,javaR_,javaE_,javaX_'
-augroup Java "{{{
-	au!
-	autocmd FileType java	nnoremap <buffer> <F9> :!ctags --languages=java -R .<CR>
-	autocmd FileType java	autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
-	autocmd FileType java	setlocal omnifunc=javacomplete#Complete
-				\ completefunc=syntaxcomplete#Complete
-	" Too annoyingly slow
-	"autocmd FileType java	imap <buffer> . .<C-X><C-O><C-P>
-	if has("menu")
-		autocmd FileType java	amenu PopUp.Goto\ tag :exe "ptag ".expand("<cword>")<CR>
-	endif
-	autocmd FileType java	setl foldtext=JavaFoldText()
-	"{{{ Java abbrevs
-	"autocmd FileType java	inoreabbr <buffer> sop	System.out.println();<C-O>1h
-	"autocmd FileType java	inoreabbr <buffer> sopf	System.out.printf("\n",)<C-O>4h
-
-	"autocmd FileType java	inoreabbr <buffer> println	System.out.println();<C-O>1h
-	"autocmd FileType java	inoreabbr <buffer> printf	System.out.printf("\n",);<C-O>1h
-	"autocmd FileType java	inoreabbr <buffer> print	System.out.print();<C-O>1h
-	"}}}
-augroup END "}}}
-
-function! JavaFoldText()
-	let curline=v:foldstart
-	let removestring='\/\*\*\=\|\*\/\|\/\/\|{'.
-				\ '{{\d\=\|^\s*\*\s*'
-	let empty="^\\s*$"
-	let vfold=substitute(getline(curline),removestring,'','g')
-	while(curline<=v:foldend && vfold=~empty)
-		let vfold=substitute(getline(curline),removestring,'','g')
-		let curline+=1
-	endwhile
-	if curline==v:foldend && vfold=~empty
-		let vfold=getline(v:foldstart)
-	endif
-	let vfold=substitute(vfold,'^\s\+','','g')
-	return "+-".v:folddashes." ".printf("%2d",v:foldend-v:foldstart+1)." lines: ".vfold
-endfunction
-
-
-function! AddJavaCompCP()
-	let jcdir=fnamemodify(globpath(&rtp,'autoload/Reflection.class'),':p:h')
-	let sep=':'
-	if has("win32")
-		let sep=';'
-	endif
-	if index(split($CLASSPATH,sep),jcdir) == -1
-		exe "let $CLASSPATH .= '".sep.jcdir."'"
-	endif
-endfunction
-call AddJavaCompCP()
-
-function! Javadoc(classname)
-	let tmpfile = tempname()
-	if executable("findjavadoc.sh")
-		exe "!findjavadoc.sh ".a:classname.">".tmpfile
-		if filereadable(tmpfile)
-			exe "silent! new ".tmpfile
-			let fqn=getline(1)
-			if bufexists(fqn)
-				let delnr=bufnr(fqn)
-				exe delnr."bd"
-			endif
-			exe "silent! keepalt file ".fqn
-			normal gg
-			exe "autocmd BufEnter ".fqn."setlocal buftype=nowrite"
-			exe "autocmd BufEnter ".fqn."setlocal nomod noma noswapfile"
-			exe "autocmd BufEnter ".fqn."setlocal nomod noma noswapfile"
-			exe "autocmd BufEnter ".fqn."nmap <buffer> <C-]>	:call JavapWord()<CR>"
-
-		endif
-	else
-		echoerr "Error [Javadoc]: findjavadoc.sh is not in your path."
-	endif
-endfunction
-nmap <silent> \jd :call Javadoc(expand("<cword>"))<CR>
 "}}}
 "**********************************************************************************"
 " Miscellaneous functions {{{
-function! Test() "{{{
-	let javapath="~/javadocs"
-	let sub=substitute(expand("<cfile>"),"\\.","/","g")
-	let fullpath=javapath."/".sub.".html"
-	execute "!".g:browser." ".fullpath
-endfunction "}}}
-
-function! OpenPDF(pdffile)
-	if filereadable(a:pdffile)
-		if has("win32")
-			if !exists('g:pdf_viewer')
-				if executable('SumatraPDF')
-					call command#Background("start SumatraPDF \"".a:pdffile."\"")
-				else
-					call command#Background("see ".a:pdffile)
-				endif
-			else
-				call command#Background(g:pdf_viewer." ".a:pdffile)
-			endif
-		elseif has("unix") && exists("$DISPLAY")
-			exe "!see '".a:pdffile."' &"
-		endif
-	endif
-endfunction
-
-" Window things {{{
-function! DefaultSize()
-	" TODO	does 'set columns& lines&' work for everything?
-	if has("win32") || expand("$TERM")=~#'linux'
-		set columns=80 lines=25
-	else	" X11
-		set columns=80 lines=24
-	endif
-endfunction
-command! -nargs=0 DefaultSize	call DefaultSize()
-command! -nargs=0 OrigSize	set lines& columns&
-command! -nargs=0 Size	set columns=120 lines=70
-
-command! -nargs=0 VSize	set columns=80 lines=60
-
-command! -nargs=0 WSize	set columns=125 lines=40
-
-command! -nargs=0 CenterandWSize winpos 125 70|WSize
-
-command! -nargs=0 MoveToCorner	winpos 0 0
-
 command! -nargs=1 ExpandColumnsTo	let &columns+=(<args>-winwidth('.'))
 command! -nargs=0 ExpandColumnsTo80	ExpandColumnsTo 80
 
-function! Rxvt_ip()
-	let i=0
-	while i<2
-		highlight Normal ctermbg=none
-		let i=i+1
-	endwhile
-endfunction
-" }}}
-
 command! -nargs=0 LCD		lcd %:p:h
-
-" Perldoc {{{
-function! Perldoc(doc)
-	exe 'silent new +r!perldoc\ -T\ '.shellescape(a:doc)
-	while getline(1)=~'^\s*$'
-		silent normal gg"_dd
-	endwhile
-	while getline('$')=~'^\s*$'
-		silent normal G"_dd
-	endwhile
-	setlocal nomodifiable buftype=nofile noswapfile
-	exe "file ".a:doc." [perldoc]"
-	"setf man
-	runtime! syntax/man.vim
-endfunction
-command! -nargs=1 Perldoc	call Perldoc(<f-args>)
-"}}}
-
-if has("win32")
-	command! -nargs=0 ExploreCurDir	silent execute "!start explorer ".expand(".")
-	command! -nargs=0 ExploreFileDir	silent execute "!start explorer ".expand("%:p:h")
-	if executable("start_session.bat")
-		command! -nargs=0 Shell		silent execute "!start_session.bat"
-	else
-		command! -nargs=0 Shell		silent execute "!start cmd"
-	endif
-
-	command! -nargs=0 Clear		silent execute "!cls"
-endif
-
-let g:utl_cfg_hdl_mt_application_pdf__xpdf="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f')"
-fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
-	if !filereadable(a:path)
-		redraw | echom "File '".a:path."' not found"
-		return
-	endif
-	let page = ''
-	if a:fragment != ''
-		let ufrag = UtlUri_unescape(a:fragment)
-		if ufrag =~ '^page='
-			let page = substitute(ufrag, '^page=', '', '')
-		else 
-			echohl ErrorMsg
-			echo "Unsupported fragment `#".ufrag."' Valid only `#page='"
-			echohl None
-			return
-		endif
-	endif
-
-	let cmd = ':silent !xpdf -q '.'"'.a:path.'"'.' '.l:page.' &'
-	exe cmd
-endfu
-if has("unix")
-	command! -nargs=0 Shell		silent execute "!xterm&"| redraw!
-	command! -nargs=0 Clear		silent execute "!clear"|redraw!
-	if exists("$DISPLAY")
-		let g:utl_cfg_hdl_scm_http__system = "silent !firefox '%u' &"
-	else
-		if executable("elinks")
-			let g:utl_cfg_hdl_scm_http__system = "silent !elinks '%u'"
-		elseif executable("lynx")
-			let g:utl_cfg_hdl_scm_http__system = "silent !lynx '%u'"
-		else
-			let g:utl_cfg_hdl_scm_http__system = "echoerr 'No browser found for terminal'"
-		endif
-	endif
-	let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
-	let g:utl_cfg_hdl_mt_generic = "silent !see '%p'"
-endif
-
-func! Set_utl_system()
-	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__system
-endfunc
-
-func! Set_utl_vim()
-	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__wget
-endfunc
-
-
-nnoremap <Leader>sh	<Esc>:Shell<CR>
 
 command! -nargs=0 SouceVIMRC	so $MYVIMRC
 command! -nargs=1 ReadHTTP	silent execute "read ++edit !wget -q -O - ".<args>
 command! -nargs=0 UnixFile	set ff=unix nomodified
 command! -nargs=0 KeywordDict	set keywordprg=dict
 
-" Toggle {{{
-command! -nargs=0 SpellToggle	setl spell! spell?
-nnoremap <silent>	,ts	:SpellToggle<CR>
-command! -nargs=0 PasteToggle	setl paste! paste?
-nnoremap <silent>	,tp	:PasteToggle<CR>
-command! -nargs=0 ListToggle	setl list! list?
-nnoremap <silent>	,tl	:ListToggle<CR>
-command! -nargs=0 NumberToggle	setl number! number?
-nnoremap <silent>	,tn	:NumberToggle<CR>
-command! -nargs=0 CursorLineToggle	setl cursorline! cursorline?
-nnoremap <silent>	,tcl	:CursorLineToggle<CR>
-command! -nargs=0 WrapToggle	setl wrap! wrap?
-nnoremap <silent>	,tw	:WrapToggle<CR>
-" }}}
-"}}}
-"**********************************************************************************"
-" Statusline and Ruler {{{
-" TODO make ruler
-let g:alt_ft_txt='text'
-let g:alt_ft_dosbatch='DOS Batch file'
-let g:alt_ft_html='HTML'
-let g:alt_ft_css='CSS'
-let g:alt_ft_tex='TeX'
-let g:alt_ft_make='Makefile'
-let g:alt_ft_man='Man page'
-let g:alt_ft_cpp='C++'
-set statusline=%<%f\ %{SLFiletype()}%h%{'['.&ff.']'}%{SLModified()}%r%=%-14.(%l,%c%V%)\ %P
-function! SLFiletype()
-	if strlen(&ft)>0 &&  &ft !=# 'help'
-		let filev=&ft
-		if exists("g:alt_ft_{&ft}")
-			let filev=g:alt_ft_{&ft}
-		endif
-		return '['.substitute(filev,'.','\u&','').']'
-	endif
-	return ''
-endfunction
-function! SLModified()
-	if &modified
-		return "[+]"
-	endif
-	return ""
-endfunction
 "}}}
 "**********************************************************************************"
 " Some functions {{{
@@ -779,27 +467,6 @@ endif
 "}}}
 "**********************************************************************************"
 " Stuff {{{
-command! -nargs=0 -bar BoxesList	if bufexists('Boxes list') |
-			\ let delnr=bufnr('Boxes list') |
-			\ exe delnr."bd" |
-			\ endif |
-			\ silent exe 'new +0r!boxes\ -l|grep\ "[[:alnum:]_-]\\+[[:blank:]](.*):"'
-			\ | exe 'normal G"_ddgg' |
-			\ file Boxes\ list |
-			\ setl buftype=nofile noma nomod
-
-" Use system to open
-nmap <Leader>gu	:call Set_utl_system()<bar>Utl<CR>zv
-vmap <Leader>gu	:call Set_utl_system()<bar>Utl o v<CR>zv
-
-" Use vim to open
-nmap <Leader>Gu	:call Set_utl_vim()<bar>Utl<CR>zv
-vmap <Leader>Gu	:call Set_utl_vim()<bar>Utl o v<CR>zv
-
-" Split and use vim to open
-nmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl<CR>zv
-vmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl o v<CR>zv
-
 command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 command! Wsudo	:w !sudo tee % >/dev/null
 
@@ -813,50 +480,6 @@ command! -nargs=0 Alphabet	call append(line("."),"abcdefghijklmnopqrstuvwxyz")
 
 
 command! -nargs=0 Duplicates	/\(\<[[:alnum:]]\+\>\)\([[:space:]]\|\n\)\+\<\1\>
-
-function! SetUpEnv()
-	if &term!~#'win32' && &term!~#'xterm'
-		"CenterandWSize
-		WSize
-	endif
-	call EnvSideBars()
-endfunction
-
-function! IsNERDTreeOpen()
-	let l:curwin=winnr()
-	let l:ntopen=0
-	windo if bufname('%')=~".*NERD_tree_" |let l:ntopen=1|endif
-	execute curwin."wincmd w"
-	return l:ntopen
-endfunction
-
-function! EnvSideBarsToggle()
-	let closed=0
-	if IsNERDTreeOpen()
-		NERDTreeClose
-		let closed=1
-	endif
-	if bufwinnr('__Tag_List__')!=-1
-		TlistClose
-		let closed=1
-	endif
-	if !closed
-		call EnvSideBars()
-	endif
-endfunction
-
-function! EnvSideBars()
-	NERDTreeToggle
-	"CNERDTree
-	if exists(':TlistOpen')
-		TlistOpen
-	endif
-	wincmd p
-	wincmd l
-endfunction
-nnoremap <Leader>sb	:call EnvSideBarsToggle()<CR>
-
-command! -nargs=0 -bar SetUpEnv	call SetUpEnv()
 
 command! -nargs=0 PrintSize	set co? lines?
 command! -nargs=0 UpdateTime	set updatetime& updatetime?
@@ -890,25 +513,6 @@ function! BC(list)
 	return substitute(system("bc -l",a:list."\n"),"\\\\\n","","g")
 endfunction
 
-function! DictLoad(word)
-	let dword=escape(a:word," \"'\\();<>&|!?")
-	let bname="/dict:".a:word
-	let name="/dict:".dword
-	if bufexists(bname)
-		let delnr=bufnr(name)
-		exe delnr."bd"
-	endif
-	silent exe "new +setlocal\\ modifiable\\|r!dict\\ ".escape(dword," \"'\\()<>&|!?")
-	silent exe "file ".name
-	normal gg"_dd
-	setlocal nomod noma
-	set buftype=nofile
-	setf txt
-endfunction
-command! -nargs=1 DictLookup	call DictLoad(<f-args>)
-nnoremap \dl	:DictLookup <C-R>=expand("<cword>")<CR><CR>
-vnoremap \dl	y:DictLookup <C-R>"<CR>
-
 function! ZiptoJar(zipfile)
 	if a:zipfile =~ "^zipfile:"
 		return substitute(substitute(a:zipfile,"^zipfile:","jar:file://",""),"::","!/","")
@@ -925,13 +529,6 @@ endfunction
 
 function! ZiptoJarThis()
 	return ZiptoJar(expand("%"))
-endfunction
-
-function! SheBangRun()
-	let first=getline(1)
-	if first =~ "^#!"
-		exe '!'.substitute(first,'^#!','','').' '.fnameescape(expand('%'))
-	endif
 endfunction
 
 call programming#QuickFixMaps(0)
