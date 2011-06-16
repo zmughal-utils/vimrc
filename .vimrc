@@ -224,21 +224,6 @@ nnoremap Y y$
 inoremap <C-U> <C-G>u<C-U>
 inoremap <C-W> <C-G>u<C-W>
 
-if &term =~# "screen"
-	map [1;2P	<S-F1>
-	map [1;2Q	<S-F2>
-	map [1;2R	<S-F3>
-	map [1;2S	<S-F4>
-	map [15;2~	<S-F5>
-	map [17;2~	<S-F6>
-	map [18;2~	<S-F7>
-	map [19;2~	<S-F8>
-	map [20;2~	<S-F9>
-	map [21;2~	<S-F10>
-	map [23;2~	<S-F11>
-	map [24;2~	<S-F12>
-endif
-
 " Taglist
 nnoremap <silent> <F8>	:TlistToggle<CR>
 
@@ -271,17 +256,6 @@ imap <silent> <F4> <Esc><F4>
 nnoremap <silent> <S-F4> :bN<CR>
 imap <silent> <S-F4> <Esc><S-F4>
 
-" Swap words
-" http://vim.wikia.com/wiki/Exchanging_adjacent_words
-nnoremap <silent> ,sw	:call SwapWords()<CR>
-function! SwapWords()
-	let lastpat = @/
-	silent exe "normal m`"
-	silent s/\v(<\k*%#\k*>)(\_.{-})(<\k+>)/\3\2\1/
-	silent exe "normal g``"
-	let @/ = lastpat
-endfunction
-
 " Tabs {{{
 nnoremap <silent> <F3>	:tabn<CR>
 imap <silent> <F3>	<Esc><F3>
@@ -297,21 +271,6 @@ nnoremap <silent> <Leader>t	:tabnew<CR>
 nnoremap <silent> <Leader>T	:tabclose<CR>
 "}}}
 
-if exists("*strftime")
-	if has("win32")
-		let strftime_iso_fmt="%Y-%m-%d"
-		let strftime_time_fmt="%H:%M:%S"
-	else
-		let strftime_iso_fmt="%F"
-		let strftime_time_fmt="%T"
-	endif
-	let strftime_isotime_fmt=strftime_iso_fmt." ".strftime_time_fmt
-	inoreabbr xdate	<C-R>=strftime("%a %Y %b %d")<CR>
-	inoreabbr xiso	<C-R>=strftime(strftime_iso_fmt)<CR>
-	inoreabbr xtime	<C-R>=strftime(strftime_time_fmt)<CR>
-	inoreabbr xfulltd	<C-R>=strftime(strftime_isotime_fmt)<CR>
-	inoreabbr xfiletd	<C-R>=strftime(strftime_isotime_fmt,getftime(expand('%')))<CR>
-endif
 "}}}
 "**********************************************************************************"
 " Autocommands {{{
@@ -437,10 +396,6 @@ augroup MyFileType " {{{
 
 	autocmd FileType mail	setlocal spell
 augroup END "}}}
-let g:alternateExtensions_CXX = "HXX,hxx"
-let g:alternateExtensions_HXX = "CXX,cxx"
-let g:alternateExtensions_cxx = "hxx,HXX"
-let g:alternateExtensions_hxx = "cxx,CXX"
 "}}}
 "**********************************************************************************"
 " Java {{{
@@ -523,51 +478,6 @@ endfunction
 nmap <silent> \jd :call Javadoc(expand("<cword>"))<CR>
 "}}}
 "**********************************************************************************"
-" TeX {{{
-command! -nargs=0 PDFTeX	let &l:makeprg= 'pdftex -interaction=nonstopmode'
-command! -nargs=0 PDFLaTeX	let &l:makeprg= 'pdflatex -interaction=nonstopmode'
-command! -nargs=0 LaTeX		let &l:makeprg= 'latex -interaction=nonstopmode'
-augroup MyFileType
-	autocmd FileType tex	nnoremap <buffer>	<F6>	:call TeXSmartOpen()<CR>
-	autocmd FileType tex	imap	<buffer>	<F6>	<Esc><F6>
-	autocmd FileType tex	if &makeprg!='make' && executable("pdflatex")|exe "PDFLaTeX"|endif
-	autocmd FileType tex	let b:surround_69 = "\\[\r\\]"
-	autocmd FileType tex	let b:surround_101 = "\\(\r\\)"
-augroup END
-"if has('win32') &&  executable('yap.exe') "{{{
-"	command! -nargs=1 -complete=file Yap	silent !start yap -1 <args>
-"	augroup MyFileType
-"		autocmd FileType tex	nnoremap <buffer>	<F6>	:Yap %:r<CR>
-"		autocmd FileType tex	imap	<buffer>	<F6>	<Esc><F6>
-"	augroup END
-"endif "}}}
-
-command! -nargs=0 TeXSubstituteEmDash	%s/\%u2014/---/gc
-command! -nargs=0 TeXSubstituteEnDash	%s/\%u2013/--/gc
-
-function! TeXSmartOpen() "{{{
-	let curfile=expand("%")
-	let p_pdf=fnamemodify(curfile,":r").".pdf"
-	let p_dvi=fnamemodify(curfile,":r").".dvi"
-	let p_ps =fnamemodify(curfile,":r").".ps"
-	let p_files=[p_pdf, p_dvi, p_ps]
-	for vfile in p_files
-		if filereadable(vfile)
-			if has("win32")
-				if vfile =~ '.*\.pdf'
-					call OpenPDF(vfile)
-				else
-					call command#Background("see ".vfile)
-				endif
-			elseif has("unix") && exists("$DISPLAY")
-				exe "!see '".vfile."' &"
-			endif
-			break	" first readable
-		endif
-	endfor
-endfunction "}}}
-"}}}
-"**********************************************************************************"
 " Miscellaneous functions {{{
 function! Test() "{{{
 	let javapath="~/javadocs"
@@ -615,25 +525,6 @@ command! -nargs=0 CenterandWSize winpos 125 70|WSize
 
 command! -nargs=0 MoveToCorner	winpos 0 0
 
-if has("gui")
-	function! ToggleFullscreen()
-		if has("gui")
-			let l:saved_l=&lines
-			let l:saved_c=&columns
-			let l:guiopt=(match(&guioptions,'\C[mTrl]')>0)
-			if l:guiopt
-				let &guioptions=substitute(&guioptions,"\\C[mTrl]","","g")
-			else
-				set guioptions+=mTr
-			endif
-			sleep 200m
-			let &lines=l:saved_l
-			let &columns=l:saved_c
-		endif
-	endfunction
-	nnoremap <silent>	<Leader>fs	:call ToggleFullscreen()<CR>
-endif
-
 command! -nargs=1 ExpandColumnsTo	let &columns+=(<args>-winwidth('.'))
 command! -nargs=0 ExpandColumnsTo80	ExpandColumnsTo 80
 
@@ -664,9 +555,6 @@ function! Perldoc(doc)
 endfunction
 command! -nargs=1 Perldoc	call Perldoc(<f-args>)
 "}}}
-
-com! PerlCore	!corelist <cword>
-autocmd FileType perl	nmap <buffer> ,pc	:PerlCore<Return>
 
 if has("win32")
 	command! -nargs=0 ExploreCurDir	silent execute "!start explorer ".expand(".")
@@ -809,50 +697,6 @@ command! -nargs=0 SynID	echo SynID()
 "}}}
 "}}}
 "**********************************************************************************"
-" Close Buffers {{{
-function! CloseWastedBuffers(method)
-	let last_buffer=bufnr("$")
-	let cur_buffer=bufnr("%")
-	let i=1
-	while i<=last_buffer
-		if i!=cur_buffer && bufexists(i) && bufname(i) == "" && !getbufvar(i, "&modified")
-			call CloseBuff(a:method,i)
-		endif
-		let i=i+1
-	endwhile
-endfunction
-command! -nargs=0 CloseBuffersDel	call CloseWastedBuffers(0)
-command! -nargs=0 CloseBuffersWipe	call CloseWastedBuffers(1)
-function! CloseOtherBuffers(method)
-	let cur_buffer=bufnr("%")
-	bufdo	if bufnr("%")!=cur_buffer |try|call CloseBuff(a:method,-1)|catch|echo "Could not close ".bufname("%")|endtry|endif
-endfunction
-
-function! CloseBuff(method,number)
-	let num=string(a:number)
-	if !bufexists(a:number)
-		if a:number==-1
-			let num=""
-		else
-			return
-		endif
-	endif
-
-	let meth=""
-	if a:method==0
-		let meth="bdelete"
-	elseif a:method==1
-		let meth="bwipeout"
-	endif
-	if meth!=""
-		try
-			exe num.meth
-		catch
-		endtry
-	endif
-endfunction
-"}}}
-"**********************************************************************************"
 " Backgrounds {{{
 command! -nargs=0 -bar Peachpuff	highlight Normal guifg=Black guibg=PeachPuff | call LightColors()
 command! -nargs=0 -bar AliceBlue	highlight Normal guifg=Black guibg=AliceBlue | call LightColors()
@@ -945,72 +789,6 @@ function! ToOwnTab_This()
 	call ToOwnTab(tabpagenr(),winnr())
 endfunction
 "}}}
-"}}}
-"**********************************************************************************"
-" Preview tags {{{
-" XXX breaks when used with taglist because taglist jumps
-" in and out and the previous window is not maintained
-"
-let g:prevword=0
-command! -nargs=0 -bar AutoPrevWordToggle	let g:prevword=!g:prevword
-" actually a bit annoying
-" using it with CursorMoved is slow
-" from CursorHold-example
-au! CursorHold *.[ch] nested	if g:prevword |call PreviewWord()|endif
-" CHANGE
-func! PreviewWord()
-	if &previewwindow			" don't do this in the preview window
-		return
-	endif
-	let w = expand("<cword>")		" get the word under cursor
-	if w =~ '\a'			" if the word contains a letter
-
-		" Delete any existing highlight before showing another tag
-		silent! wincmd P			" jump to preview window
-		if &previewwindow			" if we really get there...
-			match none			" delete existing highlight
-			wincmd p			" back to old window
-		endif
-
-		" Try displaying a matching tag for the word under the cursor
-		try
-			exe "ptag " . w
-		catch
-			return
-		endtry
-
-		silent! wincmd P			" jump to preview window
-		if &previewwindow		" if we really get there...
-			if has("folding")
-				" CHANGE
-				"	   silent! .foldopen		" don't want a closed fold
-				silent! normal zo
-			endif
-			call search("$", "b")		" to end of previous line
-			let w = substitute(w, '\\', '\\\\', "")
-			call search('\<\V' . w . '\>')	" position cursor on match
-			" Add a match highlight to the word at this position
-			hi previewWord term=bold ctermbg=green guibg=green
-			exe 'match previewWord "\%' . line(".") . 'l\%' . col(".") . 'c\k*"'
-			wincmd p			" back to old window
-		endif
-	endif
-endfun
-
-function! PreviewMaps()
-	nnoremap <buffer> <silent> <F9>	:call PreviewWordToggle()<CR>
-	imap <buffer> <silent> <F9>	<Esc><F9>
-endfunction
-
-function! PreviewWordToggle()
-	silent! wincmd P
-	if &previewwindow
-		pclose
-		wincmd p
-	else
-		call PreviewWord()
-	endif
-endfunction
 "}}}
 "**********************************************************************************"
 " Menu {{{
