@@ -765,30 +765,6 @@ function! Tab_Open_hack(...)
 endfunction
 command! -nargs=+ -complete=file TabOpen call Tab_Open_hack(<f-args>)
 " }}}
-" To own tab {{{
-" Only side effect would be winnr in target tabpage
-function! ToOwnTab(tabpage,winnr)
-	if a:tabpage>tabpagenr("$")
-		return 1
-	endif
-	let curtp=tabpagenr()
-	exe "tabnext ".a:tabpage
-	if winnr("$")!=1 && a:winnr<=winnr("$")
-		exe a:winnr."wincmd w"
-		exe "tab split"
-		let newtp=tabpagenr()
-		exe "tabnext ".a:tabpage
-		exe a:winnr."wincmd w"
-		exe "close"
-		return newtp
-	endif
-	return curtp
-endfunction
-
-function! ToOwnTab_This()
-	call ToOwnTab(tabpagenr(),winnr())
-endfunction
-"}}}
 "}}}
 "**********************************************************************************"
 " Menu {{{
