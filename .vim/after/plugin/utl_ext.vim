@@ -56,3 +56,9 @@ vmap <Leader>Gu	:call Set_utl_vim()<bar>Utl o v<CR>zv
 " Split and use vim to open
 nmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl<CR>zv
 vmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl o v<CR>zv
+
+fu! Utl_AddressScheme_find(url, fragment, dispMode)
+    let findId = UtlUri_unescape( UtlUri_opaque(a:url) )
+    let findUrl = findfile(findId)
+    return  Utl_AddressScheme_file(findUrl, a:fragment, a:dispMode)
+endfu
