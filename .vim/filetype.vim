@@ -11,4 +11,6 @@ au BufNewFile,BufRead *.prolog	setf prolog
 
 autocmd BufNewFile,BufRead *.ahk	setf ahk
 
+autocmd BufNewFile,BufRead *.txt	setf txt
+
 runtime! ftdetect/*.vim
