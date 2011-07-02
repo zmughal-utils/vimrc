@@ -141,6 +141,7 @@ set viewoptions+=unix,slash
 set fillchars+=fold:\ 
 
 set listchars+=tab:\|_	" Characters to use when 'list' is on
+set listchars+=nbsp:·
 
 set completeopt=menu,menuone,preview
 
