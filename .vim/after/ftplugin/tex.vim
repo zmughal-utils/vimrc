@@ -19,6 +19,11 @@ compiler tex
 
 nnoremap <buffer>	<F6>	:call TeXSmartOpen()<CR>
 imap	<buffer>	<F6>	<Esc><F6>
+
+command! -nargs=0 PDFTeX	let &l:makeprg= 'pdftex -interaction=nonstopmode'
+command! -nargs=0 PDFLaTeX	let &l:makeprg= 'pdflatex -interaction=nonstopmode'
+command! -nargs=0 LaTeX		let &l:makeprg= 'latex -interaction=nonstopmode'
+
 if &makeprg!='make' && executable("pdflatex")|exe "PDFLaTeX"|endif
 let b:surround_69 = "\\[\r\\]"
 let b:surround_101 = "\\(\r\\)"
@@ -30,10 +35,6 @@ let b:surround_101 = "\\(\r\\)"
 "		autocmd FileType tex	imap	<buffer>	<F6>	<Esc><F6>
 "	augroup END
 "endif "}}}
-
-command! -nargs=0 PDFTeX	let &l:makeprg= 'pdftex -interaction=nonstopmode'
-command! -nargs=0 PDFLaTeX	let &l:makeprg= 'pdflatex -interaction=nonstopmode'
-command! -nargs=0 LaTeX		let &l:makeprg= 'latex -interaction=nonstopmode'
 
 command! -nargs=0 TeXSubstituteEmDash	%s/\%u2014/---/gc
 command! -nargs=0 TeXSubstituteEnDash	%s/\%u2013/--/gc
