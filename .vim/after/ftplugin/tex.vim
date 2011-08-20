@@ -25,8 +25,8 @@ command! -nargs=0 PDFLaTeX	let &l:makeprg= 'pdflatex -interaction=nonstopmode'
 command! -nargs=0 LaTeX		let &l:makeprg= 'latex -interaction=nonstopmode'
 
 if &makeprg!='make' && executable("pdflatex")|exe "PDFLaTeX"|endif
-let b:surround_69 = "\\[\r\\]"
-let b:surround_101 = "\\(\r\\)"
+let b:surround_{char2nr("E")} = "\\[\r\\]"
+let b:surround_{char2nr("e")} = "\\(\r\\)"
 
 "if has('win32') &&  executable('yap.exe') "{{{
 "	command! -nargs=1 -complete=file Yap	silent !start yap -1 <args>
