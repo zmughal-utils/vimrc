@@ -470,6 +470,8 @@ endif
 command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 command! Wsudo	:w !sudo tee % >/dev/null
 
+let g:surround_{char2nr("o")}="\n\r\n\n"	" open line above and below
+
 function! ReverseLines(line1,line2)
 	let oldp=@/
 	exe string(a:line1).",".string(a:line2)."g/^/m".string(a:line1-1)
