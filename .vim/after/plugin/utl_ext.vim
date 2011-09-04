@@ -23,12 +23,12 @@ endfu
 
 if has("unix")
 	if exists("$DISPLAY")
-		let g:utl_cfg_hdl_scm_http__system = "silent !firefox '%u' &"
+		let g:utl_cfg_hdl_scm_http__system = "silent !firefox '%u#%f' &"
 	else
 		if executable("elinks")
-			let g:utl_cfg_hdl_scm_http__system = "silent !elinks '%u'"
+			let g:utl_cfg_hdl_scm_http__system = "silent !elinks '%u#%f'"
 		elseif executable("lynx")
-			let g:utl_cfg_hdl_scm_http__system = "silent !lynx '%u'"
+			let g:utl_cfg_hdl_scm_http__system = "silent !lynx '%u#%f'"
 		else
 			let g:utl_cfg_hdl_scm_http__system = "echoerr 'No browser found for terminal'"
 		endif
