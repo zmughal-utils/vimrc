@@ -65,15 +65,15 @@
 	hi! link UT9 Debug
 
 	"color for user text (non-wrapping)
-	hi! link UB1 Underlined
-	hi! link UB2 Underlined
-	hi! link UB3 Underlined
-	hi! link UB4 Underlined
-	hi! link UB5 Underlined
-	hi! link UB6 Underlined
-	hi! link UB7 Underlined
-	hi! link UB8 Underlined
-	hi! link UB9 Underlined
+	hi! link UB1 SpecialComment
+	hi! link UB2 SpecialComment
+	hi! link UB3 SpecialComment
+	hi! link UB4 SpecialComment
+	hi! link UB5 SpecialComment
+	hi! link UB6 SpecialComment
+	hi! link UB7 SpecialComment
+	hi! link UB8 SpecialComment
+	hi! link UB9 SpecialComment
 
 	"colors for folded sections
 	"hi! link Folded Special
