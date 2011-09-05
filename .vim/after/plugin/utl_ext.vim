@@ -21,14 +21,20 @@ fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
 	exe cmd
 endfu
 
+func! Utl_Get_Browser_Arg(uri, frag)
+	if(a:frag != '<undef>')
+		return a:uri."\\#".a:frag
+	endif
+	return a:uri
+endfunc
 if has("unix")
 	if exists("$DISPLAY")
-		let g:utl_cfg_hdl_scm_http__system = "silent !firefox '%u#%f' &"
+		let g:utl_cfg_hdl_scm_http__system = "exe 'silent !firefox '.Utl_Get_Browser_Arg('%u', '%f').' &'"
 	else
 		if executable("elinks")
-			let g:utl_cfg_hdl_scm_http__system = "silent !elinks '%u#%f'"
+			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !elinks '.Utl_Get_Browser_Arg('%u','%f')"
 		elseif executable("lynx")
-			let g:utl_cfg_hdl_scm_http__system = "silent !lynx '%u#%f'"
+			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !lynx '.Utl_Get_Browser_Arg('%u','%f')"
 		else
 			let g:utl_cfg_hdl_scm_http__system = "echoerr 'No browser found for terminal'"
 		endif
