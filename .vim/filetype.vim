@@ -13,4 +13,6 @@ autocmd BufNewFile,BufRead *.ahk	setf ahk
 
 autocmd BufNewFile,BufRead *.txt	setf txt
 
+autocmd BufNewFile,BufRead bash-fc*	setf sh
+
 runtime! ftdetect/*.vim
