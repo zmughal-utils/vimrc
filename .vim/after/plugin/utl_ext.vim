@@ -29,12 +29,12 @@ func! Utl_Get_Browser_Arg(uri, frag)
 endfunc
 if has("unix")
 	if exists("$DISPLAY")
-		let g:utl_cfg_hdl_scm_http__system = "exe 'silent !firefox '.Utl_Get_Browser_Arg('%u', '%f').' &'"
+		let g:utl_cfg_hdl_scm_http__system = "exe 'silent !firefox \"'.Utl_Get_Browser_Arg('%u', '%f').'\" &'"
 	else
 		if executable("elinks")
-			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !elinks '.Utl_Get_Browser_Arg('%u','%f')"
+			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !elinks \"'.Utl_Get_Browser_Arg('%u','%f').'\"'"
 		elseif executable("lynx")
-			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !lynx '.Utl_Get_Browser_Arg('%u','%f')"
+			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !lynx \"'.Utl_Get_Browser_Arg('%u','%f').'\"'"
 		else
 			let g:utl_cfg_hdl_scm_http__system = "echoerr 'No browser found for terminal'"
 		endif
