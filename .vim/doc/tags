@@ -30,6 +30,7 @@
 'NERDTreeWinPos'	NERD_tree.txt	/*'NERDTreeWinPos'*
 'NERDTreeWinSize'	NERD_tree.txt	/*'NERDTreeWinSize'*
 'NERDUsePlaceHolders'	NERD_commenter.txt	/*'NERDUsePlaceHolders'*
+'Tail_Height'	tail.txt	/*'Tail_Height'*
 'Tlist_Auto_Highlight_Tag'	taglist.txt	/*'Tlist_Auto_Highlight_Tag'*
 'Tlist_Auto_Open'	taglist.txt	/*'Tlist_Auto_Open'*
 'Tlist_Auto_Update'	taglist.txt	/*'Tlist_Auto_Update'*
@@ -164,6 +165,7 @@
 :RIPOW	visincr.txt	/*:RIPOW*
 :RM	visincr.txt	/*:RM*
 :S	abolish.txt	/*:S*
+:STail	tail.txt	/*:STail*
 :Subvert	abolish.txt	/*:Subvert*
 :SyntasticDisable	syntastic.txt	/*:SyntasticDisable*
 :SyntasticEnable	syntastic.txt	/*:SyntasticEnable*
@@ -175,6 +177,8 @@
 :TTimeCommand	tlib.txt	/*:TTimeCommand*
 :TToC	ttoc.txt	/*:TToC*
 :TVarArg	tlib.txt	/*:TVarArg*
+:TabTail	tail.txt	/*:TabTail*
+:Tail	tail.txt	/*:Tail*
 :TextobjFoldDefaultKeyMappings	textobj-fold.txt	/*:TextobjFoldDefaultKeyMappings*
 :TlistAddFiles	taglist.txt	/*:TlistAddFiles*
 :TlistAddFilesRecursive	taglist.txt	/*:TlistAddFilesRecursive*
@@ -212,6 +216,7 @@
 :VCSUpdate	vcscommand.txt	/*:VCSUpdate*
 :VCSVimDiff	vcscommand.txt	/*:VCSVimDiff*
 :Widen	narrow.txt	/*:Widen*
+:vim-tail.zsh	tail.txt	/*:vim-tail.zsh*
 <Plug>(fakeclip-P)	fakeclip.txt	/*<Plug>(fakeclip-P)*
 <Plug>(fakeclip-Y)	fakeclip.txt	/*<Plug>(fakeclip-Y)*
 <Plug>(fakeclip-[P)	fakeclip.txt	/*<Plug>(fakeclip-[P)*
@@ -410,6 +415,7 @@ Tabula_InvisibleIgnore	tabula.txt	/*Tabula_InvisibleIgnore*
 Tabula_LNumUnderline	tabula.txt	/*Tabula_LNumUnderline*
 Tabula_SearchStandOut	tabula.txt	/*Tabula_SearchStandOut*
 Tabula_TodoUnderline	tabula.txt	/*Tabula_TodoUnderline*
+Tail.txt	tail.txt	/*Tail.txt*
 Tlist_Get_Tag_Prototype_By_Line()	taglist.txt	/*Tlist_Get_Tag_Prototype_By_Line()*
 Tlist_Get_Tagname_By_Line()	taglist.txt	/*Tlist_Get_Tagname_By_Line()*
 Tlist_Set_App()	taglist.txt	/*Tlist_Set_App()*
@@ -1369,6 +1375,10 @@ taglist-todo	taglist.txt	/*taglist-todo*
 taglist-using	taglist.txt	/*taglist-using*
 taglist.txt	taglist.txt	/*taglist.txt*
 tags_complete	neocomplcache.txt	/*tags_complete*
+tail-about	tail.txt	/*tail-about*
+tail-commands	tail.txt	/*tail-commands*
+tail-configure	tail.txt	/*tail-configure*
+tail-mappings	tail.txt	/*tail-mappings*
 textformat-commands	textformat.txt	/*textformat-commands*
 textformat-config	textformat.txt	/*textformat-config*
 textformat-history	textformat.txt	/*textformat-history*
