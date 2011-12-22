@@ -98,6 +98,9 @@ let g:SrcExpl_pluginList = [
 	\ "Source_Explorer"
 \ ] 
 
+" :help align-multibyte
+let let g:Align_xstrlen= 3
+
 set helpheight=8
 set previewheight=4
 set switchbuf+=useopen,usetab	",split
