@@ -99,7 +99,7 @@ let g:SrcExpl_pluginList = [
 \ ] 
 
 " :help align-multibyte
-let let g:Align_xstrlen= 3
+let g:Align_xstrlen=3
 
 set helpheight=8
 set previewheight=4
