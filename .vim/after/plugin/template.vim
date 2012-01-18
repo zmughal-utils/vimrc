@@ -23,5 +23,7 @@ augroup Templates "{{{
 	autocmd BufNewFile *.bat	call Read_template("bat")
 	autocmd BufNewFile *.java	call Read_template("java")
 	autocmd BufNewFile *.py		call Read_template("py")
+	autocmd BufNewFile *.pl		call Read_template("pl")
+	autocmd BufNewFile *.pm		call Read_template("pm")
 augroup END "}}}
 "}}}
