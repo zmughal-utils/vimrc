@@ -307,7 +307,8 @@ if !exists("loaded_zip_extensions") "{{{
 	au BufReadCmd *.odt call zip#Browse(expand("<amatch>"))
 endif "}}}
 
-autocmd BufWritePost *.pl !chmod +x %	" set exec bit
+" set exec bit
+autocmd BufWritePost *.pl silent !chmod +x %
 
 " TODO make a ft
 function! URL_ft()
