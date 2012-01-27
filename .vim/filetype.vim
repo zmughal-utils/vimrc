@@ -21,4 +21,6 @@ autocmd BufNewFile,BufRead bash-fc*	setf sh
 
 autocmd BufNewFile,BufRead *.lsh	setf lisp
 
+autocmd BufNewFile,BufRead *.rq	setf sparql
+
 runtime! ftdetect/*.vim
