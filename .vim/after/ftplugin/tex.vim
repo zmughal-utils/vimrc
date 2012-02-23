@@ -54,7 +54,11 @@ function! TeXSmartOpen() "{{{
 					call command#Background("see ".vfile)
 				endif
 			elseif has("unix") && exists("$DISPLAY")
-				exe "!see '".vfile."' &"
+				if vfile =~ '.*\.pdf'
+					call OpenPDF(vfile)
+				else
+					exe "!see ".fnameescape(vfile)." &"
+				endif
 			endif
 			break	" first readable
 		endif
