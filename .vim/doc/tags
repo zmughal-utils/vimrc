@@ -265,6 +265,7 @@ AnsiEsc-history	AnsiEsc.txt	/*AnsiEsc-history*
 AnsiEsc-manual	AnsiEsc.txt	/*AnsiEsc-manual*
 AnsiEsc.txt	AnsiEsc.txt	/*AnsiEsc.txt*
 CSApprox.txt	CSApprox.txt	/*CSApprox.txt*
+ClearSwapList	swapit.txt	/*ClearSwapList*
 EasyGrep	EasyGrep.txt	/*EasyGrep*
 EasyGrep.txt	EasyGrep.txt	/*EasyGrep.txt*
 EasyGrepAllOptionsInExplorer	EasyGrep.txt	/*EasyGrepAllOptionsInExplorer*
@@ -414,6 +415,8 @@ NERD_tree.txt	NERD_tree.txt	/*NERD_tree.txt*
 ResetSnippets()	snipMate.txt	/*ResetSnippets()*
 SHINKUU-TATSUMAKI-SENPUU-KYAKU	mimicpak.txt	/*SHINKUU-TATSUMAKI-SENPUU-KYAKU*
 Stallman	mimicpak.txt	/*Stallman*
+SwapIdea	swapit.txt	/*SwapIdea*
+SwapList	swapit.txt	/*SwapList*
 SyntasticMake()	syntastic.txt	/*SyntasticMake()*
 TToC_GetLine_bib()	ttoc.txt	/*TToC_GetLine_bib()*
 TToC_GetLine_viki()	ttoc.txt	/*TToC_GetLine_viki()*
@@ -1368,6 +1371,19 @@ surround-mappings	surround.txt	/*surround-mappings*
 surround-replacements	surround.txt	/*surround-replacements*
 surround-targets	surround.txt	/*surround-targets*
 surround.txt	surround.txt	/*surround.txt*
+swapit-annoyances	swapit.txt	/*swapit-annoyances*
+swapit-bugs	swapit.txt	/*swapit-bugs*
+swapit-builtin	swapit.txt	/*swapit-builtin*
+swapit-cleanup	swapit.txt	/*swapit-cleanup*
+swapit-define	swapit.txt	/*swapit-define*
+swapit-filetype	swapit.txt	/*swapit-filetype*
+swapit-html	swapit.txt	/*swapit-html*
+swapit-installation	swapit.txt	/*swapit-installation*
+swapit-intro	swapit.txt	/*swapit-intro*
+swapit-multiword	swapit.txt	/*swapit-multiword*
+swapit-omnicomplete	swapit.txt	/*swapit-omnicomplete*
+swapit-requirements	swapit.txt	/*swapit-requirements*
+swapit-setup	swapit.txt	/*swapit-setup*
 syntastic	syntastic.txt	/*syntastic*
 syntastic-about	syntastic.txt	/*syntastic-about*
 syntastic-changelog	syntastic.txt	/*syntastic-changelog*
