@@ -11,7 +11,11 @@ function! OpenPDF(pdffile)
 				call command#Background(g:pdf_viewer." ".a:pdffile)
 			endif
 		elseif has("unix") && exists("$DISPLAY")
-			exe "!see '".a:pdffile."' &"
+			if !exists('g:pdf_viewer')
+				exe '!see '.fnameescape(a:pdffile).' &'
+			else
+				exe "!".shellescape(g:pdf_viewer)." ".fnameescape(a:pdffile)." &"
+			endif
 		endif
 	endif
 endfunction

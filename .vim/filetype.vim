@@ -23,4 +23,6 @@ autocmd BufNewFile,BufRead *.lsh	setf lisp
 
 autocmd BufNewFile,BufRead *.rq	setf sparql
 
+autocmd BufNewFile,BufRead *.cir	setf spice
+
 runtime! ftdetect/*.vim
