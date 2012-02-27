@@ -14,7 +14,7 @@ function! OpenPDF(pdffile)
 			if !exists('g:pdf_viewer')
 				exe '!see '.fnameescape(a:pdffile).' &'
 			else
-				exe "!".shellescape(g:pdf_viewer)." ".fnameescape(a:pdffile)." &"
+				exe "!".g:pdf_viewer." ".fnameescape(a:pdffile)." &"
 			endif
 		endif
 	endif
