@@ -308,7 +308,7 @@ if !exists("loaded_zip_extensions") "{{{
 endif "}}}
 
 " set exec bit
-autocmd BufWritePost *.pl if &ft == "perl" | silent !chmod +x % | endif
+autocmd BufWritePost *.pl if &ft == "perl" | silent exe "!chmod +x ".fnameescape(expand('<afile>')) | endif
 
 " TODO make a ft
 function! URL_ft()
