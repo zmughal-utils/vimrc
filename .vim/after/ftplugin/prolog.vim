@@ -17,6 +17,8 @@ if !exists("PrologSettingsLoaded")
 	endfunction
 
 	function SWIPrologInterp(file)
+		" TODO: look in to allowing for calling other goals and using
+		" the -s option
 		return 'swipl -g "'.PrologLoad(a:file).'"'
 	endfunction
 
