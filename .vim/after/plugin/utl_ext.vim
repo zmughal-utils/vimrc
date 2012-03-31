@@ -1,7 +1,8 @@
 let g:utl_cfg_hdl_mt_application_pdf__xpdf="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f')"
 fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
-	if !filereadable(a:path)
-		redraw | echom "File '".a:path."' not found"
+	let l:path = escape(a:path, '!')
+	if !filereadable(l:path)
+		redraw | echom "File '".l:path."' not found"
 		return
 	endif
 	let page = ''
@@ -17,15 +18,16 @@ fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
 		endif
 	endif
 
-	let cmd = ':silent !xpdf -q '.'"'.a:path.'"'.' '.l:page.' &'
+	let cmd = ':silent !xpdf -q '.'"'.l:path.'"'.' '.l:page.' &'
 	exe cmd
 endfu
 
 func! Utl_Get_Browser_Arg(uri, frag)
+	let l:uri = escape(a:uri, '!')
 	if(a:frag != '<undef>')
-		return a:uri."\\#".a:frag
+		return l:uri."\\#".a:frag
 	endif
-	return a:uri
+	return l:uri
 endfunc
 if has("unix")
 	if exists("$DISPLAY")
