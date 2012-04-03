@@ -11,6 +11,8 @@ au BufNewFile,BufRead *.prolog	setf prolog
 
 autocmd BufNewFile,BufRead *.ahk	setf ahk
 
+autocmd BufNewFile,BufRead *.txx	setf cpp	" templates
+
 autocmd BufNewFile,BufRead *.txt	if( expand("<afile>") == "CMakeLists.txt" )
 autocmd BufNewFile,BufRead *.txt		setf cmake
 autocmd BufNewFile,BufRead *.txt	else
