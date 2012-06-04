@@ -552,6 +552,7 @@ call programming#QuickFixMaps(0)
 " IndexedSearch.vim breaks things
 au VimEnter *		silent! cunmap <CR>
 
+digraph sb 8226	" Puce (bullet)
 digraph !? 8253	" Interrobang
 digraph ?! 8253
 digraph .3 8230 " Ellipsis
