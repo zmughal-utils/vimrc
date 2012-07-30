@@ -431,7 +431,7 @@ command! -nargs=0 -bar TermXTerm		let $TERM='xterm'
 command! -nargs=0 -bar URLHighlight	runtime syntax/URL.vim
 command! -nargs=0 -bar MakeprgReset	set makeprg&
 if executable('ack-grep')
-	command! -nargs=0 -bar AckGrep	set grepprg=ack-grep\ -Ha
+	command! -nargs=0 -bar AckGrep	set grepprg=ack-grep\ -H
 endif
 "if has("unix")
 "        command! -nargs=0 CNERDTree		exe "NERDTree ".escape(getcwd(),' \\')
