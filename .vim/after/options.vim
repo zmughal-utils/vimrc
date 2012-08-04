@@ -196,5 +196,9 @@ let tlist_bc_settings   = 'bc;f:Functions'
 " http://www-rocq.inria.fr/~soliman/gprolog.ctags
 let tlist_prolog_settings   = 'prolog;p:Predicates'
 
+let tlist_c_settings = 'c;d:macro;g:enum;s:struct;u:union;t:typedef;' .
+			\ 'v:variable;f:function;' .
+			\ 'p:prototype'
+
 "}}}
 " vim:fdm=marker
