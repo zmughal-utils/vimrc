@@ -268,7 +268,9 @@ AnsiEsc-history	AnsiEsc.txt	/*AnsiEsc-history*
 AnsiEsc-manual	AnsiEsc.txt	/*AnsiEsc-manual*
 AnsiEsc.txt	AnsiEsc.txt	/*AnsiEsc.txt*
 CSApprox.txt	CSApprox.txt	/*CSApprox.txt*
+CheckLiveUpdateStatus()	live-latex-preview.txt	/*CheckLiveUpdateStatus()*
 ClearSwapList	swapit.txt	/*ClearSwapList*
+CloseMuPDF()	live-latex-preview.txt	/*CloseMuPDF()*
 EasyGrep	EasyGrep.txt	/*EasyGrep*
 EasyGrep.txt	EasyGrep.txt	/*EasyGrep.txt*
 EasyGrepAllOptionsInExplorer	EasyGrep.txt	/*EasyGrepAllOptionsInExplorer*
@@ -319,9 +321,12 @@ IMDY	visincr.txt	/*IMDY*
 IYMD	visincr.txt	/*IYMD*
 LargeFile-copyright	LargeFile.txt	/*LargeFile-copyright*
 LargeFile.txt	LargeFile.txt	/*LargeFile.txt*
+LaunchMuPDF()	live-latex-preview.txt	/*LaunchMuPDF()*
 MakeANtags	AsNeeded.txt	/*MakeANtags*
 MatchError	matchit.txt	/*MatchError*
 MkAsNeeded	AsNeeded.txt	/*MkAsNeeded*
+MuPDFForward()	live-latex-preview.txt	/*MuPDFForward()*
+MuPDFReverse()	live-latex-preview.txt	/*MuPDFReverse()*
 NERDComAbout	NERD_commenter.txt	/*NERDComAbout*
 NERDComAlignedComment	NERD_commenter.txt	/*NERDComAlignedComment*
 NERDComAltDelim	NERD_commenter.txt	/*NERDComAltDelim*
@@ -415,6 +420,7 @@ NERDTreeOptions	NERD_tree.txt	/*NERDTreeOptions*
 NERDTreeRender()	NERD_tree.txt	/*NERDTreeRender()*
 NERD_commenter.txt	NERD_commenter.txt	/*NERD_commenter.txt*
 NERD_tree.txt	NERD_tree.txt	/*NERD_tree.txt*
+PDFViewingToggle()	live-latex-preview.txt	/*PDFViewingToggle()*
 ResetSnippets()	snipMate.txt	/*ResetSnippets()*
 SHINKUU-TATSUMAKI-SENPUU-KYAKU	mimicpak.txt	/*SHINKUU-TATSUMAKI-SENPUU-KYAKU*
 Stallman	mimicpak.txt	/*Stallman*
@@ -449,6 +455,7 @@ UnconditionalPaste-todo	UnconditionalPaste.txt	/*UnconditionalPaste-todo*
 UnconditionalPaste-usage	UnconditionalPaste.txt	/*UnconditionalPaste-usage*
 UnconditionalPaste.txt	UnconditionalPaste.txt	/*UnconditionalPaste.txt*
 UnconditionalPaste.vim	UnconditionalPaste.txt	/*UnconditionalPaste.vim*
+UpdatingToggle()	live-latex-preview.txt	/*UpdatingToggle()*
 Utl-chgOverview	utl_usr.txt	/*Utl-chgOverview*
 VCSCommandCVSDiffOpt	vcscommand.txt	/*VCSCommandCVSDiffOpt*
 VCSCommandCVSExec	vcscommand.txt	/*VCSCommandCVSExec*
@@ -1188,6 +1195,8 @@ l9.txt	l9.txt	/*l9.txt*
 largefile	LargeFile.txt	/*largefile*
 largefile-history	LargeFile.txt	/*largefile-history*
 list-snippets	snipMate.txt	/*list-snippets*
+live-latex-preview	live-latex-preview.txt	/*live-latex-preview*
+live-latex-preview.txt	live-latex-preview.txt	/*live-latex-preview.txt*
 manpageview	manpageview.txt	/*manpageview*
 manpageview-K	manpageview.txt	/*manpageview-K*
 manpageview-contents	manpageview.txt	/*manpageview-contents*
