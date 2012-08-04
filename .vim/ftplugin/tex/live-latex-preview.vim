@@ -41,7 +41,7 @@ function! LivePreviewFindRoot()
 endfunction
 call LivePreviewFindRoot()
 " make space for messages
-setlocal cmdheight=2
+"setlocal cmdheight=2
 " open PDF viewer
 function! LaunchMuPDF() 
     " Go to right directory and keep it that way
