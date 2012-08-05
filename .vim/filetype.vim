@@ -27,4 +27,7 @@ autocmd BufNewFile,BufRead *.rq	setf sparql
 
 autocmd BufNewFile,BufRead *.cir	setf spice
 
+autocmd BufNewFile,BufRead *.i	set filetype=swig
+autocmd BufNewFile,BufRead *.swg	set filetype=swig 
+
 runtime! ftdetect/*.vim
