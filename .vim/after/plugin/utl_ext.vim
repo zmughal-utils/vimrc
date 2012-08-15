@@ -1,5 +1,7 @@
 let g:utl_cfg_hdl_mt_application_pdf__xpdf="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f')"
-fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
+let g:utl_cfg_hdl_mt_application_pdf__xpdf_rv="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f', '-rv')"
+let g:utl_cfg_hdl_mt_application_pdf__evince="call Utl_if_hdl_mt_application_pdf_evince('%p', '%f')"
+fu! Utl_if_hdl_mt_application_pdf_parse(path,fragment)
 	let l:path = escape(a:path, '!')
 	if !filereadable(l:path)
 		redraw | echom "File '".l:path."' not found"
@@ -17,8 +19,36 @@ fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment)
 			return
 		endif
 	endif
+	let info = {}
+	let info["path"] = l:path
+	if !empty(page)
+		let info["page"] = l:page
+	endif
+	return info
+endfu
 
-	let cmd = ':silent !xpdf -q '.'"'.l:path.'"'.' '.l:page.' &'
+fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment, ...)
+	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let cmd = ':silent !xpdf -q '
+	if exists("a:1")
+		let cmd .= ' '.a:1.' '
+	endif
+	let cmd .= '"'.l:info["path"].'"'
+	if has_key(info, 'page')
+		let cmd .= ' '.info["page"]
+	endif
+	let cmd .= ' &'
+	exe cmd
+endfu
+
+fu! Utl_if_hdl_mt_application_pdf_evince(path,fragment)
+	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let cmd = ':silent !evince '
+	if has_key(info, 'page')
+		let cmd .= ' -p '.info["page"].' '
+	endif
+	let cmd .= '"'.l:info["path"].'"'
+	let cmd .= ' &'
 	exe cmd
 endfu
 
