@@ -171,7 +171,7 @@ function! UpdatingToggle()
     endif
 endfunction
 " Manual compilation/unstickifier
-function ManualCompilation()
+function! ManualCompilation()
     silent! call system('!killall pdflatex &>/dev/null')
     silent! call system('!killall xelatex &>/dev/null')
     silent! call system('!killall live-latex-check.sh &>/dev/null')
