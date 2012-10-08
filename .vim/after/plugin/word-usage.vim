@@ -14,6 +14,8 @@ function! WordUsage()
 
 	call matchadd('WordUsageHomophone', "\\c\\<\\(loose\\|lose\\)\\>")
 
+	call matchadd('WordUsageHomophone', "\\c\\<\\(then\\|than\\)\\>")
+
 	"match WordUsage could've
 	call matchadd('WordUsageError', "\\c\\<could\\s\\+of\\>")
 endfunction
