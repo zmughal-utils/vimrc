@@ -1,6 +1,6 @@
 " <http://stackoverflow.com/questions/3828606/vim-markdown-folding>
 " From <http://stackoverflow.com/questions/3828606/vim-markdown-folding#comment16309004_4677454>
-function markdown_level#MarkdownLevel()
+function markdown_fold#MarkdownLevel()
 	let h = matchstr(getline(v:lnum), '^#\+')
 	if empty(h)
 		return "="
