@@ -7,17 +7,25 @@ function markdown_fold#MarkdownLevel()
 		let ln = matchstr(getline(v:lnum+1), '^\s*\*')
 		let lp = matchstr(getline(v:lnum-1), '^\s*\*')
 		let blp = match(getline(v:lnum-1), '^$')
-		let bln = match(getline(v:lnum+1), '^$')
+		let bln = match(getline(v:lnum+1), '^$') 
+		let beglist = blp!=-1 || v:lnum == 1
+		let endlist = bln!=-1 || v:lnum == line('$')
 		if empty(l)
 			return "="
-		elseif len(l)==1 && blp != -1
-			return "a1"
-		elseif len(l)==1 && bln != -1
-			return "s1"
+		elseif len(l) && beglist && endlist
+			return "="
+		elseif len(l) && beglist
+			let diff = (len(l)-1)/2 + 1
+			return "a".diff
+		elseif len(l) && endlist
+			let diff = (len(l)-1)/2 + 1
+			return "s".diff
 		elseif len(l) < len(ln) 
-			return "a1"
+			let diff = (len(ln) - len(l)-2)/2 + 1
+			return "a".diff
 		elseif  len(l) > len(ln) 
-			return "s1"
+			let diff = (len(l)-len(ln)-2)/2 + 1
+			return "s".diff
 		elseif  len(l) == len(ln) 
 			return "="
 		end
