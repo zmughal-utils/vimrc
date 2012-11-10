@@ -11,7 +11,19 @@ function markdown_fold#MarkdownLevel()
 		let beglist = blp!=-1 || v:lnum == 1
 		let endlist = bln!=-1 || v:lnum == line('$')
 		if empty(l)
-			return "="
+			let q = matchstr(getline(v:lnum), '^\s*>')
+			let qp = match(getline(v:lnum-1), '^\s*>')
+			let qn = match(getline(v:lnum+1), '^\s*>')
+			let endq = blp!=-1 || v:lnum == line('$')
+			if empty(q) && qp==-1
+				return "="
+			elseif len(q) && qn==-1
+				return "s1"
+			elseif len(q) && qp==-1
+				return "a1"
+			elseif len(q) && qp!=-1
+				return "="
+			end
 		elseif len(l) && beglist && endlist
 			return "="
 		elseif len(l) && beglist
