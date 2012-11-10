@@ -14,7 +14,6 @@ function markdown_fold#MarkdownLevel()
 			let q = matchstr(getline(v:lnum), '^\s*>')
 			let qp = match(getline(v:lnum-1), '^\s*>')
 			let qn = match(getline(v:lnum+1), '^\s*>')
-			let endq = blp!=-1 || v:lnum == line('$')
 			if empty(q) && qp==-1
 				return "="
 			elseif len(q) && qn==-1
