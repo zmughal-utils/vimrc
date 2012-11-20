@@ -1,3 +1,5 @@
 setl sua+=.mdwn
-set fdm=expr
-set foldexpr=markdown_fold#MarkdownLevel()
+setl fdm=expr
+setl foldexpr=markdown_fold#MarkdownLevel()
+
+setl ts=4 sts=4 sw=4 et
