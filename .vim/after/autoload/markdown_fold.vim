@@ -3,9 +3,9 @@
 function markdown_fold#MarkdownLevel()
 	let h = matchstr(getline(v:lnum), '^#\+')
 	if empty(h)
-		let l = matchstr(getline(v:lnum), '^\s*\*')
-		let ln = matchstr(getline(v:lnum+1), '^\s*\*')
-		let lp = matchstr(getline(v:lnum-1), '^\s*\*')
+		let l = matchstr(getline(v:lnum), '^\s*[*+-]')
+		let ln = matchstr(getline(v:lnum+1), '^\s*[*+-]')
+		let lp = matchstr(getline(v:lnum-1), '^\s*[*+-]')
 		let blp = match(getline(v:lnum-1), '^$')
 		let bln = match(getline(v:lnum+1), '^$') 
 		let beglist = blp!=-1 || v:lnum == 1
