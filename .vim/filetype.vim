@@ -30,4 +30,6 @@ autocmd BufNewFile,BufRead *.cir	setf spice
 autocmd BufNewFile,BufRead *.i	set filetype=swig
 autocmd BufNewFile,BufRead *.swg	set filetype=swig 
 
+autocmd BufNewFile,BufRead *.neato	setf dot
+
 runtime! ftdetect/*.vim
