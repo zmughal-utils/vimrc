@@ -1,0 +1,56 @@
+#!/usr/bin/env perl
+# see ~/.vim/
+use strict;
+use warnings;
+use autodie ':all';
+use Class::Inspector;
+use Sub::Information;
+
+my ( $package_file, $test_file ) = @ARGV;
+
+exit if -e $test_file;
+
+my $package = $package_file;
+$package =~ s{\.pm$}{} or exit;
+$package =~ s{^.+/lib/}{};
+$package =~ s{/}{::}g;
+
+eval "use $package";
+if ( my $err = $@ ) {
+    die $err;
+}
+
+open my $fh, '>', $test_file;
+print $fh <<"END";
+use Test::Most;
+
+BEGIN {
+    use_ok( '$package' );
+}
+
+END
+
+my $functions = Class::Inspector->function_refs($package);
+
+my @functions;
+foreach my $function (@$functions) {
+    my $info = inspect($function);
+    my $name = $info->name;
+    next if $name =~ /^_/ or $name =~ /^[[:upper:]_]+$/;
+    next if $info->package ne $package;
+    push @functions => $name;
+}
+
+foreach my $function (@functions) {
+    print $fh "test_${function}();\n";
+}
+print $fh "\ndone_testing;\n\n";
+
+foreach my $function (@functions) {
+    print $fh <<"END";
+sub test_${function} {
+    can_ok '$package', '$function';
+}
+
+END
+}
