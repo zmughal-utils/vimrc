@@ -25,5 +25,6 @@ augroup Templates "{{{
 	autocmd BufNewFile *.py		call Read_template("py")
 	autocmd BufNewFile *.pl		call Read_template("pl")
 	autocmd BufNewFile *.pm		call Read_template("pm")
+	autocmd BufNewFile *.p6		call Read_template("p6")
 augroup END "}}}
 "}}}
