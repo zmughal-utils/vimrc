@@ -55,6 +55,8 @@ if !exists("vim_script_path")
 	let g:vim_script_path=expand("$HOME")	" Enviroment variable is set by z.bat
 endif
 
+call pathogen#infect() 
+
 " Specific config {{{
 if has("menu")
 	let g:my_menu=1
