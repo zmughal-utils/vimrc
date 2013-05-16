@@ -200,5 +200,8 @@ let tlist_c_settings = 'c;d:macro;g:enum;s:struct;u:union;t:typedef;' .
 			\ 'v:variable;f:function;' .
 			\ 'p:prototype'
 
+" Coffeescript <https://gist.github.com/yury/2624883>
+let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
+
 "}}}
 " vim:fdm=marker
