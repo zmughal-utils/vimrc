@@ -24,9 +24,8 @@ open my $fh, '>', $test_file;
 print $fh <<"END";
 use Test::Most;
 
-BEGIN {
-    use_ok( '$package' );
-}
+BEGIN { use_ok( '$package' ); }
+require_ok( '$package' );
 
 END
 
@@ -41,16 +40,14 @@ foreach my $function (@$functions) {
     push @functions => $name;
 }
 
-foreach my $function (@functions) {
-    print $fh "test_${function}();\n";
-}
-print $fh "\ndone_testing;\n\n";
 
 foreach my $function (@functions) {
     print $fh <<"END";
-sub test_${function} {
-    can_ok '$package', '$function';
-}
+subtest "Verify $function" => sub {
+	can_ok '$package', '$function';
+};
 
 END
 }
+
+print $fh "\ndone_testing;\n\n";
