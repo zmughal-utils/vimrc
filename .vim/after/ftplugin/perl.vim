@@ -9,6 +9,23 @@ setlocal foldmethod=syntax
 " and <http://stackoverflow.com/questions/979359/vim-and-custom-tagging/980051#980051>
 let tlist_perl_settings='perl;u:use;p:package;r:role;e:extends;c:constant;a:attribute;s:subroutine;l:label;m:method;q:requires;o:POD'
 
+function! PerlGetBasePath()
+    let tmpname = expand( '%:p' )
+    if (match(tmpname, '.pm$') != -1)
+        let basepath = substitute(tmpname, '\/lib\/.\+', '', '' )
+        return basepath
+    endif
+    if (match(tmpname, '.t$') != -1)
+        let basepath = substitute(tmpname, '\/t\/.\+', '', '' )
+        return basepath
+    endif
+    return ''
+endfunction
+
+let b:libdir = PerlGetBasePath() . "/lib"
+let $PERL5LIB = $PERL5LIB . ":" . b:libdir
+exe "set path+=" . b:libdir
+
 compiler perl
 let &l:makeprg = substitute(&l:makeprg, "\\s*%","","")
 
