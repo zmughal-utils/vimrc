@@ -1,0 +1,4 @@
+#!/bin/sh
+CURDIR=`dirname "$0"`
+cd "$CURDIR"
+helpztags doc/ bundle/*/doc/
