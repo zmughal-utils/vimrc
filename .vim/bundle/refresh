@@ -14,3 +14,4 @@ refresh() {
 }
 
 refresh https://github.com/kchmck/vim-coffee-script.git vim-coffee-script
+refresh https://github.com/scrooloose/syntastic.git syntastic
