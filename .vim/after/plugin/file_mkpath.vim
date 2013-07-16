@@ -7,6 +7,6 @@ endif
 let g:loaded_file_mkpath = 1
 
 if exists('*mkdir')
-	command -nargs=1 E	call mkdir(fnamemodify(<q-args>,":h"),"p") <Bar> e <args>
-	command -nargs=1 New	call mkdir(fnamemodify(<q-args>,":h"),"p") <Bar> new <args>
+	command -nargs=1 -complete=file E	call mkdir(fnamemodify(<q-args>,":h"),"p") <Bar> e <args>
+	command -nargs=1 -complete=file New	call mkdir(fnamemodify(<q-args>,":h"),"p") <Bar> new <args>
 end
