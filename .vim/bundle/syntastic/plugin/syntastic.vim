@@ -129,7 +129,8 @@ function! s:UpdateErrors(auto_invoked, ...)
         return
     endif
 
-    if !a:auto_invoked || s:modemap.allowsAutoChecking(&filetype)
+    let run_checks = !a:auto_invoked || s:modemap.allowsAutoChecking(&filetype)
+    if run_checks
         if a:0 >= 1
             call s:CacheErrors(a:1)
         else
@@ -141,7 +142,7 @@ function! s:UpdateErrors(auto_invoked, ...)
 
     if g:syntastic_always_populate_loc_list || g:syntastic_auto_jump
         call setloclist(0, loclist.filteredRaw())
-        if g:syntastic_auto_jump && loclist.hasErrorsOrWarningsToDisplay()
+        if run_checks && g:syntastic_auto_jump && loclist.hasErrorsOrWarningsToDisplay()
             silent! lrewind
         endif
     endif
@@ -327,6 +328,7 @@ endfunction
 "   'subtype' - all errors will be assigned the given subtype
 "   'postprocess' - a list of functions to be applied to the error list
 "   'cwd' - change directory to the given path before running the checker
+"   'returns' - a list of valid exit codes for the checker
 function! SyntasticMake(options)
     call syntastic#util#debug('SyntasticMake: called with options: '. string(a:options))
 
@@ -375,6 +377,10 @@ function! SyntasticMake(options)
 
     if s:IsRedrawRequiredAfterMake()
         call s:Redraw()
+    endif
+
+    if has_key(a:options, 'returns') && index(a:options['returns'], v:shell_error) == -1
+        throw 'Syntastic: checker error'
     endif
 
     if has_key(a:options, 'defaults')
