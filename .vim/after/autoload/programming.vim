@@ -25,9 +25,9 @@ function programming#QuickFixMaps(where)		" Mappings that make using QuickFix ea
 	exe "imap ".option." <silent> <S-F12> <Esc><S-F12>"
 
 	" <F11> is used to move from one error to the next
-	exe "nmap ".option." <S-F11> :cprevious<CR>"
+	exe "nmap ".option." <S-F11> :cprevious<CR>zv"
 	exe "imap ".option." <S-F11> <Esc><S-F11>"
-	exe "nmap ".option." <F11> :cnext<CR>"
+	exe "nmap ".option." <F11> :cnext<CR>zv"
 	exe "imap ".option." <F11> <Esc><F11>"
 endfunction
 
