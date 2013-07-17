@@ -152,6 +152,8 @@ if has("balloon_evel")
 	set ballooneval
 endif
 
+let g:ack_qhandler = ''
+
 "set synmaxcol=0
 
 call util#No_bells()
