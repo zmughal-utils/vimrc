@@ -41,9 +41,6 @@ if isdirectory(expand("~/.vimlocal"))
 	let &rtp=substitute(&rtp,",",",".expand("~/.vimlocal").",","")
 endif
 
-" Disable syntastic for now
-let g:loaded_syntastic_plugin = 1
-
 " No LaTeX-Suite under Debian {{{
 set runtimepath-=/var/lib/vim/addons
 set runtimepath-=/usr/share/vim/addons
