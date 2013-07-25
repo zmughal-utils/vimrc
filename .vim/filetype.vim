@@ -32,4 +32,6 @@ autocmd BufNewFile,BufRead *.swg	set filetype=swig
 
 autocmd BufNewFile,BufRead *.neato	setf dot
 
+autocmd BufNewFile,BufRead *.t	setf perl	" test files
+
 runtime! ftdetect/*.vim
