@@ -41,13 +41,10 @@ let g:loaded_autofold=1
 " ------------------------------------------------------------------------------
 " Configuration:                                                             {{{
 
-filetype on
-set foldcolumn=0
-set foldexpr=SF_SetFolds()
-set foldmethod=expr
-set foldminlines=1
-set foldopen=block,hor,insert,mark,percent,quickfix,search,tag,undo
-set foldtext=SFT_SetFoldText()
+function! SetAutoFoldExpr()
+	setl foldexpr=SF_SetFolds()
+	setl foldmethod=expr
+endfunction
 
 " Set fold text style
 " ("solid" sets the fold to be a solid line of -, anything else leaves it open
