@@ -34,4 +34,6 @@ autocmd BufNewFile,BufRead *.neato	setf dot
 
 autocmd BufNewFile,BufRead *.t	setf perl	" test files
 
+autocmd BufNewFile,BufRead *.md	setf markdown
+
 runtime! ftdetect/*.vim
