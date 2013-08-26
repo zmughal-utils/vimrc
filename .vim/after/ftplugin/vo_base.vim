@@ -9,6 +9,7 @@ endif
 
 " VimExec(line) {{{2
 " Execute an executable line in vim [copied from Spawn()]
+if !exists("*VimExec")
 function! VimExec()
 		let theline=getline(line("."))
 		let idx=matchend(theline, "_vim_\\s*")
@@ -19,5 +20,6 @@ function! VimExec()
 			exec command
 		endif
 endfunction
+endif
 "}}}2
 nmap <silent><buffer>  <localleader>v           :call VimExec()<cr>
