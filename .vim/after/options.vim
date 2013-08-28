@@ -153,6 +153,9 @@ if has("balloon_evel")
 endif
 
 let g:ack_qhandler = ''
+if executable('ack')
+	let g:ackprg = 'ack'
+endif
 
 "set synmaxcol=0
 
