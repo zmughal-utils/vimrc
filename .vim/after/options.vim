@@ -154,7 +154,7 @@ endif
 
 let g:ack_qhandler = ''
 if executable('ack')
-	let g:ackprg = 'ack'
+	let g:ackprg = 'ack' . " -H --nocolor --nogroup --column"
 endif
 
 "set synmaxcol=0
