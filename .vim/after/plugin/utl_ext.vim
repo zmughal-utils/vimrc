@@ -72,7 +72,7 @@ if has("unix")
 		endif
 	endif
 	let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
-	let g:utl_cfg_hdl_mt_generic = "silent !see '%p'"
+	let g:utl_cfg_hdl_mt_generic = "silent !see_smarter '%p'"
 endif
 
 func! Set_utl_system()
