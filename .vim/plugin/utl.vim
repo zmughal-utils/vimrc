@@ -1090,6 +1090,8 @@ fu! s:Utl_checkMediaType(path)
     " unix/linux oriented
     elseif ext==?'fig'
 	let mt = 'image/x-fig'
+    elseif ext==?'xoj' " NOTE: PATCH!
+	let mt = 'application/xournal'
 
     endif
     return mt 
