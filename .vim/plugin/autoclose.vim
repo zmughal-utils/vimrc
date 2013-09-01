@@ -158,7 +158,7 @@ function <SID>JumpOut(char) " ----------{{{2
 endf
 function <SID>CloseStackPop(char) " ---{{{2
     "echom "pop"
-    if(a:char == '')
+    if(a:char == '' && bufname('%') != '[Command Line]') " PATCH
         pclose
     endif
     if len(s:closeStack) == 0
