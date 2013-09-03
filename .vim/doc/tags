@@ -264,6 +264,16 @@ CSApprox.txt	CSApprox.txt	/*CSApprox.txt*
 CheckLiveUpdateStatus()	live-latex-preview.txt	/*CheckLiveUpdateStatus()*
 ClearSwapList	swapit.txt	/*ClearSwapList*
 CloseMuPDF()	live-latex-preview.txt	/*CloseMuPDF()*
+DistractFree	DistractFree.txt	/*DistractFree*
+DistractFree-Colorscheme	DistractFree.txt	/*DistractFree-Colorscheme*
+DistractFree-config	DistractFree.txt	/*DistractFree-config*
+DistractFree-feedback	DistractFree.txt	/*DistractFree-feedback*
+DistractFree-history	DistractFree.txt	/*DistractFree-history*
+DistractFree-hooks	DistractFree.txt	/*DistractFree-hooks*
+DistractFree-manual	DistractFree.txt	/*DistractFree-manual*
+DistractFree-maps	DistractFree.txt	/*DistractFree-maps*
+DistractFree-size	DistractFree.txt	/*DistractFree-size*
+DistractFree.txt	DistractFree.txt	/*DistractFree.txt*
 EasyGrep	EasyGrep.txt	/*EasyGrep*
 EasyGrep.txt	EasyGrep.txt	/*EasyGrep.txt*
 EasyGrepAllOptionsInExplorer	EasyGrep.txt	/*EasyGrepAllOptionsInExplorer*
