@@ -497,8 +497,9 @@ let RunLineChangePre=""
 if has("win32")
 	let RunLineChangePre='sed "s/.*/cmd \/C &/"|'
 endif
-exe "command! -nargs=0 RunCurrentLine	.w !".RunLineChangePre."sh"
+exe "command! -range -nargs=0 RunCurrentLine	<line1>,<line2>w !".RunLineChangePre."sh"
 nnoremap \rl	:RunCurrentLine<CR>
+vnoremap \rl	:RunCurrentLine<CR>
 
 vnoremap \wc :w !wc -w<CR>
 nnoremap \wc :w !wc -w<CR>
