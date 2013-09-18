@@ -1,4 +1,4 @@
-if executable('/usr/local/bin/matlab')
+if executable('/usr/local/bin/matlab') || executable('matlab')
 	let g:manpageview_pgm_matlab = "matlab_doc"
 else
 	let g:manpageview_pgm_matlab = "octave_doc"
