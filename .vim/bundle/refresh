@@ -5,9 +5,15 @@ COMMIT_FILE="COMMIT"
 refresh() {
   local url="$1"
   local dir="$2"
+  local branch="$3"
 
   rm -rf $dir
-  git clone $url $dir --depth=1
+  if [ -z "$branch" ]; then
+	  branch="master"
+  fi
+  BRANCH="--branch=$branch"
+  echo "$BRANCH"
+  git clone $url $dir "$BRANCH" --depth=1
   COMMIT=$(git --git-dir=$dir/.git log | head -1 | sed 's,^commit ,,')
   #echo -e "$url\t$COMMIT" >> $COMMIT_FILE
   rm -rf $dir/.git
