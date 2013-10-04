@@ -24,6 +24,12 @@ let s:defaultCheckers = {
         \ 'tex':        ['lacheck']
     \ }
 
+let s:defaultFiletypeMap = {
+        \ 'gentoo-metadata': 'xml',
+        \ 'lhaskell': 'haskell',
+        \ 'litcoffee': 'coffee'
+    \ }
+
 let g:SyntasticRegistry = {}
 
 " TODO: Handling of filetype aliases: all public methods take aliases as
@@ -199,7 +205,8 @@ endfunction
 "resolve filetype aliases, and replace - with _ otherwise we cant name
 "syntax checker functions legally for filetypes like "gentoo-metadata"
 function! s:SyntasticRegistryNormaliseFiletype(ftalias)
-    let ft = get(g:syntastic_filetype_map, a:ftalias, a:ftalias)
+    let ft = get(s:defaultFiletypeMap, a:ftalias, a:ftalias)
+    let ft = get(g:syntastic_filetype_map, ft, ft)
     let ft = substitute(ft, '-', '_', 'g')
     return ft
 endfunction
