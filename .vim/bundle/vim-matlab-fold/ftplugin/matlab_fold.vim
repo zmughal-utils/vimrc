@@ -30,14 +30,11 @@
 "       filetype indent on
 "
 
-setlocal foldmethod=expr
-setlocal foldexpr=MatlabFoldExpr()
-
-setlocal foldtext=MatlabFoldText()
-setlocal fillchars=  " 
+"setlocal foldtext=MatlabFoldText()
+"setlocal fillchars=  " 
 
 " set this to something low (like 0 - 2 range) to start with some folds closed
-setlocal foldlevel=20
+"setlocal foldlevel=20
 
 function! GetLineIndent(lnum, ...)
     " Get the indent of line lnum. This function automatically takes ... line 
@@ -211,3 +208,6 @@ function! MatlabFoldText()
     let expansionString = repeat(" ", w - strwidth(foldSizeStr.line.foldLevelStr.foldPercentage))
     return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
 endfunction
+
+setlocal foldmethod=expr
+setlocal foldexpr=MatlabFoldExpr()
