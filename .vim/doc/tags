@@ -218,7 +218,7 @@
 :Widen	narrow.txt	/*:Widen*
 :vim-tail.zsh	tail.txt	/*:vim-tail.zsh*
 <Leader>#	mark.txt	/*<Leader>#*
-<Leader>/	mark.txt	/*<Leader>\/*
+<Leader>/	mark.txt	/*<Leader>/*
 <Leader>?	mark.txt	/*<Leader>?*
 <Leader>m	mark.txt	/*<Leader>m*
 <Leader>n	mark.txt	/*<Leader>n*
@@ -815,7 +815,6 @@ fuf-givenfile-mode	fuf.txt	/*fuf-givenfile-mode*
 fuf-help-mode	fuf.txt	/*fuf-help-mode*
 fuf-hiding-menu	fuf.txt	/*fuf-hiding-menu*
 fuf-how-to-add-mode	fuf.txt	/*fuf-how-to-add-mode*
-fuf-installation	fuf.txt	/*fuf-installation*
 fuf-installation	l9.txt	/*fuf-installation*
 fuf-introduction	fuf.txt	/*fuf-introduction*
 fuf-jumplist-mode	fuf.txt	/*fuf-jumplist-mode*
