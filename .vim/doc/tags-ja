@@ -1,3 +1,4 @@
+!_TAG_FILE_ENCODING	utf-8	//
 :FufAddBookmark	fuf.jax	/*:FufAddBookmark*
 :FufAddBookmarkAsSelectedText	fuf.jax	/*:FufAddBookmarkAsSelectedText*
 :FufAroundMruFile	fuf.jax	/*:FufAroundMruFile*
@@ -70,6 +71,7 @@ fuf-givenfile-mode	fuf.jax	/*fuf-givenfile-mode*
 fuf-help-mode	fuf.jax	/*fuf-help-mode*
 fuf-hiding-menu	fuf.jax	/*fuf-hiding-menu*
 fuf-how-to-add-mode	fuf.jax	/*fuf-how-to-add-mode*
+fuf-installation	fuf.jax	/*fuf-installation*
 fuf-installation	l9.jax	/*fuf-installation*
 fuf-introduction	fuf.jax	/*fuf-introduction*
 fuf-jumplist-mode	fuf.jax	/*fuf-jumplist-mode*
