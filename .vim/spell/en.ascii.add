@@ -134,3 +134,7 @@ petabytes
 colour space
 colourspace/!
 colorspace/!
+RGB
+grayscale
+binarize
+binarized
