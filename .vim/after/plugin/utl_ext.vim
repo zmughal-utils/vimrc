@@ -1,6 +1,7 @@
 let g:utl_cfg_hdl_mt_application_pdf__xpdf="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f')"
 let g:utl_cfg_hdl_mt_application_pdf__xpdf_rv="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f', '-rv')"
 let g:utl_cfg_hdl_mt_application_pdf__evince="call Utl_if_hdl_mt_application_pdf_evince('%p', '%f')"
+let g:utl_cfg_hdl_mt_application_pdf__mendeley="call Utl_if_hdl_mt_application_pdf_mendeley('%p', '%f')"
 fu! Utl_if_hdl_mt_application_pdf_parse(path,fragment)
 	let l:path = escape(a:path, '!')
 	if !filereadable(l:path)
@@ -47,6 +48,14 @@ fu! Utl_if_hdl_mt_application_pdf_evince(path,fragment)
 	if has_key(info, 'page')
 		let cmd .= ' -p '.info["page"].' '
 	endif
+	let cmd .= '"'.l:info["path"].'"'
+	let cmd .= ' &'
+	exe cmd
+endfu
+
+fu! Utl_if_hdl_mt_application_pdf_mendeley(path,fragment)
+	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let cmd = ':silent !mendeleydesktop '
 	let cmd .= '"'.l:info["path"].'"'
 	let cmd .= ' &'
 	exe cmd
