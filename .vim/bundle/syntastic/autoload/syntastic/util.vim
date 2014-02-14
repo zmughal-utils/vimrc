@@ -1,4 +1,4 @@
-if exists("g:loaded_syntastic_util_autoload")
+if exists('g:loaded_syntastic_util_autoload')
     finish
 endif
 let g:loaded_syntastic_util_autoload = 1
@@ -6,14 +6,18 @@ let g:loaded_syntastic_util_autoload = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
-if !exists("g:syntastic_debug")
-    let g:syntastic_debug = 0
-endif
+" strwidth() was added in Vim 7.3; if it doesn't exist, we use strlen()
+" and hope for the best :)
+let s:width = function(exists('*strwidth') ? 'strwidth' : 'strlen')
 
-let s:deprecationNoticesIssued = []
+" Public functions {{{1
+
+function! syntastic#util#isRunningWindows()
+    return has('win16') || has('win32') || has('win64')
+endfunction
 
 function! syntastic#util#DevNull()
-    if has('win32')
+    if syntastic#util#isRunningWindows()
         return 'NUL'
     endif
     return '/dev/null'
@@ -21,7 +25,7 @@ endfunction
 
 " Get directory separator
 function! syntastic#util#Slash() abort
-    return !exists("+shellslash") || &shellslash ? '/' : '\'
+    return (!exists("+shellslash") || &shellslash) ? '/' : '\'
 endfunction
 
 "search the first 5 lines of the file for a magic number and return a map
@@ -39,18 +43,25 @@ function! syntastic#util#parseShebang()
         let line = getline(lnum)
 
         if line =~ '^#!'
-            let exe = matchstr(line, '^#!\s*\zs[^ \t]*')
-            let args = split(matchstr(line, '^#!\s*[^ \t]*\zs.*'))
-            return {'exe': exe, 'args': args}
+            let exe = matchstr(line, '\m^#!\s*\zs[^ \t]*')
+            let args = split(matchstr(line, '\m^#!\s*[^ \t]*\zs.*'))
+            return { 'exe': exe, 'args': args }
         endif
     endfor
 
-    return {'exe': '', 'args': []}
+    return { 'exe': '', 'args': [] }
+endfunction
+
+" Get the value of a variable.  Allow local variables to override global ones.
+function! syntastic#util#var(name)
+    return
+        \ exists('b:syntastic_' . a:name) ? b:syntastic_{a:name} :
+        \ exists('g:syntastic_' . a:name) ? g:syntastic_{a:name} : ''
 endfunction
 
 " Parse a version string.  Return an array of version components.
 function! syntastic#util#parseVersion(version)
-    return split(matchstr( a:version, '\v^\D*\zs\d+(\.\d+)+\ze' ), '\.')
+    return split(matchstr( a:version, '\v^\D*\zs\d+(\.\d+)+\ze' ), '\m\.')
 endfunction
 
 " Run 'command' in a shell and parse output as a version string.
@@ -66,17 +77,9 @@ endfunction
 "
 " See http://semver.org for info about version numbers.
 function! syntastic#util#versionIsAtLeast(installed, required)
-    for index in range(max([len(a:installed), len(a:required)]))
-        if len(a:installed) <= index
-            let installed_element = 0
-        else
-            let installed_element = a:installed[index]
-        endif
-        if len(a:required) <= index
-            let required_element = 0
-        else
-            let required_element = a:required[index]
-        endif
+    for idx in range(max([len(a:installed), len(a:required)]))
+        let installed_element = get(a:installed, idx, 0)
+        let required_element = get(a:required, idx, 0)
         if installed_element != required_element
             return installed_element > required_element
         endif
@@ -90,24 +93,23 @@ function! syntastic#util#wideMsg(msg)
     let old_ruler = &ruler
     let old_showcmd = &showcmd
 
-    "convert tabs to spaces so that the tabs count towards the window width
-    "as the proper amount of characters
-    let msg = substitute(a:msg, "\t", repeat(" ", &tabstop), "g")
-    let msg = strpart(msg, 0, winwidth(0)-1)
+    "This is here because it is possible for some error messages to
+    "begin with \n which will cause a "press enter" prompt.
+    let msg = substitute(a:msg, "\n", "", "g")
 
-    "This is here because it is possible for some error messages to begin with
-    "\n which will cause a "press enter" prompt. I have noticed this in the
-    "javascript:jshint checker and have been unable to figure out why it
-    "happens
-    let msg = substitute(msg, "\n", "", "g")
+    "convert tabs to spaces so that the tabs count towards the window
+    "width as the proper amount of characters
+    let chunks = split(msg, "\t", 1)
+    let msg = join(map(chunks[:-2], 'v:val . repeat(" ", &ts - s:width(v:val) % &ts)'), '') . chunks[-1]
+    let msg = strpart(msg, 0, winwidth(0) - 1)
 
     set noruler noshowcmd
-    redraw
+    call syntastic#util#redraw(0)
 
     echo msg
 
-    let &ruler=old_ruler
-    let &showcmd=old_showcmd
+    let &ruler = old_ruler
+    let &showcmd = old_showcmd
 endfunction
 
 " Check whether a buffer is loaded, listed, and not hidden
@@ -134,14 +136,25 @@ endfunction
 function! syntastic#util#findInParent(what, where)
     let here = fnamemodify(a:where, ':p')
 
-    while !empty(here)
+    let root = syntastic#util#Slash()
+    if syntastic#util#isRunningWindows() && here[1] == ':'
+        " The drive letter is an ever-green source of fun.  That's because
+        " we don't care about running syntastic on Amiga these days. ;)
+        let root = fnamemodify(root, ':p')
+        let root = here[0] . root[1:]
+    endif
+
+    let old = ''
+    while here != ''
         let p = split(globpath(here, a:what), '\n')
 
         if !empty(p)
             return fnamemodify(p[0], ':p')
-        elseif here == '/'
+        elseif here ==? root || here ==? old
             break
         endif
+
+        let old = here
 
         " we use ':h:h' rather than ':h' since ':p' adds a trailing '/'
         " if 'here' is a directory
@@ -177,46 +190,62 @@ endfunction
 " decode XML entities
 function! syntastic#util#decodeXMLEntities(string)
     let str = a:string
-    let str = substitute(str, '&lt;', '<', 'g')
-    let str = substitute(str, '&gt;', '>', 'g')
-    let str = substitute(str, '&quot;', '"', 'g')
-    let str = substitute(str, '&apos;', "'", 'g')
-    let str = substitute(str, '&amp;', '\&', 'g')
+    let str = substitute(str, '\m&lt;', '<', 'g')
+    let str = substitute(str, '\m&gt;', '>', 'g')
+    let str = substitute(str, '\m&quot;', '"', 'g')
+    let str = substitute(str, '\m&apos;', "'", 'g')
+    let str = substitute(str, '\m&amp;', '\&', 'g')
     return str
 endfunction
 
-function! syntastic#util#debug(msg)
-    if g:syntastic_debug
-        echomsg "syntastic: debug: " . a:msg
+function! syntastic#util#redraw(full)
+    if a:full
+        redraw!
+    else
+        redraw
     endif
 endfunction
 
-function! syntastic#util#info(msg)
-    echomsg "syntastic: info: " . a:msg
+function! syntastic#util#dictFilter(errors, filter)
+    let rules = s:translateFilter(a:filter)
+    " call syntastic#log#debug(g:SyntasticDebugFilters, "applying filter:", rules)
+    try
+        call filter(a:errors, rules)
+    catch /\m^Vim\%((\a\+)\)\=:E/
+        let msg = matchstr(v:exception, '\m^Vim\%((\a\+)\)\=:\zs.*')
+        call syntastic#log#error('quiet_messages: ' . msg)
+    endtry
 endfunction
 
-function! syntastic#util#warn(msg)
-    echohl WarningMsg
-    echomsg "syntastic: warning: " . a:msg
-    echohl None
+" Private functions {{{1
+
+function! s:translateFilter(filters)
+    let conditions = []
+    for [k, v] in items(a:filters)
+        if type(v) == type([])
+            call extend(conditions, map(copy(v), 's:translateElement(k, v:val)'))
+        else
+            call add(conditions, s:translateElement(k, v))
+        endif
+    endfor
+    return len(conditions) == 1 ? conditions[0] : join(map(conditions, '"(" . v:val . ")"'), ' && ')
 endfunction
 
-function! syntastic#util#error(msg)
-    execute "normal \<Esc>"
-    echohl ErrorMsg
-    echomsg "syntastic: error: " . a:msg
-    echohl None
-endfunction
-
-function! syntastic#util#deprecationWarn(msg)
-    if index(s:deprecationNoticesIssued, a:msg) >= 0
-        return
+function! s:translateElement(key, term)
+    if a:key ==? 'level'
+        let ret = 'v:val["type"] !=? ' . string(a:term[0])
+    elseif a:key ==? 'type'
+        let ret = a:term ==? 'style' ? 'get(v:val, "subtype", "") !=? "style"' : 'has_key(v:val, "subtype")'
+    elseif a:key ==? 'regex'
+        let ret = 'v:val["text"] !~? ' . string(a:term)
+    elseif a:key ==? 'file'
+        let ret = 'bufname(str2nr(v:val["bufnr"])) !~# ' . string(a:term)
+    else
+        let ret = "1"
     endif
-
-    call add(s:deprecationNoticesIssued, a:msg)
-    call syntastic#util#warn(a:msg)
+    return ret
 endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
-" vim: set et sts=4 sw=4:
+" vim: set et sts=4 sw=4 fdm=marker:
