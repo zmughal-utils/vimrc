@@ -1,7 +1,7 @@
 "============================================================================
-"File:        jscs.vim
-"Description: Javascript syntax checker - using jscs
-"Maintainer:  LCD 47 <lcd047@gmail.com>
+"File:        syntaxerl.vim
+"Description: Syntax checking plugin for syntastic.
+"Maintainer:  locojay
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -9,31 +9,32 @@
 "             See http://sam.zoy.org/wtfpl/COPYING for more details.
 "============================================================================
 
-if exists("g:loaded_syntastic_javascript_jscs_checker")
+if exists("g:loaded_syntastic_erlang_syntaxerl_checker")
     finish
 endif
-let g:loaded_syntastic_javascript_jscs_checker = 1
+
+let g:loaded_syntastic_erlang_syntaxerl_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_javascript_jscs_GetLocList() dict
-    let makeprg = self.makeprgBuild({ 'args_after': '--no-colors --reporter checkstyle' })
-    let errorformat = '%f:%t:%l:%c:%m'
+
+function! SyntaxCheckers_erlang_syntaxerl_GetLocList() dict
+
+    let makeprg = self.makeprgBuild({})
+
+    let errorformat =
+        \ '%W%f:%l: warning: %m,'.
+        \ '%E%f:%l: %m'
+
     return SyntasticMake({
         \ 'makeprg': makeprg,
-        \ 'errorformat': errorformat,
-        \ 'subtype': 'Style',
-        \ 'preprocess': 'checkstyle',
-        \ 'postprocess': ['sort'],
-        \ 'returns': [0, 2] })
+        \ 'errorformat': errorformat })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'javascript',
-    \ 'name': 'jscs'})
+    \ 'filetype': 'erlang',
+    \ 'name': 'syntaxerl'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
-
-" vim: set et sts=4 sw=4:
