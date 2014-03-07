@@ -41,3 +41,4 @@ refresh https://github.com/scrooloose/syntastic.git syntastic
 refresh https://github.com/zmughal/ack.vim.git ack.vim
 refresh https://github.com/zmughal/vim-matlab-fold vim-matlab-fold zmughal
 refresh https://github.com/wesQ3/vim-windowswap vim-windowswap
+refresh https://github.com/ervandew/supertab supertab
