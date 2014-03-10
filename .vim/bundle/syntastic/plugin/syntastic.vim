@@ -1,7 +1,6 @@
 "============================================================================
 "File:        syntastic.vim
 "Description: Vim plugin for on the fly syntax checking.
-"Version:     3.3.0-113
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -18,6 +17,8 @@ let g:loaded_syntastic_plugin = 1
 if has('reltime')
     let g:syntastic_start = reltime()
 endif
+
+let g:syntastic_version = '3.4.0'
 
 " Sanity checks {{{1
 
@@ -286,6 +287,7 @@ function! s:CacheErrors(checker_names) " {{{2
 
     if !s:skipFile()
         " debug logging {{{3
+        call syntastic#log#debugShowVariables(g:SyntasticDebugTrace, 'version')
         call syntastic#log#debugShowOptions(g:SyntasticDebugTrace, s:debug_dump_options)
         call syntastic#log#debugDump(g:SyntasticDebugVariables)
         call syntastic#log#debugShowVariables(g:SyntasticDebugTrace, 'aggregate_errors')
@@ -303,17 +305,16 @@ function! s:CacheErrors(checker_names) " {{{2
 
         let names = []
         for checker in clist
-            let type = checker.getFiletype()
-            let name = checker.getName()
-            call syntastic#log#debug(g:SyntasticDebugTrace, 'CacheErrors: Invoking checker: ' . type . '/' . name)
+            let cname = checker.getFiletype() . '/' . checker.getName()
+            call syntastic#log#debug(g:SyntasticDebugTrace, 'CacheErrors: Invoking checker: ' . cname)
 
             let loclist = checker.getLocList()
 
             if !loclist.isEmpty()
                 if decorate_errors
-                    call loclist.decorate(type, name)
+                    call loclist.decorate(cname)
                 endif
-                call add(names, [type, name])
+                call add(names, cname)
 
                 let newLoclist = newLoclist.extend(loclist)
 
@@ -325,13 +326,13 @@ function! s:CacheErrors(checker_names) " {{{2
 
         " set names {{{3
         if !empty(names)
-            if len(syntastic#util#unique(map( copy(names), 'v:val[0]' ))) == 1
-                let type = names[0][0]
-                let name = join(map(names, 'v:val[1]'), ', ')
+            if len(syntastic#util#unique(map( copy(names), 'substitute(v:val, "\\m/.*", "", "")' ))) == 1
+                let type = substitute(names[0], '\m/.*', '', '')
+                let name = join(map( names, 'substitute(v:val, "\\m.\\{-}/", "", "")' ), ', ')
                 call newLoclist.setName( name . ' ('. type . ')' )
             else
                 " checkers from mixed types
-                call newLoclist.setName(join(map(names, 'v:val[0] . "/" . v:val[1]'), ', '))
+                call newLoclist.setName(join(names, ', '))
             endif
         endif
         " }}}3
@@ -425,7 +426,7 @@ function! SyntasticMake(options) " {{{2
     endif
     lgetexpr err_lines
 
-    let errors = copy(getloclist(0))
+    let errors = deepcopy(getloclist(0))
 
     if has_key(a:options, 'cwd')
         execute 'lcd ' . fnameescape(old_cwd)
