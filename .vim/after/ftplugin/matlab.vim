@@ -1,4 +1,6 @@
 setl iskeyword+=.
-setlocal foldmethod=syntax
-setlocal foldcolumn=1
 setl fo+=cro " automatic comment insertion
+
+"setlocal foldmethod=syntax
+setl fdm=expr " use vim-matlab-fold plugin
+setlocal foldcolumn=1
