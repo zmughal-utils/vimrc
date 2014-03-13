@@ -14,16 +14,21 @@ if exists("+showtabline")
             let s .= ' '
             let wn = tabpagewinnr(i,'$')
 
-            let s .= (i== t ? '%#TabNumSel#' : '%#TabNum#')
+            "let s .= (i== t ? '%#TabNumSel#' : '%#TabNum#')
             let s .= i
             if tabpagewinnr(i,'$') > 1
                 let s .= '.'
-                let s .= (i== t ? '%#TabWinNumSel#' : '%#TabWinNum#')
+                "let s .= (i== t ? '%#TabWinNumSel#' : '%#TabWinNum#')
                 let s .= (tabpagewinnr(i,'$') > 1 ? wn : '')
             end
 
             let s .= ' %*'
-            let s .= (i == t ? '%#TabLineSel#' : '%#TabLine#')
+	    "let s .= (i == t ? '%#TabLineSel#' : '%#TabLine#')
+	    if i == t
+		    let s .= '%#TabLineSel#'
+	    elseif i == t + 1
+		    let s .= '%#TabLine#'
+	    end
             let bufnr = buflist[winnr - 1]
             let file = bufname(bufnr)
             let buftype = getbufvar(bufnr, 'buftype')
@@ -35,8 +40,11 @@ if exists("+showtabline")
                 let file = fnamemodify(file, ':p:t')
             endif
             if file == ''
-                let file = '[No Name]'
+                let file = '[NN]'
             endif
+	    if len(file) > 5
+		    let file = substitute(file, '^\(.\{3\}\).*\(.\{2\}\)$', '\1\2', '' )
+	    end
             let s .= file
             let s .= (i == t ? '%m' : '')
             let i = i + 1
