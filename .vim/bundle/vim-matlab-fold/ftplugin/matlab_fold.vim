@@ -97,7 +97,7 @@ endfunction
 
 function! IsLineCellMarked(lnum)
     " Returns 1 iff this line begins with %%
-    return getline(a:lnum)=~'^%%'
+    return getline(a:lnum)=~'^\s*%%'
 endfunction
 
 function! IsLineCellStart(lnum)
