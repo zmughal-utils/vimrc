@@ -45,3 +45,4 @@ refresh https://github.com/ervandew/supertab supertab
 refresh https://github.com/luochen1990/rainbow rainbow-paren-improved
 refresh https://github.com/zeis/vim-kolor colorscheme-kolor
 refresh https://github.com/chrisbra/Recover.vim.git recover.vim-swap
+refresh https://github.com/airblade/vim-gitgutter vim-gitgutter
