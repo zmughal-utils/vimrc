@@ -152,3 +152,6 @@ mispredicted
 assistive
 overfitting
 underfitting
+Gaussians
+RANSAC
+inliers
