@@ -41,6 +41,8 @@ if isdirectory(expand("~/.vimlocal"))
 	let &rtp=substitute(&rtp,",",",".expand("~/.vimlocal").",","")
 endif
 
+autocmd BufNew,BufRead,BufWritePre * setl noundofile
+
 " No LaTeX-Suite under Debian {{{
 set runtimepath-=/var/lib/vim/addons
 set runtimepath-=/usr/share/vim/addons
