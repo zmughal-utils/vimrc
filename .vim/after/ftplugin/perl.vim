@@ -33,3 +33,8 @@ nmap <buffer> <F6> :!"%:p"<CR>
 imap <buffer> <F6> <Esc><F6>
 
 setlocal iskeyword+=:
+
+" syntastic setting
+let g:syntastic_perl_checkers = [ "perl", "perlcritic", "podchecker" ]
+let g:syntastic_enable_perl_checker = 1 " security (maybe this should be disabled for any Perl outside certain directories)
+let g:syntastic_perl_lib_path = [ './lib', './lib/auto' ]
