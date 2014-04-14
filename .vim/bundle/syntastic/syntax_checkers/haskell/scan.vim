@@ -1,7 +1,7 @@
 "============================================================================
-"File:        hdevtools.vim
+"File:        scan.vim
 "Description: Syntax checking plugin for syntastic.vim
-"Maintainer:  Anthony Carapetis <anthony.carapetis at gmail dot com>
+"Maintainer:  LCD 47 <lcd047 at gmail dot com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,43 +10,29 @@
 "
 "============================================================================
 
-if exists("g:loaded_syntastic_haskell_hdevtools_checker")
+if exists('g:loaded_syntastic_haskell_scan_checker')
     finish
 endif
-let g:loaded_syntastic_haskell_hdevtools_checker = 1
+let g:loaded_syntastic_haskell_scan_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_haskell_hdevtools_GetLocList() dict
-    if exists('g:hdevtools_options')
-        let g:syntastic_haskell_hdevtools_args = g:hdevtools_options
-    endif
+function! SyntaxCheckers_haskell_scan_GetLocList() dict
+    let makeprg = self.makeprgBuild({})
 
-    let makeprg = self.makeprgBuild({
-        \ 'exe_after': 'check',
-        \ 'fname': syntastic#util#shexpand('%:p') })
-
-    let errorformat =
-        \ '%-Z %#,'.
-        \ '%W%f:%l:%v: Warning: %m,'.
-        \ '%W%f:%l:%v: Warning:,'.
-        \ '%E%f:%l:%v: %m,'.
-        \ '%E%>%f:%l:%v:,'.
-        \ '%+C  %#%m,'.
-        \ '%W%>%f:%l:%v:,'.
-        \ '%+C  %#%tarning: %m,'
+    let errorformat = '%f:%l:%v: %m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
-        \ 'defaults': {'vcol': 1},
-        \ 'postprocess': ['compressWhitespace'] })
+        \ 'subtype': 'Style',
+        \ 'postprocess': ['sort'] })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
     \ 'filetype': 'haskell',
-    \ 'name': 'hdevtools'})
+    \ 'name': 'scan'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
