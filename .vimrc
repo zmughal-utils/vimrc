@@ -494,6 +494,7 @@ command! -nargs=0 -range=% AutoFormat <line1>,<line2>!perl -MText::Autoformat -e
 command! -nargs=0 -range=% AutoFormatBreakWrap <line1>,<line2>!perl -MText::Autoformat=autoformat,break_wrap -e'autoformat({all => 1, break => break_wrap})'
 command! -nargs=0 -range=% AutoFormatBreakAt <line1>,<line2>!perl -MText::Autoformat=autoformat,break_at -e'autoformat({ all => 1, break => break_at("-", { except => qr/<[^>]*>/ }) })'
 command! -nargs=0 AutoFormatPara .,$!perl -MText::Autoformat -e'autoformat'
+command! -nargs=0 -range=% SortNaturally <line1>,<line2>!perl -MSort::Naturally -E 'say nsort( <> )'
 
 let RunLineChangePre=""
 if has("win32")
