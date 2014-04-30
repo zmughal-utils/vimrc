@@ -38,7 +38,7 @@ fi
 #rm -f $COMMIT_FILE
 refresh https://github.com/kchmck/vim-coffee-script.git vim-coffee-script
 refresh https://github.com/scrooloose/syntastic.git syntastic
-refresh https://github.com/zmughal/ack.vim.git ack.vim
+refresh https://github.com/mileszs/ack.vim.git ack.vim
 refresh https://github.com/zmughal/vim-matlab-fold vim-matlab-fold zmughal
 refresh https://github.com/wesQ3/vim-windowswap vim-windowswap
 refresh https://github.com/ervandew/supertab supertab
