@@ -561,9 +561,9 @@ digraph ?! 8253
 digraph .3 8230 " Ellipsis
 digraph ~= 8773 " Approximately equal to
 
-"nnoremap <Leader>rf	:FuzzyFinderMruFile<CR>
-" For v. 3.0
+" For FuzzyFinder >= v3.0
 nnoremap <Leader>rf	:FufMruFile<CR>
+nnoremap <Leader>rt	:FufFileWithFullCwd<CR>
 
 
 "if exists("g:loaded_nerd_tree")
