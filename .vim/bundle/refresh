@@ -2,14 +2,14 @@
 
 COMMIT_FILE="COMMIT"
 
-refresh() {
+refresh_git() {
   local url="$1"
   local dir="$2"
   local branch="$3"
 
   rm -rf $dir
   if [ -z "$branch" ]; then
-	  branch="master"
+    branch="master"
   fi
   BRANCH="--branch=$branch"
   echo "$BRANCH"
@@ -24,25 +24,26 @@ refresh() {
 
   STATUS=$(git status --porcelain | grep ".vim/bundle/$dir" )
   if [ ! -z "$STATUS" ]; then
-	  git add $dir
-	  git commit -m "refresh bundles [automated]: $url @ $COMMIT"
+    git add $dir
+    git commit -m "refresh bundles [automated]: $url @ $COMMIT"
   fi
 }
 
 STAGED=$( git diff --cached )
 if [ ! -z "$STAGED" ]; then
-	echo "Can't have staged changes"
-	exit;
+  echo "Can't have staged changes"
+  exit;
 fi
 
 #rm -f $COMMIT_FILE
-refresh https://github.com/kchmck/vim-coffee-script.git vim-coffee-script
-refresh https://github.com/scrooloose/syntastic.git syntastic
-refresh https://github.com/mileszs/ack.vim.git ack.vim
-refresh https://github.com/zmughal/vim-matlab-fold vim-matlab-fold zmughal
-refresh https://github.com/wesQ3/vim-windowswap vim-windowswap
-refresh https://github.com/ervandew/supertab supertab
-refresh https://github.com/luochen1990/rainbow rainbow-paren-improved
-refresh https://github.com/zeis/vim-kolor colorscheme-kolor
-refresh https://github.com/chrisbra/Recover.vim.git recover.vim-swap
-refresh https://github.com/airblade/vim-gitgutter vim-gitgutter
+refresh_git https://github.com/kchmck/vim-coffee-script.git vim-coffee-script
+refresh_git https://github.com/scrooloose/syntastic.git syntastic
+refresh_git https://github.com/mileszs/ack.vim.git ack.vim
+refresh_git https://github.com/zmughal/vim-matlab-fold vim-matlab-fold zmughal
+refresh_git https://github.com/wesQ3/vim-windowswap vim-windowswap
+refresh_git https://github.com/ervandew/supertab supertab
+refresh_git https://github.com/luochen1990/rainbow rainbow-paren-improved
+refresh_git https://github.com/zeis/vim-kolor colorscheme-kolor
+refresh_git https://github.com/chrisbra/Recover.vim.git recover.vim-swap
+refresh_git https://github.com/airblade/vim-gitgutter vim-gitgutter
+#refresh https://bitbucket.org/ns9tks/vim-fuzzyfinder vim-fuzzyfinder
