@@ -5,9 +5,9 @@ CVIM=$(wildcard contrib/*)
 PLUGIN=$(shell basename "$$PWD")
 VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' $(SCRIPT))
 
-.PHONY: $(PLUGIN).vmb test
+.PHONY: test
 
-all: uninstall vimball install 
+all: vimball
 
 vimball: $(PLUGIN).vmb
 
@@ -19,17 +19,17 @@ clean:
 dist-clean: clean
 
 install:
-	vim -N -c':so %' -c':q!' $(PLUGIN)-$(VERSION).vmb
+	vim -N -u NONE -c'ru! plugin/vimballPlugin.vim' -c':so %' -c':q!' $(PLUGIN)-$(VERSION).vmb
 
 uninstall:
-	vim -N -c':RmVimball' -c':q!' $(PLUGIN)-$(VERSION).vmb
+	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':RmVimball' -c':q!' $(PLUGIN)-$(VERSION).vmb
 
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
 
 $(PLUGIN).vmb:
 	rm -f $(PLUGIN)-$(VERSION).vmb
-	vim -N -c 'ru! vimballPlugin.vim' -c ':call append("0", [ "$(SCRIPT)", "$(AUTOL)", "$(DOC)", "$(CVIM)"])' -c '$$d' -c ":%MkVimball $(PLUGIN)-$(VERSION)  ." -c':q!'
+	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c ':call append("0", [ "$(SCRIPT)", "$(AUTOL)", "$(DOC)", "$(CVIM)"])' -c '$$d' -c ":%MkVimball $(PLUGIN)-$(VERSION)  ." -c':q!'
 	ln -f $(PLUGIN)-$(VERSION).vmb $(PLUGIN).vmb
 
 release: version all
