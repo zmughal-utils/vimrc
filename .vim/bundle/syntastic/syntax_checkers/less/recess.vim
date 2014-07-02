@@ -1,7 +1,8 @@
 "============================================================================
-"File:        rubylint.vim
-"Description: Checks Ruby source code using ruby-lint
-"Maintainer:  Yorick Peterse <yorickpeterse@gmail.com>
+"File:        recess.vim
+"Description: Syntax checking plugin for syntastic.vim using `recess`
+"             (http://twitter.github.io/recess/).
+"Maintainer:  Tim Carry <tim at pixelastic dot com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,23 +11,23 @@
 "
 "============================================================================
 
-if exists("g:loaded_syntastic_ruby_rubylint_checker")
+if exists('g:loaded_syntastic_less_recess_checker')
     finish
 endif
-
-let g:loaded_syntastic_ruby_rubylint_checker = 1
+let g:loaded_syntastic_less_recess_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_ruby_rubylint_GetLocList() dict
-    if !exists('s:rubylint_new')
-        let s:rubylint_new = syntastic#util#versionIsAtLeast(syntastic#util#getVersion(
-            \ self.getExecEscaped() . ' --version'), [2])
-    endif
-    let makeprg = self.makeprgBuild({ 'args': (s:rubylint_new ? '' : 'analyze ') . '--presenter=syntastic' })
+function! SyntaxCheckers_less_recess_GetLocList() dict
+    let makeprg = self.makeprgBuild({
+        \ 'post_args_after': '--format=compact --stripColors' })
 
-    let errorformat = '%f:%t:%l:%c: %m'
+    let errorformat =
+        \ '%E%m in %f,' .
+        \ '%Z %#%l.%.%#,' .
+        \ '%f:%l:%m,' .
+        \ '%-G%.%#'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
@@ -34,9 +35,8 @@ function! SyntaxCheckers_ruby_rubylint_GetLocList() dict
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'ruby',
-    \ 'name': 'rubylint',
-    \ 'exec': 'ruby-lint'})
+    \ 'filetype': 'less',
+    \ 'name': 'recess'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

@@ -19,7 +19,7 @@ if has('reltime')
     lockvar! g:syntastic_start
 endif
 
-let g:syntastic_version = '3.4.0-53'
+let g:syntastic_version = '3.4.0-90'
 lockvar g:syntastic_version
 
 " Sanity checks {{{1
@@ -84,7 +84,7 @@ for s:key in keys(g:syntastic_defaults)
 endfor
 
 if exists("g:syntastic_quiet_warnings")
-    call syntastic#log#deprecationWarn("variable g:syntastic_quiet_warnings is deprecated, please use let g:syntastic_quiet_messages = {'level': 'warnings'} instead")
+    call syntastic#log#oneTimeWarn("variable g:syntastic_quiet_warnings is deprecated, please use let g:syntastic_quiet_messages = {'level': 'warnings'} instead")
     if g:syntastic_quiet_warnings
         let s:quiet_warnings = get(g:syntastic_quiet_messages, 'type', [])
         if type(s:quiet_warnings) != type([])
@@ -142,7 +142,7 @@ let s:modemap = g:SyntasticModeMap.Instance()
 function! s:CompleteCheckerName(argLead, cmdLine, cursorPos) " {{{2
     let checker_names = []
     for ft in s:resolveFiletypes()
-        call extend(checker_names, keys(s:registry.getCheckersMap(ft)))
+        call extend(checker_names, s:registry.getNamesOfAvailableCheckers(ft))
     endfor
     return join(checker_names, "\n")
 endfunction " }}}2
@@ -181,11 +181,6 @@ command! SyntasticSetLoclist call g:SyntasticLoclist.current().setloclist()
 augroup syntastic
     autocmd BufReadPost * call s:BufReadPostHook()
     autocmd BufWritePost * call s:BufWritePostHook()
-
-    autocmd BufWinEnter * call s:BufWinEnterHook()
-
-    " TODO: the next autocmd should be "autocmd BufWinLeave * if &buftype == '' | lclose | endif"
-    " but in recent versions of Vim lclose can no longer be called from BufWinLeave
     autocmd BufEnter * call s:BufEnterHook()
 augroup END
 
@@ -210,24 +205,22 @@ function! s:BufWritePostHook() " {{{2
     call s:UpdateErrors(1)
 endfunction " }}}2
 
-function! s:BufWinEnterHook() " {{{2
-    call syntastic#log#debug(g:SyntasticDebugAutocommands,
-        \ 'autocmd: BufWinEnter, buffer ' . bufnr("") . ' = ' . string(bufname(str2nr(bufnr("")))) .
-        \ ', &buftype = ' . string(&buftype))
-    if &buftype == ''
-        call s:notifiers.refresh(g:SyntasticLoclist.current())
-    endif
-endfunction " }}}2
-
 function! s:BufEnterHook() " {{{2
     call syntastic#log#debug(g:SyntasticDebugAutocommands,
         \ 'autocmd: BufEnter, buffer ' . bufnr("") . ' = ' . string(bufname(str2nr(bufnr("")))) .
         \ ', &buftype = ' . string(&buftype))
-    " TODO: at this point there is no b:syntastic_loclist
-    let loclist = filter(getloclist(0), 'v:val["valid"] == 1')
-    let buffers = syntastic#util#unique(map( loclist, 'v:val["bufnr"]' ))
-    if &buftype == 'quickfix' && !empty(loclist) && empty(filter( buffers, 'syntastic#util#bufIsActive(v:val)' ))
-        call SyntasticLoclistHide()
+    if &buftype == ''
+        call s:notifiers.refresh(g:SyntasticLoclist.current())
+    elseif &buftype == 'quickfix'
+        " TODO: this is needed because in recent versions of Vim lclose
+        " can no longer be called from BufWinLeave
+        " TODO: at this point there is no b:syntastic_loclist
+        let loclist = filter(copy(getloclist(0)), 'v:val["valid"] == 1')
+        let owner = str2nr(getbufvar(bufnr(""), 'syntastic_owner_buffer'))
+        let buffers = syntastic#util#unique(map(loclist, 'v:val["bufnr"]') + (owner ? [owner] : []))
+        if !empty(loclist) && empty(filter( buffers, 'syntastic#util#bufIsActive(v:val)' ))
+            call SyntasticLoclistHide()
+        endif
     endif
 endfunction " }}}2
 
@@ -290,7 +283,7 @@ endfunction " }}}2
 "clear the loc list for the buffer
 function! s:ClearCache() " {{{2
     call s:notifiers.reset(g:SyntasticLoclist.current())
-    unlet! b:syntastic_loclist
+    call b:syntastic_loclist.destroy()
 endfunction " }}}2
 
 "detect and cache all syntax errors in this buffer
@@ -318,8 +311,15 @@ function! s:CacheErrors(checker_names) " {{{2
         endfor
 
         let names = []
+        let unavailable_checkers = 0
         for checker in clist
             let cname = checker.getFiletype() . '/' . checker.getName()
+            if !checker.isAvailable()
+                call syntastic#log#debug(g:SyntasticDebugTrace, 'CacheErrors: Checker ' . cname . ' is not available')
+                let unavailable_checkers += 1
+                continue
+            endif
+
             call syntastic#log#debug(g:SyntasticDebugTrace, 'CacheErrors: Invoking checker: ' . cname)
 
             let loclist = checker.getLocList()
@@ -356,7 +356,7 @@ function! s:CacheErrors(checker_names) " {{{2
         " }}}3
 
         " issue warning about no active checkers {{{3
-        if empty(clist)
+        if len(clist) == unavailable_checkers
             if !empty(a:checker_names)
                 if len(a:checker_names) == 1
                     call syntastic#log#warn('checker ' . a:checker_names[0] . ' is not available')
@@ -376,7 +376,8 @@ function! s:CacheErrors(checker_names) " {{{2
         endif
     endif
 
-    let b:syntastic_loclist = newLoclist
+    call newLoclist.setOwner(bufnr(''))
+    call newLoclist.deploy()
 endfunction " }}}2
 
 function! s:ToggleMode() " {{{2
