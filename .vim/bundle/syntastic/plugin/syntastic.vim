@@ -19,12 +19,12 @@ if has('reltime')
     lockvar! g:syntastic_start
 endif
 
-let g:syntastic_version = '3.4.0-90'
+let g:syntastic_version = '3.4.0-108'
 lockvar g:syntastic_version
 
 " Sanity checks {{{1
 
-for s:feature in ['autocmd', 'eval', 'modify_fname', 'quickfix', 'user_commands']
+for s:feature in ['autocmd', 'eval', 'modify_fname', 'quickfix', 'reltime', 'user_commands']
     if !has(s:feature)
         call syntastic#log#error("need Vim compiled with feature " . s:feature)
         finish
@@ -65,6 +65,7 @@ let g:syntastic_defaults = {
         \ 'filetype_map':             {},
         \ 'full_redraws':             !(has('gui_running') || has('gui_macvim')),
         \ 'id_checkers':              1,
+        \ 'ignore_extensions':        '\c\v^([gx]?z|lzma|bz2)$',
         \ 'ignore_files':             [],
         \ 'loc_list_height':          10,
         \ 'quiet_messages':           {},
@@ -167,7 +168,7 @@ command! -nargs=* -complete=custom,s:CompleteCheckerName SyntasticCheck
             \ call syntastic#util#redraw(g:syntastic_full_redraws)
 command! Errors call s:ShowLocList()
 command! -nargs=? -complete=custom,s:CompleteFiletypes SyntasticInfo
-            \ call s:modemap.echoMode() |
+            \ call s:modemap.modeInfo(<f-args>) |
             \ call s:registry.echoInfoFor(s:resolveFiletypes(<f-args>))
 command! SyntasticReset
             \ call s:ClearCache() |
@@ -376,7 +377,6 @@ function! s:CacheErrors(checker_names) " {{{2
         endif
     endif
 
-    call newLoclist.setOwner(bufnr(''))
     call newLoclist.deploy()
 endfunction " }}}2
 
@@ -408,7 +408,9 @@ endfunction " }}}2
 "   'preprocess' - a function to be applied to the error file before parsing errors
 "   'postprocess' - a list of functions to be applied to the error list
 "   'cwd' - change directory to the given path before running the checker
+"   'env' - environment variables to set before running the checker
 "   'returns' - a list of valid exit codes for the checker
+" @vimlint(EVL102, 1, l:env_save)
 function! SyntasticMake(options) " {{{2
     call syntastic#log#debug(g:SyntasticDebugTrace, 'SyntasticMake: called with options:', a:options)
 
@@ -432,11 +434,31 @@ function! SyntasticMake(options) " {{{2
         execute 'lcd ' . fnameescape(a:options['cwd'])
     endif
 
+    " set environment variables {{{3
+    let env_save = {}
+    if has_key(a:options, 'env') && len(a:options['env'])
+        for key in keys(a:options['env'])
+            if key =~? '\m^[a-z_]\+$'
+                exec 'let env_save[' . string(key) . '] = $' . key
+                exec 'let $' . key . ' = ' . string(a:options['env'][key])
+            endif
+        endfor
+    endif
     let $LC_MESSAGES = 'C'
     let $LC_ALL = ''
+    " }}}3
+
     let err_lines = split(system(a:options['makeprg']), "\n", 1)
+
+    " restore environment variables {{{3
     let $LC_ALL = old_lc_all
     let $LC_MESSAGES = old_lc_messages
+    if len(env_save)
+        for key in keys(env_save)
+            exec 'let $' . key . ' = ' . string(env_save[key])
+        endfor
+    endif
+    " }}}3
 
     call syntastic#log#debug(g:SyntasticDebugLoclist, 'checker output:', err_lines)
 
@@ -497,6 +519,7 @@ function! SyntasticMake(options) " {{{2
 
     return errors
 endfunction " }}}2
+" @vimlint(EVL102, 0, l:env_save)
 
 "return a string representing the state of buffer according to
 "g:syntastic_stl_format
@@ -529,7 +552,8 @@ endfunction " }}}2
 function! s:skipFile() " {{{2
     let force_skip = exists('b:syntastic_skip_checks') ? b:syntastic_skip_checks : 0
     let fname = expand('%')
-    return force_skip || (&buftype != '') || !filereadable(fname) || getwinvar(0, '&diff') || s:ignoreFile(fname)
+    return force_skip || (&buftype != '') || !filereadable(fname) || getwinvar(0, '&diff') ||
+        \ s:ignoreFile(fname) || fnamemodify(fname, ':e') =~? g:syntastic_ignore_extensions
 endfunction " }}}2
 
 " Take a list of errors and add default values to them from a:options
