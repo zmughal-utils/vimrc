@@ -1,0 +1,142 @@
+*CaptureClipboard.txt*    Append system clipboard changes to current buffer.
+
+		     CAPTURE CLIPBOARD    by Ingo Karkat
+		     (original version by Marian Csontos)
+							*CaptureClipboard.vim*
+description			|CaptureClipboard-description|
+usage				|CaptureClipboard-usage|
+installation			|CaptureClipboard-installation|
+configuration			|CaptureClipboard-configuration|
+limitations			|CaptureClipboard-limitations|
+known problems			|CaptureClipboard-known-problems|
+todo				|CaptureClipboard-todo|
+history				|CaptureClipboard-history|
+
+==============================================================================
+DESCRIPTION					*CaptureClipboard-description*
+
+Quotes or text fragments can be collected from various sources outside Vim
+into a single text document through the clipboard. This plugin makes
+consecutive copy-and-pastes into Vim much more comfortable by monitoring the
+system clipboard for changes and appending them into the current Vim buffer
+automatically. Feedback about the number of captures is given in Vim's window
+title, so one does not have to switch back and forth between applications any
+more, and can completely focus on text collection via CTRL-C, CTRL-C, ...
+
+==============================================================================
+USAGE						      *CaptureClipboard-usage*
+				*:CaptureClipboard* *:CaptureClipboardReverse*
+:[count]CaptureClipboard[!] [{delimiter}]
+:[count]CaptureClipboardReverse[!] [{delimiter}]
+			Monitors the clipboard for changes and inserts any
+			change of clipboard contents into the current buffer
+			(in new lines, or delimited by {delimiter} if given).
+			To stop, press <CTRL-C> or copy a literal dot (".") to
+			the clipboard. If [count] is given, the capture stops
+			after [count] captures.
+
+			If [!] is given, whitespace (including new lines) is
+			trimmed from the beginning and end of each capture.
+
+			With :CaptureClipboardReverse, changes are prepended,
+			reverting the insertion order. Normally, changes are
+			appended to the current or given [line].
+			Use :$|CaptureClipboard to append to the end of the
+			current buffer.
+
+			{delimiter} is evaluated as an expression if it is
+			(single- or double-)quoted, or contains backslashes.
+			The default {delimiter} is "\n"; each capture is
+			placed on a new line. Use '' to place everything next
+			to each other, ' ' to put a space character in
+			between, "\n--\n" to insert a -- separator line
+			between captures. When {delimiter} contains a newline
+			character, the first capture will already start on a
+			new line.
+
+								  *i_CTRL-R_?*
+CTRL-R ?		Wait for one capture from the clipboard and insert it
+			at the current cursor position.
+
+==============================================================================
+INSTALLATION				       *CaptureClipboard-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim CaptureClipboard*.vmb.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES				       *CaptureClipboard-dependencies*
+
+- Requires Vim 7.0 or higher.
+
+==============================================================================
+CONFIGURATION				      *CaptureClipboard-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+
+					 *g:CaptureClipboard_DefaultDelimiter*
+By default, each capture will be placed on a new line in the capture buffer;
+i.e. the delimiter between captures is a newline character: >
+    let g:CaptureClipboard_DefaultDelimiter = "\n"
+<
+				       *g:CaptureClipboard_EndOfCaptureMarker*
+The marker text that will stop capturing can be changed via: >
+    let g:CaptureClipboard_EndOfCaptureMarker = '.'
+<
+					       *g:CaptureClipboard_IsAutoSave*
+If you capture a lot of text or the captured information is very valuable, you
+can automatically persist the capture buffer after each capture. Enable via: >
+    let g:CaptureClipboard_IsAutoSave = 1
+<
+						 *g:CaptureClipboard_Register*
+In X, changes to the current selection (|quotestar|) are captured. If you want
+to only capture changes to the X clipboard (|quoteplus|), not every change in
+selection, use: >
+    let g:CaptureClipboard_Register = '+'
+<
+						      *CaptureClipboard-remap*
+If you want to use a different mapping, map your keys to the
+<Plug>(CaptureClipboardInsertOne) mapping target _before_ sourcing the script
+(e.g. in your |vimrc|): >
+    imap <C-R>? <Plug>(CaptureClipboardInsertOne)
+<
+==============================================================================
+LIMITATIONS					*CaptureClipboard-limitations*
+
+KNOWN PROBLEMS				     *CaptureClipboard-known-problems*
+
+TODO						       *CaptureClipboard-todo*
+
+IDEAS						      *CaptureClipboard-ideas*
+
+==============================================================================
+HISTORY						    *CaptureClipboard-history*
+
+1.11	30-Dec-2012
+Implement check for no-modifiable buffer via noop-modification instead of
+checking for 'modifiable'; this also handles the read-only warning.
+
+1.10	29-Oct-2012
+Add mapping to wait for and insert one capture.
+
+1.00	20-Sep-2010
+First published version.
+
+0.01	23-Sep-2009
+First enhancements.
+
+0.00	26-Oct-2006
+Copied original function TrackClipboard() by from vimtip #1370, now residing
+at http://vim.wikia.com/wiki/Tracking_clipboard_changes
+
+==============================================================================
+Copyright: (C) 2010-2012 Ingo Karkat
+The VIM LICENSE applies to this script; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

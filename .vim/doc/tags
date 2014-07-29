@@ -75,6 +75,8 @@
 :CVSWatchOn	vcscommand.txt	/*:CVSWatchOn*
 :CVSWatchRemove	vcscommand.txt	/*:CVSWatchRemove*
 :CVSWatchers	vcscommand.txt	/*:CVSWatchers*
+:CaptureClipboard	CaptureClipboard.txt	/*:CaptureClipboard*
+:CaptureClipboardReverse	CaptureClipboard.txt	/*:CaptureClipboardReverse*
 :FakeclipDefaultKeyMappings	fakeclip.txt	/*:FakeclipDefaultKeyMappings*
 :FufBookmarkDir	fuf.txt	/*:FufBookmarkDir*
 :FufBookmarkDirAdd	fuf.txt	/*:FufBookmarkDirAdd*
@@ -269,6 +271,19 @@ AnsiEsc-history	AnsiEsc.txt	/*AnsiEsc-history*
 AnsiEsc-manual	AnsiEsc.txt	/*AnsiEsc-manual*
 AnsiEsc.txt	AnsiEsc.txt	/*AnsiEsc.txt*
 CSApprox.txt	CSApprox.txt	/*CSApprox.txt*
+CaptureClipboard-configuration	CaptureClipboard.txt	/*CaptureClipboard-configuration*
+CaptureClipboard-dependencies	CaptureClipboard.txt	/*CaptureClipboard-dependencies*
+CaptureClipboard-description	CaptureClipboard.txt	/*CaptureClipboard-description*
+CaptureClipboard-history	CaptureClipboard.txt	/*CaptureClipboard-history*
+CaptureClipboard-ideas	CaptureClipboard.txt	/*CaptureClipboard-ideas*
+CaptureClipboard-installation	CaptureClipboard.txt	/*CaptureClipboard-installation*
+CaptureClipboard-known-problems	CaptureClipboard.txt	/*CaptureClipboard-known-problems*
+CaptureClipboard-limitations	CaptureClipboard.txt	/*CaptureClipboard-limitations*
+CaptureClipboard-remap	CaptureClipboard.txt	/*CaptureClipboard-remap*
+CaptureClipboard-todo	CaptureClipboard.txt	/*CaptureClipboard-todo*
+CaptureClipboard-usage	CaptureClipboard.txt	/*CaptureClipboard-usage*
+CaptureClipboard.txt	CaptureClipboard.txt	/*CaptureClipboard.txt*
+CaptureClipboard.vim	CaptureClipboard.txt	/*CaptureClipboard.vim*
 CheckLiveUpdateStatus()	live-latex-preview.txt	/*CheckLiveUpdateStatus()*
 ClearSwapList	swapit.txt	/*ClearSwapList*
 CloseMuPDF()	live-latex-preview.txt	/*CloseMuPDF()*
@@ -913,6 +928,10 @@ g:CSApprox_konsole	CSApprox.txt	/*g:CSApprox_konsole*
 g:CSApprox_loaded	CSApprox.txt	/*g:CSApprox_loaded*
 g:CSApprox_redirfallback	CSApprox.txt	/*g:CSApprox_redirfallback*
 g:CSApprox_verbose_level	CSApprox.txt	/*g:CSApprox_verbose_level*
+g:CaptureClipboard_DefaultDelimiter	CaptureClipboard.txt	/*g:CaptureClipboard_DefaultDelimiter*
+g:CaptureClipboard_EndOfCaptureMarker	CaptureClipboard.txt	/*g:CaptureClipboard_EndOfCaptureMarker*
+g:CaptureClipboard_IsAutoSave	CaptureClipboard.txt	/*g:CaptureClipboard_IsAutoSave*
+g:CaptureClipboard_Register	CaptureClipboard.txt	/*g:CaptureClipboard_Register*
 g:NeoComplCache_AlphabeticalOrder	neocomplcache.txt	/*g:NeoComplCache_AlphabeticalOrder*
 g:NeoComplCache_CacheLineCount	neocomplcache.txt	/*g:NeoComplCache_CacheLineCount*
 g:NeoComplCache_CachingDisablePattern	neocomplcache.txt	/*g:NeoComplCache_CachingDisablePattern*
@@ -1149,6 +1168,7 @@ i_<Plug>(fakeclip-screen-insert-r)	fakeclip.txt	/*i_<Plug>(fakeclip-screen-inser
 i_CTRL-G_S	surround.txt	/*i_CTRL-G_S*
 i_CTRL-G_s	surround.txt	/*i_CTRL-G_s*
 i_CTRL-R_<Tab>	snipMate.txt	/*i_CTRL-R_<Tab>*
+i_CTRL-R_?	CaptureClipboard.txt	/*i_CTRL-R_?*
 ikiwiki-bugs	ikiwiki-nav.txt	/*ikiwiki-bugs*
 ikiwiki-commands	ikiwiki-nav.txt	/*ikiwiki-commands*
 ikiwiki-compl	ikiwiki-nav.txt	/*ikiwiki-compl*
