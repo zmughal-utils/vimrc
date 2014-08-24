@@ -19,7 +19,7 @@ if has('reltime')
     lockvar! g:syntastic_start
 endif
 
-let g:syntastic_version = '3.4.0-116'
+let g:syntastic_version = '3.4.0-130'
 lockvar g:syntastic_version
 
 " Sanity checks {{{1
@@ -56,6 +56,7 @@ let g:syntastic_defaults = {
         \ 'bash_hack':                1,
         \ 'check_on_open':            0,
         \ 'check_on_wq':              1,
+        \ 'cursor_columns':           1,
         \ 'debug':                    0,
         \ 'echo_current_error':       1,
         \ 'enable_balloons':          1,
