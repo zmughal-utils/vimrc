@@ -48,4 +48,5 @@ refresh_git https://github.com/chrisbra/Recover.vim.git recover.vim-swap
 refresh_git https://github.com/airblade/vim-gitgutter vim-gitgutter
 refresh_git https://github.com/Shougo/unite.vim unite.vim
 refresh_git https://github.com/Shougo/neomru.vim neomru.vim
+refresh_git https://github.com/Shougo/vimproc.vim vimproc.vim
 #refresh https://bitbucket.org/ns9tks/vim-fuzzyfinder vim-fuzzyfinder

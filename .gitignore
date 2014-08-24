@@ -3,3 +3,5 @@
 .vim/.netrwhist
 .*.sw*
 tags-ja
+
+.vim/bundle/vimproc.vim/autoload/vimproc_linux64.so
