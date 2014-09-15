@@ -110,6 +110,11 @@ endfunction
 function! unite#util#smart_execute_command(action, word)
   execute a:action . ' ' . fnameescape(a:word)
 endfunction
+function! unite#util#smart_open_command(action, word)
+  call unite#util#smart_execute_command(a:action, a:word)
+
+  call unite#remove_previewed_buffer_list(bufnr(a:word))
+endfunction
 function! unite#util#escape_file_searching(buffer_name)
   " You should not escape for buflisted() or bufnr()
   return a:buffer_name
@@ -274,9 +279,10 @@ function! unite#util#is_cmdwin() "{{{
   return bufname('%') ==# '[Command Line]'
 endfunction"}}}
 function! s:buflisted(bufnr) "{{{
-  return exists('t:unite_buffer_dictionary') ?
-        \ has_key(t:unite_buffer_dictionary, a:bufnr) && buflisted(a:bufnr) :
-        \ buflisted(a:bufnr)
+  return getbufvar(a:bufnr, '&bufhidden') == '' &&
+        \ (exists('t:unite_buffer_dictionary') ?
+        \   has_key(t:unite_buffer_dictionary, a:bufnr) && bufloaded(a:bufnr) :
+        \   bufloaded(a:bufnr))
 endfunction"}}}
 
 function! unite#util#glob(pattern, ...) "{{{

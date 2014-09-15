@@ -79,14 +79,16 @@ function! unite#start#standard(sources, ...) "{{{
   call unite#candidates#_recache(context.input, context.is_redraw)
 
   if !current_unite.is_async &&
-        \ (context.immediately || !context.empty) "{{{
+        \ (context.force_immediately
+        \ || context.immediately || !context.empty) "{{{
     let candidates = unite#candidates#gather()
 
     if empty(candidates)
       " Ignore.
       call unite#variables#disable_current_unite()
       return
-    elseif context.immediately && len(candidates) == 1
+    elseif (context.immediately && len(candidates) == 1)
+          \ || context.force_immediately
       " Immediately action.
       call unite#action#do(
             \ context.default_action, [candidates[0]])
@@ -303,27 +305,8 @@ function! unite#start#resume(buffer_name, ...) "{{{
     return
   endif
 
-  if a:buffer_name == ''
-    " Use last unite buffer.
-    if !exists('t:unite') ||
-          \ !bufexists(t:unite.last_unite_bufnr)
-      call unite#util#print_error('No unite buffer.')
-      return
-    endif
-
-    let bufnr = t:unite.last_unite_bufnr
-  else
-    let bufnr = s:get_resume_buffer(a:buffer_name)
-  endif
-
+  let bufnr = s:get_unite_buffer(a:buffer_name)
   if bufnr < 0
-    return
-  endif
-
-  if type(getbufvar(bufnr, 'unite')) != type({})
-    " Unite buffer is released.
-    call unite#util#print_error(
-          \ printf('Invalid unite buffer(%d) is detected.', bufnr))
     return
   endif
 
@@ -396,13 +379,46 @@ function! unite#start#complete(sources, ...) "{{{
         \ 'col' : col('.'), 'complete' : 1,
         \ 'direction' : 'rightbelow',
         \ 'buffer_name' : 'completion',
+        \ 'profile_name' : 'completion',
         \ 'here' : 1,
         \ }
   call extend(context, get(a:000, 0, {}))
 
-  return printf("\<ESC>:call unite#start(%s, %s)\<CR>",
+  return printf("\<C-o>:\<C-u>call unite#start(%s, %s)\<CR>",
         \  string(sources), string(context))
 endfunction "}}}
+
+function! unite#start#_pos(buffer_name, direction, count) "{{{
+  let bufnr = s:get_unite_buffer(a:buffer_name)
+  if bufnr < 0
+    return
+  endif
+
+  let unite = getbufvar(bufnr, 'unite')
+
+  let next =
+        \ (a:direction ==# 'first') ? 0 :
+        \ (a:direction ==# 'last') ? len(unite.candidates)-1 :
+        \ (a:direction ==# 'next') ? unite.candidate_cursor+a:count :
+        \ unite.candidate_cursor-a:count
+  if next < 0 || next >= len(unite.candidates)
+    " Ignore.
+    call unite#view#_print_error('No more items')
+    return
+  endif
+
+  let unite.candidate_cursor = next
+
+  let candidate = unite.candidates[next]
+
+  " Immediately action.
+  silent call unite#action#do_candidates(
+        \ unite.context.default_action, [candidate], unite.context)
+
+  call unite#view#_redraw_echo(printf('[%d/%d] %s',
+        \ unite.candidate_cursor+1, len(unite.candidates),
+        \ get(candidate, 'abbr', candidate.word)))
+endfunction"}}}
 
 function! s:get_candidates(sources, context) "{{{
   try
@@ -432,6 +448,29 @@ function! s:get_candidates(sources, context) "{{{
   return candidates
 endfunction"}}}
 
+function! s:get_unite_buffer(buffer_name) "{{{
+  if a:buffer_name == ''
+    " Use last unite buffer.
+    if !exists('t:unite') ||
+          \ !bufexists(t:unite.last_unite_bufnr)
+      call unite#util#print_error('No unite buffer.')
+      return -1
+    endif
+
+    let bufnr = t:unite.last_unite_bufnr
+  else
+    let bufnr = s:get_resume_buffer(a:buffer_name)
+  endif
+
+  if type(getbufvar(bufnr, 'unite')) != type({})
+    " Unite buffer is released.
+    call unite#util#print_error(
+          \ printf('Invalid unite buffer(%d) is detected.', bufnr))
+    return -1
+  endif
+
+  return bufnr
+endfunction"}}}
 function! s:get_resume_buffer(buffer_name) "{{{
   let buffer_name = a:buffer_name
   if buffer_name !~ '@\d\+$'

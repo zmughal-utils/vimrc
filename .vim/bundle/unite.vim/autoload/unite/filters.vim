@@ -177,6 +177,98 @@ function! unite#filters#vim_filter_head(candidates, input) "{{{
         \      v:val.word)), input) == 0")
 endfunction"}}}
 
+function! unite#filters#vim_filter_pattern(candidates, pattern) "{{{
+  return filter(a:candidates,
+        \ "get(v:val, 'action__path', v:val.word) !~? a:pattern")
+endfunction"}}}
+
+function! unite#filters#filter_patterns(candidates, patterns, whites) "{{{
+  return unite#util#has_lua()?
+          \ unite#filters#lua_filter_patterns(
+          \   a:candidates, a:patterns, a:whites) :
+          \ unite#filters#vim_filter_patterns(
+          \   a:candidates, a:patterns, a:whites)
+endfunction"}}}
+function! unite#filters#lua_filter_patterns(candidates, patterns, whites) "{{{
+lua << EOF
+do
+  local patterns = vim.eval('a:patterns')
+  local whites = vim.eval('a:whites')
+  local candidates = vim.eval('a:candidates')
+  for i = #candidates-1, 0, -1 do
+    local word = string.lower(candidates[i].action__path
+        or candidates[i].word)
+    for j = #patterns-1, 0, -1 do
+      if string.find(word, patterns[j]) then
+        local match = nil
+        -- Search from whites
+        for k = #whites-1, 0, -1 do
+          if string.find(word, whites[k]) then
+            match = k
+            break
+          end
+        end
+
+        if match == nil then
+          candidates[i] = nil
+        end
+      end
+    end
+  end
+end
+EOF
+
+  return a:candidates
+endfunction"}}}
+function! unite#filters#vim_filter_patterns(candidates, patterns, whites) "{{{
+  let pattern = join(a:patterns, '\|')
+  let white = join(a:whites, '\|')
+  return filter(a:candidates,
+        \ "get(v:val, 'action__path', v:val.word) !~? pattern
+        \  || get(v:val, 'action__path', v:val.word) =~? white")
+endfunction"}}}
+
+function! unite#filters#globs2patterns(globs) "{{{
+  return unite#util#has_lua() ?
+          \ unite#filters#globs2lua_patterns(a:globs) :
+          \ unite#filters#globs2vim_patterns(a:globs)
+endfunction"}}}
+function! unite#filters#globs2vim_patterns(globs) "{{{
+  let patterns = []
+  for glob in a:globs
+    if glob !~ '^/'
+      let glob = '/' . glob
+    endif
+    let glob = escape(glob, '~.^$')
+    let glob = substitute(glob, '//', '/', 'g')
+    let glob = substitute(glob, '\*\@<!\*\*\@!', '[^/]*', 'g')
+    let glob = substitute(glob, '\\\@<!\*\*\+', '.*', 'g')
+    let glob = substitute(glob, '\\\@<!?', '[^/]', 'g')
+    let glob .= '$'
+    call add(patterns, glob)
+  endfor
+
+  return patterns
+endfunction"}}}
+function! unite#filters#globs2lua_patterns(globs) "{{{
+  let patterns = []
+  for glob in a:globs
+    if glob !~ '^/'
+      let glob = '/' . glob
+    endif
+    let glob = tolower(glob)
+    let glob = substitute(glob, '//', '/', 'g')
+    let glob = substitute(glob, '[%().+^$-]', '%\0', 'g')
+    let glob = substitute(glob, '\*\@<!\*\*\@!', '[^/]*', 'g')
+    let glob = substitute(glob, '\\\@<!\*\*\+', '.*', 'g')
+    let glob = substitute(glob, '\\\@<!?', '[^/]', 'g')
+    let glob .= '$'
+    call add(patterns, glob)
+  endfor
+
+  return patterns
+endfunction"}}}
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 

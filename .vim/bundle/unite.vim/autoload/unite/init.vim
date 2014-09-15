@@ -307,6 +307,7 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.candidates_pos = 0
   let unite.candidates = []
   let unite.candidates_len = 0
+  let unite.candidate_cursor = -1
   let unite.max_source_candidates = 0
   let unite.is_multi_line = 0
   let unite.args = unite#helper#get_source_args(a:sources)
@@ -721,22 +722,20 @@ function! unite#init#_sources(...) "{{{
 
       " Set filters.
       if has_key(custom_source, 'filters')
-        let source.filters = custom_source.filters
-      elseif !has_key(source, 'filters')
-            \ || has_key(custom_source, 'matchers')
-            \ || has_key(custom_source, 'sorters')
-            \ || has_key(custom_source, 'converters')
-        let matchers = unite#util#convert2list(
-              \ get(custom_source, 'matchers',
-              \   get(source, 'matchers', 'matcher_default')))
-        let sorters = unite#util#convert2list(
-              \ get(custom_source, 'sorters',
-              \   get(source, 'sorters', 'sorter_default')))
-        let converters = unite#util#convert2list(
-              \ get(custom_source, 'converters',
-              \   get(source, 'converters', 'converter_default')))
-        let source.filters = matchers + sorters + converters
+        call unite#print_error(
+              \ '[unite.vim] Custom filters feature is removed.'.
+              \ '  You must use matchers/sorters/converters feature.')
       endif
+
+      let source.matchers = unite#util#convert2list(
+            \ get(custom_source, 'matchers',
+            \   get(source, 'matchers', 'matcher_default')))
+      let source.sorters = unite#util#convert2list(
+            \ get(custom_source, 'sorters',
+            \   get(source, 'sorters', 'sorter_default')))
+      let source.converters = unite#util#convert2list(
+            \ get(custom_source, 'converters',
+            \   get(source, 'converters', 'converter_default')))
 
       let source.max_candidates =
             \ get(custom_source, 'max_candidates',
@@ -744,9 +743,12 @@ function! unite#init#_sources(...) "{{{
       let source.ignore_pattern =
             \ get(custom_source, 'ignore_pattern',
             \    get(source, 'ignore_pattern', ''))
-      let source.variables =
-            \ extend(get(custom_source, 'variables', {}),
-            \    get(source, 'variables', {}), 'keep')
+      let source.ignore_globs = unite#util#convert2list(
+            \ get(custom_source, 'ignore_globs',
+            \    get(source, 'ignore_globs', [])))
+      let source.white_globs = unite#util#convert2list(
+            \ get(custom_source, 'white_globs',
+            \    get(source, 'white_globs', [])))
 
       let source.unite__len_candidates = 0
       let source.unite__orig_len_candidates = 0

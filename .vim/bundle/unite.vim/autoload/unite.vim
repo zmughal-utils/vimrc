@@ -193,6 +193,9 @@ function! unite#set_context(context) "{{{
 
   return old_context
 endfunction"}}}
+function! unite#get_unite_winnr(buffer_name) "{{{
+  return unite#helper#get_unite_winnr(a:buffer_name)
+endfunction"}}}
 
 function! unite#force_redraw(...) "{{{
   call unite#view#_redraw(1, get(a:000, 0, 0), get(a:000, 1, 0))
@@ -224,9 +227,6 @@ function! unite#add_previewed_buffer_list(bufnr) "{{{
 endfunction"}}}
 function! unite#remove_previewed_buffer_list(bufnr) "{{{
   return unite#view#_remove_previewed_buffer_list(a:bufnr)
-endfunction"}}}
-function! unite#get_source_variables(context) "{{{
-  return a:context.source.variables
 endfunction"}}}
 function! unite#get_data_directory() "{{{
   let g:unite_data_directory =
