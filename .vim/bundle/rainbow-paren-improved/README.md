@@ -35,18 +35,20 @@ Install:
 --------
 
 ### via Vundle:
-- `Bundle 'luochen1990/rainbow'`
-- add this to your vimrc:
-	```vim
-	let g:rainbow_active = 1 "0 if you want to enable it later via :RainbowToggle
-	```
+
+```vim
+Bundle 'luochen1990/rainbow'
+let g:rainbow_active = 1 "0 if you want to enable it later via :RainbowToggle
+```
 
 ### Manually:
 - first, put `rainbow.vim`(this file) to dir `~/.vim/plugin` or `vimfiles/plugin`
 - second, add the follow sentences to your `.vimrc` or `_vimrc` :
+
 	```vim
 	let g:rainbow_active = 1 "0 if you want to enable it later via :RainbowToggle
 	```
+
 - third, restart your vim and enjoy coding.
 
 Configure:
