@@ -203,8 +203,8 @@ vp_file_open(char *args)
 #ifdef O_WRONLY
     if (strstr(flags, "O_WRONLY"))      f |= O_WRONLY;
 #endif
-#ifdef O_RDRW
-    if (strstr(flags, "O_RDRW"))        f |= O_RDWR;
+#ifdef O_RDWR
+    if (strstr(flags, "O_RDWR"))        f |= O_RDWR;
 #endif
 #ifdef O_NONBLOCK
     if (strstr(flags, "O_NONBLOCK"))    f |= O_NONBLOCK;
@@ -775,6 +775,14 @@ vp_pty_set_winsize(char *args)
     return NULL;
 }
 
+static pid_t
+get_pid()
+{
+    static pid_t pid = -1;
+
+    return (pid != -1) ? pid : (pid = getpid());
+}
+
 const char *
 vp_kill(char *args)
 {
@@ -795,7 +803,7 @@ vp_kill(char *args)
     if (sig != 0) {
         /* Kill by the process group. */
         pgid = getpgid(pid);
-        if (pgid > 0) {
+        if (pgid > 1 && pgid != get_pid()) {
             kill(-pgid, sig);
         }
     }
