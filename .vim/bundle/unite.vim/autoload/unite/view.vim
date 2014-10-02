@@ -564,14 +564,15 @@ function! unite#view#_init_cursor() "{{{
   let positions = unite#custom#get_profile(
         \ unite.profile_name, 'unite__save_pos')
   let key = unite#loaded_source_names_string()
-  let is_restore = has_key(positions, key) && context.select <= 0 &&
-        \   positions[key].candidate ==#
+  let is_restore = context.restore
+        \ && has_key(positions, key) && context.select <= 0
+        \ && positions[key].candidate ==#
         \     unite#helper#get_current_candidate(positions[key].pos[1])
 
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    if is_restore && unite.is_resume
+    if is_restore && context.resume
           \ && positions[key].pos[1] != unite.prompt_linenr
       " Restore position.
       call setpos('.', positions[key].pos)
@@ -641,8 +642,6 @@ function! unite#view#_quit(is_force, ...)  "{{{
   let unite = b:unite
   let context = unite.context
 
-  let key = unite#loaded_source_names_string()
-
   " Clear mark.
   for source in unite#loaded_sources_list()
     for candidate in source.unite__cached_candidates
@@ -650,26 +649,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
     endfor
   endfor
 
-  " Save position.
-  let positions = unite#custom#get_profile(
-        \ unite.profile_name, 'unite__save_pos')
-  if key != ''
-    let positions[key] = {
-          \ 'pos' : getpos('.'),
-          \ 'candidate' : unite#helper#get_current_candidate(),
-          \ }
-
-    if context.input != ''
-      " Save input.
-      let inputs = unite#custom#get_profile(
-            \ unite.profile_name, 'unite__inputs')
-      if !has_key(inputs, key)
-        let inputs[key] = []
-      endif
-      call insert(filter(inputs[key],
-            \ 'v:val !=# unite.context.input'), context.input)
-    endif
-  endif
+  call unite#view#_save_position()
 
   if a:is_force || context.quit
     let bufname = bufname('%')
@@ -783,6 +763,38 @@ function! unite#view#_clear_match() "{{{
   endif
 endfunction"}}}
 
+function! unite#view#_save_position() "{{{
+  let unite = b:unite
+  let context = unite.context
+
+  let key = unite#loaded_source_names_string()
+  if key == ''
+    return
+  endif
+
+  " Save position.
+  let positions = unite#custom#get_profile(
+        \ unite.profile_name, 'unite__save_pos')
+
+  let positions[key] = {
+        \ 'pos' : getpos('.'),
+        \ 'candidate' : unite#helper#get_current_candidate(),
+        \ }
+
+  if context.input == ''
+    return
+  endif
+
+  " Save input.
+  let inputs = unite#custom#get_profile(
+        \ unite.profile_name, 'unite__inputs')
+  if !has_key(inputs, key)
+    let inputs[key] = []
+  endif
+  call insert(filter(inputs[key],
+        \ 'v:val !=# unite.context.input'), context.input)
+endfunction"}}}
+
 " Message output.
 function! unite#view#_print_error(message) "{{{
   let message = s:msg2list(a:message)
@@ -877,6 +889,21 @@ endfunction"}}}
 function! unite#view#_remove_previewed_buffer_list(bufnr) "{{{
   let unite = unite#get_current_unite()
   call filter(unite.previewed_buffer_list, 'v:val != a:bufnr')
+endfunction"}}}
+
+function! unite#view#_preview_file(filename) "{{{
+  let context = unite#get_context()
+  if context.vertical_preview
+    let unite_winwidth = winwidth(0)
+    noautocmd silent execute 'vertical pedit!'
+          \ fnameescape(a:filename)
+    wincmd P
+    let target_winwidth = (unite_winwidth + winwidth(0)) / 2
+    execute 'wincmd p | vert resize ' . target_winwidth
+  else
+    noautocmd silent execute 'pedit!'
+          \ fnameescape(a:filename)
+  endif
 endfunction"}}}
 
 function! s:clear_previewed_buffer_list() "{{{

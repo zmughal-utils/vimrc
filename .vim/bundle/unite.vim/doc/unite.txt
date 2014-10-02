@@ -761,14 +761,6 @@ g:unite_kind_jump_list_after_jump_scroll
 
 		The default value is 25.
 
-g:unite_kind_file_vertical_preview		*g:unite_kind_file_vertical_preview*
-		If this variable is 1, Unite will open the preview window
-		(when executing the file preview action) vertically rather than
-		horizontally. It will take up half the width of the current
-		Unite buffer.
-
-		The default value is 0.
-
 					*g:unite_kind_file_preview_max_filesize*
 g:unite_kind_file_preview_max_filesize
 		It is max file size of preview action in file kind.
@@ -892,6 +884,13 @@ g:unite_cursor_line_time		*g:unite_cursor_line_time*
 		If you scroll cursor quickly less than it, unite will skip
 		cursor line highlight.
 		If it is "0.0", this feature will be disabled.
+		Note: This variable is deprecated.  Please use
+		|unite#custom#profile()| instead.
+
+					*g:unite_kind_file_vertical_preview*
+g:unite_kind_file_vertical_preview
+		If this variable is 1, Unite will open the preview window
+		vertically rather than horizontally.
 		Note: This variable is deprecated.  Please use
 		|unite#custom#profile()| instead.
 
@@ -1207,7 +1206,7 @@ e		In case when you selected a candidate, runs narrow action
 t		In case when you selected a candidate, runs tabopen action
 yy		In case when you selected a candidate, runs yank action
 o		In case when you selected a candidate, runs open action
-p		runs preview action
+p		In case when you selected a candidate, runs preview action
 x		In case when you selected a candidate, runs
 		|<Plug>(unite_quick_match_default_action)|
 
@@ -1374,9 +1373,6 @@ unite#mappings#get_current_filters()
 						*unite#set_profile()*
 unite#custom#profile({profile-name}, {option-name}, {value})
 		Set {profile-name} specialized {option-name} to {value}.
-		Note: If you use single source in unite.vim commands with
-		omitting profile name and buffer name, "source/{source-name}"
-		is used.  Thus, you can define a source-specific profile.
 
 		The options below are available:
 
@@ -1442,18 +1438,6 @@ unite#custom#profile({profile-name}, {option-name}, {value})
 		combining all candidates.  If you change filters dynamically,
 		use |unite#mappings#set_current_filters()| instead.
 
-		ignorecase			(Number)
-		Specify 'ignorecase' value in unite buffer.  If it is
-		omitted, global 'ignorecase' value is used.
-		Note: If profile_name is "files", the default value "1" is
-		used.
-
-		smartcase			(Number)
-		Specify 'smartcase' value in unite buffer.  If it is omitted,
-		global 'smartcase' value is used.
-		Note: If profile_name is "files", the default value "0" is
-		used.
-
 		context				(Dictionary)
 		Specify default {context} value in unite buffer.
 		You can customize the context in the unite buffer.
@@ -1462,6 +1446,9 @@ unite#custom#profile({profile-name}, {option-name}, {value})
 		default context.
 		Note: If you want to change default context, you should use
 		"default" profile name.
+		Note: If you use single source in unite.vim commands with
+		omitting profile name and buffer name, "source/{source-name}"
+		is used.  Thus, you can define a source-specific profile.
 		Valid key context is in |unite-options|.  However, "-" is
 		substituted to "_", and "-" prefix is removed.
 
@@ -1699,10 +1686,7 @@ the context dictionary.
 						*unite-options-profile-name*
 		-profile-name={profile-name}		(String)
 		Specify a profile name.  The default profile name is the same
-		as the buffer name.  However, if you use a single source and
-		omit the buffer name, "source/{source-name}" or "default" is
-		used.  This way you can define source-specific profiles.
-		Note: https://github.com/Shougo/unite.vim/issues/277
+		as the buffer name.
 
 						*unite-options-input*
 		-input={input-text}
@@ -1948,6 +1932,28 @@ the context dictionary.
 		It is useful for using jumplist.
 		Note: If it is used, you cannot use |:UniteResume| feature.
 
+						*unite-options-ignorecase*
+		-ignorecase
+		Specify 'ignorecase' value in unite buffer.  If it is
+		omitted, global 'ignorecase' value is used.
+
+						*unite-options-smartcase*
+		-smartcase
+		Specify 'smartcase' value in unite buffer.  If it is omitted,
+		global 'smartcase' value is used.
+
+						*unite-options-restore*
+		-restore
+		Restore the cursor in unite buffer.
+		Note: It is default behavior.
+
+						*unite-options-vertical-preview*
+		-vertical-preview
+		If it is on, Unite will open the preview window
+		(when executing the file preview action) vertically rather than
+		horizontally. It will take up half the width of the current
+		Unite buffer.
+
 ==============================================================================
 SOURCES						*unite-sources*
 
@@ -2053,6 +2059,9 @@ buffer_tab	Nominates opened buffers only in the current tab as
 		candidates, ordering by time series.
 		Arguments are the same as for |unite-source-buffer|.
 
+		Note: This source requires |tabpagebuffer|.  Please install.
+		http://github.com/Shougo/tabpagebuffer.vim
+
 		Source arguments:
 		1. "!", "?", "+" or "-".
 
@@ -2141,7 +2150,7 @@ mapping		Nominates Vim mappings as candidates.
 grep		Nominates "grep" command output as candidates.
 		Note: This source is created by Sixeight.
 
-		Note: This source requires vimproc.  Please install.
+		Note: This source requires |vimproc|.  Please install.
 		http://github.com/Shougo/vimproc
 
 		Source arguments:
@@ -3618,17 +3627,6 @@ buffer (the default is mapped to <C-l>).
 Note: |unite-options-sync| may be useful. It blocks Vim until the cache is
 completed.
 
-Q: I want to toggle the preview window when I press the "p" key.
-
-A: >
-	autocmd FileType unite call s:unite_my_settings()
-	function! s:unite_my_settings()
-	    nnoremap <silent><buffer><expr> p
-	          \ empty(filter(range(1, winnr('$')),
-	          \ 'getwinvar(v:val, "&previewwindow") != 0')) ?
-	          \ unite#do_action('preview') : ":\<C-u>pclose!\<CR>"
-	endfunction
-
 Q: file_rec/async source does not look .gitignore using ag.
 https://github.com/Shougo/unite.vim/issues/398
 
@@ -3680,12 +3678,11 @@ A: >
 	\ })
 
 Q: I want to use file_rec/async in Windows environment.
-You can use "files" command.  It is slower than find command, however, it is
-useful in Windows environment.
-https://github.com/mattn/files
 
-A: >
-	let g:unite_source_rec_async_command = 'files'
+A: You can use "files" command.  It is slower than find command, however, it
+is useful in Windows environment.
+https://github.com/mattn/files >
+	let g:unite_source_rec_async_command = 'files -A'
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:

@@ -311,6 +311,7 @@ function! unite#start#resume(buffer_name, ...) "{{{
   endif
 
   let context = getbufvar(bufnr, 'unite').context
+  let context.resume = 1
 
   let winnr = winnr()
   let win_rest_cmd = context.unite__direct_switch ||
@@ -337,7 +338,6 @@ function! unite#start#resume(buffer_name, ...) "{{{
   let unite.access_time = localtime()
   let unite.context = context
   let unite.is_finalized = 0
-  let unite.is_resume = 1
   let unite.preview_candidate = {}
   let unite.highlight_candidate = {}
 
@@ -418,6 +418,22 @@ function! unite#start#_pos(buffer_name, direction, count) "{{{
   call unite#view#_redraw_echo(printf('[%d/%d] %s',
         \ unite.candidate_cursor+1, len(unite.candidates),
         \ get(candidate, 'abbr', candidate.word)))
+
+  let winnr = unite#helper#get_unite_winnr(unite.context.buffer_name)
+  if winnr < 0
+    return
+  endif
+
+  " Move cursor
+  let prev_winnr = winnr()
+  try
+    execute winnr . 'wincmd w'
+    call cursor(unite#helper#get_current_candidate_linenr(next), 0)
+    call unite#view#_set_cursor_line()
+    call unite#view#_save_position()
+  finally
+    execute prev_winnr . 'wincmd w'
+  endtry
 endfunction"}}}
 
 function! s:get_candidates(sources, context) "{{{
