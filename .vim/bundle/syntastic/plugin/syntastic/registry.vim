@@ -72,10 +72,11 @@ let s:defaultCheckers = {
         \ 'scss':        ['sass', 'scss_lint'],
         \ 'sh':          ['sh', 'shellcheck'],
         \ 'slim':        ['slimrb'],
+        \ 'spec':        ['rpmlint'],
         \ 'tcl':         ['nagelfar'],
         \ 'tex':         ['lacheck', 'chktex'],
         \ 'texinfo':     ['makeinfo'],
-        \ 'text':        ['atdtool'],
+        \ 'text':        [],
         \ 'twig':        ['twiglint'],
         \ 'typescript':  ['tsc'],
         \ 'vala':        ['valac'],
@@ -96,7 +97,8 @@ lockvar! s:defaultCheckers
 let s:defaultFiletypeMap = {
         \ 'gentoo-metadata': 'xml',
         \ 'lhaskell': 'haskell',
-        \ 'litcoffee': 'coffee'
+        \ 'litcoffee': 'coffee',
+        \ 'mail': 'text'
     \ }
 lockvar! s:defaultFiletypeMap
 
