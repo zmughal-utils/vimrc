@@ -211,7 +211,7 @@
 :Widen	narrow.txt	/*:Widen*
 :vim-tail.zsh	tail.txt	/*:vim-tail.zsh*
 <Leader>#	mark.txt	/*<Leader>#*
-<Leader>/	mark.txt	/*<Leader>\/*
+<Leader>/	mark.txt	/*<Leader>/*
 <Leader>?	mark.txt	/*<Leader>?*
 <Leader>m	mark.txt	/*<Leader>m*
 <Leader>n	mark.txt	/*<Leader>n*
