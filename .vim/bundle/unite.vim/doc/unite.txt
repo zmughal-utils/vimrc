@@ -1194,7 +1194,7 @@ k		|<Plug>(unite_loop_cursor_up)|
 <Up>		|<Plug>(unite_loop_cursor_up)|
 J		|<Plug>(unite_skip_cursor_down)|
 K		|<Plug>(unite_skip_cursor_up)|
-?		|<Plug>(unite_quick_help)|
+g?		|<Plug>(unite_quick_help)|
 N		|<Plug>(unite_new_candidate)|
 .		|<Plug>(unite_narrowing_dot)|
 <2-LeftMouse>	|<Plug>(unite_do_default_action)|
@@ -1976,12 +1976,12 @@ file/new	Nominates a new input file as a candidate.
 file/async	Similar to |unite-source-file|, but get files asynchronously.
 
 						*unite-source-file_rec*
-file_rec	Gather files recursive and nominates all directory or file
-		names under the search directory (argument 1) or the current
-		directory (if argument is omitted) as candidates.  This may
-		freeze Vim when there are too many candidates.  The candidates
-		are cached by file_rec source.  To clear cache, use
-		|<Plug>(unite_redraw)| keymapping.
+file_rec	Gather files recursive and nominates all file names under the
+		search directory (argument 1) or the current directory (if
+		argument is omitted) as candidates.  This may freeze Vim when
+		there are too many candidates.  The candidates are cached by
+		file_rec source.  To clear cache, use |<Plug>(unite_redraw)|
+		keymapping.
 		Note: If you edit file by Vim, file_rec source will update
 		cache file.
 		Note: If the candidates are over 1000, it will disable make

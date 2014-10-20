@@ -123,7 +123,7 @@ endfunction"}}}
 
 function! unite#helper#parse_options(args) "{{{
   let args = []
-  let options = { 'custom' : {} }
+  let options = {}
   for arg in split(a:args, '\%(\\\@<!\s\)\+')
     let arg = substitute(arg, '\\\( \)', '\1', 'g')
     let arg_key = substitute(arg, '=\zs.*$', '', '')
@@ -193,8 +193,7 @@ function! unite#helper#get_input(...) "{{{
     setlocal modifiable
 
     " Restore prompt.
-    call setline(unite.prompt_linenr, unite.prompt
-          \ . getline(unite.prompt_linenr))
+    call setline(unite.prompt_linenr, unite.prompt)
 
     let &l:modifiable = modifiable_save
   endif
