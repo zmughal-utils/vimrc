@@ -134,6 +134,8 @@
 :IkiJumpToPageVW	ikiwiki-nav.txt	/*:IkiJumpToPageVW*
 :IkiNextWikiLink	ikiwiki-nav.txt	/*:IkiNextWikiLink*
 :IkiPrevWikiLink	ikiwiki-nav.txt	/*:IkiPrevWikiLink*
+:Mannxt	manpageview.txt	/*:Mannxt*
+:Manprv	manpageview.txt	/*:Manprv*
 :Mark	mark.txt	/*:Mark*
 :MarkClear	mark.txt	/*:MarkClear*
 :MarkLoad	mark.txt	/*:MarkLoad*
@@ -211,7 +213,7 @@
 :Widen	narrow.txt	/*:Widen*
 :vim-tail.zsh	tail.txt	/*:vim-tail.zsh*
 <Leader>#	mark.txt	/*<Leader>#*
-<Leader>/	mark.txt	/*<Leader>/*
+<Leader>/	mark.txt	/*<Leader>\/*
 <Leader>?	mark.txt	/*<Leader>?*
 <Leader>m	mark.txt	/*<Leader>m*
 <Leader>n	mark.txt	/*<Leader>n*
@@ -318,6 +320,8 @@ EasyGrep_OptionsSummary	EasyGrep.txt	/*EasyGrep_OptionsSummary*
 ExtractSnips()	snipMate.txt	/*ExtractSnips()*
 ExtractSnipsFile()	snipMate.txt	/*ExtractSnipsFile()*
 Filename()	snipMate.txt	/*Filename()*
+HEMan	manpageview.txt	/*HEMan*
+HMan	manpageview.txt	/*HMan*
 IDMY	visincr.txt	/*IDMY*
 IH	alternate.txt	/*IH*
 IHN	alternate.txt	/*IHN*
@@ -427,12 +431,15 @@ NERDTreeOptions	NERD_tree.txt	/*NERDTreeOptions*
 NERDTreeRender()	NERD_tree.txt	/*NERDTreeRender()*
 NERD_commenter.txt	NERD_commenter.txt	/*NERD_commenter.txt*
 NERD_tree.txt	NERD_tree.txt	/*NERD_tree.txt*
+OMan	manpageview.txt	/*OMan*
 PDFViewingToggle()	live-latex-preview.txt	/*PDFViewingToggle()*
+RMan	manpageview.txt	/*RMan*
 ResetSnippets()	snipMate.txt	/*ResetSnippets()*
 SHINKUU-TATSUMAKI-SENPUU-KYAKU	mimicpak.txt	/*SHINKUU-TATSUMAKI-SENPUU-KYAKU*
 Stallman	mimicpak.txt	/*Stallman*
 SwapIdea	swapit.txt	/*SwapIdea*
 SwapList	swapit.txt	/*SwapList*
+TMan	manpageview.txt	/*TMan*
 TToC_GetLine_bib()	ttoc.txt	/*TToC_GetLine_bib()*
 TToC_GetLine_viki()	ttoc.txt	/*TToC_GetLine_viki()*
 Tabula_BoldStatement	tabula.txt	/*Tabula_BoldStatement*
@@ -482,6 +489,8 @@ VCSCommandSVNDiffExt	vcscommand.txt	/*VCSCommandSVNDiffExt*
 VCSCommandSVNDiffOpt	vcscommand.txt	/*VCSCommandSVNDiffOpt*
 VCSCommandSVNExec	vcscommand.txt	/*VCSCommandSVNExec*
 VCSCommandSplit	vcscommand.txt	/*VCSCommandSplit*
+VEMan	manpageview.txt	/*VEMan*
+VMan	manpageview.txt	/*VMan*
 VimExplorer	vimExplorer.txt	/*VimExplorer*
 VimExplorer-author	vimExplorer.txt	/*VimExplorer-author*
 VimExplorer-browse	vimExplorer.txt	/*VimExplorer-browse*
@@ -1019,6 +1028,7 @@ g:fuf_taggedfile_switchOrder	fuf.txt	/*g:fuf_taggedfile_switchOrder*
 g:fuf_timeFormat	fuf.txt	/*g:fuf_timeFormat*
 g:fuf_useMigemo	fuf.txt	/*g:fuf_useMigemo*
 g:manpageview_K_EXT	manpageview.txt	/*g:manpageview_K_EXT*
+g:manpageview_K_http	manpageview.txt	/*g:manpageview_K_http*
 g:manpageview_iconv	manpageview.txt	/*g:manpageview_iconv*
 g:manpageview_init_EXT	manpageview.txt	/*g:manpageview_init_EXT*
 g:manpageview_multimanpage	manpageview.txt	/*g:manpageview_multimanpage*
@@ -1159,6 +1169,10 @@ list-snippets	snipMate.txt	/*list-snippets*
 live-latex-preview	live-latex-preview.txt	/*live-latex-preview*
 live-latex-preview.txt	live-latex-preview.txt	/*live-latex-preview.txt*
 manpageview	manpageview.txt	/*manpageview*
+manpageview-.man	manpageview.txt	/*manpageview-.man*
+manpageview-.php	manpageview.txt	/*manpageview-.php*
+manpageview-.pl	manpageview.txt	/*manpageview-.pl*
+manpageview-.py	manpageview.txt	/*manpageview-.py*
 manpageview-K	manpageview.txt	/*manpageview-K*
 manpageview-contents	manpageview.txt	/*manpageview-contents*
 manpageview-copyright	manpageview.txt	/*manpageview-copyright*
@@ -1174,7 +1188,11 @@ manpageview-pageup	manpageview.txt	/*manpageview-pageup*
 manpageview-perl	manpageview.txt	/*manpageview-perl*
 manpageview-php	manpageview.txt	/*manpageview-php*
 manpageview-python	manpageview.txt	/*manpageview-python*
+manpageview-search	manpageview.txt	/*manpageview-search*
+manpageview-shell	manpageview.txt	/*manpageview-shell*
+manpageview-specialhandler	manpageview.txt	/*manpageview-specialhandler*
 manpageview-suggest	manpageview.txt	/*manpageview-suggest*
+manpageview-updates	manpageview.txt	/*manpageview-updates*
 manpageview-usage	manpageview.txt	/*manpageview-usage*
 manpageview.txt	manpageview.txt	/*manpageview.txt*
 manpageview_extend	manpageview.txt	/*manpageview_extend*
@@ -1256,6 +1274,8 @@ mimic_paradox_alt	mimicpak.txt	/*mimic_paradox_alt*
 mimicpak	mimicpak.txt	/*mimicpak*
 mimicpak.txt	mimicpak.txt	/*mimicpak.txt*
 mimicpak.vim	mimicpak.txt	/*mimicpak.vim*
+mpv-history	manpageview.txt	/*mpv-history*
+mpv-search	manpageview.txt	/*mpv-search*
 multi_snip	snipMate.txt	/*multi_snip*
 narrow#Narrow()	narrow.txt	/*narrow#Narrow()*
 narrow#Widen()	narrow.txt	/*narrow#Widen()*
