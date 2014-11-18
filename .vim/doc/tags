@@ -58,9 +58,6 @@
 'Tlist_WinWidth'	taglist.txt	/*'Tlist_WinWidth'*
 'loaded_nerd_comments'	NERD_commenter.txt	/*'loaded_nerd_comments'*
 'loaded_nerd_tree'	NERD_tree.txt	/*'loaded_nerd_tree'*
-'snippets'	snipMate.txt	/*'snippets'*
-.snippet	snipMate.txt	/*.snippet*
-.snippets	snipMate.txt	/*.snippets*
 :Abolish	abolish.txt	/*:Abolish*
 :AlignCenter	textformat.txt	/*:AlignCenter*
 :AlignJustify	textformat.txt	/*:AlignJustify*
@@ -213,7 +210,7 @@
 :Widen	narrow.txt	/*:Widen*
 :vim-tail.zsh	tail.txt	/*:vim-tail.zsh*
 <Leader>#	mark.txt	/*<Leader>#*
-<Leader>/	mark.txt	/*<Leader>\/*
+<Leader>/	mark.txt	/*<Leader>/*
 <Leader>?	mark.txt	/*<Leader>?*
 <Leader>m	mark.txt	/*<Leader>m*
 <Leader>n	mark.txt	/*<Leader>n*
@@ -317,9 +314,6 @@ EasyGrep_Options	EasyGrep.txt	/*EasyGrep_Options*
 EasyGrep_OptionsDetail	EasyGrep.txt	/*EasyGrep_OptionsDetail*
 EasyGrep_OptionsExplorer	EasyGrep.txt	/*EasyGrep_OptionsExplorer*
 EasyGrep_OptionsSummary	EasyGrep.txt	/*EasyGrep_OptionsSummary*
-ExtractSnips()	snipMate.txt	/*ExtractSnips()*
-ExtractSnipsFile()	snipMate.txt	/*ExtractSnipsFile()*
-Filename()	snipMate.txt	/*Filename()*
 HEMan	manpageview.txt	/*HEMan*
 HMan	manpageview.txt	/*HMan*
 IDMY	visincr.txt	/*IDMY*
@@ -434,7 +428,6 @@ NERD_tree.txt	NERD_tree.txt	/*NERD_tree.txt*
 OMan	manpageview.txt	/*OMan*
 PDFViewingToggle()	live-latex-preview.txt	/*PDFViewingToggle()*
 RMan	manpageview.txt	/*RMan*
-ResetSnippets()	snipMate.txt	/*ResetSnippets()*
 SHINKUU-TATSUMAKI-SENPUU-KYAKU	mimicpak.txt	/*SHINKUU-TATSUMAKI-SENPUU-KYAKU*
 Stallman	mimicpak.txt	/*Stallman*
 SwapIdea	swapit.txt	/*SwapIdea*
@@ -1045,8 +1038,6 @@ g:manpgeview_user	manpageview.txt	/*g:manpgeview_user*
 g:mwAutoLoadMarks	mark.txt	/*g:mwAutoLoadMarks*
 g:mwAutoSaveMarks	mark.txt	/*g:mwAutoSaveMarks*
 g:mwHistAdd	mark.txt	/*g:mwHistAdd*
-g:snippets_dir	snipMate.txt	/*g:snippets_dir*
-g:snips_author	snipMate.txt	/*g:snips_author*
 g:textobj_fold_no_default_key_mappings	textobj-fold.txt	/*g:textobj_fold_no_default_key_mappings*
 g:tlib#cache#dont_purge	tlib.txt	/*g:tlib#cache#dont_purge*
 g:tlib#cache#purge_days	tlib.txt	/*g:tlib#cache#purge_days*
@@ -1116,7 +1107,6 @@ i_<Plug>(fakeclip-screen-insert-p)	fakeclip.txt	/*i_<Plug>(fakeclip-screen-inser
 i_<Plug>(fakeclip-screen-insert-r)	fakeclip.txt	/*i_<Plug>(fakeclip-screen-insert-r)*
 i_CTRL-G_S	surround.txt	/*i_CTRL-G_S*
 i_CTRL-G_s	surround.txt	/*i_CTRL-G_s*
-i_CTRL-R_<Tab>	snipMate.txt	/*i_CTRL-R_<Tab>*
 i_CTRL-R_?	CaptureClipboard.txt	/*i_CTRL-R_?*
 ikiwiki-bugs	ikiwiki-nav.txt	/*ikiwiki-bugs*
 ikiwiki-commands	ikiwiki-nav.txt	/*ikiwiki-commands*
@@ -1165,7 +1155,6 @@ l9-usage	l9.txt	/*l9-usage*
 l9.txt	l9.txt	/*l9.txt*
 largefile	LargeFile.txt	/*largefile*
 largefile-history	LargeFile.txt	/*largefile-history*
-list-snippets	snipMate.txt	/*list-snippets*
 live-latex-preview	live-latex-preview.txt	/*live-latex-preview*
 live-latex-preview.txt	live-latex-preview.txt	/*live-latex-preview.txt*
 manpageview	manpageview.txt	/*manpageview*
@@ -1276,7 +1265,6 @@ mimicpak.txt	mimicpak.txt	/*mimicpak.txt*
 mimicpak.vim	mimicpak.txt	/*mimicpak.vim*
 mpv-history	manpageview.txt	/*mpv-history*
 mpv-search	manpageview.txt	/*mpv-search*
-multi_snip	snipMate.txt	/*multi_snip*
 narrow#Narrow()	narrow.txt	/*narrow#Narrow()*
 narrow#Widen()	narrow.txt	/*narrow#Widen()*
 narrow-bugs	narrow.txt	/*narrow-bugs*
@@ -1326,27 +1314,6 @@ screen-terminal	screen.txt	/*screen-terminal*
 screen-troubleshooting	screen.txt	/*screen-troubleshooting*
 screen-usage	screen.txt	/*screen-usage*
 screen.txt	screen.txt	/*screen.txt*
-snipMate	snipMate.txt	/*snipMate*
-snipMate-$#	snipMate.txt	/*snipMate-$#*
-snipMate-${#:}	snipMate.txt	/*snipMate-${#:}*
-snipMate-${#}	snipMate.txt	/*snipMate-${#}*
-snipMate-author	snipMate.txt	/*snipMate-author*
-snipMate-commands	snipMate.txt	/*snipMate-commands*
-snipMate-contact	snipMate.txt	/*snipMate-contact*
-snipMate-description	snipMate.txt	/*snipMate-description*
-snipMate-disadvantages	snipMate.txt	/*snipMate-disadvantages*
-snipMate-expandtab	snipMate.txt	/*snipMate-expandtab*
-snipMate-features	snipMate.txt	/*snipMate-features*
-snipMate-filename	snipMate.txt	/*snipMate-filename*
-snipMate-indenting	snipMate.txt	/*snipMate-indenting*
-snipMate-placeholders	snipMate.txt	/*snipMate-placeholders*
-snipMate-remap	snipMate.txt	/*snipMate-remap*
-snipMate-settings	snipMate.txt	/*snipMate-settings*
-snipMate-usage	snipMate.txt	/*snipMate-usage*
-snipMate.txt	snipMate.txt	/*snipMate.txt*
-snippet	snipMate.txt	/*snippet*
-snippet-syntax	snipMate.txt	/*snippet-syntax*
-snippets	snipMate.txt	/*snippets*
 standard-paragraph	tlib.txt	/*standard-paragraph*
 surround	surround.txt	/*surround*
 surround-author	surround.txt	/*surround-author*
