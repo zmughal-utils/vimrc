@@ -309,7 +309,7 @@ function! neocomplete#helper#call_hook(sources, hook_name, context) "{{{
       call neocomplete#print_error(v:throwpoint)
       call neocomplete#print_error(v:exception)
       call neocomplete#print_error(
-            \ '[unite.vim] Error occured in calling hook "' . a:hook_name . '"!')
+            \ '[unite.vim] Error occurred in calling hook "' . a:hook_name . '"!')
       call neocomplete#print_error(
             \ '[unite.vim] Source name is ' . source.name)
     endtry
@@ -325,7 +325,7 @@ function! neocomplete#helper#call_filters(filters, source, context) "{{{
       call neocomplete#print_error(v:throwpoint)
       call neocomplete#print_error(v:exception)
       call neocomplete#print_error(
-            \ '[unite.vim] Error occured in calling filter '
+            \ '[unite.vim] Error occurred in calling filter '
             \   . filter.name . '!')
       call neocomplete#print_error(
             \ '[unite.vim] Source name is ' . a:source.name)
@@ -359,12 +359,14 @@ endfunction"}}}
 
 function! neocomplete#helper#indent_current_line() "{{{
   let pos = getpos('.')
+  let len = len(getline('.'))
   let equalprg = &l:equalprg
   try
     setlocal equalprg=
     silent normal! ==
   finally
     let &l:equalprg = equalprg
+    let pos[2] += len(getline('.')) - len
     call setpos('.', pos)
   endtry
 endfunction"}}}
@@ -387,12 +389,6 @@ function! neocomplete#helper#complete_configure() "{{{
     else
       set completeopt+=noinsert,noselect
     endif
-  endif
-
-  " Do not display completion messages
-  " Patch: https://groups.google.com/forum/#!topic/vim_dev/WeBBjkXE8H8
-  if has('patch-7.4.314')
-    set shortmess+=c
   endif
 endfunction"}}}
 

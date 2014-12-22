@@ -164,7 +164,7 @@ function! neocomplete#handler#_on_insert_char_pre() "{{{
   endif
 
   let neocomplete = neocomplete#get_current_neocomplete()
-  if neocomplete.old_char != ' ' && v:char == ' '
+  if neocomplete.old_char != ' ' && v:char == ' ' && v:count == 0
     call s:make_cache_current_line()
   endif
 
@@ -206,8 +206,10 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
       return
     endif
 
-    " Check multibyte input or eskk.
-    if neocomplete#is_eskk_enabled()
+    " Check multibyte input or eskk or spaces.
+    " Note: Spaces are skipped by performance problem.
+    if cur_text =~ '^\s*$\|\s\+$'
+          \ || neocomplete#is_eskk_enabled()
           \ || neocomplete#is_multibyte_input(cur_text)
       call neocomplete#print_debug('Skipped.')
       return
@@ -309,8 +311,7 @@ endfunction"}}}
 function! s:is_skip_auto_complete(cur_text) "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
 
-  if a:cur_text =~ '^\s*$\|\s\+$'
-        \ || (a:cur_text == neocomplete.old_cur_text
+  if (a:cur_text == neocomplete.old_cur_text
         \     && line('.') == neocomplete.old_linenr)
         \ || (g:neocomplete#lock_iminsert && &l:iminsert)
         \ || (&l:formatoptions =~# '[tca]' && &l:textwidth > 0
@@ -366,6 +367,7 @@ function! s:make_cache_current_line() "{{{
 endfunction"}}}
 
 function! s:complete_key(key) "{{{
+  set completeopt-=longest
   call neocomplete#helper#complete_configure()
   call feedkeys(a:key)
 endfunction"}}}

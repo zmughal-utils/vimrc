@@ -88,6 +88,8 @@ function! neocomplete#init#_autocmds() "{{{
           \ call neocomplete#handler#_on_insert_char_pre()
     autocmd TextChangedI *
           \ call neocomplete#handler#_on_text_changed()
+    autocmd VimLeavePre *
+          \ call neocomplete#init#disable()
   augroup END
 
   if g:neocomplete#enable_insert_char_pre
@@ -129,13 +131,6 @@ function! neocomplete#init#_others() "{{{
     call neocomplete#print_error(output)
     call neocomplete#print_error(
           \ 'Detected set paste! Disabled neocomplete.')
-  endif
-
-  " Set completefunc.
-  let completefunc_save = &l:completefunc
-  let &completefunc = 'neocomplete#complete#manual_complete'
-  if completefunc_save != ''
-    let &l:completefunc = completefunc_save
   endif
 
   command! -nargs=0 -bar NeoCompleteDisable
@@ -371,6 +366,10 @@ function! neocomplete#init#_variables() "{{{
         \'g:neocomplete#keyword_patterns',
         \'go',
         \'\h\w*')
+  call neocomplete#util#set_default_dictionary(
+        \'g:neocomplete#keyword_patterns',
+        \'toml',
+        \'\h[[:alnum:]_.-]*')
   "}}}
 
   " Initialize same file types. "{{{

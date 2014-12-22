@@ -172,7 +172,7 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
   endif
 
   if neocomplete#helper#is_omni(neocomplete#get_cur_text(1))
-    return "\<C-x>\<C-o>\<C-p>"
+    return "\<C-x>\<C-o>"
   endif
 
   " Set context filetype.
@@ -186,16 +186,13 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
         \ neocomplete#util#convert2list(sources))
   let neocomplete.sources_filetype = ''
 
-  " Don't support menu configuration
-  set completeopt+=menuone
-  set completeopt-=menu
+  call neocomplete#helper#complete_configure()
 
   " Set function.
   let &l:completefunc = 'neocomplete#complete#sources_manual_complete'
 
   " Start complete.
-  return neocomplete#util#is_complete_select() ?
-        \ "\<C-x>\<C-u>" : "\<C-x>\<C-u>\<C-p>"
+  return "\<C-x>\<C-u>"
 endfunction"}}}
 
 let &cpo = s:save_cpo
