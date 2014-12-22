@@ -75,7 +75,7 @@ unlet s:vimproc_dll_basename
 call vimproc#util#set_default(
       \ 'g:vimproc#password_pattern',
       \ '\%(Enter \|[Oo]ld \|[Nn]ew \|login '  .
-      \'\|Kerberos \|CVS \|UNIX \| SMB \|LDAP \|\[sudo] ' .
+      \'\|Kerberos \|EncFS \|CVS \|UNIX \| SMB \|LDAP \|\[sudo] ' .
       \'\|^\|\n\|''s \)\%([Pp]assword\|[Pp]assphrase\)\>',
       \ 'g:vimproc_password_pattern')
 call vimproc#util#set_default(
@@ -429,10 +429,11 @@ function! vimproc#shellescape(string) "{{{
   return string(a:string)
 endfunction"}}}
 
-function! vimproc#fopen(path, flags, ...) "{{{
-  let mode = get(a:000, 0, 0644)
+function! vimproc#fopen(path, ...) "{{{
+  let flags = get(a:000, 0, 'r')
+  let mode = get(a:000, 1, 0644)
   let fd = s:vp_file_open((s:is_null_device(a:path)
-        \ ? s:null_device : a:path), a:flags, mode)
+        \ ? s:null_device : a:path), flags, mode)
   let proc = s:fdopen(fd, 'vp_file_close', 'vp_file_read', 'vp_file_write')
   return proc
 endfunction"}}}
@@ -483,7 +484,7 @@ function! s:plineopen(npipe, commands, is_pty) "{{{
 
   " Open input.
   let hstdin = (empty(a:commands) || a:commands[0].fd.stdin == '')?
-        \ 0 : vimproc#fopen(a:commands[0].fd.stdin, 'O_RDONLY').fd
+        \ 0 : vimproc#fopen(a:commands[0].fd.stdin, 'r').fd
 
   let is_pty = !vimproc#util#is_windows() && a:is_pty
 
@@ -494,12 +495,11 @@ function! s:plineopen(npipe, commands, is_pty) "{{{
       " pty_open() use pipe.
       let hstdout = 1
     else
-      let mode = 'O_WRONLY | O_CREAT'
       if command.fd.stdout =~ '^>'
-        let mode .= ' | O_APPEND'
+        let mode = 'a'
         let command.fd.stdout = command.fd.stdout[1:]
       else
-        let mode .= ' | O_TRUNC'
+        let mode = 'w'
       endif
 
       let hstdout = s:is_pseudo_device(command.fd.stdout) ?
@@ -511,12 +511,11 @@ function! s:plineopen(npipe, commands, is_pty) "{{{
       " pty_open() use pipe.
       let hstderr = 1
     else
-      let mode = 'O_WRONLY | O_CREAT'
       if command.fd.stderr =~ '^>'
-        let mode .= ' | O_APPEND'
+        let mode = 'a'
         let command.fd.stderr = command.fd.stderr[1:]
       else
-        let mode .= ' | O_TRUNC'
+        let mode = 'w'
       endif
       let hstderr = s:is_pseudo_device(command.fd.stderr) ?
             \ 0 : vimproc#fopen(command.fd.stderr, mode).fd
@@ -536,7 +535,8 @@ function! s:plineopen(npipe, commands, is_pty) "{{{
 
     if is_pty && (cnt == 0 || cnt == len(a:commands)-1)
       " Use pty_open().
-      let pipe = s:vp_pty_open(pty_npipe, winwidth(0)-5, winheight(0),
+      let pipe = s:vp_pty_open(pty_npipe,
+            \ s:get_winwidth(), winheight(0),
             \ hstdin, hstdout, hstderr, args)
     else
       let pipe = s:vp_pipe_open(pty_npipe,
@@ -593,6 +593,8 @@ function! s:plineopen(npipe, commands, is_pty) "{{{
   let proc.is_pty = is_pty
   if a:is_pty
     let proc.ttyname = ''
+    let proc.width = winwidth(0) - &l:numberwidth - &l:foldcolumn
+    let proc.height = winheight(0)
     let proc.get_winsize = s:funcref('vp_get_winsize')
     let proc.set_winsize = s:funcref('vp_set_winsize')
   endif
@@ -752,14 +754,7 @@ function! vimproc#write(filename, string, ...) "{{{
     call setqflist(qflist)
   else
     " Write file.
-
-    let cmode = 'O_WRONLY | O_CREAT'
-    if mode =~# 'a'
-      " Append mode.
-      let cmode .= '| O_APPEND'
-    endif
-
-    let hfile = vimproc#fopen(filename, cmode)
+    let hfile = vimproc#fopen(filename, mode)
     call hfile.write(a:string)
     call hfile.close()
   endif
@@ -1065,7 +1060,7 @@ function! s:convert_args(args) "{{{
   endif
 
   let args = map(copy(a:args), 'vimproc#util#iconv(
-	\ v:val, &encoding, vimproc#util#systemencoding())')
+        \ v:val, &encoding, vimproc#util#systemencoding())')
 
   if vimproc#util#is_windows() && !executable(a:args[0])
     " Search from internal commands.
@@ -1083,7 +1078,7 @@ function! s:convert_args(args) "{{{
   let command_name = vimproc#get_command_name(a:args[0])
 
   return map(vimproc#analyze_shebang(command_name), 'vimproc#util#iconv(
-	\ v:val, &encoding, vimproc#util#systemencoding())') + args[1:]
+        \ v:val, &encoding, vimproc#util#systemencoding())') + args[1:]
 endfunction"}}}
 
 function! vimproc#analyze_shebang(filename) "{{{
@@ -1291,21 +1286,35 @@ function! s:quote_arg(arg)
 endfunction
 
 function! s:vp_pipe_open(npipe, hstdin, hstdout, hstderr, argv) "{{{
-  if vimproc#util#is_windows()
-    let cmdline = s:quote_arg(substitute(a:argv[0], '/', '\', 'g'))
-    for arg in a:argv[1:]
-      let cmdline .= ' ' . s:quote_arg(arg)
-    endfor
-    let [pid; fdlist] = s:libcall('vp_pipe_open',
-          \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, cmdline])
-  else
-    let [pid; fdlist] = s:libcall('vp_pipe_open',
-          \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, len(a:argv)] + a:argv)
-  endif
+  try
+    if vimproc#util#is_windows()
+      let cmdline = s:quote_arg(substitute(a:argv[0], '/', '\', 'g'))
+      for arg in a:argv[1:]
+        let cmdline .= ' ' . s:quote_arg(arg)
+      endfor
+      let [pid; fdlist] = s:libcall('vp_pipe_open',
+            \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, cmdline])
+    else
+      let [pid; fdlist] = s:libcall('vp_pipe_open',
+            \ [a:npipe, a:hstdin, a:hstdout, a:hstderr, len(a:argv)] + a:argv)
+    endif
+  catch
+    call s:print_error(v:throwpoint)
+    call s:print_error(v:exception)
+    call s:print_error(
+          \ 'vimproc: Error occurred in calling s:vp_pipe_open()')
+    call s:print_error(printf(
+          \ 'a:argv = %s', string(a:argv)))
+    call s:print_error(printf(
+          \ 'original a:argv = %s', vimproc#util#iconv(
+          \   string(a:argv), vimproc#util#systemencoding(), &encoding)))
+  endtry
 
   if a:npipe != len(fdlist)
-    call s:print_error(printf('a:npipe = %d, a:argv = %s', a:npipe, string(a:argv)))
-    call s:print_error(printf('pid = %d, fdlist = %s', pid, string(fdlist)))
+    call s:print_error(printf(
+          \ 'a:npipe = %d, a:argv = %s', a:npipe, string(a:argv)))
+    call s:print_error(printf(
+          \ 'pid = %d, fdlist = %s', pid, string(fdlist)))
     echoerr 'Bug behavior is detected!: ' . pid
   endif
 
@@ -1468,7 +1477,7 @@ function! s:vp_pty_write(hd, timeout) dict
 endfunction
 
 function! s:vp_get_winsize() dict
-  let [width, height] = [winwidth(0)-5, winheight(0)]
+  let [width, height] = [s:get_winwidth(), winheight(0)]
 
   if !vimproc#util#is_windows()
     for pid in self.pid_list
@@ -1481,11 +1490,15 @@ endfunction
 
 function! s:vp_set_winsize(width, height) dict
   if vimproc#util#is_windows() || !self.is_valid
-    " Not implemented.
+        \ || (abs(a:width - self.width) < 3 && abs(a:height - self.height) < 3)
+        \ || !self.is_pty
     return
   endif
 
-  if self.is_pty
+  let self.width = a:width
+  let self.height = a:height
+
+  try
     if self.stdin.eof == 0 && self.stdin.fd[-1].is_pty
       call s:libcall('vp_pty_set_winsize',
             \ [self.stdin.fd[-1].fd, a:width-5, a:height])
@@ -1498,7 +1511,9 @@ function! s:vp_set_winsize(width, height) dict
       call s:libcall('vp_pty_set_winsize',
             \ [self.stderr.fd[0].fd, a:width-5, a:height])
     endif
-  endif
+  catch
+    return
+  endtry
 
   " Send SIGWINCH = 28 signal.
   for pid in self.pid_list
@@ -1515,6 +1530,7 @@ function! s:vp_kill(...) dict
 
   let ret = 0
   for pid in get(self, 'pid_list', [self.pid])
+    call s:waitpid(pid)
     let ret = vimproc#kill(pid, sig)
   endfor
 
@@ -1634,6 +1650,10 @@ endfunction
 function! s:vp_host_exists(host)
   let [rval] = s:libcall('vp_host_exists', [a:host])
   return rval
+endfunction
+
+function! s:get_winwidth()
+  return winwidth(0) - &l:numberwidth - &l:foldcolumn
 endfunction
 
 " Initialize.
