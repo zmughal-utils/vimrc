@@ -8,10 +8,11 @@
 "             Want To Public License, Version 2, as published by Sam Hocevar.
 "             See http://sam.zoy.org/wtfpl/COPYING for more details.
 "
+"============================================================================
+"
 " This syntax checker does not reformat your source code.
 " Use a BufWritePre autocommand to that end:
 "   autocmd FileType go autocmd BufWritePre <buffer> Fmt
-"============================================================================
 
 if exists("g:loaded_syntastic_go_go_checker")
     finish
@@ -22,7 +23,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! SyntaxCheckers_go_go_IsAvailable() dict
-    return executable('go') && executable('gofmt')
+    return executable(self.getExec()) && executable('gofmt')
 endfunction
 
 function! SyntaxCheckers_go_go_GetLocList() dict
@@ -49,10 +50,10 @@ function! SyntaxCheckers_go_go_GetLocList() dict
     " Test files, i.e. files with a name ending in `_test.go`, are not
     " compiled by `go build`, therefore `go test` must be called for those.
     if match(expand('%'), '\m_test\.go$') == -1
-        let makeprg = 'go build ' . syntastic#c#NullOutput()
+        let makeprg = self.getExec() . ' build ' . syntastic#c#NullOutput()
         let cleanup = 0
     else
-        let makeprg = 'go test -c ' . syntastic#c#NullOutput()
+        let makeprg = self.getExec() . ' test -c ' . syntastic#c#NullOutput()
         let cleanup = 1
     endif
 
