@@ -46,9 +46,7 @@ function! unite#candidates#_recache(input, is_force) "{{{
           \ || context.path !=# unite.last_path
 
     if empty(unite.args)
-      if a:input == ''
-        let sources = []
-      elseif a:input !~ '^.\{-}\%(\\\@<!\s\)\+'
+      if a:input !~ '^.\{-}\%(\\\@<!\s\)\+'
         " Use interactive source.
         let sources = unite#init#_loaded_sources(['interactive'], context)
       else
@@ -56,23 +54,41 @@ function! unite#candidates#_recache(input, is_force) "{{{
         let args = unite#helper#parse_options_args(
               \ matchstr(a:input, '^.\{-}\%(\\\@<!\s\)\+'))[0]
         try
+          " Ignore source name
+          let context.input = matchstr(context.input,
+                \ '^.\{-}\%(\\\@<!\s\)\+\zs.*')
+
           let sources = unite#init#_loaded_sources(args, context)
         catch
           let sources = []
+        finally
+          let context.input = a:input
         endtry
       endif
 
       if get(unite.sources, 0, {'name' : ''}).name
-            \ !=# get(sources, 0, {'name' : ''}).name
+            \   !=# get(sources, 0, {'name' : ''}).name
         " Finalize previous sources.
         call unite#helper#call_hook(unite.sources, 'on_close')
 
         let unite.sources = sources
         let unite.source_names = unite#helper#get_source_names(sources)
 
-        " Initialize.
-        call unite#helper#call_hook(sources, 'on_init')
-        call unite#view#_set_syntax()
+        let prev_winnr = winnr()
+        try
+          execute bufwinnr(unite.prev_bufnr).'wincmd w'
+
+          " Initialize.
+          call unite#helper#call_hook(sources, 'on_init')
+        finally
+          if winnr() != prev_winnr
+            execute prev_winnr . 'wincmd w'
+          endif
+        endtry
+
+        if &filetype ==# 'unite'
+          call unite#view#_set_syntax()
+        endif
       endif
     endif
 
@@ -153,7 +169,8 @@ function! unite#candidates#gather(...) "{{{
 
   if unite.context.unique
     " Uniq filter.
-    let unite.candidates = unite#util#uniq_by(unite.candidates, 'v:val.word')
+    let unite.candidates = unite#util#uniq_by(unite.candidates,
+          \ "string(v:val.kind) . ' ' . v:val.word")
   endif
 
   if is_gather_all || unite.context.prompt_direction ==# 'below'
@@ -280,17 +297,15 @@ function! s:recache_candidates_loop(context, is_force) "{{{
 
     if !unite.context.unite__is_vimfiler
       " Call filters.
-      for Filter in source.matchers + source.sorters + source.converters
-        if type(Filter) == type('')
-          let source_candidates = unite#helper#call_filter(
-                \ Filter, source_candidates, context)
-        else
-          let source_candidates = call(Filter,
-                \ [source_candidates, context], source)
-        endif
-
-        unlet Filter
-      endfor
+      let source_candidates = unite#helper#call_source_filters(
+            \ source.matchers + source.sorters,
+            \ source_candidates, context, source)
+      if context.unite__max_candidates > 0
+        let source_candidates = source_candidates[:
+              \ context.unite__max_candidates - 1]
+      endif
+      let source_candidates = unite#helper#call_source_filters(
+            \ source.converters, source_candidates, context, source)
     endif
 
     " Get execute_command.
@@ -380,7 +395,7 @@ function! s:get_source_candidates(source) "{{{
     call unite#print_error(v:throwpoint)
     call unite#print_error(v:exception)
     call unite#print_error(
-          \ '[unite.vim] Error occured in ' . funcname . '!')
+          \ '[unite.vim] Error occurred in ' . funcname . '!')
     call unite#print_error(
           \ '[unite.vim] Source name is ' . a:source.name)
 

@@ -28,9 +28,10 @@ set cpo&vim
 
 " filter() for matchers.
 function! unite#filters#filter_matcher(list, expr, context) "{{{
-  if a:context.unite__max_candidates <= 0 ||
-        \ !a:context.unite__is_interactive ||
-        \ len(a:context.input_list) > 1
+  if a:context.unite__max_candidates <= 0
+        \ || a:expr == ''
+        \ || !a:context.unite__is_interactive
+        \ || len(a:context.input_list) > 1
 
     return a:expr == '' ? a:list :
           \ (a:expr ==# 'if_lua') ?
@@ -40,10 +41,6 @@ function! unite#filters#filter_matcher(list, expr, context) "{{{
           \   unite#filters#lua_fuzzy_matcher(
           \      a:list, a:context, &ignorecase) :
           \ filter(a:list, a:expr)
-  endif
-
-  if a:expr == ''
-    return a:list[: a:context.unite__max_candidates - 1]
   endif
 
   let _ = []
@@ -112,7 +109,7 @@ do
   local pattern = vim.eval('unite#filters#fuzzy_escape(a:context.input)')
   local input = vim.eval('a:context.input')
   local candidates = vim.eval('a:candidates')
-  if vim.eval('&ignorecase') ~= 0 then
+  if vim.eval('a:ignorecase') ~= 0 then
     pattern = string.lower(pattern)
     input = string.lower(input)
     for i = #candidates-1, 0, -1 do
