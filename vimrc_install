@@ -1,0 +1,16 @@
+#!/bin/sh
+# <https://github.com/zmughal/vimrc>
+# git clone git@github.com:zmughal/vimrc.git
+
+if [ -z "$1" ]; then echo "$0 [vimrc_dir]"; exit 1; fi
+VIMRC_REPO="$1"
+cd `dirname "$1/."`
+CUR="`pwd -P`"
+ln -sf "$CUR/.vim"           "$HOME"
+ln -sf "$CUR/.vimlocal"      "$HOME"
+#ln -sf "$CUR/.vimoutliner"   "$HOME"
+ln -sf "$CUR/.gvimrc"        "$HOME"
+#ln -sf "$CUR/.vimoutlinerrc" "$HOME"
+ln -sf "$CUR/.vimrc"         "$HOME"
+mkdir "$HOME/bin"
+ln -sf -t "$HOME/bin" "$HOME/.vim/scripts/pipe.vim"
