@@ -29,7 +29,15 @@ exe "set path+=" . b:libdir
 compiler perl
 let &l:makeprg = substitute(&l:makeprg, "\\s*%","","")
 
-nmap <buffer> <F6> :!"%:p"<CR>
+function! PerlRun()
+	:if match(expand('%:p'), '\.t$') != -1
+		!prove -lv "%:p"
+	else
+		!"%:p"
+	endif
+endfunction
+
+nmap <buffer> <F6> :call PerlRun()<CR>
 imap <buffer> <F6> <Esc><F6>
 
 setlocal iskeyword+=:
