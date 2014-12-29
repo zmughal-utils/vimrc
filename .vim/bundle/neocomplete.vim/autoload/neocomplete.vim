@@ -51,8 +51,6 @@ let g:neocomplete#disable_auto_complete =
       \ get(g:, 'neocomplete#disable_auto_complete', 0)
 let g:neocomplete#enable_fuzzy_completion =
       \ get(g:, 'neocomplete#enable_fuzzy_completion', 1)
-let g:neocomplete#enable_refresh_always =
-      \ get(g:, 'neocomplete#enable_refresh_always', 0)
 let g:neocomplete#enable_insert_char_pre =
       \ get(g:, 'neocomplete#enable_insert_char_pre', 0)
 let g:neocomplete#enable_cursor_hold_i =
@@ -67,13 +65,10 @@ let g:neocomplete#lock_buffer_name_pattern =
       \ get(g:, 'neocomplete#lock_buffer_name_pattern', '')
 let g:neocomplete#ctags_command =
       \ get(g:, 'neocomplete#ctags_command', 'ctags')
-let g:neocomplete#force_overwrite_completefunc =
-      \ get(g:, 'neocomplete#force_overwrite_completefunc', 0)
-let g:neocomplete#enable_prefetch =
-      \ get(g:, 'neocomplete#enable_prefetch',
-      \  has('gui_running') && has('xim'))
 let g:neocomplete#lock_iminsert =
       \ get(g:, 'neocomplete#lock_iminsert', 0)
+let g:neocomplete#enable_multibyte_completion =
+      \ get(g:, 'neocomplete#enable_multibyte_completion', 0)
 let g:neocomplete#release_cache_time =
       \ get(g:, 'neocomplete#release_cache_time', 900)
 let g:neocomplete#skip_auto_completion_time =
@@ -205,10 +200,8 @@ function! neocomplete#is_auto_select() "{{{
   return g:neocomplete#enable_auto_select && !neocomplete#is_eskk_enabled()
 endfunction"}}}
 function! neocomplete#is_auto_complete() "{{{
-  return &l:completefunc == 'neocomplete#complete#auto_complete'
-endfunction"}}}
-function! neocomplete#is_sources_complete() "{{{
-  return &l:completefunc == 'neocomplete#complete#sources_manual_complete'
+  let neocomplete = neocomplete#get_current_neocomplete()
+  return neocomplete.is_auto_complete
 endfunction"}}}
 function! neocomplete#is_eskk_enabled() "{{{
   return exists('*eskk#is_enabled') && eskk#is_enabled()
@@ -220,7 +213,8 @@ function! neocomplete#is_eskk_convertion(cur_text) "{{{
 endfunction"}}}
 function! neocomplete#is_multibyte_input(cur_text) "{{{
   return (exists('b:skk_on') && b:skk_on)
-        \     || char2nr(split(a:cur_text, '\zs')[-1]) > 0x80
+        \   || (!g:neocomplete#enable_multibyte_completion
+        \         && char2nr(split(a:cur_text, '\zs')[-1]) > 0x80)
 endfunction"}}}
 function! neocomplete#is_text_mode() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
@@ -231,9 +225,7 @@ function! neocomplete#is_windows() "{{{
   return neocomplete#util#is_windows()
 endfunction"}}}
 function! neocomplete#is_prefetch() "{{{
-  return !neocomplete#is_locked() && !g:neocomplete#enable_cursor_hold_i &&
-        \ (g:neocomplete#enable_prefetch || &l:formatoptions =~# 'a'
-        \  || !empty(g:neocomplete#fallback_mappings))
+  return 1
 endfunction"}}}
 function! neocomplete#exists_echodoc() "{{{
   return exists('g:loaded_echodoc') && g:loaded_echodoc

@@ -207,8 +207,7 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
     endif
 
     " Check multibyte input or eskk or spaces.
-    " Note: Spaces are skipped by performance problem.
-    if cur_text =~ '^\s*$\|\s\+$'
+    if cur_text =~ '^\s*$'
           \ || neocomplete#is_eskk_enabled()
           \ || neocomplete#is_multibyte_input(cur_text)
       call neocomplete#print_debug('Skipped.')
@@ -238,35 +237,46 @@ function! neocomplete#handler#_do_auto_complete(event) "{{{
   let neocomplete.skip_next_complete = 0
   let neocomplete.old_complete_pos = complete_pos
 
-  let &l:completefunc = 'neocomplete#complete#auto_complete'
+  try
+    let neocomplete.is_auto_complete = 1
 
-  if neocomplete#is_prefetch()
     " Do prefetch.
     let neocomplete.complete_sources =
           \ neocomplete#complete#_get_results(cur_text)
+  finally
+    let neocomplete.is_auto_complete = 0
+  endtry
 
-    if empty(neocomplete.complete_sources)
-      if !empty(g:neocomplete#fallback_mappings)
-            \ && len(matchstr(cur_text, '\h\w*$'))
-            \   > g:neocomplete#auto_completion_start_length
-        let key = ''
-        for i in range(0, len(g:neocomplete#fallback_mappings)-1)
-          let key .= '<C-r>=neocomplete#mappings#fallback(' . i . ')<CR>'
-        endfor
-        execute 'inoremap <silent> <Plug>(neocomplete_fallback)' key
+  if empty(neocomplete.complete_sources)
+    if !empty(g:neocomplete#fallback_mappings)
+          \ && len(matchstr(cur_text, '\h\w*$'))
+          \   >= g:neocomplete#auto_completion_start_length
+      let key = ''
+      for i in range(0, len(g:neocomplete#fallback_mappings)-1)
+        let key .= '<C-r>=neocomplete#mappings#fallback(' . i . ')<CR>'
+      endfor
+      execute 'inoremap <silent> <Plug>(neocomplete_fallback)' key
 
-        " Fallback to omnifunc
-        call s:complete_key("\<Plug>(neocomplete_fallback)")
-      else
-        call neocomplete#print_debug('Skipped.')
-        return
-      endif
+      " Fallback to omnifunc
+      call s:complete_key("\<Plug>(neocomplete_fallback)")
+    else
+      call neocomplete#print_debug('Skipped.')
       return
     endif
+    return
   endif
 
+  let complete_pos =
+        \ neocomplete#complete#_get_complete_pos(
+        \ neocomplete.complete_sources)
+  let base = cur_text[complete_pos :]
+
+  let neocomplete.candidates = neocomplete#complete#_get_words(
+        \ neocomplete.complete_sources, complete_pos, base)
+
   " Start auto complete.
-  call s:complete_key("\<Plug>(neocomplete_start_auto_complete)")
+  call s:complete_key(
+        \ "\<Plug>(neocomplete_start_auto_complete)")
 endfunction"}}}
 
 function! s:check_in_do_auto_complete() "{{{
@@ -274,30 +284,9 @@ function! s:check_in_do_auto_complete() "{{{
     return 1
   endif
 
-  if &l:completefunc == ''
-    let &l:completefunc = 'neocomplete#complete#manual_complete'
-  endif
-
   " Detect completefunc.
-  if &l:completefunc !~# '^neocomplete#'
-    if &l:buftype =~ 'nofile'
-      return 1
-    endif
-
-    if g:neocomplete#force_overwrite_completefunc
-      " Set completefunc.
-      let &l:completefunc = 'neocomplete#complete#manual_complete'
-    else
-      " Warning.
-      redir => output
-      99verbose setl completefunc?
-      redir END
-      call neocomplete#print_error(output)
-      call neocomplete#print_error(
-            \ 'Another plugin set completefunc! Disabled neocomplete.')
-      NeoCompleteLock
-      return 1
-    endif
+  if &l:completefunc != '' && &l:buftype =~ 'nofile'
+    return 1
   endif
 
   " Detect AutoComplPop.
@@ -315,7 +304,7 @@ function! s:is_skip_auto_complete(cur_text) "{{{
         \     && line('.') == neocomplete.old_linenr)
         \ || (g:neocomplete#lock_iminsert && &l:iminsert)
         \ || (&l:formatoptions =~# '[tca]' && &l:textwidth > 0
-        \     && neocomplete#util#wcswidth(a:cur_text) >= &l:textwidth)
+        \     && strwidth(a:cur_text) >= &l:textwidth)
     let neocomplete.skip_next_complete = 0
     return 1
   endif

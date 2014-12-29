@@ -99,15 +99,12 @@ function! neocomplete#sources#dictionary#remake_cache(filetype) "{{{
     let filetype = neocomplete#get_context_filetype(1)
   endif
 
-  let dictionaries =
-        \ neocomplete#sources#dictionary#get_dictionaries(filetype)
-
   if !has_key(s:async_dictionary_list, filetype)
     let s:async_dictionary_list[filetype] = []
   endif
 
   let pattern = neocomplete#get_keyword_pattern(filetype, s:source.name)
-  for dictionary in split(dictionaries, ',')
+  for dictionary in neocomplete#sources#dictionary#get_dictionaries(filetype)
     let dictionary = neocomplete#util#substitute_path_separator(
           \ fnamemodify(dictionary, ':p'))
     if filereadable(dictionary)
@@ -136,14 +133,15 @@ function! neocomplete#sources#dictionary#get_dictionaries(filetype) "{{{
           \ g:neocomplete#sources#dictionary#dictionaries['_']
   endif
 
-  if dictionaries == ''
-    if filetype == &filetype &&
-          \ &l:dictionary != '' && &l:dictionary !=# &g:dictionary
+  if dictionaries == '' && &l:dictionary != ''
+    if ((filetype ==# 'nothing' && &filetype == '')
+          \ || filetype ==# &filetype)
+          \ && &l:dictionary !=# &g:dictionary
       let dictionaries = &l:dictionary
     endif
   endif
 
-  return dictionaries
+  return split(dictionaries, ',')
 endfunction"}}}
 
 let &cpo = s:save_cpo

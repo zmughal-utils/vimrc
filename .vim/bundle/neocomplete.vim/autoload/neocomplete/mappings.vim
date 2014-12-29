@@ -33,26 +33,55 @@ function! neocomplete#mappings#define_default_mappings() "{{{
         \ unite#sources#neocomplete#start_quick_match()
   inoremap <silent> <Plug>(neocomplete_start_omni_complete)
         \ <C-x><C-o><C-p>
-  if neocomplete#util#is_complete_select()
-    inoremap <silent> <Plug>(neocomplete_start_auto_complete)
-          \ <C-x><C-u>
-  else
-    inoremap <silent> <Plug>(neocomplete_start_auto_complete)
-          \ <C-x><C-u><C-r>=neocomplete#mappings#popup_post()<CR>
-  endif
+  inoremap <silent> <Plug>(neocomplete_start_auto_complete)
+        \ <C-r>=neocomplete#mappings#auto_complete()<CR><C-r>=
+        \neocomplete#mappings#popup_post()<CR>
+endfunction"}}}
+
+function! neocomplete#mappings#auto_complete() "{{{
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let cur_text = neocomplete#get_cur_text(1)
+  let complete_pos =
+        \ neocomplete#complete#_get_complete_pos(
+        \ neocomplete.complete_sources)
+  let base = cur_text[complete_pos :]
+
+  let neocomplete.candidates = neocomplete#complete#_get_words(
+        \ neocomplete.complete_sources, complete_pos, base)
+  let neocomplete.complete_str = base
+
+  " Start auto complete.
+  call complete(complete_pos+1, neocomplete.candidates)
+  return ''
+endfunction"}}}
+
+function! neocomplete#mappings#manual_complete() "{{{
+  let neocomplete = neocomplete#get_current_neocomplete()
+  let cur_text = neocomplete#get_cur_text(1)
+  let complete_sources = neocomplete#complete#_get_results(
+        \ cur_text, neocomplete.manual_sources)
+  let complete_pos =
+        \ neocomplete#complete#_get_complete_pos(
+        \ complete_sources)
+  let base = cur_text[complete_pos :]
+
+  let neocomplete.complete_pos = complete_pos
+  let neocomplete.candidates = neocomplete#complete#_get_words(
+        \ complete_sources, complete_pos, base)
+  let neocomplete.complete_str = base
+
+  " Start auto complete.
+  call complete(complete_pos+1, neocomplete.candidates)
+  return ''
 endfunction"}}}
 
 function! neocomplete#mappings#smart_close_popup() "{{{
-  let key = g:neocomplete#enable_auto_select ?
-        \ neocomplete#mappings#cancel_popup() :
-        \ neocomplete#mappings#close_popup()
-
   " Don't skip next complete.
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.skip_next_complete = 0
   let neocomplete.old_linenr = 0
 
-  return key
+  return neocomplete#mappings#cancel_popup()
 endfunction
 "}}}
 function! neocomplete#mappings#close_popup() "{{{
@@ -73,8 +102,7 @@ endfunction
 
 function! neocomplete#mappings#popup_post() "{{{
   return  !pumvisible() ? "" :
-        \ g:neocomplete#enable_auto_select ? "\<C-p>\<Down>" :
-        \ neocomplete#is_auto_complete() ? "\<C-p>" : ""
+        \ g:neocomplete#enable_auto_select ? "\<C-p>\<Down>" : "\<C-p>"
 endfunction"}}}
 
 function! neocomplete#mappings#undo_completion() "{{{
@@ -159,10 +187,9 @@ endfunction"}}}
 
 function! neocomplete#mappings#fallback(i) "{{{
   let mapping = g:neocomplete#fallback_mappings[a:i]
-  return  pumvisible()
-        \ || (mapping ==? "\<C-x>\<C-o>" && &l:omnifunc == '') ? "" :
-        \   mapping . (g:neocomplete#enable_auto_select ?
-        \            "\<C-p>\<Down>" : "\<C-p>")
+  return  (pumvisible()
+        \ || (mapping ==? "\<C-x>\<C-o>" && &l:omnifunc == '')) ? "" :
+        \   mapping . "\<C-p>"
 endfunction"}}}
 
 " Manual complete wrapper.
@@ -188,11 +215,8 @@ function! neocomplete#mappings#start_manual_complete(...) "{{{
 
   call neocomplete#helper#complete_configure()
 
-  " Set function.
-  let &l:completefunc = 'neocomplete#complete#sources_manual_complete'
-
   " Start complete.
-  return "\<C-x>\<C-u>"
+  return "\<C-r>=neocomplete#mappings#manual_complete()\<CR>"
 endfunction"}}}
 
 let &cpo = s:save_cpo
