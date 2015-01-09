@@ -1,0 +1,2 @@
+http://www.vim.org/scripts/download_script.php?src_id=7218
+a.vim 	2.18 	2007-06-07 	7.0 	Mike Sharpe 	Recent versions since 2.16 broke user defined alternate specifications. This patch fixes that.
