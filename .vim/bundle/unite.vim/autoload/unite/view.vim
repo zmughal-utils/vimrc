@@ -639,17 +639,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
 
     call unite#handlers#_on_buf_unload(bufname)
 
-    if !unite.has_preview_window
-      let preview_windows = filter(range(1, winnr('$')),
-            \ 'getwinvar(v:val, "&previewwindow") != 0')
-      if !empty(preview_windows)
-        " Close preview window.
-        noautocmd pclose!
-
-      endif
-    endif
-
-    call s:clear_previewed_buffer_list()
+    call s:close_preview_window()
 
     if winnr('$') != 1 && !unite.context.temporary
           \ && winnr('$') == unite.winmax
@@ -657,17 +647,27 @@ function! unite#view#_quit(is_force, ...)  "{{{
       execute unite.prev_winnr 'wincmd w'
     endif
   else
-    " Note: Except preview window.
+    call s:close_preview_window()
+
     let winnr = get(filter(range(1, winnr('$')),
-          \ "winbufnr(v:val) == unite.prev_bufnr &&
-          \  !getwinvar(v:val, '&previewwindow')"), 0, unite.prev_winnr)
+          \ "winbufnr(v:val) == unite.prev_bufnr"), 0, unite.prev_winnr)
 
     if winnr == winnr()
       new
     else
       execute winnr 'wincmd w'
     endif
+
     let unite.prev_winnr = winnr()
+
+    " Resize window.
+    try
+      execute bufwinnr(unite.bufnr) 'wincmd w'
+
+      call unite#view#_resize_window()
+    finally
+      execute unite.prev_winnr 'wincmd w'
+    endtry
   endif
 
   if context.complete
@@ -908,7 +908,7 @@ function! unite#view#_get_status_string(unite) "{{{
   endif
 
   let statusline .= "%=%#uniteStatusMessage# %{unite#view#_get_status_tail_string()} %*"
-  let statusline .= "%#LineNR#%{printf('%'.len(b:unite.candidates_len"
+  let statusline .= "%#uniteStatusLineNR#%{printf('%'.len(b:unite.candidates_len"
   let statusline .= "+b:unite.prompt_linenr).'d/%d',line('.'),"
   let statusline .= "b:unite.candidates_len+b:unite.prompt_linenr)}%*"
   return statusline
@@ -938,8 +938,20 @@ function! unite#view#_preview_file(filename) "{{{
   endif
 endfunction"}}}
 
-function! s:clear_previewed_buffer_list() "{{{
+function! s:close_preview_window() "{{{
   let unite = unite#get_current_unite()
+
+  if !unite.has_preview_window
+    let preview_windows = filter(range(1, winnr('$')),
+          \ 'getwinvar(v:val, "&previewwindow") != 0')
+    if !empty(preview_windows)
+      " Close preview window.
+      noautocmd pclose!
+
+    endif
+  endif
+
+  " Clear previewed buffer list
   for bufnr in unite.previewed_buffer_list
     if buflisted(bufnr)
       if bufnr == bufnr('%')
