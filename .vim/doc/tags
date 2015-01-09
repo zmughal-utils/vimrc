@@ -58,7 +58,6 @@
 'Tlist_WinWidth'	taglist.txt	/*'Tlist_WinWidth'*
 'loaded_nerd_comments'	NERD_commenter.txt	/*'loaded_nerd_comments'*
 'loaded_nerd_tree'	NERD_tree.txt	/*'loaded_nerd_tree'*
-:Abolish	abolish.txt	/*:Abolish*
 :AlignCenter	textformat.txt	/*:AlignCenter*
 :AlignJustify	textformat.txt	/*:AlignJustify*
 :AlignLeft	textformat.txt	/*:AlignLeft*
@@ -155,12 +154,10 @@
 :RIDMY	visincr.txt	/*:RIDMY*
 :RIPOW	visincr.txt	/*:RIPOW*
 :RM	visincr.txt	/*:RM*
-:S	abolish.txt	/*:S*
 :STail	tail.txt	/*:STail*
 :ScreenShell	screen.txt	/*:ScreenShell*
 :ScreenShellAttach	screen.txt	/*:ScreenShellAttach*
 :ScreenShellVertical	screen.txt	/*:ScreenShellVertical*
-:Subvert	abolish.txt	/*:Subvert*
 :TBrowseOutput	tlib.txt	/*:TBrowseOutput*
 :TKeyArg	tlib.txt	/*:TKeyArg*
 :TLet	tlib.txt	/*:TLet*
@@ -524,15 +521,6 @@ WinManagerSuspendAUs	winmanager.txt	/*WinManagerSuspendAUs*
 ]%	matchit.txt	/*]%*
 _not_	CSApprox.txt	/*_not_*
 abc	fuf.txt	/*abc*
-abolish	abolish.txt	/*abolish*
-abolish-abbrev	abolish.txt	/*abolish-abbrev*
-abolish-author	abolish.txt	/*abolish-author*
-abolish-coercion	abolish.txt	/*abolish-coercion*
-abolish-grep	abolish.txt	/*abolish-grep*
-abolish-patterns	abolish.txt	/*abolish-patterns*
-abolish-search	abolish.txt	/*abolish-search*
-abolish-substitute	abolish.txt	/*abolish-substitute*
-abolish.txt	abolish.txt	/*abolish.txt*
 align	Align.txt	/*align*
 align-align	Align.txt	/*align-align*
 align-codepoint	Align.txt	/*align-codepoint*
@@ -681,7 +669,6 @@ c_<Plug>(fakeclip-insert-r)	fakeclip.txt	/*c_<Plug>(fakeclip-insert-r)*
 c_<Plug>(fakeclip-screen-insert)	fakeclip.txt	/*c_<Plug>(fakeclip-screen-insert)*
 c_<Plug>(fakeclip-screen-insert-o)	fakeclip.txt	/*c_<Plug>(fakeclip-screen-insert-o)*
 c_<Plug>(fakeclip-screen-insert-r)	fakeclip.txt	/*c_<Plug>(fakeclip-screen-insert-r)*
-cr	abolish.txt	/*cr*
 cs	surround.txt	/*cs*
 csapprox	CSApprox.txt	/*csapprox*
 csapprox-+gui	CSApprox.txt	/*csapprox-+gui*
