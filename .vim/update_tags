@@ -1,4 +1,4 @@
 #!/bin/sh
 CURDIR=`dirname "$0"`
 cd "$CURDIR"
-helpztags doc/ bundle/*/doc/
+helpztags doc/ bundle/*/doc/ bundle-vim-scripts/*/doc/
