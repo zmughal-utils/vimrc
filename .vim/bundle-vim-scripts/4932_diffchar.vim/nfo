@@ -1,0 +1,1 @@
+diffchar.vim 	4.7 	2014-12-26 	7.0 	Rick Howe 	Enhanced to use faster this plugin's diff algorithm and initially show exact differences on diff mode. Enhanced to make the key mappings configurable. Fixed to correctly adjust the iwhite unit position.
