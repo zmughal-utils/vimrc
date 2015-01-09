@@ -1,0 +1,11 @@
+http://www.vim.org/scripts/download_script.php?src_id=19574
+taglist_46.zip 	4.6 	2013-02-27 	6.0 	Yegappan Lakshmanan 	1. Fixed a bug in refreshing the folds in the taglist window when switching between Vim tabs with Tlist_Show_One_File enabled.
+2. Update the TlistShowTag command output to display the tag scope.
+3. Preserve the alternate file when opening the taglist window.
+4. Restore the 'cpo' option value properly when the loading of the plugin is stopped.
+5. When the plugin is recursively sourced, don't change the 'cpo' setting to the default value.
+6. If a filetype contains multiple file types separated by a dot, then use the first file type.
+7. When displaying tag prototypes, trim the output to fit the window width.
+8. Add support for some more languages.
+9. Disable the 'relativenumber' option for the taglist window.
+10. On MS-Windows, use writefile() to generate the temporary batch file instead of the redir command. This fixes a problem in using the generated batch file in multi-byte encoding environments. 
