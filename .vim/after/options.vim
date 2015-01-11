@@ -1,4 +1,8 @@
 " Vim script for options
+"
+"
+
+
 
 set nocompatible
 
@@ -94,6 +98,27 @@ endif
 
 " CtrlP {{{
 let g:ctrlp_extensions = [ 'smarttabs' ]
+
+" On Windows use "dir" as fallback command.
+if platform#WINDOWS()
+	let s:ctrlp_fallback = 'dir %s /-n /b /s /a-d'
+elseif executable('ag')
+	let s:ctrlp_fallback = 'ag %s --nocolor -l -g ""'
+elseif executable('ack-grep')
+	let s:ctrlp_fallback = 'ack-grep %s --nocolor -f'
+elseif executable('ack')
+	let s:ctrlp_fallback = 'ack %s --nocolor -f'
+else
+	let s:ctrlp_fallback = 'find %s -type f'
+endif
+let g:ctrlp_user_command = {
+		 \ 'types': {
+			 \ 1: ['.git', 'cd %s && git ls-files . --cached --exclude-standard --others'],
+			 \ 2: ['.hg', 'hg --cwd %s locate -I .'],
+		 \ },
+		 \ 'fallback': s:ctrlp_fallback
+	 \ }
+
 "}}}
 
 let g:SrcExpl_pluginList = [
