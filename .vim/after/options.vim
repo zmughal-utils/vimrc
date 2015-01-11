@@ -92,6 +92,10 @@ if filereadable(expand("~/.twitvim"))
 endif
 "}}}
 
+" CtrlP {{{
+let g:ctrlp_extensions = [ 'smarttabs' ]
+"}}}
+
 let g:SrcExpl_pluginList = [
 	\ "__Tag_List__",
 	\ "_NERD_tree_",
