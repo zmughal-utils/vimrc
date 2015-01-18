@@ -59,3 +59,4 @@ refresh_git https://github.com/Shougo/neocomplete.vim neocomplete.vim
 refresh_git https://github.com/mjbrownie/swapit swapit
 refresh_git https://github.com/tpope/vim-abolish vim-abolish
 refresh_git https://github.com/mattboehm/vim-unstack vim-unstack
+refresh_git https://github.com/hari-rangarajan/CCTree CCTree
