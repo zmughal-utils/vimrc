@@ -35,36 +35,25 @@ function! unite#view#_redraw_prompt() "{{{
   let modifiable_save = &l:modifiable
   try
     setlocal modifiable
-    call setline(unite.prompt_linenr,
-          \ unite.prompt . unite.context.input)
+    call setline(unite.prompt_linenr, ' ' . unite.context.input)
+
+    if unite.context.prompt != ''
+      execute printf(
+            \ 'silent! sign place %d name=unite_prompt line=%d buffer=%d',
+            \ 1000 + !unite.sign_offset,
+            \ unite.prompt_linenr, bufnr('%'))
+      let unite.sign_offset = !unite.sign_offset
+      execute printf('sign unplace %d buffer=%s',
+            \ 1000 + !unite.sign_offset, bufnr('%'))
+    endif
 
     silent! syntax clear uniteInputLine
     execute 'syntax match uniteInputLine'
           \ '/\%'.unite.prompt_linenr.'l.*/'
-          \ 'contains=uniteInputPrompt,uniteInputPromptError,'.
-          \ 'uniteInputCommand'
+          \ 'contains=uniteInputCommand'
   finally
     let &l:modifiable = modifiable_save
   endtry
-endfunction"}}}
-function! unite#view#_remove_prompt() "{{{
-  let unite = unite#get_current_unite()
-  if unite.prompt_linenr == 0
-    return
-  endif
-
-  let modifiable_save = &l:modifiable
-  try
-    setlocal modifiable
-
-    silent! execute (unite.prompt_linenr).'delete _'
-    silent! syntax clear uniteInputLine
-  finally
-    let &l:modifiable = modifiable_save
-  endtry
-
-  call cursor(unite.init_prompt_linenr, 0)
-  let unite.prompt_linenr = 0
 endfunction"}}}
 function! unite#view#_redraw_candidates(...) "{{{
   let is_gather_all = get(a:000, 0, 0)
@@ -266,11 +255,6 @@ function! unite#view#_set_syntax() "{{{
   syntax match uniteInputCommand /\\\@<! :\S\+/ contained
 
   let unite = unite#get_current_unite()
-
-  " Set highlight.
-  let match_prompt = escape(unite.prompt, '\/*~.^$[]')
-  execute 'syntax match uniteInputPrompt'
-        \ '/^'.match_prompt.'/ contained'
 
   let candidate_icon = unite#util#escape_pattern(
         \ unite.context.candidate_icon)
@@ -973,6 +957,10 @@ function! unite#view#_convert_lines(candidates, ...) "{{{
   let context = unite#get_context()
   let [max_width, max_source_name] = unite#helper#adjustments(
         \ winwidth(0), unite.max_source_name, 2)
+  if unite.context.prompt != ''
+    " width for prompt
+    let max_width -= 2
+  endif
 
   " Create key table.
   let keys = {}
