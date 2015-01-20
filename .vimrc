@@ -565,6 +565,9 @@ digraph ~= 8773 " Approximately equal to
 nnoremap <Leader>rf	:FufMruFile<CR>
 nnoremap <Leader>rt	:FufFileWithFullCwd<CR>
 
+" For CtrlPSmartTabs
+nnoremap <C-P><C-P>	:CtrlPSmartTabs<CR>
+
 
 "if exists("g:loaded_nerd_tree")
 "command! -n=? NERDTree :call s:CreateNERDTreeWin()
