@@ -35,22 +35,16 @@ function! unite#view#_redraw_prompt() "{{{
   let modifiable_save = &l:modifiable
   try
     setlocal modifiable
-    call setline(unite.prompt_linenr, ' ' . unite.context.input)
-
-    if unite.context.prompt != ''
-      execute printf(
-            \ 'silent! sign place %d name=unite_prompt line=%d buffer=%d',
-            \ 1000 + !unite.sign_offset,
-            \ unite.prompt_linenr, bufnr('%'))
-      let unite.sign_offset = !unite.sign_offset
-      execute printf('sign unplace %d buffer=%s',
-            \ 1000 + !unite.sign_offset, bufnr('%'))
-    endif
+    call setline(unite.prompt_linenr,
+          \ unite.context.prompt . unite.context.input)
 
     silent! syntax clear uniteInputLine
+    silent! syntax clear uniteInputPrompt
     execute 'syntax match uniteInputLine'
           \ '/\%'.unite.prompt_linenr.'l.*/'
-          \ 'contains=uniteInputCommand'
+          \ 'contains=uniteInputCommand,uniteInputPrompt'
+    execute 'syntax match uniteInputPrompt'
+          \ '/\%'.unite.prompt_linenr.'l.*\%'.len(unite.context.prompt).'c/'
   finally
     let &l:modifiable = modifiable_save
   endtry
@@ -131,12 +125,21 @@ function! unite#view#_redraw_line(...) "{{{
 
   let &l:modifiable = modifiable_save
 endfunction"}}}
-function! unite#view#_quick_match_redraw(quick_match_table) "{{{
-  call unite#view#_set_candidates_lines(
-        \ unite#view#_convert_lines(
-        \   unite#get_current_unite().current_candidates,
-        \   a:quick_match_table))
-  redraw
+function! unite#view#_quick_match_redraw(quick_match_table, is_define) "{{{
+  for [key, number] in items(a:quick_match_table)
+    if a:is_define
+      execute printf(
+            \ 'silent! sign define unite_quick_match_%d text=%s texthl=uniteQuickMatchText',
+            \ number, key)
+      execute printf(
+            \ 'silent! sign place %d name=unite_quick_match_%d line=%d buffer=%d',
+            \ 2000 + number, number, number, bufnr('%'))
+    else
+      execute printf(
+            \ 'silent! sign unplace %d buffer=%d',
+            \ 2000 + number, bufnr('%'))
+    endif
+  endfor
 endfunction"}}}
 function! unite#view#_set_candidates_lines(lines) "{{{
   let unite = unite#get_current_unite()
@@ -249,34 +252,34 @@ endfunction"}}}
 function! unite#view#_set_syntax() "{{{
   syntax clear
 
-  syntax match uniteQuickMatchMarker /^.|/ contained
-        \ contains=uniteQuickMatchSeparator
-  syntax match uniteQuickMatchSeparator /|/ contained conceal
   syntax match uniteInputCommand /\\\@<! :\S\+/ contained
 
   let unite = unite#get_current_unite()
+  let context = unite.context
 
   let candidate_icon = unite#util#escape_pattern(
-        \ unite.context.candidate_icon)
+        \ context.candidate_icon)
   execute 'syntax region uniteNonMarkedLine start=/^'.
-        \ candidate_icon.' / end=''$'' keepend'.
-        \ ' contains=uniteCandidateMarker,'.
+        \ candidate_icon.'/ end=''$'' keepend'.
+        \ ' contains=uniteCandidateIcon,'.
         \ 'uniteCandidateSourceName'
-  execute 'syntax match uniteCandidateMarker /^'.
-        \ candidate_icon.'/ contained conceal'
+  execute 'syntax match uniteCandidateIcon /^'.
+        \ candidate_icon.'/ contained '
+        \ . (context.hide_icon ? 'conceal' : '')
 
   let marked_icon = unite#util#escape_pattern(
-        \ unite.context.marked_icon)
+        \ context.marked_icon)
   execute 'syntax region uniteMarkedLine start=/^'.
         \ marked_icon.'/ end=''$'' keepend'
-        \ ' contains=uniteMarkedMarker'
-  execute 'syntax match uniteMarkedMarker /^'.
-        \ marked_icon.'/ contained conceal'
+        \ ' contains=uniteMarkedIcon'
+  execute 'syntax match uniteMarkedIcon /^'.
+        \ marked_icon.'/ contained '
+        \ . (context.hide_icon ? 'conceal' : '')
 
   silent! syntax clear uniteCandidateSourceName
   if unite.max_source_name > 0
-    syntax match uniteCandidateSourceName
-          \ /\%3c[[:alnum:]_\/-]\+/ contained
+    execute 'syntax match uniteCandidateSourceName
+          \ /\%'.(2+strwidth(unite.context.prompt)).'c[[:alnum:]_\/-]\+/ contained'
   endif
 
   " Set syntax.
@@ -294,10 +297,10 @@ function! unite#view#_set_syntax() "{{{
     execute 'highlight default link'
           \ source.syntax unite.context.abbr_highlight
 
-    execute printf('syntax match %s "^\%(['.
-          \ unite.context.candidate_icon.' ] \|.|\)%s" '.
+    execute printf('syntax match %s "^['.
+          \ unite.context.candidate_icon.' ]\+%s" '.
           \ 'nextgroup='.source.syntax. ' keepend
-          \ contains=uniteCandidateMarker,uniteQuickMatchMarker,%s',
+          \ contains=uniteCandidateIcon,%s',
           \ 'uniteSourceLine__'.source.syntax,
           \ (name == '' ? '' : name . '\>'),
           \ (name == '' ? '' : 'uniteCandidateSourceName')
@@ -529,16 +532,8 @@ function! unite#view#_init_cursor() "{{{
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    if is_restore
-          \ && positions[key].pos[1] != unite.prompt_linenr
-      " Restore position.
-      call setpos('.', positions[key].pos)
-      call cursor(0, 1)
-      startinsert
-    else
-      call unite#helper#cursor_prompt()
-      startinsert!
-    endif
+    call unite#helper#cursor_prompt()
+    startinsert!
   else
     let unite.is_insert = 0
 
@@ -950,29 +945,23 @@ endfunction"}}}
 
 " @vimlint(EVL102, 1, l:max_source_name)
 " @vimlint(EVL102, 1, l:context)
-function! unite#view#_convert_lines(candidates, ...) "{{{
-  let quick_match_table = get(a:000, 0, {})
-
+" @vimlint(EVL102, 1, l:padding)
+function! unite#view#_convert_lines(candidates) "{{{
   let unite = unite#get_current_unite()
   let context = unite#get_context()
   let [max_width, max_source_name] = unite#helper#adjustments(
-        \ winwidth(0), unite.max_source_name, 2)
-  if unite.context.prompt != ''
-    " width for prompt
-    let max_width -= 2
-  endif
+        \ winwidth(0), unite.max_source_name, 4)
 
-  " Create key table.
-  let keys = {}
-  for [key, number] in items(quick_match_table)
-    let keys[number] = key . '|'
-  endfor
+  let padding_width = strwidth(context.prompt)
+  if !unite.context.hide_icon
+    let padding_width -= strwidth(context.candidate_icon)
+  endif
+  let padding = repeat(' ', padding_width)
 
   return map(copy(a:candidates),
-        \ "(v:val.is_dummy ? '  ' :
-        \   v:val.unite__is_marked ? context.marked_icon . ' ' :
-        \   empty(quick_match_table) ? context.candidate_icon . ' ' :
-        \   get(keys, v:key, '  '))
+        \ "(v:val.is_dummy ? ' ' :
+        \   v:val.unite__is_marked ? context.marked_icon :
+        \   context.candidate_icon) . padding
         \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(unite#helper#convert_source_name(
         \     (v:val.is_dummy ? '' : v:val.source)), max_source_name))
@@ -981,6 +970,7 @@ function! unite#view#_convert_lines(candidates, ...) "{{{
 endfunction"}}}
 " @vimlint(EVL102, 0, l:max_source_name)
 " @vimlint(EVL102, 0, l:context)
+" @vimlint(EVL102, 0, l:padding)
 
 function! s:set_syntax() "{{{
   let unite = unite#get_current_unite()

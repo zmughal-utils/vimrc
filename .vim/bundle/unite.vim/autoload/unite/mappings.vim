@@ -123,7 +123,7 @@ function! unite#mappings#define_default_mappings() "{{{
         \ "\<ESC>:\<C-u>call \<SID>all_exit()\<CR>" : "\<C-h>"))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_line)
         \ <SID>smart_imap('', repeat("\<C-h>",
-        \     col('.')-(1+1)))
+        \     unite#util#strchars(unite#helper#get_input())))
   inoremap <silent><expr><buffer> <Plug>(unite_delete_backward_word)
         \ <SID>smart_imap('', "\<C-w>")
   inoremap <silent><buffer> <Plug>(unite_delete_backward_path)
@@ -586,8 +586,10 @@ function! unite#mappings#_quick_match(is_choose) "{{{
     return
   endif
 
+  let unite = unite#get_current_unite()
+
   let quick_match_table = s:get_quick_match_table()
-  call unite#view#_quick_match_redraw(quick_match_table)
+  call unite#view#_quick_match_redraw(quick_match_table, 1)
 
   if mode() !~# '^c'
     echo 'Input quick match key: '
@@ -601,14 +603,11 @@ function! unite#mappings#_quick_match(is_choose) "{{{
   redraw
   echo ''
 
-  call unite#view#_redraw_candidates()
-
   stopinsert
-
-  let unite = unite#get_current_unite()
+  call unite#view#_quick_match_redraw(quick_match_table, 0)
 
   if !has_key(quick_match_table, char)
-        \ || quick_match_table[char] >= len(unite.current_candidates)
+        \ || quick_match_table[char] > len(unite.current_candidates)
     call unite#util#print_error('Canceled.')
 
     if unite.context.quick_match && char == "\<ESC>"
@@ -617,7 +616,7 @@ function! unite#mappings#_quick_match(is_choose) "{{{
     return
   endif
 
-  let candidate = unite.current_candidates[quick_match_table[char]]
+  let candidate = unite.current_candidates[quick_match_table[char] - 1]
   if candidate.is_dummy
     call unite#util#print_error('Canceled.')
     return
@@ -776,14 +775,13 @@ function! s:get_quick_match_table() "{{{
   let unite = unite#get_current_unite()
   let offset = unite.context.prompt_direction ==# 'below' ?
         \ (unite.prompt_linenr == 0 ?
-        \  line('$') - line('.') + 1 :
-        \  unite.prompt_linenr - line('.')) :
-        \ (line('.') - unite.prompt_linenr - 1)
+        \  line('$') - line('.') :
+        \  unite.prompt_linenr - line('.') - 1) :
+        \ line('.')
   if line('.') == unite.prompt_linenr
-    let offset = unite.context.prompt_direction
-          \ ==# 'below' ? 1 : 0
-  endif
-  if unite.context.prompt_direction ==# 'below'
+    let offset = (unite.context.prompt_direction ==# 'below' ?
+          \  0 : 2)
+  elseif unite.context.prompt_direction ==# 'below'
     let offset = offset * -1
   endif
 
