@@ -23,3 +23,12 @@ endfunction
 endif
 "}}}2
 nmap <silent><buffer>  <localleader>v           :call VimExec()<cr>
+
+" use IndentWise to navigate by indent level
+map <silent> ]] <Plug>(IndentWiseNextLesserIndent)
+map <silent> [[ <Plug>(IndentWisePreviousLesserIndent)
+map <silent> {  <Plug>(IndentWisePreviousEqualIndent)
+map <silent> }  <Plug>(IndentWiseNextEqualIndent)
+map <silent> [] <Plug>(IndentWisePreviousAbsoluteIndent)
+map <silent> ][ <Plug>(IndentWiseNextAbsoluteIndent)
+
