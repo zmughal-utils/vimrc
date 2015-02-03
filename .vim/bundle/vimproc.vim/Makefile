@@ -1,6 +1,15 @@
 ifeq ($(OS),Windows_NT)
-    # Fail if this is a windows platform
-    $(error Windows is not supported by this makefile, please use appropriate .mak file)
+    # Need to figure out if Cygwin/Mingw is installed
+    SYS := $(shell gcc -dumpmachine)
+    ifeq ($(findstring cygwin, $(SYS)),cygwin)
+      PLATFORM = cygwin
+    endif
+    ifeq ($(findstring mingw32, $(SYS)),mingw32)
+      PLATFORM = mingw32
+    endif
+    ifeq ($(findstring mingw64, $(SYS)),mingw64)
+      PLATFORM = mingw64
+    endif
 else
     # Grab the output of `uname -s` and switch to set the platform
     UNAME_S := $(shell uname -s)
@@ -22,11 +31,11 @@ else
     ifeq ($(UNAME_S),SunOS)
         PLATFORM = sunos
     endif
+endif
 
-    # Verify that the PLATFORM was detected
-    ifndef PLATFORM
-        $(error Autodetection of platform failed, please use appropriate .mak file)
-    endif
+# Verify that the PLATFORM was detected
+ifndef PLATFORM
+    $(error Autodetection of platform failed, please use appropriate .mak file)
 endif
 
 # Invoke the platform specific make files
