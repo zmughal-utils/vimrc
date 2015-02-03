@@ -236,6 +236,14 @@ function! multiple_cursors#find(start, end, pattern)
     return
   else
     echohl Normal | echo 'Added '.s:cm.size().' cursor'.(s:cm.size()>1?'s':'') | echohl None
+
+    " If we've created any cursors, we need to call the before function, end
+    " function will be called via normal routes
+    if exists('*Multiple_cursors_before') && !s:before_function_called
+      exe "call Multiple_cursors_before()"
+      let s:before_function_called = 1
+    endif
+
     call s:wait_for_user_input('v')
   endif
 endfunction
@@ -458,8 +466,8 @@ function! s:CursorManager.update_current() dict
     call cur.update_visual_selection(s:get_visual_region(s:pos('.')))
   elseif s:from_mode ==# 'v' || s:from_mode ==# 'V'
     call cur.remove_visual_selection()
-  elseif s:from_mode ==# 'i' && s:to_mode ==# 'n' && self.current_index == self.size() - 1
-    normal! `^
+  elseif s:from_mode ==# 'i' && s:to_mode ==# 'n' && self.current_index != self.size() - 1
+    normal! h
   endif
   let vdelta = line('$') - s:saved_linecount
   " If the total number of lines changed in the buffer, we need to potentially
