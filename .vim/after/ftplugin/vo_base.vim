@@ -25,10 +25,10 @@ endif
 nmap <silent><buffer>  <localleader>v           :call VimExec()<cr>
 
 " use IndentWise to navigate by indent level
-map <silent> ]] <Plug>(IndentWiseNextLesserIndent)
-map <silent> [[ <Plug>(IndentWisePreviousLesserIndent)
-map <silent> {  <Plug>(IndentWisePreviousEqualIndent)
-map <silent> }  <Plug>(IndentWiseNextEqualIndent)
-map <silent> [] <Plug>(IndentWisePreviousAbsoluteIndent)
-map <silent> ][ <Plug>(IndentWiseNextAbsoluteIndent)
+map <silent><buffer> ]] <Plug>(IndentWiseNextLesserIndent)
+map <silent><buffer> [[ <Plug>(IndentWisePreviousLesserIndent)
+map <silent><buffer> {  <Plug>(IndentWisePreviousEqualIndent)
+map <silent><buffer> }  <Plug>(IndentWiseNextEqualIndent)
+map <silent><buffer> [] <Plug>(IndentWisePreviousAbsoluteIndent)
+map <silent><buffer> ][ <Plug>(IndentWiseNextAbsoluteIndent)
 
