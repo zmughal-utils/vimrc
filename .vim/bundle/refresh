@@ -62,3 +62,5 @@ refresh_git https://github.com/mattboehm/vim-unstack vim-unstack
 refresh_git https://github.com/hari-rangarajan/CCTree CCTree
 
 refresh_git https://github.com/jeetsukumaran/vim-indentwise vim-indentwise
+
+refresh_git https://github.com/tpope/vim-fugitive vim-fugitive
