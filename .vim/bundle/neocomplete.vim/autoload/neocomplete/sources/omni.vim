@@ -104,8 +104,7 @@ function! s:source.hooks.on_init(context) "{{{
           "\'g:neocomplete#sources#omni#input_patterns', 'ruby',
           "\'[^. *\t]\.\h\w*\|\h\w*::\w*')
   endif
-  if has('python/dyn') || has('python3/dyn')
-        \ || has('python') || has('python3')
+  if has('python') || has('python3')
     call neocomplete#util#set_default_dictionary(
           \'g:neocomplete#sources#omni#input_patterns',
           \'python', '[^. \t]\.\w*')
@@ -189,8 +188,10 @@ function! s:set_complete_results_pos(funcs, cur_text) "{{{
 
     " Save pos.
     let pos = getpos('.')
+    let line = getline('.')
 
     try
+      call setline('.', s:get_current_line())
       let complete_pos = call(omnifunc, [1, ''])
     catch
       call neocomplete#print_error(
@@ -202,6 +203,7 @@ function! s:set_complete_results_pos(funcs, cur_text) "{{{
       if getpos('.') != pos
         call setpos('.', pos)
       endif
+      call setline('.', line)
     endtry
 
     if complete_pos < 0
@@ -229,9 +231,11 @@ function! s:set_complete_results_words(complete_results) "{{{
     endif
 
     let pos = getpos('.')
+    let line = getline('.')
 
     try
       call cursor(0, result.complete_pos)
+      call setline('.', s:get_current_line())
       let ret = call(omnifunc, [0, result.complete_str])
       let list = type(ret) == type([]) ? ret : ret.words
     catch
@@ -241,7 +245,10 @@ function! s:set_complete_results_words(complete_results) "{{{
       call neocomplete#print_error(v:exception)
       let list = []
     finally
-      call setpos('.', pos)
+      if getpos('.') != pos
+        call setpos('.', pos)
+      endif
+      call setline('.', line)
     endtry
 
     let list = s:get_omni_list(list)
@@ -282,6 +289,10 @@ function! s:get_candidates(complete_results, complete_pos, complete_str) "{{{
   endfor
 
   return candidates
+endfunction"}}}
+function! s:get_current_line() abort "{{{
+  return (col('.') == 1) ? '' :
+        \ substitute(getline('.')[ : col('.')-1], '\h\w*$', '', '')
 endfunction"}}}
 
 let &cpo = s:save_cpo
