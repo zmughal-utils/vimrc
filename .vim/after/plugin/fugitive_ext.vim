@@ -1,5 +1,8 @@
-augroup fugitive
-  au BufEnter * if exists(':Gcommit')
-  au BufEnter *     command! -buffer -bar -bang -nargs=* Gci	:Gcommit<bang> --verbose <args>   " a shortcut to call commit with --verbose flag
-  au BufEnter * endif
+" a shortcut to call commit with --verbose flag
+augroup fugitive_Gci
+	au!
+	au VimEnter,BufNew,BufEnter * if len(fugitive#statusline())
+	au VimEnter,BufNew,BufEnter *     command! -buffer -bar -bang -nargs=* Gci	Gcommit<bang> --verbose <args>
+	au VimEnter,BufNew,BufEnter * endif
 augroup END
+
