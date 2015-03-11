@@ -65,26 +65,28 @@ function! unite#handlers#_on_cursor_hold_i()  "{{{
 
   call unite#view#_change_highlight()
 
-  if unite.max_source_candidates > unite.redraw_hold_candidates
+  if unite.redraw_hold_candidates > 0
+        \ && unite.max_source_candidates > unite.redraw_hold_candidates
     call s:check_redraw()
   endif
 
   if unite.is_async && &l:modifiable
     " Ignore key sequences.
     call feedkeys("a\<BS>", 'n')
-    " call feedkeys("\<C-r>\<ESC>", 'n')
   endif
 endfunction"}}}
 function! unite#handlers#_on_cursor_moved_i()  "{{{
   let unite = unite#get_current_unite()
   let prompt_linenr = unite.prompt_linenr
 
-  if unite.max_source_candidates <= unite.redraw_hold_candidates
+  if unite.redraw_hold_candidates <= 0
+        \ || unite.max_source_candidates <= unite.redraw_hold_candidates
     call s:check_redraw()
   endif
 
   " Prompt check.
-  if line('.') == prompt_linenr && col('.') <= 1
+  if line('.') == prompt_linenr
+        \ && col('.') <= len(unite#get_context().prompt)
     startinsert!
   endif
 endfunction"}}}
@@ -154,7 +156,7 @@ function! unite#handlers#_on_cursor_hold()  "{{{
 
   if is_async
     " Ignore key sequences.
-    call feedkeys("g\<ESC>", 'n')
+    call feedkeys("g\<ESC>" . (v:count > 0 ? v:count : ''), 'n')
   endif
 endfunction"}}}
 function! unite#handlers#_on_cursor_moved()  "{{{

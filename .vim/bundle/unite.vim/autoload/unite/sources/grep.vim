@@ -101,9 +101,6 @@ function! s:source.hooks.on_init(args, context) "{{{
     elseif target == '**'
       " Optimized.
       let target = '.'
-    else
-      " Escape filename.
-      let target = escape(target, ' ')
     endif
 
     let a:context.source__target = [target]
@@ -211,8 +208,8 @@ function! s:source.gather_candidates(args, context) "{{{
     \   recursive_opt,
     \   a:context.source__extra_opts,
     \   string(a:context.source__input),
-    \   join(map(a:context.source__target,
-    \           "substitute(v:val, '/$', '', '')")),
+    \   join(map(copy(a:context.source__target),
+    \           "unite#util#escape_shell(substitute(v:val, '/$', '', ''))"))
     \)
 
   call unite#print_source_message('Command-line: ' . cmdline, s:source.name)

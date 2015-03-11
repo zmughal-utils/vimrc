@@ -142,6 +142,10 @@ function! unite#mappings#define_default_mappings() "{{{
         \ <SID>smart_imap("\<ESC>".<SID>insert_enter('A'),
         \   repeat("\<Left>", len(substitute(
         \     unite#helper#get_input(), '.', 'x', 'g'))))
+  inoremap <expr><buffer> <Plug>(unite_move_left)
+        \ <SID>smart_imap('', "\<Left>")
+  inoremap <expr><buffer> <Plug>(unite_move_right)
+        \ <SID>smart_imap2('', "\<Right>")
   inoremap <silent><buffer> <Plug>(unite_quick_match_default_action)
         \ <C-o>:<C-u>call unite#mappings#_quick_match(0)<CR>
   inoremap <silent><buffer> <Plug>(unite_quick_match_choose_action)
@@ -282,6 +286,8 @@ function! unite#mappings#define_default_mappings() "{{{
   imap <buffer> <C-w>     <Plug>(unite_delete_backward_word)
   imap <buffer> <C-a>     <Plug>(unite_move_head)
   imap <buffer> <Home>    <Plug>(unite_move_head)
+  imap <buffer> <Left>    <Plug>(unite_move_left)
+  imap <buffer> <Right>   <Plug>(unite_move_right)
   imap <buffer> <C-l>     <Plug>(unite_redraw)
   if has('gui_running')
     imap <buffer> <ESC>   <Plug>(unite_insert_leave)
@@ -353,11 +359,14 @@ endfunction"}}}
 function! s:smart_imap(lhs, rhs) "{{{
   call s:clear_complete()
   return (line('.') != unite#get_current_unite().prompt_linenr ||
-        \ col('.') <= 1) ? a:lhs : a:rhs
+        \ col('.') <= len(unite#get_context().prompt)) ?
+        \ a:lhs : a:rhs
 endfunction"}}}
 function! s:smart_imap2(lhs, rhs) "{{{
   call s:clear_complete()
-  return line('.') <= (1+1) ? a:lhs : a:rhs
+  return (line('.') != unite#get_current_unite().prompt_linenr ||
+        \ col('.') >= col('$')) ?
+        \ a:lhs : a:rhs
 endfunction"}}}
 
 function! s:do_new_candidate_action() "{{{
@@ -606,8 +615,9 @@ function! unite#mappings#_quick_match(is_choose) "{{{
   stopinsert
   call unite#view#_quick_match_redraw(quick_match_table, 0)
 
-  if !has_key(quick_match_table, char)
-        \ || quick_match_table[char] > len(unite.current_candidates)
+  let candidate = unite#helper#get_current_candidate(
+        \ get(quick_match_table, char, -1))
+  if empty(candidate)
     call unite#util#print_error('Canceled.')
 
     if unite.context.quick_match && char == "\<ESC>"
@@ -616,7 +626,6 @@ function! unite#mappings#_quick_match(is_choose) "{{{
     return
   endif
 
-  let candidate = unite.current_candidates[quick_match_table[char] - 1]
   if candidate.is_dummy
     call unite#util#print_error('Canceled.')
     return
