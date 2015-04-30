@@ -31,7 +31,8 @@ function! neocomplete#helper#get_cur_text(...) "{{{
   let is_skip_char = get(a:000, 0, 0)
 
   let cur_text =
-        \ (mode() ==# 'i' ? (col('.')-1) : col('.')) >= len(getline('.')) ?
+        \ ((neocomplete.event ==# 'InsertEnter' || mode() ==# 'i') ?
+        \   (col('.')-1) : col('.')) >= len(getline('.')) ?
         \      getline('.') :
         \      matchstr(getline('.'),
         \         '^.*\%' . (mode() ==# 'i' && !is_skip_char ?
@@ -77,12 +78,16 @@ function! neocomplete#helper#get_force_omni_complete_pos(cur_text) "{{{
     return -1
   endif
 
+  let pattern = ''
+
   if has_key(g:neocomplete#force_omni_input_patterns, omnifunc)
     let pattern = g:neocomplete#force_omni_input_patterns[omnifunc]
   elseif filetype != '' &&
         \ get(g:neocomplete#force_omni_input_patterns, filetype, '') != ''
     let pattern = g:neocomplete#force_omni_input_patterns[filetype]
-  else
+  endif
+
+  if pattern == ''
     return -1
   endif
 
