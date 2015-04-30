@@ -74,19 +74,19 @@ endfunction"}}}
 let s:is_windows = has('win16') || has('win32') || has('win64')
 
 function! unite#util#truncate_smart(...)
-  return call(s:get_prelude().truncate_skipping, a:000)
+  return call(s:get_string().truncate_skipping, a:000)
 endfunction
 function! unite#util#truncate(...)
-  return call(s:get_prelude().truncate, a:000)
+  return call(s:get_string().truncate, a:000)
 endfunction
 function! unite#util#strchars(...)
   return call(s:get_string().strchars, a:000)
 endfunction
 function! unite#util#strwidthpart(...)
-  return call(s:get_prelude().strwidthpart, a:000)
+  return call(s:get_string().strwidthpart, a:000)
 endfunction
 function! unite#util#strwidthpart_reverse(...)
-  return call(s:get_prelude().strwidthpart_reverse, a:000)
+  return call(s:get_string().strwidthpart_reverse, a:000)
 endfunction
 function! unite#util#wcswidth(string)
   return strwidth(a:string)
@@ -372,9 +372,14 @@ function! unite#util#move(src, dest) "{{{
   return s:get_system().move(a:src, a:dest)
 endfunction"}}}
 
-function! unite#util#read_lines(source, timeout) "{{{
+function! unite#util#read_lines(source, ...) "{{{
+  let timeout = get(a:000, 0, -1)
+  if timeout < 0
+    return a:source.read_lines(-1, timeout)
+  endif
+
   let lines = []
-  for _ in range(a:timeout / 100)
+  for _ in range(timeout / 100)
     let lines += a:source.read_lines(-1, 100)
   endfor
   return lines

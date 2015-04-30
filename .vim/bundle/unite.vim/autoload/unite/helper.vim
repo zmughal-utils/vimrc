@@ -121,10 +121,15 @@ function! unite#helper#adjustments(currentwinwidth, the_max_source_name, size) "
   endif
 endfunction"}}}
 
-function! unite#helper#parse_options(args) "{{{
+function! unite#helper#parse_options(cmdline) "{{{
   let args = []
   let options = {}
-  for arg in split(a:args, '\%(\\\@<!\s\)\+')
+
+  " Eval
+  let cmdline = (a:cmdline =~ '\\\@<!`.*\\\@<!`') ?
+        \ s:eval_cmdline(a:cmdline) : a:cmdline
+
+  for arg in split(cmdline, '\%(\\\@<!\s\)\+')
     let arg = substitute(arg, '\\\( \)', '\1', 'g')
     let arg_key = substitute(arg, '=\zs.*$', '', '')
 
@@ -141,9 +146,9 @@ function! unite#helper#parse_options(args) "{{{
 
   return [args, options]
 endfunction"}}}
-function! unite#helper#parse_options_args(args) "{{{
+function! unite#helper#parse_options_args(cmdline) "{{{
   let _ = []
-  let [args, options] = unite#helper#parse_options(a:args)
+  let [args, options] = unite#helper#parse_options(a:cmdline)
   for arg in args
     " Add source name.
     let source_name = matchstr(arg, '^[^:]*')
@@ -161,6 +166,27 @@ function! unite#helper#parse_options_user(args) "{{{
   let [args, options] = unite#helper#parse_options_args(a:args)
   let options.unite__is_manual = 1
   return [args, options]
+endfunction"}}}
+function! s:eval_cmdline(cmdline) abort "{{{
+  let cmdline = ''
+  let prev_match = 0
+  let match = match(a:cmdline, '\\\@<!`.\{-}\\\@<!`')
+  while match >= 0
+    if match - prev_match > 0
+      let cmdline .= a:cmdline[prev_match : match - 1]
+    endif
+    let prev_match = matchend(a:cmdline,
+          \ '\\\@<!`.\{-}\\\@<!`', match)
+    sandbox let cmdline .= escape(eval(
+          \ a:cmdline[match+1 : prev_match - 2]), '\: ')
+
+    let match = match(a:cmdline, '\\\@<!`.\{-}\\\@<!`', prev_match)
+  endwhile
+  if prev_match >= 0
+    let cmdline .= a:cmdline[prev_match :]
+  endif
+
+  return cmdline
 endfunction"}}}
 
 function! unite#helper#parse_project_bang(args) "{{{
@@ -334,15 +360,15 @@ function! unite#helper#call_filter(filter_name, candidates, context) "{{{
 endfunction"}}}
 function! unite#helper#call_source_filters(filters, candidates, context, source) "{{{
   let candidates = a:candidates
-  for Filter in a:filters
-    if type(Filter) == type('')
+  for l:Filter in a:filters
+    if type(l:Filter) == type('')
       let candidates = unite#helper#call_filter(
-            \ Filter, candidates, a:context)
+            \ l:Filter, candidates, a:context)
     else
-      let candidates = call(Filter, [candidates, a:context], a:source)
+      let candidates = call(l:Filter, [candidates, a:context], a:source)
     endif
 
-    unlet Filter
+    unlet l:Filter
   endfor
 
   return candidates

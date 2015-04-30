@@ -44,6 +44,12 @@ function! unite#sources#history_unite#add(unite)"{{{
         \  && v:val.context.input !=# a:unite.context.input')
         \[ : g:unite_source_history_unite_limit - 1]
 
+  if !empty(filter(copy(a:unite.sources),
+        \ "v:val.name ==# 'history/unite' || !v:val.is_listed"))
+    " Don't save non listed source or history/unite
+    return
+  endif
+
   let context = deepcopy(a:unite.original_context)
   let context.input = a:unite.context.input
   call insert(s:unite_histories, {
@@ -84,7 +90,7 @@ function! s:source.action_table.start.func(candidate) "{{{
   let history = a:candidate.source__history
   let history.context.split = unite#get_context().split
   let history.context.no_split = 0
-  call unite#start_temporary(history.sources, history.context)
+  call unite#start(history.sources, history.context)
 endfunction"}}}
 "}}}
 

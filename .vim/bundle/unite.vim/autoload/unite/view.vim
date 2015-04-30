@@ -601,6 +601,10 @@ function! unite#view#_quit(is_force, ...)  "{{{
     endfor
   endfor
 
+  if unite.context.unite__is_manual
+    call unite#sources#history_unite#add(unite)
+  endif
+
   call unite#view#_save_position()
 
   if a:is_force || context.quit
@@ -686,16 +690,6 @@ function! unite#view#_set_cursor_line() "{{{
   if line('.') != prompt_linenr
     call unite#view#_match_line(context.cursor_line_highlight,
           \ line('.'), unite.match_id)
-  elseif (context.prompt_direction !=# 'below'
-          \   && line('$') == prompt_linenr)
-          \ || (context.prompt_direction ==# 'below'
-          \   && prompt_linenr == 1)
-    call unite#view#_match_line('uniteError',
-          \ prompt_linenr, unite.match_id)
-  else
-    call unite#view#_match_line(context.cursor_line_highlight,
-          \ prompt_linenr+(context.prompt_direction ==#
-          \                   'below' ? -1 : 1), unite.match_id)
   endif
   let unite.cursor_line_time = reltime()
 endfunction"}}}
@@ -709,10 +703,7 @@ function! unite#view#_bottom_cursor() "{{{
   endtry
 endfunction"}}}
 function! unite#view#_clear_match() "{{{
-  let unite = unite#get_current_unite()
-  if unite.match_id > 0
-    silent! call matchdelete(unite.match_id)
-  endif
+  setlocal nocursorline
 endfunction"}}}
 
 function! unite#view#_save_position() "{{{
@@ -763,15 +754,16 @@ function! unite#view#_print_source_error(message, source_name) "{{{
         \ map(copy(s:msg2list(a:message)),
         \   "printf('[%s] %s', a:source_name, v:val)"))
 endfunction"}}}
-function! unite#view#_print_message(message) "{{{
+function! unite#view#_print_message(message, ...) "{{{
   let context = unite#get_context()
   let unite = unite#get_current_unite()
   let message = s:msg2list(a:message)
+  let is_silent = get(a:000, 0, get(context, 'silent', 0))
   if !empty(unite)
     let unite.msgs += message
   endif
 
-  if !get(context, 'silent', 0)
+  if !is_silent
     echohl Comment | call unite#view#_redraw_echo(message[: &cmdheight-1]) | echohl None
   endif
 endfunction"}}}
@@ -779,6 +771,11 @@ function! unite#view#_print_source_message(message, source_name) "{{{
   call unite#view#_print_message(
         \ map(copy(s:msg2list(a:message)),
         \    "printf('[%s] %s', a:source_name, v:val)"))
+endfunction"}}}
+function! unite#view#_add_source_message(message, source_name) "{{{
+  call unite#view#_print_message(
+        \ map(copy(s:msg2list(a:message)),
+        \    "printf('[%s] %s', a:source_name, v:val)"), 1)
 endfunction"}}}
 function! unite#view#_clear_message() "{{{
   let unite = unite#get_current_unite()
@@ -814,6 +811,12 @@ function! unite#view#_redraw_echo(expr) "{{{
 endfunction"}}}
 
 function! unite#view#_match_line(highlight, line, id) "{{{
+  if &filetype ==# 'unite'
+    setlocal cursorline
+    return
+  endif
+
+  " For compatibility
   return exists('*matchaddpos') ?
         \ matchaddpos(a:highlight, [a:line], 10, a:id) :
         \ matchadd(a:highlight, '^\%'.a:line.'l.*', 10, a:id)
@@ -894,6 +897,8 @@ function! unite#view#_get_status_string(unite) "{{{
 endfunction"}}}
 
 function! unite#view#_add_previewed_buffer_list(bufnr) "{{{
+  call s:clear_previewed_buffer_list()
+
   let unite = unite#get_current_unite()
   call add(unite.previewed_buffer_list, a:bufnr)
 endfunction"}}}
@@ -930,6 +935,11 @@ function! s:close_preview_window() "{{{
     endif
   endif
 
+  call s:clear_previewed_buffer_list()
+endfunction"}}}
+function! s:clear_previewed_buffer_list() "{{{
+  let unite = unite#get_current_unite()
+
   " Clear previewed buffer list
   for bufnr in unite.previewed_buffer_list
     if buflisted(bufnr)
@@ -965,8 +975,10 @@ function! unite#view#_convert_lines(candidates) "{{{
         \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(unite#helper#convert_source_name(
         \     (v:val.is_dummy ? '' : v:val.source)), max_source_name))
-        \ . unite#util#truncate_wrap(v:val.unite__abbr, " . max_width
-        \    .  ", (context.truncate ? 0 : max_width/2), '..')")
+        \ . (strwidth(v:val.unite__abbr) < max_width ?
+        \     v:val.unite__abbr
+        \   : unite#util#truncate_wrap(v:val.unite__abbr, max_width
+        \    , (context.truncate ? 0 : max_width/2), '..'))")
 endfunction"}}}
 " @vimlint(EVL102, 0, l:max_source_name)
 " @vimlint(EVL102, 0, l:context)
