@@ -277,10 +277,39 @@ function! s:kind.action_table.grep.func(candidates) "{{{
         \ ['grep', join(map(copy(a:candidates), 'v:val.action__path'), "\n"),
         \ ]], { 'no_quit' : 1, 'no_empty' : 1 })
 endfunction "}}}
+
+" For vimgrep
+let s:kind.action_table.vimgrep = {
+  \   'description': 'vimgrep this files',
+  \   'is_quit': 1,
+  \   'is_invalidate_cache': 1,
+  \   'is_selectable': 1,
+  \   'is_start' : 1,
+  \ }
+function! s:kind.action_table.vimgrep.func(candidates) "{{{
+  call unite#start_script([
+        \ ['vimgrep', map(copy(a:candidates),
+        \ 'string(substitute(v:val.action__path, "/$", "", "g"))'),
+        \ ]], { 'no_quit' : 1 })
+endfunction "}}}
+
+" For find.
+let s:kind.action_table.find = {
+      \   'description': 'find this directory',
+      \   'is_quit': 1,
+      \   'is_invalidate_cache': 1,
+      \   'is_start' : 1,
+      \ }
+function! s:kind.action_table.find.func(candidate) "{{{
+  call unite#start_script([['find',
+        \ unite#helper#get_candidate_directory(a:candidate)]],
+        \ {'no_quit' : 1})
+endfunction "}}}
 "}}}
 
 function! s:execute_command(command, candidate) "{{{
-  let dir = unite#util#path2directory(a:candidate.action__path)
+  let dir = unite#util#path2directory(
+        \ unite#util#expand(a:candidate.action__path))
   " Auto make directory.
   if dir !~ '^\a\+:' && !isdirectory(dir) && !unite#util#is_sudo()
         \ && unite#util#input_yesno(
@@ -289,7 +318,7 @@ function! s:execute_command(command, candidate) "{{{
   endif
 
   call unite#util#smart_execute_command(
-        \ a:command, unite#util#substitute_path_separator(
+        \ a:command, unite#util#expand(
         \   fnamemodify(a:candidate.action__path, ':~:.')))
 endfunction"}}}
 

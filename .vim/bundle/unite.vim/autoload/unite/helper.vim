@@ -189,18 +189,47 @@ function! s:eval_cmdline(cmdline) abort "{{{
   return cmdline
 endfunction"}}}
 
-function! unite#helper#parse_project_bang(args) "{{{
-  let args = filter(copy(a:args), "v:val != '!'")
+function! unite#helper#parse_source_args(args) "{{{
+  let args = copy(a:args)
   if empty(args)
-    let args = ['']
+    return []
   endif
 
-  if get(a:args, 0, '') == '!'
-    " Use project directory.
-    let args[0] = unite#util#path2project_directory(args[0], 1)
-  endif
-
+  let args[0] = unite#helper#parse_source_path(args[0])
   return args
+endfunction"}}}
+
+function! unite#helper#parse_source_path(path) "{{{
+  " Expand ?!/buffer_project_subdir, !/project_subdir and ?/buffer_subdir
+  if a:path =~ '^?!'
+    " Use project directory from buffer directory
+    let path = unite#helper#get_buffer_directory(bufnr('%'))
+    let path = unite#util#substitute_path_separator(
+      \ unite#util#path2project_directory(path) . a:path[2:])
+  elseif a:path =~ '^!'
+    " Use project directory from cwd
+    let path = &filetype ==# 'vimfiler' ?
+          \ b:vimfiler.current_dir :
+          \ unite#util#substitute_path_separator(getcwd())
+    let path = unite#util#substitute_path_separator(
+      \ unite#util#path2project_directory(path) . a:path[1:])
+  elseif a:path =~ '^?'
+    " Use buffer directory
+    let path = unite#util#substitute_path_separator(
+      \ unite#helper#get_buffer_directory(bufnr('%')) . a:path[1:])
+  else
+    let path = a:path
+  endif
+
+  " Don't assume empty path means current directory.
+  " Let the sources customize default rules.
+  if path != ''
+    let path = unite#util#substitute_path_separator(
+          \ fnamemodify(unite#util#expand(path), ':p'))
+  endif
+
+  " resolve .. in the paths
+  return resolve(path)
 endfunction"}}}
 
 function! unite#helper#get_marked_candidates() "{{{
@@ -332,9 +361,8 @@ function! unite#helper#get_current_candidate(...) "{{{
 endfunction"}}}
 
 function! unite#helper#get_current_candidate_linenr(num) "{{{
-  let num = 0
-
   let candidate_num = 0
+  let num = 0
   for candidate in unite#get_unite_candidates()
     if !candidate.is_dummy
       let candidate_num += 1
@@ -342,12 +370,20 @@ function! unite#helper#get_current_candidate_linenr(num) "{{{
 
     let num += 1
 
-    if candidate_num >= a:num+1
+    if candidate_num >= a:num
       break
     endif
   endfor
 
-  return unite#get_current_unite().prompt_linenr + num
+  let unite = unite#get_current_unite()
+  if unite.context.prompt_direction ==# 'below'
+    let num = num * -1
+    if unite.prompt_linenr == 0
+      let num += line('$') + 1
+    endif
+  endif
+
+  return unite.prompt_linenr + num
 endfunction"}}}
 
 function! unite#helper#call_filter(filter_name, candidates, context) "{{{
@@ -508,6 +544,20 @@ function! unite#helper#is_prompt(line) "{{{
   let context = unite#get_context()
   return (context.prompt_direction ==# 'below' && a:line >= prompt_linenr)
         \ || (context.prompt_direction !=# 'below' && a:line <= prompt_linenr)
+endfunction"}}}
+
+function! unite#helper#relative_target(target) "{{{
+  let target = unite#util#substitute_path_separator(fnamemodify(
+        \ substitute(a:target, '[^:]\zs/$', '', ''), ':.'))
+  if target == unite#util#substitute_path_separator(getcwd())
+    return '.'
+  endif
+  return target
+endfunction"}}}
+
+function! unite#helper#join_targets(targets) "{{{
+  return join(map(copy(a:targets),
+        \    "unite#util#escape_shell(unite#helper#relative_target(v:val))"))
 endfunction"}}}
 
 let &cpo = s:save_cpo

@@ -182,6 +182,8 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
   let pos = getpos('.')
   let unite = unite#get_current_unite()
   let context = unite.context
+  let current_candidate = (line('.') == unite.prompt_linenr) ?
+        \ {} : unite#helper#get_current_candidate()
 
   try
     if &filetype !=# 'unite'
@@ -232,6 +234,8 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
         call cursor(line('$'), 0)
         call unite#view#_bottom_cursor()
       endif
+    else
+      call unite#view#_search_cursor(current_candidate)
     endif
 
     if a:winnr > 0
@@ -246,6 +250,12 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
   endif
   if context.auto_highlight
     call unite#view#_do_auto_highlight()
+  endif
+endfunction"}}}
+function! unite#view#_redraw_all_candidates() "{{{
+  let unite = unite#get_current_unite()
+  if len(unite.candidates) != len(unite.current_candidates)
+    call unite#redraw(0, 1)
   endif
 endfunction"}}}
 
@@ -378,8 +388,8 @@ function! unite#view#_resize_window() "{{{
 
   if context.unite__old_winwidth != 0
         \ && context.unite__old_winheight != 0
-        \ && winheight(0) != context.unite__old_winheight
         \ && winwidth(0) != context.unite__old_winwidth
+        \ && winheight(0) != context.unite__old_winheight
     " Disabled resize.
     let context.winwidth = 0
     let context.winheight = 0
@@ -405,7 +415,7 @@ function! unite#view#_resize_window() "{{{
 
     let context.unite__is_resize = winheight != winheight(0)
   elseif context.vertical
-        \ && context.unite__old_winwidth  == 0
+        \ && context.unite__old_winwidth == 0
     execute 'vertical resize' context.winwidth
 
     let context.unite__is_resize = 1
@@ -462,7 +472,7 @@ function! unite#view#_switch_unite_buffer(buffer_name, context) "{{{
 
   if a:context.split && !a:context.unite__direct_switch
     " Split window.
-    noautocmd execute a:context.direction ((bufnr > 0) ?
+    noautocmd execute s:get_buffer_direction(a:context) ((bufnr > 0) ?
           \ ((a:context.vertical) ? 'vsplit' : 'split') :
           \ ((a:context.vertical) ? 'vnew' : 'new'))
   endif
@@ -532,8 +542,14 @@ function! unite#view#_init_cursor() "{{{
   if context.start_insert && !context.auto_quit
     let unite.is_insert = 1
 
-    call unite#helper#cursor_prompt()
-    startinsert!
+    if is_restore && positions[key].pos[1] != unite.prompt_linenr
+      " Restore position.
+      call setpos('.', positions[key].pos)
+      startinsert
+    else
+      call unite#helper#cursor_prompt()
+      startinsert!
+    endif
   else
     let unite.is_insert = 0
 
@@ -622,7 +638,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
 
     call unite#handlers#_on_buf_unload(bufname)
 
-    call s:close_preview_window()
+    call unite#view#_close_preview_window()
 
     if winnr('$') != 1 && !unite.context.temporary
           \ && winnr('$') == unite.winmax
@@ -630,7 +646,7 @@ function! unite#view#_quit(is_force, ...)  "{{{
       execute unite.prev_winnr 'wincmd w'
     endif
   else
-    call s:close_preview_window()
+    call unite#view#_close_preview_window()
 
     let winnr = get(filter(range(1, winnr('$')),
           \ "winbufnr(v:val) == unite.prev_bufnr"), 0, unite.prev_winnr)
@@ -703,7 +719,9 @@ function! unite#view#_bottom_cursor() "{{{
   endtry
 endfunction"}}}
 function! unite#view#_clear_match() "{{{
-  setlocal nocursorline
+  if &filetype ==# 'unite'
+    setlocal nocursorline
+  endif
 endfunction"}}}
 
 function! unite#view#_save_position() "{{{
@@ -917,12 +935,18 @@ function! unite#view#_preview_file(filename) "{{{
     let target_winwidth = (unite_winwidth + winwidth(0)) / 2
     execute 'wincmd p | vert resize ' . target_winwidth
   else
-    noautocmd silent execute 'pedit!'
-          \ fnameescape(a:filename)
+    let previewheight_save = &previewheight
+    try
+      let &previewheight = context.previewheight
+      noautocmd silent execute 'pedit!'
+            \ fnameescape(a:filename)
+    finally
+      let &previewheight = previewheight_save
+    endtry
   endif
 endfunction"}}}
 
-function! s:close_preview_window() "{{{
+function! unite#view#_close_preview_window() "{{{
   let unite = unite#get_current_unite()
 
   if !unite.has_preview_window
@@ -936,6 +960,8 @@ function! s:close_preview_window() "{{{
   endif
 
   call s:clear_previewed_buffer_list()
+
+  let unite.preview_candidate = {}
 endfunction"}}}
 function! s:clear_previewed_buffer_list() "{{{
   let unite = unite#get_current_unite()
@@ -968,6 +994,8 @@ function! unite#view#_convert_lines(candidates) "{{{
   endif
   let padding = repeat(' ', padding_width)
 
+  let truncate_width = (max_width*context.truncate_width) / 100
+
   return map(copy(a:candidates),
         \ "(v:val.is_dummy ? ' ' :
         \   v:val.unite__is_marked ? context.marked_icon :
@@ -975,14 +1003,38 @@ function! unite#view#_convert_lines(candidates) "{{{
         \ . (unite.max_source_name == 0 ? ''
         \   : unite#util#truncate(unite#helper#convert_source_name(
         \     (v:val.is_dummy ? '' : v:val.source)), max_source_name))
-        \ . (strwidth(v:val.unite__abbr) < max_width ?
+        \ . ((strwidth(v:val.unite__abbr) < max_width || !context.truncate) ?
         \     v:val.unite__abbr
         \   : unite#util#truncate_wrap(v:val.unite__abbr, max_width
-        \    , (context.truncate ? 0 : max_width/2), '..'))")
+        \    , truncate_width, '..'))")
 endfunction"}}}
 " @vimlint(EVL102, 0, l:max_source_name)
 " @vimlint(EVL102, 0, l:context)
 " @vimlint(EVL102, 0, l:padding)
+
+function! unite#view#_search_cursor(candidate) "{{{
+  " Optimized
+  if empty(a:candidate) ||
+        \ unite#helper#get_current_candidate() ==# a:candidate
+    return
+  endif
+
+  call unite#view#_redraw_all_candidates()
+
+  let max = line('$')
+  let cnt = 1
+  while cnt <= max
+    let candidate = unite#helper#get_current_candidate(cnt)
+
+    if candidate ==# a:candidate
+      " Move cursor.
+      call cursor(cnt, 0)
+      return
+    endif
+
+    let cnt += 1
+  endwhile
+endfunction"}}}
 
 function! s:set_syntax() "{{{
   let unite = unite#get_current_unite()
@@ -1004,6 +1056,25 @@ endfunction"}}}
 
 function! s:msg2list(expr) "{{{
   return type(a:expr) ==# type([]) ? a:expr : split(a:expr, '\n')
+endfunction"}}}
+
+function! s:get_buffer_direction(context) "{{{
+  let direction = a:context.direction
+  if direction ==# 'dynamictop' || direction ==# 'dynamicbottom'
+    " Use dynamic direction calculation
+    let unite = unite#get_current_unite()
+    let [max_width, _] = unite#helper#adjustments(
+          \ winwidth(0), unite.max_source_name, 4)
+    let is_fit = empty(filter(copy(unite#candidates#gather()),
+          \ 'strwidth(v:val.unite__abbr) > max_width'))
+
+    if direction ==# 'dynamictop'
+      let direction = is_fit ? 'aboveleft' : 'topleft'
+    else
+      let direction = is_fit ? 'belowright' : 'botright'
+    endif
+  endif
+  return direction
 endfunction"}}}
 
 let &cpo = s:save_cpo
