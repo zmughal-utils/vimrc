@@ -49,3 +49,6 @@ let g:syntastic_perl_lib_path = [ './lib', './lib/auto' ]
 
 " manpageview setting
 let g:manpageview_options_pl= ";-f;-q"
+
+" babycart operator (complex interpolation)
+let b:surround_{char2nr("i")} = "@{[ \r ]}"
