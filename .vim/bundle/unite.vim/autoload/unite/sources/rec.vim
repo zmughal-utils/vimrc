@@ -279,10 +279,10 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
   let command = g:unite_source_rec_async_command
   if a:context.source__is_directory
     " Use find command.
-    let command = 'find'
+    let command = 'find -L'
   endif
 
-  let args = split(command)
+  let args = vimproc#parser#split_args(command)
   if empty(args) || !executable(args[0])
     if empty(args)
       call unite#print_source_message(
@@ -290,14 +290,14 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
             \  . 'g:unite_source_rec_async_command variable.', self.name)
     else
       call unite#print_source_message('async command : "'.
-            \ command.'" is not executable.', self.name)
+            \ args[0].'" is not executable.', self.name)
     endif
     let a:context.is_async = 0
     return []
   endif
 
   " Note: If find command and args used, uses whole command line.
-  let commands = vimproc#parser#split_args(command) + paths
+  let commands = args + paths
   if args[0] ==# 'find'
     " Default option.
     let commands += g:unite_source_rec_find_args
@@ -448,7 +448,7 @@ function! s:source_file_neovim.gather_candidates(args, context) "{{{
   let command = g:unite_source_rec_async_command
   if a:context.source__is_directory
     " Use find command.
-    let command = 'find'
+    let command = 'find -L'
   endif
 
   let args = split(command)
@@ -459,14 +459,14 @@ function! s:source_file_neovim.gather_candidates(args, context) "{{{
             \  . 'g:unite_source_rec_async_command variable.', self.name)
     else
       call unite#print_source_message('async command : "'.
-            \ command.'" is not executable.', self.name)
+            \ args[0].'" is not executable.', self.name)
     endif
     let a:context.is_async = 0
     return []
   endif
 
   " Note: If find command and args used, uses whole command line.
-  let commands = [command] + paths
+  let commands = args + paths
   if args[0] ==# 'find'
     " Default option.
     let commands += g:unite_source_rec_find_args
@@ -526,8 +526,7 @@ endfunction"}}}
 function! s:source_file_neovim.hooks.on_close(args, context) "{{{
   if has_key(a:context, 'source__job')
         \ && has_key(s:job_info, a:context.source__job)
-        \ && !s:job_info[a:context.source__job].eof
-    call jobstop(a:context.source__job)
+    silent! call jobstop(a:context.source__job)
     call remove(s:job_info, a:context.source__job)
   endif
 endfunction "}}}
@@ -578,7 +577,7 @@ function! s:source_file_git.gather_candidates(args, context) "{{{
   let args = vimproc#parser#split_args(command) + a:args
   if empty(args) || !executable(args[0])
     call unite#print_source_message('git command : "'.
-          \ command.'" is not executable.', self.name)
+          \ args[0].'" is not executable.', self.name)
     let a:context.is_async = 0
     return []
   endif
