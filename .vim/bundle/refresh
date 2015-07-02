@@ -52,7 +52,7 @@ refresh_git https://github.com/Shougo/vimproc.vim vimproc.vim
 #refresh https://bitbucket.org/ns9tks/vim-fuzzyfinder vim-fuzzyfinder
 refresh_git https://github.com/terryma/vim-multiple-cursors vim-multiple-cursors
 
-refresh_git https://github.com/kien/ctrlp.vim ctrlp.vim
+refresh_git https://github.com/ctrlpvim/ctrlp.vim ctrlp.vim
 refresh_git https://github.com/DavidEGx/ctrlp-smarttabs ctrlp-smarttabs
 
 refresh_git https://github.com/Shougo/neocomplete.vim neocomplete.vim
