@@ -66,3 +66,5 @@ refresh_git https://github.com/jeetsukumaran/vim-indentwise vim-indentwise
 refresh_git https://github.com/tpope/vim-fugitive vim-fugitive
 
 refresh_git https://github.com/terryma/vim-expand-region vim-expand-region
+
+refresh_git https://github.com/godlygeek/csapprox CSApprox
