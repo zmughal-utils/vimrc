@@ -68,3 +68,9 @@ refresh_git https://github.com/tpope/vim-fugitive vim-fugitive
 refresh_git https://github.com/terryma/vim-expand-region vim-expand-region
 
 refresh_git https://github.com/godlygeek/csapprox CSApprox
+
+refresh_git https://github.com/vim-perl/vim-perl vim-perl-src
+mkdir vim-perl;
+make -Cvim-perl-src clean carp dancer highlight-all-pragmas moose test-more try-tiny
+mv -v vim-perl-src/after vim-perl/
+git add vim-perl && git commit -m "refresh bundles [automated]: vim-perl built from vim-perl-src"
