@@ -39,7 +39,8 @@ let g:netrw_keepdir=0	" change pwd while browsing
 " NERD_Tree {{{
 let g:NERDTreeWinSize=15
 "autocmd VimEnter *	call extend(g:NERDTreeIgnore,map(split(&suffixes,","),'v:val."$"'))
-let g:NERDTreeIgnore=['\.class$', '\.\(log\|aux\|out\|snm\|toc\|nav\|vrb\|bbl\|blg\|fdb_latexmk\|fls\)$', '^moc_.*\.[cho]$', '\.o$', '\~$']
+" LaTeX ignore: ~/sw_projects/zmughal/scraps/scraps/build/latex/clean.mk
+let g:NERDTreeIgnore=['\.class$', '\.\(out\|log\|aux\|toc\|bbl\|blg\|nav\|snm\|vrb\|tpt\|lof\|lot\|fdb_latexmk\|fls\)$', '^moc_.*\.[cho]$', '\.o$', '\~$']
 
 let g:NERDTreeSortOrder=['\/$', '\.sh$', '\.bat$', '\.java$', '\.html$', '*', '\.pdf$', '^\(\u\|\A\)\+$', '^tags$', '\.swp$', '\.bak$', '\~$']
 let g:NERDTreeHijackNetrw=0
