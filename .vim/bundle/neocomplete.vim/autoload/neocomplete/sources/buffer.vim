@@ -117,8 +117,8 @@ function! neocomplete#sources#buffer#make_cache_current_line() "{{{
 
   " let start = reltime()
   call s:make_cache_current_buffer(
-        \ max([1, line('.')-10]),
-        \ min([line('$'), line('.') + 10]))
+        \ max([1, line('.') - winline()]),
+        \ min([line('$'), line('.') + winheight(0) - winline()]))
   " echomsg reltimestr(reltime(start))
 endfunction"}}}
 
@@ -173,7 +173,9 @@ endfunction"}}}
 
 function! s:make_cache_file(srcname) "{{{
   " Initialize source.
-  call s:initialize_source(a:srcname)
+  if !has_key(s:buffer_sources, a:srcname)
+    call s:initialize_source(a:srcname)
+  endif
 
   let source = s:buffer_sources[a:srcname]
 

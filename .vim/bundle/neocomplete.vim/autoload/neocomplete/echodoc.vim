@@ -42,6 +42,9 @@ function! s:doc_dict.search(cur_text) "{{{
 
   let abbr = (has_key(item, 'abbr') && item.word !=# item.abbr) ?
         \ item.abbr : split(item.info, '\n')[0]
+  if abbr == ''
+    return []
+  endif
   if has_key(item, 'abbr')
         \ && abbr ==# item.abbr && len(get(item, 'menu', '')) > 5
     " Combine menu.
@@ -53,13 +56,13 @@ function! s:doc_dict.search(cur_text) "{{{
     return []
   endif
 
-  let match = match(abbr, neocomplete#escape_match(item.word))
-  if match > 0
-    call add(ret, { 'text' : abbr[ : match-1] })
+  let match = stridx(abbr, item.word)
+  if match < 0
+    call add(ret, { 'text' : abbr })
+  else
+    call add(ret, { 'text' : item.word, 'highlight' : 'Identifier' })
+    call add(ret, { 'text' : abbr[match+len(item.word) :] })
   endif
-
-  call add(ret, { 'text' : item.word, 'highlight' : 'Identifier' })
-  call add(ret, { 'text' : abbr[match+len(item.word) :] })
 
   return ret
 endfunction"}}}

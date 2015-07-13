@@ -372,6 +372,10 @@ g:neocomplete#enable_auto_select
 		automatically.  If you enable this option, neocomplete's
 		completion behavior is like |AutoComplPop|.
 
+		Note: If you want to enable the feature in
+		|g:neocomplete#force_omni_input_patterns|, you need Vim
+		7.4.775 or above.
+
 		Default value is 0.
 
 				*g:neocomplete#enable_auto_delimiter*
@@ -448,8 +452,7 @@ g:neocomplete#force_omni_input_patterns
 		If this pattern is not defined or empty pattern, neocomplete
 		does not call 'omnifunc'.
 		Note: If it is a set, neocomplete will call 'omnifunc'
-		directly.  So almost neocomplete features are disabled(for
-		example: auto select first candidate).  But
+		directly.  So almost neocomplete features are disabled.  But
 		all Omni completion works instead of
 		|g:neocomplete#sources#omni#input_patterns|.
 >
@@ -831,6 +834,16 @@ neocomplete#disable_default_dictionary({variable-name})
 	call neocomplete#disable_default_dictionary(
 	      \ 'g:neocomplete#same_filetypes')
 <
+				*neocomplete#get_default_matchers()*
+neocomplete#get_default_matchers()
+		Get default matchers in current buffer.
+
+				*neocomplete#set_default_matchers()*
+neocomplete#set_default_matchers({names})
+		Chang default matchers in current buffer.
+>
+	call neocomplete#set_default_matchers('matcher_head')
+<
 ------------------------------------------------------------------------------
 KEY MAPPINGS 					*neocomplete-key-mappings*
 
@@ -1115,6 +1128,8 @@ Default matchers:
 		['matcher_head', 'matcher_length']
 	Otherwise:
 		['matcher_fuzzy', 'matcher_length']
+	
+	You can change it by |neocomplete#set_default_matchers()|.
 
 					*neocomplete-filter-sorter_default*
 Default sorters: ['sorter_rank'].
@@ -1880,7 +1895,7 @@ Q: In ||g:neocomplete#force_omni_input_patterns|,
 |g:neocomplete#enable_auto_select| feature is not work.
 https://github.com/Shougo/neocomplete.vim/issues/139
 
-A: It is feature. See |g:neocomplete#force_omni_input_patterns| documentation.
+A: Please update your Vim to 7.4.775 or above.
 
 Q: I want to disable all sources by default.
 
