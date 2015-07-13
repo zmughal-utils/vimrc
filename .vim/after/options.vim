@@ -122,6 +122,10 @@ let g:ctrlp_user_command = {
 
 "}}}
 
+" LanguageTool {{{
+let g:languagetool_jar='$HOME/bin/build.local/LanguageTool-3.0/languagetool-commandline.jar'
+"}}}
+
 let g:SrcExpl_pluginList = [
 	\ "__Tag_List__",
 	\ "_NERD_tree_",
