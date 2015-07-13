@@ -75,3 +75,5 @@ make -Cvim-perl-src clean carp dancer highlight-all-pragmas moose test-more try-
 rsync -avz vim-perl-src/after vim-perl/
 rm -Rfv vim-perl-src/after
 git add vim-perl && git commit -m "refresh bundles [automated]: vim-perl built from vim-perl-src"
+
+refresh_git https://github.com/dpelle/vim-LanguageTool vim-languagetool
