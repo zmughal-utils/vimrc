@@ -17,3 +17,10 @@ if has("conceal") && &enc == 'utf-8'
   endfor
  endif
 endif
+
+" Taken from the system tex.vim but added a containedin so that it is always in
+" the texComment syntax group. This is because there is a little error in the
+" system tex.vim syntax that excludes contains=texTodo when folding is enabled.
+syn case ignore
+syn keyword texTodo		contained		combak	fixme	todo	xxx containedin=texComment
+syn case match
