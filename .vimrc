@@ -504,10 +504,10 @@ exe "command! -range -nargs=0 RunCurrentLine	<line1>,<line2>w !".RunLineChangePr
 nnoremap \rl	:RunCurrentLine<CR>
 vnoremap \rl	:RunCurrentLine<CR>
 
-vnoremap \wc :w !wc -w<CR>
-nnoremap \wc :w !wc -w<CR>
-vnoremap \st :w !style\|$PAGER <CR>
-nnoremap \st :w !style\|$PAGER<CR>
+vnoremap \wc :w !detex <Bar> wc -w<CR>
+nnoremap \wc :w !detex <Bar> wc -w<CR>
+vnoremap \st :w !detex <Bar> style\|$PAGER <CR>
+nnoremap \st :w !detex <Bar> style\|$PAGER<CR>
 command! -nargs=0 ExplodePara	'{,'}join | exe "normal O\<Esc>jo\<Esc>k" | '{,'}s/\([.?!]\)\s*/\1\r/g | exe "normal {j"
 
 vnoremap \rc :w !recode ..dump<CR>
