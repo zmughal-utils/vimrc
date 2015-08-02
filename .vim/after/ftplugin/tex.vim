@@ -39,6 +39,8 @@ let b:surround_{char2nr("e")} = "\\(\r\\)"
 command! -nargs=0 TeXSubstituteEmDash	%s/\%u2014/---/gc
 command! -nargs=0 TeXSubstituteEnDash	%s/\%u2013/--/gc
 
+command! -range -nargs=0 TeXPandocFromMarkdown <line1>,<line2>!pandoc -t latex -f markdown
+
 function! TeXSmartOpen() "{{{
 	let curfile=expand("%")
 	let p_pdf=fnamemodify(curfile,":r").".pdf"
