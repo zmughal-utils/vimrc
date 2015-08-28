@@ -185,6 +185,9 @@ nnoremap <Leader>nt	:NERDTreeToggle<CR>
 nnoremap <Leader>bw	:bwipeout<CR>
 nnoremap <Leader>bd	:bdelete<CR>
 
+" inserts the name of the previous window
+imap <C-R>w <C-R>=bufname(winbufnr(winnr('#')))<Return>
+
 cabbr cdir	<C-R>=expand("%:p:h")<C-J>
 
 nmap \o	o<Esc>
