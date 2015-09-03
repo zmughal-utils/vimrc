@@ -18,6 +18,7 @@ endfunction
 augroup Templates "{{{
 	au!
 	autocmd BufNewFile *.c		call Read_template("c")
+	autocmd BufNewFile *.h		call Read_template("h")
 	autocmd BufNewFile *.html,*.htm	call Read_template("html")
 	autocmd BufNewFile *.sh		call Read_template("sh")
 	autocmd BufNewFile *.bat	call Read_template("bat")
