@@ -47,10 +47,11 @@ function! s:matcher.filter(candidates, context) "{{{
 
   if !has_key(a:context, 'filter__project_ignore_path')
         \ || a:context.filter__project_ignore_path !=# project
+        \ || a:context.is_redraw
     let a:context.filter__project_ignore_path = project
     let [a:context.filter__project_ignore_patterns,
           \ a:context.filter__project_ignore_whites] =
-          \ s:get_ignore_results(project)
+          \ unite#filters#matcher_project_ignore_files#get_ignore_results(project)
   endif
 
   if empty(a:context.filter__project_ignore_patterns)
@@ -62,7 +63,7 @@ function! s:matcher.filter(candidates, context) "{{{
         \ a:context.filter__project_ignore_whites)
 endfunction"}}}
 
-function! s:get_ignore_results(path) "{{{
+function! unite#filters#matcher_project_ignore_files#get_ignore_results(path) "{{{
   let globs = []
   let whites = []
   for ignore in [

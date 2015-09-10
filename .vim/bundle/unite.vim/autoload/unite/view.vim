@@ -62,6 +62,14 @@ function! unite#view#_redraw_candidates(...) "{{{
     let unite.init_prompt_linenr = len(candidates) + 1
   endif
 
+  if context.immediately && len(candidates) == 1
+    " Immediately action.
+    call unite#action#do(
+          \ context.default_action, [candidates[0]])
+    call unite#variables#disable_current_unite()
+    return
+  endif
+
   let pos = getpos('.')
   let modifiable_save = &l:modifiable
   try
@@ -353,9 +361,7 @@ function! unite#view#_change_highlight()  "{{{
       continue
     endif
 
-    let input_list = map(filter(split(input_str, '\\\@<! '),
-          \ "v:val !~ '^[!:]'"),
-          \ "substitute(v:val, '\\\\ ', ' ', 'g')")
+    let input_list = unite#helper#get_input_list(input_str)
 
     for source in filter(copy(unite.sources), "v:val.syntax != ''")
       for matcher in filter(copy(map(filter(
@@ -763,7 +769,7 @@ endfunction"}}}
 
 " Message output.
 function! unite#view#_print_error(message) "{{{
-  let message = s:msg2list(a:message)
+  let message = map(s:msg2list(a:message), '"[unite.vim] " . v:val')
   let unite = unite#get_current_unite()
   if !empty(unite)
     let unite.err_msgs += message
@@ -934,8 +940,7 @@ function! unite#view#_preview_file(filename) "{{{
   let context = unite#get_context()
   if context.vertical_preview
     let unite_winwidth = winwidth(0)
-    noautocmd silent execute 'vertical pedit!'
-          \ fnameescape(a:filename)
+    silent execute 'vertical pedit!' fnameescape(a:filename)
     wincmd P
     let target_winwidth = (unite_winwidth + winwidth(0)) / 2
     execute 'wincmd p | vert resize ' . target_winwidth
@@ -943,8 +948,7 @@ function! unite#view#_preview_file(filename) "{{{
     let previewheight_save = &previewheight
     try
       let &previewheight = context.previewheight
-      noautocmd silent execute 'pedit!'
-            \ fnameescape(a:filename)
+      silent execute 'pedit!' fnameescape(a:filename)
     finally
       let &previewheight = previewheight_save
     endtry
@@ -960,7 +964,6 @@ function! unite#view#_close_preview_window() "{{{
     if !empty(preview_windows)
       " Close preview window.
       noautocmd pclose!
-
     endif
   endif
 

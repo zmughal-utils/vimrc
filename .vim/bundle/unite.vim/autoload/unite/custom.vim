@@ -69,7 +69,7 @@ function! unite#custom#profile(profile_name, option_name, value) "{{{
   if a:option_name ==# 'smartcase'
         \ || a:option_name ==# 'ignorecase'
     call unite#print_error(
-          \ printf('[unite.vim] You cannot set "%s". '
+          \ printf('You cannot set "%s". '
           \ .'Please set "context.%s" by unite#custom#profile() instead.',
           \ a:option_name, a:option_name))
     return
@@ -128,6 +128,14 @@ function! unite#custom#get_profile(profile_name, option_name) "{{{
   endif
 
   return custom.profiles[profile_name][a:option_name]
+endfunction"}}}
+function! unite#custom#get_context(profile_name) "{{{
+  let context = copy(unite#custom#get_profile(a:profile_name, 'context'))
+  for option in map(filter(items(context),
+        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]"), 'v:val[0]')
+    let context[option[3:]] = 0
+  endfor
+  return context
 endfunction"}}}
 
 function! unite#custom#substitute(profile, pattern, subst, ...) "{{{

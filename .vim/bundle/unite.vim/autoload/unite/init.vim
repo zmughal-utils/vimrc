@@ -48,12 +48,12 @@ function! unite#init#_context(context, ...) "{{{
   let source_names = get(a:000, 0, [])
 
   let default_context = extend(copy(unite#variables#default_context()),
-        \ unite#custom#get_profile('default', 'context'))
+        \ unite#custom#get_context('default'))
 
   if len(source_names) == 1
     " Overwrite source context by profile.
-    call extend(default_context, unite#custom#get_profile(
-          \ 'source/' . source_names[0], 'context'))
+    call extend(default_context, unite#custom#get_context(
+          \ 'source/' . source_names[0]))
   endif
 
   if get(a:context, 'script', 0)
@@ -64,23 +64,21 @@ function! unite#init#_context(context, ...) "{{{
         \    get(a:context, 'buffer_name', 'default'))
   if profile_name !=# 'default'
     " Overwrite context by profile.
-    call extend(default_context, unite#custom#get_profile(
-          \ profile_name, 'context'))
+    call extend(default_context, unite#custom#get_context(profile_name))
   endif
+
+  " Generic no.
+  for option in map(filter(items(a:context),
+        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]"), 'v:val[0]')
+    let a:context[option[3:]] = 0
+  endfor
 
   let context = extend(default_context, a:context)
 
   if context.temporary || context.script
     " User can overwrite context by profile context.
-    let context = extend(context,
-          \ unite#custom#get_profile(profile_name, 'context'))
+    let context = extend(context, unite#custom#get_context(profile_name))
   endif
-
-  " Generic no.
-  for option in map(filter(items(context),
-        \ "stridx(v:val[0], 'no_') == 0 && v:val[1]"), 'v:val[0]')
-    let context[option[3:]] = 0
-  endfor
 
   " Complex initializer.
   if context.complete
@@ -208,11 +206,6 @@ function! unite#init#_unite_buffer() "{{{
             \ call unite#handlers#_restore_updatetime()
     augroup END
 
-    if v:version > 703 || v:version == 703 && has('patch418')
-      " Enable auto narrow feature.
-      autocmd plugin-unite InsertCharPre <buffer>
-            \ call unite#handlers#_on_insert_char_pre()
-    endif
     if v:version > 703 || v:version == 703 && has('patch867')
       " Enable auto narrow feature.
       autocmd plugin-unite TextChanged <buffer>
@@ -321,12 +314,9 @@ function! unite#init#_current_unite(sources, context) "{{{
   let unite.access_time = localtime()
   let unite.is_finalized = 0
   let unite.previewed_buffer_list = []
-  let unite.current_matchers = unite#util#convert2list(
-        \ unite#custom#get_profile(unite.profile_name, 'matchers'))
-  let unite.current_sorters = unite#util#convert2list(
-        \ unite#custom#get_profile(unite.profile_name, 'converters'))
-  let unite.current_converters = unite#util#convert2list(
-        \ unite#custom#get_profile(unite.profile_name, 'converters'))
+  let unite.current_matchers = []
+  let unite.current_sorters = []
+  let unite.current_converters = []
   let unite.preview_candidate = {}
   let unite.highlight_candidate = {}
   let unite.max_source_name = 0
@@ -599,12 +589,12 @@ function! unite#init#_loaded_sources(sources, context) "{{{
 
         if source_name =~ '^-'
           call unite#util#print_error(
-                \ 'unite.vim: Invalid option "' .
+                \ 'Invalid option "' .
                 \ source_name . '" is detected.')
           throw 'unite.vim: Invalid option'
         else
           call unite#util#print_error(
-                \ 'unite.vim: Invalid source name "' .
+                \ 'Invalid source name "' .
                 \ source_name . '" is detected.')
           if source_name ==# 'file_mru' || source_name ==# 'directory_mru'
             call unite#util#print_error(
@@ -660,7 +650,6 @@ function! unite#init#_sources(...) "{{{
         \ 'is_volatile' : 0,
         \ 'is_listed' : 1,
         \ 'is_forced' : 0,
-        \ 'is_grouped' : 0,
         \ 'action_table' : {},
         \ 'default_action' : {},
         \ 'default_kind' : 'common',
@@ -745,7 +734,7 @@ function! unite#init#_sources(...) "{{{
       " Set filters.
       if has_key(custom_source, 'filters')
         call unite#print_error(
-              \ '[unite.vim] Custom filters feature is removed.'.
+              \ 'Custom filters feature is removed.'.
               \ '  You must use matchers/sorters/converters feature.')
       endif
 
@@ -784,9 +773,9 @@ function! unite#init#_sources(...) "{{{
       call unite#print_error(v:throwpoint)
       call unite#print_error(v:exception)
       call unite#print_error(
-            \ '[unite.vim] Error occurred in source initialization!')
+            \ 'Error occurred in source initialization!')
       call unite#print_error(
-            \ '[unite.vim] Source name is ' . source.name)
+            \ 'Source name is ' . source.name)
     endtry
   endfor
 

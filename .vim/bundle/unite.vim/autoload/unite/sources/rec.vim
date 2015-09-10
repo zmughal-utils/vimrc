@@ -26,6 +26,12 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+if exists('g:unite_source_rec_async_command') &&
+      \ type(g:unite_source_rec_async_command) == type('')
+  call unite#print_error(
+        \ 'g:unite_source_rec_async_command must be list type.')
+endif
+
 " Variables  "{{{
 call unite#util#set_default(
       \ 'g:unite_source_rec_min_cache_files', 100,
@@ -38,7 +44,8 @@ call unite#util#set_default('g:unite_source_rec_unit',
 " -L follows symbolic links to have the same behaviour as file_rec
 call unite#util#set_default(
       \ 'g:unite_source_rec_async_command', (
-      \  !unite#util#is_windows() && executable('find') ? 'find -L' : ''),
+      \  !unite#util#is_windows() && executable('find') ?
+      \    ['find',  '-L'] : []),
       \ 'g:unite_source_file_rec_async_command')
 call unite#util#set_default(
       \ 'g:unite_source_rec_find_args',
@@ -64,8 +71,7 @@ let s:source_file_rec = {
       \         '.hg/**', '.git/**', '.bzr/**', '.svn/**',
       \         'tags', 'tags-*'
       \ ],
-      \ 'matchers' : [ 'converter_relative_word',
-      \                'matcher_default', 'matcher_hide_hidden_files' ],
+      \ 'matchers' : [ 'converter_relative_word', 'matcher_default' ],
       \ }
 
 function! s:source_file_rec.gather_candidates(args, context) "{{{
@@ -276,13 +282,20 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
     return deepcopy(continuation.files)
   endif
 
-  let command = g:unite_source_rec_async_command
-  if a:context.source__is_directory
-    " Use find command.
-    let command = 'find -L'
+  if type(g:unite_source_rec_async_command) == type('')
+    " You must specify list type.
+    call unite#print_source_message(
+          \ 'g:unite_source_rec_async_command must be list type.', self.name)
+    let a:context.is_async = 0
+    return []
   endif
 
-  let args = vimproc#parser#split_args(command)
+  let args = g:unite_source_rec_async_command
+  if a:context.source__is_directory
+    " Use find command.
+    let args = ['find', '-L']
+  endif
+
   if empty(args) || !executable(args[0])
     if empty(args)
       call unite#print_source_message(
@@ -306,10 +319,8 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
           \ (a:context.source__is_directory ? 'd' : 'f'), '-print']
   endif
 
-  " Note: "pt" needs pty.
-  let a:context.source__proc =
-        \ (fnamemodify(args[0], ':t') ==# 'pt') ?
-        \ vimproc#popen3(commands, 1) : vimproc#popen3(commands)
+  let a:context.source__proc = vimproc#popen3(commands,
+        \ unite#helper#is_pty(args[0]))
 
   " Close handles.
   call a:context.source__proc.stdin.close()
@@ -445,13 +456,20 @@ function! s:source_file_neovim.gather_candidates(args, context) "{{{
     return deepcopy(continuation.files)
   endif
 
-  let command = g:unite_source_rec_async_command
-  if a:context.source__is_directory
-    " Use find command.
-    let command = 'find -L'
+  if type(g:unite_source_rec_async_command) == type('')
+    " You must specify list type.
+    call unite#print_source_message(
+          \ 'g:unite_source_rec_async_command must be list type.', self.name)
+    let a:context.is_async = 0
+    return []
   endif
 
-  let args = split(command)
+  let args = g:unite_source_rec_async_command
+  if a:context.source__is_directory
+    " Use find command.
+    let args = ['find', '-L']
+  endif
+
   if empty(args) || !executable(args[0])
     if empty(args)
       call unite#print_source_message(
@@ -475,12 +493,11 @@ function! s:source_file_neovim.gather_candidates(args, context) "{{{
           \ (a:context.source__is_directory ? 'd' : 'f'), '-print']
   endif
 
-  " Note: "pt" needs pty.
   let a:context.source__job = jobstart(commands, {
         \ 'on_stdout' : function('s:job_handler'),
         \ 'on_stderr' : function('s:job_handler'),
         \ 'on_exit' : function('s:job_handler'),
-        \ 'pty' : fnamemodify(args[0], ':t') ==# 'pt'
+        \ 'pty' : unite#helper#is_pty(args[0]),
         \ })
 
   return []
@@ -764,8 +781,12 @@ function! s:init_continuation(context, directory) "{{{
   let continuation = (a:context.source__is_directory) ?
         \ s:continuation.directory : s:continuation.file
 
-  if !has_key(continuation, a:directory)
-        \ && s:Cache.filereadable(cache_dir, a:directory)
+  if a:context.is_redraw
+    " Delete old cache files.
+    call s:Cache.deletefile(cache_dir, a:directory)
+  endif
+
+  if s:Cache.filereadable(cache_dir, a:directory)
     " Use cache file.
 
     let files = unite#helper#paths2candidates(
@@ -800,7 +821,6 @@ function! s:write_cache(context, directory, files) "{{{
         \ && !unite#util#is_sudo()
         \ && len(a:files) >
         \ g:unite_source_rec_min_cache_files
-        \ && stridx(a:directory, "\n") < 0
     call s:Cache.writefile(cache_dir, a:directory,
           \ map(copy(a:files), 'v:val.action__path'))
   elseif s:Cache.filereadable(cache_dir, a:directory)
