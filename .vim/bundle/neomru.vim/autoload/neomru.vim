@@ -71,7 +71,8 @@ call neomru#set_default(
       \'\~$\|\.\%(o\|exe\|dll\|bak\|zwc\|pyc\|sw[po]\)$'.
       \'\|\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)'.
       \'\|^\%(\\\\\|/mnt/\|/media/\|/temp/\|/tmp/\|\%(/private\)\=/var/folders/\)'.
-      \'\|\%(^\%(fugitive\)://\)'
+      \'\|\%(^\%(fugitive\)://\)'.
+      \'\|\%(^\%(term\)://\)'
       \, 'g:unite_source_file_mru_ignore_pattern')
 
 call neomru#set_default(
@@ -85,6 +86,7 @@ call neomru#set_default(
       \'\%(^\|/\)\.\%(hg\|git\|bzr\|svn\)\%($\|/\)'.
       \'\|^\%(\\\\\|/mnt/\|/media/\|/temp/\|/tmp/\|\%(/private\)\=/var/folders/\)',
       \ 'g:unite_source_directory_mru_ignore_pattern')
+call neomru#set_default('g:neomru#follow_links', 0)
 "}}}
 
 " MRUs  "{{{
@@ -258,6 +260,10 @@ function! s:mru.version_check(ver)  "{{{
   endif
 endfunction"}}}
 
+function! s:resolve(fpath)  "{{{
+  return g:neomru#follow_links ? resolve(a:fpath) : a:fpath
+endfunction"}}}
+
 "}}}
 
 " File MRU:   "{{{2
@@ -333,7 +339,7 @@ function! neomru#_append() "{{{
   let path = s:substitute_path_separator(expand('%:p'))
   if path !~ '\a\+:'
     let path = s:substitute_path_separator(
-          \ simplify(resolve(path)))
+          \ simplify(s:resolve(path)))
   endif
 
   " Append the current buffer to the mru list.
@@ -352,7 +358,7 @@ function! neomru#_append() "{{{
     let path = getcwd()
   endif
 
-  let path = s:substitute_path_separator(simplify(resolve(path)))
+  let path = s:substitute_path_separator(simplify(s:resolve(path)))
   " Chomp last /.
   let path = substitute(path, '/$', '', '')
 
