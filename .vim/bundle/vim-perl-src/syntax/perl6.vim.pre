@@ -67,7 +67,7 @@ syn match p6Identifier display "@@IDENTIFIER@@"
 
 let s:keywords = {
  \ "p6DeclareRoutine": [
- \   "macro sub submethod method multi proto only category",
+ \   "macro sub submethod method multi proto only category unit",
  \ ],
  \ "p6Module": [
  \   "module class role package enum grammar slang subset",
@@ -247,9 +247,10 @@ syn cluster p6Interp_qq
     \ add=@p6Interp_function
     \ add=@p6Interp_closure
     \ add=@p6Interp_backslash
+    \ add=p6MatchVarSigil
 
 syn region p6InterpScalar
-    \ start="\ze\z(\$\%(\%(\%(\d\+\|!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(\$\%(\%(\%(\d\+\|!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.\^\?@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ start="\ze\z(\$\%(\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\|\%(\d\+\|!\|/\|¢\)\)\)"
     \ end="\z1\zs"
     \ contained keepend
@@ -264,7 +265,7 @@ syn region p6InterpScalar
     \ contains=TOP
 
 syn region p6InterpArray
-    \ start="\ze\z(@\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(@\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.\^\?@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
     \ contained keepend
     \ contains=TOP
@@ -278,7 +279,7 @@ syn region p6InterpArray
     \ contains=TOP
 
 syn region p6InterpHash
-    \ start="\ze\z(%\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(%\$*\%(\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\)\%(\.\^\?@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
     \ contained keepend
     \ contains=TOP
@@ -292,7 +293,7 @@ syn region p6InterpHash
     \ contains=TOP
 
 syn region p6InterpFunction
-    \ start="\ze\z(&\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\%(\.@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
+    \ start="\ze\z(&\%(\%(!\|/\|¢\)\|\%(\%(\%([.^*?=!~]\|:\@1<!::\@!\)@@IDENT_NONDIGIT@@\@=\)\?@@IDENTIFIER@@\%(\.\^\?@@IDENTIFIER@@\|\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)*\)\.\?\%(([^)]*)\|\[[^\]]*]\|<[^>]*>\|«[^»]*»\|{[^}]*}\)\)\)"
     \ end="\z1\zs"
     \ contained keepend
     \ contains=TOP
