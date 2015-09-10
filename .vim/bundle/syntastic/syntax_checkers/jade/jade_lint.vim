@@ -1,7 +1,7 @@
 "============================================================================
-"File:        gotype.vim
-"Description: Perform syntactic and semantic checking of Go code using 'gotype'
-"Maintainer:  luz <ne.tetewi@gmail.com>
+"File:        jade_lint.vim
+"Description: Syntax checking plugin for syntastic.vim
+"Maintainer:  Ben Parnell <benjaminparnell.94@gmail.com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,37 +10,29 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_go_gotype_checker')
+if exists('g:loaded_syntastic_jade_jade_lint_checker')
     finish
 endif
-let g:loaded_syntastic_go_gotype_checker = 1
+let g:loaded_syntastic_jade_jade_lint_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_go_gotype_GetLocList() dict
-    let makeprg = self.makeprgBuild({
-        \ 'args': (expand('%', 1) =~# '\m_test\.go$' ? '-a' : ''),
-        \ 'fname': '.' })
+function! SyntaxCheckers_jade_jade_lint_GetLocList() dict
+    let makeprg = self.makeprgBuild({ 'args_after': '-r inline' })
 
-    let errorformat =
-        \ '%f:%l:%c: %m,' .
-        \ '%-G%.%#'
-
-    " gotype needs the full go package to test types properly. Just cwd to
-    " the package for the same reasons specified in go.vim ("figuring out
-    " the import path is fickle").
+    let errorformat = '%f:%l:%c %m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
-        \ 'cwd': expand('%:p:h', 1),
-        \ 'defaults': {'type': 'e'} })
+        \ 'returns': [0, 2] })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'go',
-    \ 'name': 'gotype'})
+    \ 'filetype': 'jade',
+    \ 'name': 'jade_lint',
+    \ 'exec': 'jade-lint' })
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
