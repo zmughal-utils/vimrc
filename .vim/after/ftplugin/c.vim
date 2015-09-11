@@ -18,3 +18,11 @@ imap <buffer> <F6> <Esc><F6>
 
 autocmd QuickFixCmdPost <buffer> call AutoOpenQF(0)
 call PreviewMaps()
+
+
+nmap <Leader>fh :call tlib#buffer#InsertText(
+			\ '#include "' .
+			\ filter(
+			\         taglist(expand("<cword>")),
+			\         'v:val.filename =~ "\.h$"')[0].filename
+			\ . '"' . "\n" , { "col": 0 } )<Return><Esc>0f"l
