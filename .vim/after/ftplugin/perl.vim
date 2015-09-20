@@ -52,3 +52,5 @@ let g:manpageview_options_pl= ";-f;-q"
 
 " babycart operator (complex interpolation)
 let b:surround_{char2nr("i")} = "@{[ \r ]}"
+
+iabbr xrepl require Carp::REPL; Carp::REPL->import('repl'); repl();#DEBUG
