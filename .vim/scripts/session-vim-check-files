@@ -1,0 +1,24 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use IO::All;
+
+my $filename = shift @ARGV;
+
+my $file_match = qr/
+	  ^badd\s+[+0-9]+\s+(?<badd>.*)
+	| ^cd\s+(?<cd>.*)
+	| ^edit\s+(?<edit>.*)
+	| ^lcd\s+(?<lcd>.*)
+	| ^tabedit\s+(?<tabedit>.*)
+/x;
+
+sub file_unescape { 
+	shift =~ s|\\([ ])|$1|gr;
+}
+
+my @lines = io($filename)->getlines;
+my @files = map { /$file_match/ ? { %+ } : () } @lines;
+
+use DDP; p @files;
