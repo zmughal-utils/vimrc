@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 use IO::All;
+use Path::Tiny;
+use List::UtilsBy qw(extract_first_by);
 
 my $filename = shift @ARGV;
 
@@ -21,4 +23,23 @@ sub file_unescape {
 my @lines = io($filename)->getlines;
 my @files = map { /$file_match/ ? { %+ } : () } @lines;
 
-use DDP; p @files;
+my $directory;
+my $file;
+use DDP;
+my @info = map {
+	my $data = $_;
+	use DDP; p $data;
+	if( exists $_->{lcd} || exists $_->{cd} ) {
+		my @cd_keys = qw(lcd cd);
+		my $key = extract_first_by { exists $data->{$_} } @cd_keys;
+		$directory = path($data->{$key});
+		{ dir => $directory, exists => -d $directory };
+	} else {
+		my @buffer_keys = qw(edit tabedit badd);
+		my $key = extract_first_by { exists $data->{$_} } @buffer_keys;
+		$file = path($data->{$key});
+		{ file => $file, exists => -f $file  };
+	}
+} @files;
+
+use DDP; p @info;
