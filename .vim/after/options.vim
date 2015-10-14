@@ -135,6 +135,10 @@ let g:SrcExpl_pluginList = [
 " :help align-multibyte
 let g:Align_xstrlen=3
 
+" Mark.vim plugin {{{
+let g:mwDefaultHighlightingPalette = 'extended'
+"}}}
+
 set helpheight=8
 set previewheight=4
 set switchbuf+=useopen,usetab	",split
