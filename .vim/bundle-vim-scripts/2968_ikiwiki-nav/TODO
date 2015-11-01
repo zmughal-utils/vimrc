@@ -1,0 +1,5 @@
+  * Handle properly the anchors (#, locations inside a markdown page). For now
+    just ignore them (DONE), in the future maybe look for the anchor location
+    and jump there.
+  * support for wintendo
+

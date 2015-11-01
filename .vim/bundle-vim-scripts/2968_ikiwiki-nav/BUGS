@@ -1,0 +1,7 @@
+Completion does not work properly for page/index.mdwn links
+
+Completion gets activated in front of \[[ text
+
+Completion will get activated when in front of an unmatched [[, or a |, even if
+they are not part of a wikilink, but of, e.g., `code segments`. This is a more 
+general case of the problem above.
