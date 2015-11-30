@@ -1,3 +1,4 @@
+/regions=gbus
 Zakariyya
 Zaki
 Mughal
@@ -44,7 +45,8 @@ amygdala
 hippocampus
 prefrontal
 ipsilateral
-hyperpolarization
+hyperpolarisation/1
+hyperpolarization/2
 postsynaptic
 saccade
 midline
@@ -79,8 +81,8 @@ binarised
 neocortical
 isosurface
 isosurfaces
-skeletonisation
-skeletonisations
+skeletonisation/1
+skeletonisations/1
 Menger curvature
 Purkinje cells
 bioinformatics
@@ -90,10 +92,10 @@ perceptron
 perceptrons
 transcompiler
 transcompilers
-subvocalisation
-subvocalisations
-subvocalization
-subvocalizations
+subvocalisation/1
+subvocalisations/1
+subvocalization/2
+subvocalizations/2
 saccadic
 connectome
 connectomes
@@ -104,8 +106,8 @@ shearlets
 undersegmentation
 oversegmentation
 neuroplasticity
-dialogise
-dialogises
+dialogise/1
+dialogises/1
 unfluent
 boxplot
 scatterplot
@@ -123,7 +125,7 @@ programmatically
 boxplots
 foveated
 Chebyshev distance
-discretisation
+discretisation/1
 support vector machine
 Voronoi diagram
 Bereitschaftspotential
@@ -160,9 +162,9 @@ contravariance
 introgression
 triplestore
 triplestores
-summarisation
-discretising
-discretise
+summarisation/1
+discretising/1
+discretise/1
 MapReduce
 photoreceptors
 ciliary
@@ -182,7 +184,7 @@ curation
 electrochemistry
 consilience
 metacognition
-tabularise
+tabularise/1
 ferroelectricity
 biomechanics
 biomolecular
@@ -197,7 +199,7 @@ optogenetics
 designee
 hackathon
 hackathons
-anonymise
+anonymise/1
 MD5
 codebase
 reusability
