@@ -122,6 +122,11 @@ function! unite#util#escape_pattern(...)
 endfunction
 function! unite#util#set_default(var, val, ...)  "{{{
   if !exists(a:var) || type({a:var}) != type(a:val)
+    if exists(a:var) && type({a:var}) != type(a:val)
+      call unite#print_error(printf(
+            \ 'Current %s is wrong type.  Ignored your config.', a:var))
+    endif
+
     let alternate_var = get(a:000, 0, '')
     unlet! {a:var}
 
@@ -242,7 +247,9 @@ endfunction
 function! unite#util#alternate_buffer() "{{{
   let unite = unite#get_current_unite()
   if s:buflisted(unite.prev_bufnr)
+        \ && getbufvar(unite.prev_bufnr, '&filetype') !=# "unite"
     execute 'buffer' unite.prev_bufnr
+    keepjumps call winrestview(unite.prev_winsaveview)
     return
   endif
 
@@ -395,7 +402,7 @@ endfunction"}}}
 
 function! unite#util#lcd(dir) "{{{
   if isdirectory(a:dir)
-    execute 'lcd' fnameescape(a:dir)
+    execute (haslocaldir() ? 'lcd' : 'cd') fnameescape(a:dir)
   endif
 endfunction"}}}
 

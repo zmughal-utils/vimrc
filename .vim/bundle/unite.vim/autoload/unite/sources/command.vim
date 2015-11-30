@@ -44,6 +44,12 @@ let s:source = {
       \ 'syntax' : 'uniteSource__Command',
       \ }
 
+function! s:source.hooks.on_init(args, context) "{{{
+  " Get command list.
+  redir => a:context.source__command
+  silent! command
+  redir END
+endfunction"}}}
 function! s:source.hooks.on_syntax(args, context) "{{{
   syntax match uniteSource__Command_DescriptionLine
         \ / -- .*$/
@@ -61,16 +67,11 @@ endfunction"}}}
 
 let s:cached_result = []
 function! s:source.gather_candidates(args, context) "{{{
-  if !a:context.is_redraw && !empty(s:cached_result)
-    return s:cached_result
+  if a:context.is_redraw || empty(s:cached_result)
+    let s:cached_result = s:make_cache_commands()
   endif
 
-  " Get command list.
-  redir => result
-  silent! command
-  redir END
-
-  let s:cached_result = []
+  let result = copy(s:cached_result)
   let completions = [ 'augroup', 'buffer', 'behave',
         \ 'color', 'command', 'compiler', 'cscope',
         \ 'dir', 'environment', 'event', 'expression',
@@ -79,14 +80,14 @@ function! s:source.gather_candidates(args, context) "{{{
         \ 'mapping', 'menu', 'option', 'shellcmd', 'sign',
         \ 'syntax', 'tag', 'tag_listfiles',
         \ 'var', 'custom', 'customlist' ]
-  for line in split(result, '\n')[1:]
-    let word = matchstr(line, '\a\w*')
+  for line in split(a:context.source__command, '\n')[1:]
+    let word = matchstr(line, '\u\w*')
 
     " Analyze prototype.
-    let end = matchend(line, '\a\w*')
+    let end = matchend(line, '\u\w*')
     let args = matchstr(line, '[[:digit:]?+*]', end)
     if args != '0'
-      let prototype = matchstr(line, '\a\w*', end)
+      let prototype = matchstr(line, '\u\w*', end)
 
       if index(completions, prototype) < 0
         let prototype = 'arg'
@@ -113,14 +114,10 @@ function! s:source.gather_candidates(args, context) "{{{
           \ }
     let dict.action__description = dict.abbr
 
-    call add(s:cached_result, dict)
+    call add(result, dict)
   endfor
-  let s:cached_result += s:make_cache_commands()
 
-  let s:cached_result = unite#util#sort_by(
-        \ s:cached_result, 'tolower(v:val.word)')
-
-  return s:cached_result
+  return unite#util#sort_by(result, 'tolower(v:val.word)')
 endfunction"}}}
 function! s:source.change_candidates(args, context) "{{{
   let dummy = substitute(a:context.input, '[*\\]', '', 'g')
@@ -138,31 +135,6 @@ function! s:source.change_candidates(args, context) "{{{
   return []
 endfunction"}}}
 
-function! s:caching_from_neocomplcache_dict() "{{{
-  let dict_files = split(globpath(&runtimepath,
-        \ 'autoload/neocomplcache/sources/vim_complete/commands.dict'), '\n')
-  if empty(dict_files)
-    return []
-  endif
-
-  let keyword_pattern =
-        \'^\%(-\h\w*\%(=\%(\h\w*\|[01*?+%]\)\?\)\?\|'
-        \'<\h[[:alnum:]_-]*>\?\|\h[[:alnum:]_:#\[]*\%([!\]]\+\|()\?\)\?\)'
-  let keyword_list = []
-  for line in readfile(dict_files[0])
-    let word = substitute(
-          \ matchstr(line, keyword_pattern), '[\[\]]', '', 'g')
-    call add(keyword_list, {
-          \ 'word' : line,
-          \ 'action__command' : word . ' ',
-          \ 'action__description' : line,
-          \ 'source__command' : ':'.word,
-          \ 'action__histadd' : 1,
-          \})
-  endfor
-
-  return keyword_list
-endfunction"}}}
 function! s:make_cache_commands() "{{{
   let helpfile = expand(findfile('doc/index.txt', &runtimepath))
   if !filereadable(helpfile)

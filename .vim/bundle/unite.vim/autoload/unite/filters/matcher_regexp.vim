@@ -47,6 +47,9 @@ function! s:matcher.filter(candidates, context) "{{{
 
   let candidates = a:candidates
   for input in a:context.input_list
+    if input == '!' || input == ''
+      continue
+    endif
     let a:context.input = input
     let candidates = unite#filters#matcher_regexp#regexp_matcher(
           \ candidates, input, a:context)
@@ -81,6 +84,7 @@ function! unite#filters#matcher_regexp#get_expr(input, context) "{{{
   elseif input !~ '[~\\.^$\[\]*]'
     if unite#util#has_lua()
       let expr = 'if_lua'
+      let a:context.input_lua = input
     else
       " Optimized filter.
       let input = substitute(input, '\\\(.\)', '\1', 'g')

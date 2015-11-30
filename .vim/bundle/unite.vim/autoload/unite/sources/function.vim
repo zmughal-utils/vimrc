@@ -41,17 +41,17 @@ let s:source = {
 
 let s:cached_result = []
 function! s:source.gather_candidates(args, context) "{{{
-  if !a:context.is_redraw && !empty(s:cached_result)
-    return s:cached_result
+  if a:context.is_redraw || empty(s:cached_result)
+    let s:cached_result = s:make_cache_functions()
   endif
 
   " Get command list.
-  redir => result
+  redir => cmd
   silent! function
   redir END
 
-  let s:cached_result = []
-  for line in split(result, '\n')[1:]
+  let result = []
+  for line in split(cmd, '\n')[1:]
     let line = line[9:]
     if line =~ '^<SNR>'
       continue
@@ -70,36 +70,38 @@ function! s:source.gather_candidates(args, context) "{{{
           \ }
     let dict.action__description = dict.abbr
 
-    call add(s:cached_result, dict)
+    call add(result, dict)
   endfor
-  let s:cached_result += s:caching_from_neocomplcache_dict()
 
-  let s:cached_result = unite#util#sort_by(
-        \ s:cached_result, 'tolower(v:val.word)')
-
-  return s:cached_result
+  return unite#util#sort_by(
+        \ s:cached_result + result, 'tolower(v:val.word)')
 endfunction"}}}
 
-function! s:caching_from_neocomplcache_dict() "{{{
-  let dict_files = split(globpath(&runtimepath,
-        \ 'autoload/neocomplcache/sources/vim_complete/functions.dict'), '\n')
-  if empty(dict_files)
+function! s:make_cache_functions() "{{{
+  let helpfile = expand(findfile('doc/eval.txt', &runtimepath))
+  if !filereadable(helpfile)
     return []
   endif
 
-  let keyword_pattern = '^[[:alnum:]_]\+'
-  let keyword_list = []
-  for line in readfile(dict_files[0])
-    let word = matchstr(line, keyword_pattern)
-    call add(keyword_list, {
-          \ 'word' : line,
-          \ 'action__description' : line,
-          \ 'action__function' : word,
-          \ 'action__text' : word . '(',
-          \})
+  let lines = readfile(helpfile)
+  let functions = []
+  let start = match(lines, '^abs')
+  let end = match(lines, '^abs', start, 2)
+  for i in range(end-1, start, -1)
+    let func = matchstr(lines[i], '^\s*\zs\w\+(.\{-})')
+    if func != ''
+      let word = substitute(func, '(.\+)', '', '')
+      call insert(functions, {
+            \ 'word' : word . '(',
+            \ 'abbr' : lines[i],
+            \ 'action__description' : lines[i],
+            \ 'action__function' : word,
+            \ 'action__text' : word . '(',
+            \ })
+    endif
   endfor
 
-  return keyword_list
+  return functions
 endfunction"}}}
 
 " Actions "{{{

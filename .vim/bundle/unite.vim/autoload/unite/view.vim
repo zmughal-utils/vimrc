@@ -62,14 +62,6 @@ function! unite#view#_redraw_candidates(...) "{{{
     let unite.init_prompt_linenr = len(candidates) + 1
   endif
 
-  if context.immediately && len(candidates) == 1
-    " Immediately action.
-    call unite#action#do(
-          \ context.default_action, [candidates[0]])
-    call unite#variables#disable_current_unite()
-    return
-  endif
-
   let pos = getpos('.')
   let modifiable_save = &l:modifiable
   try
@@ -253,6 +245,16 @@ function! unite#view#_redraw(is_force, winnr, is_gather_all) "{{{
     endif
   endtry
 
+  if context.immediately && len(unite.current_candidates) == 1
+    " Immediately action.
+    call unite#action#do(
+          \ context.default_action, [unite.current_candidates[0]])
+
+    " Note: It is workaround
+    " Change updatetime to leave insertmode
+    set updatetime=10
+    stopinsert
+  endif
   if context.auto_preview
     call unite#view#_do_auto_preview()
   endif
@@ -685,11 +687,6 @@ function! unite#view#_quit(is_force, ...)  "{{{
     else
       startinsert!
     endif
-
-    " Skip next auto completion.
-    if exists('*neocomplcache#skip_next_complete')
-      call neocomplcache#skip_next_complete()
-    endif
   else
     redraw
   endif
@@ -826,7 +823,8 @@ function! unite#view#_redraw_echo(expr) "{{{
     set noruler
 
     let msg = map(s:msg2list(a:expr), "unite#util#truncate_smart(
-          \ v:val, &columns-1, &columns/2, '...')")
+          \ v:val, &columns - 1 + len(v:val) - strdisplaywidth(v:val),
+          \ &columns/2, '...')")
     let height = max([1, &cmdheight])
     for i in range(0, len(msg)-1, height)
       redraw
@@ -849,6 +847,9 @@ function! unite#view#_match_line(highlight, line, id) "{{{
   return exists('*matchaddpos') ?
         \ matchaddpos(a:highlight, [a:line], 10, a:id) :
         \ matchadd(a:highlight, '^\%'.a:line.'l.*', 10, a:id)
+endfunction"}}}
+function! unite#view#_clear_match_highlight() "{{{
+  silent! call matchdelete(10)
 endfunction"}}}
 
 function! unite#view#_get_status_plane_string() "{{{
@@ -885,13 +886,13 @@ function! unite#view#_get_status_tail_string() "{{{
 endfunction"}}}
 
 function! unite#view#_get_source_name_string(source) "{{{
-  return (a:source.unite__len_candidates == 0) ? '_' :
+  return (a:source.unite__orig_len_candidates == 0) ? '_' :
         \ join(insert(filter(copy(a:source.args),
         \  'type(v:val) <= 1'),
         \   unite#helper#convert_source_name(a:source.name)), ':')
 endfunction"}}}
 function! unite#view#_get_source_candidates_string(source) "{{{
-  return a:source.unite__len_candidates == 0 ? '' :
+  return a:source.unite__orig_len_candidates == 0 ? '' :
         \      a:source.unite__orig_len_candidates ==
         \            a:source.unite__len_candidates ?
         \            '(' . a:source.unite__len_candidates . ')' :

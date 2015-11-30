@@ -203,6 +203,7 @@ function! unite#start#temporary(sources, ...) "{{{
   endif
   let unite.winnr = unite_save.winnr
   let unite.has_preview_window = unite_save.has_preview_window
+  let unite.prev_winsaveview = unite_save.prev_winsaveview
 
   " Restore current directory.
   execute 'lcd' fnameescape(cwd)
@@ -329,6 +330,7 @@ function! unite#start#resume(buffer_name, ...) "{{{
 
   let prev_bufnr = bufnr('%')
   let winnr = winnr()
+  let prev_winsaveview = winsaveview()
   let win_rest_cmd = context.unite__direct_switch ||
         \ unite#helper#get_unite_winnr(context.buffer_name) > 0 ?
         \ '' : winrestcmd()
@@ -348,6 +350,7 @@ function! unite#start#resume(buffer_name, ...) "{{{
   let unite.winnr = winnr
   let unite.prev_bufnr = prev_bufnr
   let unite.prev_winnr = winnr
+  let unite.prev_winsaveview = prev_winsaveview
   if !context.unite__direct_switch
     let unite.win_rest_cmd = win_rest_cmd
   endif

@@ -93,7 +93,7 @@ function! s:external(command, dest_dir, src_files) "{{{
 endfunction"}}}
 function! s:input_overwrite_method(dest, src) "{{{
   redraw
-  echo 'File is already exists!'
+  echo 'File already exists!'
   echo printf('dest: %s %d bytes %s', a:dest, getfsize(a:dest),
         \ strftime('%y/%m/%d %H:%M', getftime(a:dest)))
   echo printf('src:  %s %d bytes %s', a:src, getfsize(a:src),
@@ -167,7 +167,7 @@ function! s:check_over_write(dest_dir, filename, overwrite_method, is_reset_meth
 endfunction"}}}
 function! unite#kinds#file#do_rename(old_filename, new_filename) "{{{
   if a:old_filename ==# a:new_filename
-    return
+    return 0
   endif
 
   if a:old_filename !=? a:new_filename &&
@@ -175,7 +175,7 @@ function! unite#kinds#file#do_rename(old_filename, new_filename) "{{{
     " Failed.
     call unite#print_error(
           \ printf('file: "%s" is already exists!', a:new_filename))
-    return
+    return 1
   endif
 
   " Convert to relative path.
@@ -219,14 +219,15 @@ function! unite#kinds#file#do_rename(old_filename, new_filename) "{{{
       call unite#print_error(
             \ printf('Failed rename: "%s" to "%s".',
             \   a:old_filename, a:new_filename))
+      return 1
     endif
   finally
     " Restore path.
-    if isdirectory(current_dir_save)
-      call unite#util#lcd(current_dir_save)
-    endif
+    call unite#util#lcd(current_dir_save)
     let &l:hidden = hidden_save
   endtry
+
+  return 0
 endfunction"}}}
 
 function! unite#kinds#file#do_action(candidates, dest_dir, action_name) "{{{
