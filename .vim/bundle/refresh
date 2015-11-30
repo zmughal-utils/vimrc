@@ -78,3 +78,5 @@ git add vim-perl && git commit -m "refresh bundles [automated]: vim-perl built f
 
 refresh_git https://github.com/dpelle/vim-LanguageTool vim-languagetool
 refresh_git https://github.com/tpope/vim-dispatch vim-dispatch
+
+refresh_git https://github.com/matze/vim-tex-fold vim-tex-fold
