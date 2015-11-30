@@ -29,7 +29,7 @@ set cpo&vim
 
 let s:is_windows = has('win32')
 let s:is_cygwin = has('win32unix')
-let s:is_mac = !s:is_windows
+let s:is_mac = !s:is_windows && !s:is_cygwin
       \ && (has('mac') || has('macunix') || has('gui_macvim') ||
       \   (!isdirectory('/proc') && executable('sw_vers')))
 
@@ -92,7 +92,7 @@ function! vimproc#util#substitute_path_separator(path) "{{{
   return s:is_windows ? substitute(a:path, '\\', '/', 'g') : a:path
 endfunction"}}}
 function! vimproc#util#cd(path)  "{{{
-  execute 'lcd' fnameescape(a:path)
+  execute (haslocaldir() ? 'lcd' : 'cd') fnameescape(a:path)
 endfunction"}}}
 
 function! vimproc#util#uniq(list, ...) "{{{

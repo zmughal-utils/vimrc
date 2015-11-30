@@ -9,14 +9,15 @@
 #include <errno.h>
 
 /*
- * Argument and Result are Stack. Each value consists of DataSize, Data,
+ * Function arguments and return values are stored in stack. Each value consists of DataSize, Data,
  * and EOV. DataSize is a 32-bit integer encoded into a 5-byte string.
  * Number should be stored as String.
- * The result which is not started with EOV is error message, except NULL
- * which is no value.
+ *
+ * Return values not started with EOV are error message, except NULL
+ * which indicates no result.
  *
  * Successful Result:
- *   EOV | DataSize0, Data0, EOV | DataSize1, Data1, EOV | ...
+ *   EOV | DataSize0, Data0, EOV | DataSize1, Data1, EOV | ... | NUL
  *      or
  *   NULL
  *
@@ -163,10 +164,10 @@ vp_stack_from_args(vp_stack_t *stack, char *args)
 static const char *
 vp_stack_return(vp_stack_t *stack)
 {
-#if 0
     size_t needsize;
     const char *ret;
 
+    /* add the last EOV and NUL */
     needsize = vp_stack_used(stack) + 1;
     ret = vp_stack_reserve(stack, needsize);
     if (ret != NULL)
@@ -174,7 +175,7 @@ vp_stack_return(vp_stack_t *stack)
 
     stack->top[0] = VP_EOV;
     stack->top[1] = '\0';
-#endif
+
     /* Clear the stack. */
     stack->top = stack->buf;
     return stack->buf;
