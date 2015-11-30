@@ -1,0 +1,79 @@
+*tex-fold.txt* Folds for TeX sources
+
+Author: Matthias Vogelgesang <github.com/matze>
+License: MIT (see |tex-fold-license|)
+
+===============================================================================
+Contents                                                   *tex-fold-contents*
+
+    1. Usage..................................|tex-fold-usage|
+    2. Options................................|tex-fold-options|
+    3. License................................|tex-fold-license|
+    4. Changelog..............................|tex-fold-changelog|
+
+===============================================================================
+1. Usage                                                      *tex-fold-usage*
+
+The tex-fold plugin provides a |foldexpr| function using regular expressions to
+fold TeX sources. When enabled it will fold sections and environments defined
+with begin and end.
+
+===============================================================================
+2. Options                                                  *tex-fold-options*
+
+Use these options to customize tex-fold:
+
+                                              *'g:tex_fold_override_foldtext'*
+Use tex-folds own foldtext function instead of the builtin one: >
+    let g:tex_fold_override_foldtext = 1
+<
+
+                                                       *'g:tex_fold_sec_char'*
+Set the string to prepend the foldtext for sections: >
+    let g:tex_fold_sec_char = '>'
+<
+
+                                                       *'g:tex_fold_env_char'*
+Set the string to prepend the foldtext for environments: >
+    let g:tex_fold_env_char = 'E'
+<
+                                                   *'g:tex_fold_allow_marker'*
+Besides folding sections and environments, allow folds to be defined with {{{
+markers: >
+    let g:tex_fold_allow_marker = 1
+<
+                                                *'g:tex_fold_additional_envs'*
+Per default, tex-fold folds figure, table, align, lstlisting and frame
+environments. If you want to fold more, you can list them with: >
+    let g:tex_fold_additional_envs = ['example']
+<
+                                               *'g:tex_fold_use_default_envs'*
+Per default, tex-fold folds figure, table, align, lstlisting and frame
+environments. If you don't want to fold these environments, set this variable
+to 0: >
+    let g:tex_fold_use_default_envs = 0
+<
+
+===============================================================================
+3. License                                                  *tex-fold-license*
+
+This plugin is copyright by Matthias Vogelgesang and licensed under the MIT
+license.
+
+===============================================================================
+3. Changelog                                              *tex-fold-changelog*
+
+v1.3
+    * Released on 09/01/14
+    * Add g:tex_fold_additional_envs. Thanks @fwang2.
+v1.2
+    * Released on 06/30/14
+    * Fixes incompatibility issue with Vim 7.4
+    * Fold figure, tabular and align environments. Thanks @DanielAndreasen.
+v1.1
+    * Released on 04/23/14
+    * Fixes incompatibility issue with NERDcommenter.
+v1.0
+    * Released on 08/22/13
+
+vim:ft=help:
