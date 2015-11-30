@@ -74,6 +74,9 @@ function! neocomplete#mappings#auto_complete() "{{{
   let neocomplete.candidates = neocomplete#complete#_get_words(
         \ neocomplete.complete_sources, complete_pos, base)
   let neocomplete.complete_str = base
+  if empty(neocomplete.candidates)
+    return ''
+  endif
 
   " Start auto complete.
   call complete(complete_pos+1, neocomplete.candidates)
@@ -94,6 +97,9 @@ function! neocomplete#mappings#manual_complete() "{{{
   let neocomplete.candidates = neocomplete#complete#_get_words(
         \ complete_sources, complete_pos, base)
   let neocomplete.complete_str = base
+  if empty(neocomplete.candidates)
+    return ''
+  endif
 
   " Start auto complete.
   call complete(complete_pos+1, neocomplete.candidates)
@@ -107,7 +113,8 @@ endfunction
 function! neocomplete#mappings#close_popup() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.complete_str = ''
-  let neocomplete.skip_next_complete = 2
+  let neocomplete.old_cur_text = neocomplete#get_cur_text(1)
+  let neocomplete.skip_next_complete = 1
 
   return pumvisible() ? "\<C-y>" : ''
 endfunction
@@ -115,6 +122,7 @@ endfunction
 function! neocomplete#mappings#cancel_popup() "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.complete_str = ''
+  let neocomplete.old_cur_text = neocomplete#get_cur_text(1)
   let neocomplete.skip_next_complete = 1
 
   return pumvisible() ? "\<C-e>" : ''
@@ -154,7 +162,6 @@ function! neocomplete#mappings#complete_common_string() "{{{
   let neocomplete.event = 'mapping'
   let complete_str =
         \ neocomplete#helper#match_word(neocomplete#get_cur_text(1))[1]
-  let neocomplete.event = ''
 
   if complete_str == ''
     return ''

@@ -42,9 +42,6 @@ function! s:converter.filter(context) "{{{
     return a:context.candidates
   endif
 
-  let neocomplete = neocomplete#get_current_neocomplete()
-  let neocomplete.overlapped_items = {}
-
   let candidates = []
   for candidate in a:context.candidates
     let overlapped_len = neocomplete#filters#
@@ -55,11 +52,7 @@ function! s:converter.filter(context) "{{{
         let candidate.abbr = candidate.word
       endif
 
-      let word = candidate.word
       let candidate.word = candidate.word[: -overlapped_len-1]
-      if candidate.word != ''
-        let neocomplete.overlapped_items[candidate.word] = word
-      endif
       call add(candidates, candidate)
     elseif !neocomplete#is_auto_complete()
       call add(candidates, candidate)

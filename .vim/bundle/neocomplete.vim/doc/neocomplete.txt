@@ -182,6 +182,11 @@ candidates, you need to install the neoinclude plugin
 If you want to complete the candidates from syntax files, you need to install
 the neco-syntax plugin (https://github.com/Shougo/neco-syntax).
 
+						*neocomplete-neopairs*
+
+If you want to insert the parentheses pairs automatically, you need to install
+the neopairs plugin (https://github.com/Shougo/neopairs.vim).
+
 ==============================================================================
 INTERFACE					*neocomplete-interface*
 
@@ -355,17 +360,6 @@ g:neocomplete#cursor_hold_i_time
 
 		Default value is 300.
 
-					*g:neocomplete#enable_insert_char_pre*
-g:neocomplete#enable_insert_char_pre
-		This variable controls whether neocomplete use
-		|InsertCharPre| event when complete candidates.
-		If it is enabled, the candidates will be updated after user
-		input.
-		Note: This option must be set before call
-		|:NeoCompleteEnable|.
-
-		Default value is 0.
-
 					*g:neocomplete#enable_auto_select*
 g:neocomplete#enable_auto_select
 		When neocomplete displays candidates, this option controls
@@ -382,7 +376,7 @@ g:neocomplete#enable_auto_select
 				*g:neocomplete#enable_auto_delimiter*
 g:neocomplete#enable_auto_delimiter
 		This option controls whether neocomplete insert delimiter
-		automatically.  For example, /(filename) or #(Vim script).
+		automatically.  For example, / (filenames) or # (Vim scripts.)
 
 		Default value is 0.
 
@@ -467,36 +461,6 @@ g:neocomplete#force_omni_input_patterns
 		neocomplete#init#_variables() in
 		autoload/neocomplete/init.vim for the initial value.
 
-					*g:neocomplete#same_filetypes*
-g:neocomplete#same_filetypes
-		It is a dictionary to connect file type mutually.  It is
-		effective at time to let you refer to c and cpp mutually.
-		The value are comma-separated filetypes.
-		If the value contains "_", neocomplete completes from all
-		buffers.  If the key is "_", the value will be used for default
-		same filetypes.
-		Note: neocomplete completes from same filetype buffers in
-		default.
->
-		if !exists('g:neocomplete#same_filetypes')
-		  let g:neocomplete#same_filetypes = {}
-		endif
-		" In c buffers, completes from cpp and d buffers.
-		let g:neocomplete#same_filetypes.c = 'cpp,d'
-		" In cpp buffers, completes from c buffers.
-		let g:neocomplete#same_filetypes.cpp = 'c'
-		" In gitconfig buffers, completes from all buffers.
-		let g:neocomplete#same_filetypes.gitconfig = '_'
-		" In default, completes from all buffers.
-		let g:neocomplete#same_filetypes._ = '_'
-<
-		Because it is complicated, refer to
-		neocomplete#init#_variables() in
-		autoload/neocomplete/init.vim for the initial value.
-		Note: To disable neocomplete initialization, you must use
-		|neocomplete#disable_default_dictionary()|.
-
-
 					*g:neocomplete#text_mode_filetypes*
 g:neocomplete#text_mode_filetypes
 		It is a dictionary to define text mode filetypes.  The
@@ -577,24 +541,6 @@ g:neocomplete#use_vimproc			*g:neocomplete#use_vimproc*
 		asynchronously.
 
 		Default value is vimproc auto detection result.
-
-				*g:neocomplete#ignore_composite_filetypes*
-g:neocomplete#ignore_composite_filetypes
-		It is a dictionary to ignore composite file type.
-		The dictionary's key is composite filetype and value is
-		filetype.
->
-		" Examples:
-		let g:neocomplete#ignore_composite_filetypes = {
-			\ 'ruby.spec' : 'ruby'
-			\ }
-<
-		If you open filetype like "ruby.spec", completion is
-		intended for "ruby" and "spec".
-		But if you only want to complete "ruby" filetype,
-		you can set this variable to ignore "spec".
-
-		Default value is {}.
 
 				*g:neocomplete#skip_auto_completion_time*
 g:neocomplete#skip_auto_completion_time
@@ -705,8 +651,8 @@ g:neocomplete#sources#omni#input_patterns
 		'omnifunc'.
 		Note: ruby and php omnifunc are disabled, because they are too
 		slow.
-		Note: Partial omnifunc has problem when neocomplete call(Ex:
-		rubycomplete, jedi.vim, cocoa.vim and clang_complete).  You
+		Note: Partial omnifunc has problem when neocomplete call (Ex:
+		rubycomplete, jedi.vim, cocoa.vim, and clang_complete.)  You
 		should |g:neocomplete#force_omni_input_patterns| instead.
 
 		Because it is complicated, refer to s:source.initialize()
@@ -747,7 +693,7 @@ g:neocomplete#sources#vim#complete_functions
 <
 					 *g:neocomplete#ignore_source_files*
 g:neocomplete#ignore_source_files
-		Ignore source filenames(not full path). You can optimize
+		Ignore source filenames (not full path.) You can optimize
 		source initialization.
 
 		Note: You cannot use the sources in ignored source files.
@@ -805,10 +751,7 @@ neocomplete#get_context_filetype()
 neocomplete#disable_default_dictionary({variable-name})
 		Disable default {variable-name} dictionary initialization.
 		Note: It must be called in .vimrc.
->
-	call neocomplete#disable_default_dictionary(
-	      \ 'g:neocomplete#same_filetypes')
-<
+
 				*neocomplete#get_default_matchers()*
 neocomplete#get_default_matchers()
 		Get default matchers in current buffer.
@@ -835,15 +778,13 @@ neocomplete#start_manual_complete([{sources}])
 				*neocomplete#close_popup()*
 neocomplete#close_popup()
 		Insert candidate and close popup menu for neocomplete.
->
-		inoremap <expr><C-y>  neocomplete#close_popup()
-<
+		Note: It is deprecated function.
+
 				*neocomplete#cancel_popup()*
 neocomplete#cancel_popup()
 		Cancel completion menu for neocomplete.
->
-		inoremap <expr><C-e>  neocomplete#cancel_popup()
-<
+		Note: It is deprecated function.
+
 				*neocomplete#smart_close_popup()*
 neocomplete#smart_close_popup()
 		Insert candidate and re-generate popup menu for neocomplete.
@@ -889,8 +830,8 @@ neocomplete#complete_common_string()
 ==============================================================================
 EXAMPLES					*neocomplete-examples*
 >
-	" Note: This option must set it in .vimrc(_vimrc).
-	" NOT IN .gvimrc(_gvimrc)!
+	" Note: This option must set it in .vimrc (_vimrc).
+	" NOT IN .gvimrc (_gvimrc)!
 	" Disable AutoComplPop.
 	let g:acp_enableAtStartup = 0
 	" Use neocomplete.
@@ -920,24 +861,22 @@ EXAMPLES					*neocomplete-examples*
 	" <CR>: close popup and save indent.
 	inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
 	function! s:my_cr_function()
-	  return neocomplete#close_popup() . "\<CR>"
+	  return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
 	  " For no inserting <CR> key.
-	  "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
+	  "return pumvisible() ? "\<C-y>" : "\<CR>"
 	endfunction
 	" <TAB>: completion.
 	inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
 	" <C-h>, <BS>: close popup and delete backword char.
 	inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
 	inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-	inoremap <expr><C-y>  neocomplete#close_popup()
-	inoremap <expr><C-e>  neocomplete#cancel_popup()
 	" Close popup by <Space>.
-	"inoremap <expr><Space> pumvisible() ? neocomplete#close_popup() : "\<Space>"
+	"inoremap <expr><Space> pumvisible() ? "\<C-y>" : "\<Space>"
 
 	" AutoComplPop like behavior.
 	"let g:neocomplete#enable_auto_select = 1
 
-	" Shell like behavior(not recommended).
+	" Shell like behavior (not recommended.)
 	"set completeopt+=longest
 	"let g:neocomplete#enable_auto_select = 1
 	"let g:neocomplete#disable_auto_complete = 1
@@ -1066,7 +1005,7 @@ To custom candidates, neocomplete uses the filters. There are three kinds of
 filters are available. "matcher" is to filter candidates by user input.
 "sorter" is to sort candidates. "converter" is to candidates conversion.
 
-Default sources are below. But you can create original filters(cf:
+Default sources are below. But you can create original filters (cf:
 |neocomplete-create-filter|) and set them by
 |neocomplete#custom#source()|.
 >
@@ -1622,25 +1561,11 @@ A: Please try below settings.
 	" <CR>: close popup and save indent.
 	inoremap <silent> <CR> <C-r>=<SID>my_cr_function()<CR>
 	function! s:my_cr_function()
-	  return neocomplete#close_popup() . "\<CR>"
+	  return (pumvisible() ? "\<C-y>" : "" ) . "\<CR>"
 	  " For no inserting <CR> key.
-	  "return pumvisible() ? neocomplete#close_popup() : "\<CR>"
+	  "return pumvisible() ? "\<C-y>" : "\<CR>"
 	endfunction
 >
-Q: No completion offered from "vim" buffers in "non-vim" buffers.
-
-A: It is feature. neocomplete completes from same filetype buffers in
-default.  But you can completes from other filetype buffers using
-|g:neocomplete#same_filetypes|.
-
-Q: I want to complete from all buffers.
-
-A: |g:neocomplete#same_filetypes|
->
-	let g:neocomplete#same_filetypes = {}
-	let g:neocomplete#same_filetypes._ = '_'
-<
-
 Q: Suggestions are case insensitive in "gitcommit" buffers, but not
 "javascript".
 
@@ -1674,11 +1599,12 @@ A: Please set |g:neocomplete#force_omni_input_patterns| as below.
 	autocmd FileType python setlocal omnifunc=jedi#completions
 	let g:jedi#completions_enabled = 0
 	let g:jedi#auto_vim_configuration = 0
+	let g:jedi#smart_auto_mappings = 0
 	let g:neocomplete#force_omni_input_patterns.python =
 	\ '\%([^. \t]\.\|^\s*@\|^\s*from\s.\+import \|^\s*from \|^\s*import \)\w*'
 	" alternative pattern: '\h\w*\|[^. \t]\.\w*'
 <
-Q: Candidates are not found in heavy completion(neco-look, etc).
+Q: Candidates are not found in heavy completion (neco-look, etc.)
 
 A: It may be caused by skip completion.
 
@@ -1706,7 +1632,7 @@ Q: Freeze for a while and close opened folding when I begin to insert.
 https://github.com/Shougo/neocomplcache.vim/issues/368
 
 A: I think you use 'foldmethod' is "expr" or "syntax". It is too heavy to use
-neocomplete(or other auto completion). You should change 'foldmethod'
+neocomplete (or other auto completion.) You should change 'foldmethod'
 option.
 Note: In current version, neocomplete does not restore 'foldmethod'. Because
 it is too heavy.
@@ -1786,7 +1712,7 @@ A:
 Note: You should use this omni completion for PHP.
 https://github.com/shawncplus/phpcomplete.vim
 >
-	let g:neocomplete#force_omni_input_patterns.php =
+	let g:neocomplete#sources#omni#input_patterns.php =
 	\ '\h\w*\|[^. \t]->\%(\h\w*\)\?\|\h\w*::\%(\h\w*\)\?'
 <
 
@@ -1800,7 +1726,7 @@ A: neocomplete does not support eclim.  You should use
 	if !exists('g:neocomplete#force_omni_input_patterns')
 	  let g:neocomplete#force_omni_input_patterns = {}
 	endif
-	g:neocomplete#force_omni_input_patterns.java =
+	let g:neocomplete#force_omni_input_patterns.java =
 	\ \'\%(\h\w*\|)\)\.\w*
 
 Q: I want to get quiet messages in auto completion.
@@ -1825,7 +1751,7 @@ https://github.com/Shougo/neocomplete.vim/issues/69
 
 A: You can use |g:neocomplete#sources#buffer#max_keyword_width|.
 
-Q: neocomplete will change external completeopt value(longest).
+Q: neocomplete will change external completeopt value (longest.)
 https://github.com/Shougo/neocomplcache.vim/issues/453
 
 A: It is feature. Because "longest" completeopt conflicts with auto
@@ -1846,7 +1772,7 @@ A: >
 	if !exists('g:neocomplete#force_omni_input_patterns')
 	  let g:neocomplete#force_omni_input_patterns = {}
 	endif
-	g:neocomplete#force_omni_input_patterns.erlang =
+	let g:neocomplete#force_omni_input_patterns.erlang =
 	\ '\<[[:digit:][:alnum:]_-]\+:[[:digit:][:alnum:]_-]*'
 
 Q: I want to look selected function's arguments in neocomplete. But I don't
@@ -1855,8 +1781,6 @@ https://github.com/Shougo/neocomplete.vim/issues/120
 
 A: You can do it by |echodoc|.
 http://github.com/Shougo/echodoc.vim
-Note: This feature is available from neocomplete candidates only.
-You cannot get it from |g:neocomplete#force_omni_input_patterns|.
 
 Q: In ||g:neocomplete#force_omni_input_patterns|,
 |g:neocomplete#enable_auto_select| feature is not work.
@@ -1887,6 +1811,23 @@ Q: My <C-l> mapping never works.
 
 A: https://github.com/Shougo/neocomplete.vim/issues/334
 Note: It is fixed in Vim 7.4.653.
+
+Q: When I press enter, Vim inserts new line instead of selected item.
+
+A: It is Vim's default behavior (feature.)  If you want to select the item, you
+should map <CR>. >
+
+	inoremap <expr><CR> pumvisible()? "\<C-y>" : "\<CR>"
+
+Q: After updating Vim, some completion plugins automatically select the last
+candidate in the popup menu.
+
+A: Vim 7.4.775 introduced "noselect" and "noinsert" options for 'completeopt'.
+It is likely that those completion plugins use keymappings such as <C-p> to
+display the popup menu. However, there is no need to do this after 7.4.775
+since neocomplete.vim handles that part. If that's the case, you will need to
+contact the author of the plugin and have it not send those key strokes if
+"noselect" or "noinsert" option is present in 'completeopt'.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:noet:

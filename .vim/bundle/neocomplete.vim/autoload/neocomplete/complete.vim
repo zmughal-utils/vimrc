@@ -75,14 +75,12 @@ function! neocomplete#complete#_get_words(sources, complete_pos, complete_str) "
   " Append prefix.
   let candidates = []
   let len_words = 0
-  for source in sort(filter(copy(a:sources),
+  for source in sort(filter(deepcopy(a:sources),
         \ '!empty(v:val.neocomplete__context.candidates)'),
         \  's:compare_source_rank')
-    let mark = source.mark
     let context = source.neocomplete__context
-    let words =
-          \ type(context.candidates[0]) == type('') ?
-          \ map(copy(context.candidates), "{'word': v:val, 'menu' : mark}") :
+    let words = type(context.candidates[0]) == type('') ?
+          \ map(copy(context.candidates), "{'word': v:val}") :
           \ deepcopy(context.candidates)
     let context.candidates = words
 
@@ -116,23 +114,18 @@ EOF
 
     let words = neocomplete#helper#call_filters(
           \ source.neocomplete__sorters, source, {})
+    if empty(words)
+      continue
+    endif
 
     if source.max_candidates > 0
       let words = words[: len(source.max_candidates)-1]
     endif
 
     " Set default menu.
-    lua << EOF
-    do
-      local candidates = vim.eval('words')
-      local mark = vim.eval('mark')
-      for i = 0, #candidates-1 do
-        if candidates[i].menu == nil then
-          candidates[i].menu = mark
-        end
-      end
-    end
-EOF
+    if !has_key(words[0], 'menu') || words[0].menu !~ '^\[.*\]'
+      call s:set_default_menu(words, source)
+    endif
 
     let words = neocomplete#helper#call_filters(
           \ source.neocomplete__converters, source, {})
@@ -315,6 +308,19 @@ endfunction"}}}
 " Source rank order. "{{{
 function! s:compare_source_rank(i1, i2)
   return a:i2.rank - a:i1.rank
+endfunction"}}}
+
+function! s:set_default_menu(words, source) abort "{{{
+  lua << EOF
+  do
+    local candidates = vim.eval('a:words')
+    local mark = vim.eval('a:source.mark') .. ' '
+    for i = 0, #candidates-1 do
+      candidates[i].menu = mark .. (candidates[i].menu ~= nil and
+                           candidates[i].menu or '')
+    end
+  end
+EOF
 endfunction"}}}
 
 let &cpo = s:save_cpo
