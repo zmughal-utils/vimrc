@@ -1,7 +1,7 @@
 "============================================================================
-"File:        coffeelint.vim
+"File:        ansible_lint.vim
 "Description: Syntax checking plugin for syntastic.vim
-"Maintainer:  Lincoln Stoll <l@lds.li>
+"Maintainer:  Erik Zaadi <erik.zaadi at gmail dot com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,33 +10,41 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_coffee_coffeelint_checker')
+if exists('g:loaded_syntastic_ansible_ansible_lint_checker')
     finish
 endif
-let g:loaded_syntastic_coffee_coffeelint_checker = 1
+let g:loaded_syntastic_ansible_ansible_lint_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_coffee_coffeelint_GetLocList() dict
-    if !exists('s:coffeelint_new')
-        let s:coffeelint_new = syntastic#util#versionIsAtLeast(self.getVersion(), [1, 4])
+function! SyntaxCheckers_ansible_ansible_lint_IsAvailable() dict
+    if !executable(self.getExec())
+        return 0
     endif
-    let makeprg = self.makeprgBuild({ 'args_after': (s:coffeelint_new ? '--reporter csv' : '--csv') })
+    return syntastic#util#versionIsAtLeast(self.getVersion(), [2, 0, 4])
+endfunction
 
-    let errorformat = '%f:%l:%t:%m'
+function! SyntaxCheckers_ansible_ansible_lint_GetLocList() dict
+    let makeprg = self.makeprgBuild({ 'args_after': '-p' })
+
+    let errorformat = '%f:%l: [ANSIBLE%n] %m'
+
+    let env = syntastic#util#isRunningWindows() ? {} : { 'TERM': 'dumb' }
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
+        \ 'env': env,
+        \ 'defaults': {'type': 'E'},
         \ 'subtype': 'Style',
-        \ 'returns': [0, 1],
-        \ 'preprocess': 'coffeelint' })
+        \ 'returns': [0, 2] })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'coffee',
-    \ 'name': 'coffeelint'})
+    \ 'filetype': 'ansible',
+    \ 'name': 'ansible_lint',
+    \ 'exec': 'ansible-lint'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
