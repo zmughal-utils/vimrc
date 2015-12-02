@@ -499,6 +499,9 @@ command! -nargs=0 -range=% AutoFormatBreakAt <line1>,<line2>!perl -MText::Autofo
 command! -nargs=0 AutoFormatPara .,$!perl -MText::Autoformat -e'autoformat'
 command! -nargs=0 -range=% SortNaturally <line1>,<line2>!perl -MSort::Naturally -E 'say nsort( <> )'
 
+command! -nargs=0 -range=% PandocMtoL <line1>,<line2>!pandoc -t latex -f markdown <Bar> grep -v '\\itemsep1pt\\parskip0pt\\parsep0pt'
+command! -nargs=0 -range=% PandocLtoM <line1>,<line2>!pandoc -t markdown -f latex
+
 let RunLineChangePre=""
 if has("win32")
 	let RunLineChangePre='sed "s/.*/cmd \/C &/"|'
