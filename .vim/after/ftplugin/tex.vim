@@ -5,6 +5,9 @@
 " TODO make this have better options
 call programming#Programming()
 
+" setting for vim-tex-fold plugin
+let g:tex_fold_additional_envs = [ '.' ]
+
 setlocal tw=66
 highlight link texAccent SpecialChar
 autocmd QuickFixCmdPost <buffer> call AutoOpenQF(1)
