@@ -949,9 +949,11 @@ file						*neocomplete-source-file*
 
 omni						*neocomplete-source-omni*
 		This source calls 'omnifunc' automatically when cursor
-		text is matched with |g:neocomplete#sources#omni#input_patterns|.  If
-		|g:neocomplete_omni_function_list|is defined,
-		neocomplete will give priority it.
+		text is matched with
+		|g:neocomplete#sources#omni#input_patterns|.  If
+		|g:neocomplete_omni_function_list| is defined, neocomplete
+		will give priority it.
+		Note: It supports the fuzzy match using the previous result.
 
 
 suffix of complete candidates in popup menu declaration.
@@ -1633,7 +1635,10 @@ https://github.com/Shougo/neocomplcache.vim/issues/368
 
 A: I think you use 'foldmethod' is "expr" or "syntax". It is too heavy to use
 neocomplete (or other auto completion.) You should change 'foldmethod'
-option.
+option or install FastFold plugin.
+
+https://github.com/Konfekt/FastFold
+
 Note: In current version, neocomplete does not restore 'foldmethod'. Because
 it is too heavy.
 

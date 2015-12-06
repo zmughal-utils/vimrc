@@ -189,7 +189,8 @@ function! neocomplete#complete#_set_results_pos(cur_text, ...) "{{{
     let context.input = a:cur_text
 
     try
-      let complete_pos =
+      let complete_pos = s:use_previous_result(source, context) ?
+            \ context.prev_complete_pos :
             \ has_key(source, 'get_complete_position') ?
             \ source.get_complete_position(context) :
             \ neocomplete#helper#match_word(context.input,
@@ -248,13 +249,12 @@ function! neocomplete#complete#_set_results_words(sources) "{{{
 
       let &ignorecase = (g:neocomplete#enable_smart_case
             \ || g:neocomplete#enable_camel_case) ?
-            \   context.complete_str !~ '\u' : g:neocomplete#enable_ignore_case
+            \   context.complete_str !~ '\u'
+            \ : g:neocomplete#enable_ignore_case
 
-      if !source.is_volatile
-            \ && context.prev_complete_pos == context.complete_pos
-            \ && !empty(context.prev_candidates)
+      if s:use_previous_result(source, context)
         " Use previous candidates.
-        let context.candidates = context.prev_candidates
+        let context.candidates = deepcopy(context.prev_candidates)
       else
         try
           let context.candidates = source.gather_candidates(context)
@@ -272,10 +272,11 @@ function! neocomplete#complete#_set_results_words(sources) "{{{
             call winrestview(pos)
           endif
         endtry
-      endif
 
-      let context.prev_candidates = copy(context.candidates)
-      let context.prev_complete_pos = context.complete_pos
+        let context.prev_line = context.input
+        let context.prev_candidates = copy(context.candidates)
+        let context.prev_complete_pos = context.complete_pos
+      endif
 
       if !empty(context.candidates)
         let matchers = empty(source.neocomplete__matchers) ?
@@ -321,6 +322,14 @@ function! s:set_default_menu(words, source) abort "{{{
     end
   end
 EOF
+endfunction"}}}
+
+function! s:use_previous_result(source, context) abort "{{{
+  return !a:source.is_volatile
+        \ && substitute(a:context.input, '\w\+$', '', '')
+        \    ==# substitute(a:context.prev_line, '\w\+$', '', '')
+        \ && stridx(a:context.input, a:context.prev_line) == 0
+        \ && !empty(a:context.prev_candidates)
 endfunction"}}}
 
 let &cpo = s:save_cpo

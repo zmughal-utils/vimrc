@@ -86,8 +86,6 @@ function! neocomplete#init#_autocmds() "{{{
           \ call neocomplete#handler#_on_insert_leave()
     autocmd CursorMovedI *
           \ call neocomplete#handler#_on_moved_i()
-    autocmd BufWritePost *
-          \ call neocomplete#handler#_on_write_post()
     autocmd VimLeavePre *
           \ call neocomplete#init#disable()
     autocmd InsertCharPre *
@@ -667,6 +665,7 @@ function! neocomplete#init#_context(context) "{{{
         \ 'input' : '',
         \ 'prev_complete_pos' : -1,
         \ 'prev_candidates' : [],
+        \ 'prev_line' : '',
         \ 'complete_pos' : -1,
         \ 'complete_str' : '',
         \ 'candidates' : []
