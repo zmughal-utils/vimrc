@@ -83,3 +83,5 @@ refresh_git https://github.com/matze/vim-tex-fold vim-tex-fold
 
 refresh_git https://github.com/LucHermitte/lh-vim-lib lh-vim-lib
 refresh_git https://github.com/LucHermitte/local_vimrc local_vimrc
+
+refresh_git https://github.com/tpope/vim-projectionist vim-projectionist
