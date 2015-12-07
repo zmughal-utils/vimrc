@@ -87,3 +87,5 @@ refresh_git https://github.com/LucHermitte/local_vimrc local_vimrc
 refresh_git https://github.com/tpope/vim-projectionist vim-projectionist
 
 refresh_git https://github.com/easymotion/vim-easymotion vim-easymotion
+
+refresh_git https://github.com/altercation/vim-colors-solarized vim-colors-solarized
