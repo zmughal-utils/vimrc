@@ -139,6 +139,11 @@ let g:Align_xstrlen=3
 let g:mwDefaultHighlightingPalette = 'extended'
 "}}}
 
+" Solarized color scheme {{{
+" use 256-color palette
+let g:solarized_termcolors = 256
+"}}}
+
 set helpheight=8
 set previewheight=4
 set switchbuf+=useopen,usetab	",split
