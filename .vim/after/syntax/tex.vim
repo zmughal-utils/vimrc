@@ -1,5 +1,5 @@
 
-" adapted from system tex.vim
+" adapted from system tex.vim: $VIMRUNTIME/syntax/tex.vim
 if has("conceal") && &enc == 'utf-8'
 
  " Math Symbols {{{2
@@ -24,3 +24,17 @@ endif
 syn case ignore
 syn keyword texTodo		contained		combak	fixme	todo	xxx containedin=texComment
 syn case match
+
+" Taken from system tex.vim:
+"
+" Added the \autocite command (from biblatex) to the match in addition to the
+" \cite command.
+syn match  texRefZone		'\\\(autocite\|cite\)\%([tp]\*\=\)\=' nextgroup=texRefOption,texCite
+
+" cleveref package
+syn region texRefZone		matchgroup=texStatement start="\\[cC]ref{"	end="}\|%stopzone\>"	contains=@texRefGroup
+
+" glossaries package
+" \[gG]ls, \acrshort, \acrfull,
+" \[gG]lsentry(item|long|text)
+syn region texRefZone		matchgroup=texStatement start="\\\([gG]ls\|[gG]lsentry\(item\|long\|text\)\|acr\(short\|full\)\){"		end="}\|%stopzone\>"	contains=@texRefGroup
