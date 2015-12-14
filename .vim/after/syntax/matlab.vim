@@ -9,7 +9,7 @@ syn keyword matlabFunc exist single
 syn keyword matlabFunc fullfile
 
 " Strings
-syn keyword matlabFunc strcat
+syn keyword matlabFunc strcat fprintf sprintf
 
 " FFT
 syn keyword matlabFunc fftn ifftn
