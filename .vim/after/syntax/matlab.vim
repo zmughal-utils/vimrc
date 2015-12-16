@@ -1,7 +1,7 @@
 syntax region matlabCommentFold start=+\(^\s*%.*\n\)\@<!\zs\(\_^\s*%.*\)+ end=+\ze\_^\(\s*%.*\n\)\@!.*$+ transparent fold
 syntax match matlabCommentSection +\(^\s*%%\)\@=\zs.*$+ containedin=matlabComment
 
-syn keyword matlabBool true false
+syn keyword matlabBool true false logical
 
 " Data handling
 syn keyword matlabFunc exist single
