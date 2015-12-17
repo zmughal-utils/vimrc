@@ -38,3 +38,7 @@ syn region texRefZone		matchgroup=texStatement start="\\[cC]ref{"	end="}\|%stopz
 " \[gG]ls, \acrshort, \acrfull,
 " \[gG]lsentry(item|long|text)
 syn region texRefZone		matchgroup=texStatement start="\\\([gG]ls\|[gG]lsentry\(item\|long\|text\)\|acr\(short\|full\)\){"		end="}\|%stopzone\>"	contains=@texRefGroup
+
+" breqn package
+call TexNewMathZone("br","dmath",1)
+call TexNewMathZone("br","math",1)
