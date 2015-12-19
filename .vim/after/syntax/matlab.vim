@@ -4,7 +4,9 @@ syntax match matlabCommentSection +\(^\s*%%\)\@=\zs.*$+ containedin=matlabCommen
 syn keyword matlabBool true false logical
 
 " Data handling
-syn keyword matlabFunc exist single
+syn keyword matlabFunc exist single isempty
+
+syn keyword matlabFunc prod sum diff
 
 " File system
 syn keyword matlabFunc fullfile
