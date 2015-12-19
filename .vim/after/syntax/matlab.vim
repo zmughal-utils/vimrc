@@ -15,6 +15,8 @@ syn keyword matlabFunc strcat fprintf sprintf
 " FFT
 syn keyword matlabFunc fftn ifftn
 
+syn keyword matlabFunc polyval polyfit
+
 hi link matlabCommentSection SpecialComment
 hi link matlabFunc Function
 hi link matlabBool Boolean
