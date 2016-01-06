@@ -6,6 +6,10 @@
 
 set nocompatible
 
+" When jumping to a given line using `G` or `gg`, stay in the same column. This
+" is especially useful for visual block mode.
+set nostartofline
+
 " Man {{{
 if executable('man')
 	runtime ftplugin/man.vim		" Plugin for manpages
