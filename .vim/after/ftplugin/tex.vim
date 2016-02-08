@@ -69,3 +69,12 @@ function! TeXSmartOpen() "{{{
 		endif
 	endfor
 endfunction "}}}
+
+iabbr <buffer> α \alpha
+iabbr <buffer> β \beta
+iabbr <buffer> δ \delta
+iabbr <buffer> σ \sigma
+iabbr <buffer> λ \lambda
+iabbr <buffer> γ \gamma
+iabbr <buffer> θ \theta
+iabbr <buffer> π \pi
