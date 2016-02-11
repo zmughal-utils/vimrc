@@ -79,3 +79,4 @@ iabbr <buffer> λ \lambda
 iabbr <buffer> γ \gamma
 iabbr <buffer> θ \theta
 iabbr <buffer> π \pi
+iabbr <buffer> ε \epsilon
