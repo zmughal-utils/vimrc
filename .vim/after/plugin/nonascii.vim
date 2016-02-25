@@ -1,1 +1,1 @@
-command NonASII     /[^\x00-\xFF]
+command NonASCII     /[^\x00-\xFF]
