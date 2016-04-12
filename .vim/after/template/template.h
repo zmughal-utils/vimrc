@@ -4,6 +4,7 @@
 /* system headers */
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /* local headers */
 /* TODO */
