@@ -39,7 +39,7 @@ function! dispatch#shellescape(...) abort
   return join(args, ' ')
 endfunction
 
-let s:flags = '\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*'
+let s:flags = '<\=\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*'
 let s:expandable = '\\*\%(<\w\+>\|%\|#\d*\)' . s:flags
 function! dispatch#expand(string) abort
   return substitute(a:string, s:expandable, '\=s:expand(submatch(0))', 'g')
@@ -135,7 +135,7 @@ function! dispatch#vim_executable() abort
 endfunction
 
 function! dispatch#callback(request) abort
-  if !empty(v:servername) && has_key(s:request(a:request), 'id')
+  if has('clientserver') && !empty(v:servername) && has_key(s:request(a:request), 'id')
     return dispatch#shellescape(dispatch#vim_executable()) .
           \ ' --servername ' . dispatch#shellescape(v:servername) .
           \ ' --remote-expr "' . 'DispatchComplete(' . s:request(a:request).id . ')' . '"'
