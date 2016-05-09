@@ -54,7 +54,7 @@ call unite#util#set_default(
       \ 'g:unite_source_rec_git_command', 'git')
 "}}}
 
-let s:Cache = unite#util#get_vital().import('System.Cache')
+let s:Cache = unite#util#get_vital_cache()
 
 let s:continuation = { 'directory' : {}, 'file' : {} }
 
@@ -74,7 +74,7 @@ let s:source_file_rec = {
       \ 'matchers' : [ 'converter_relative_word', 'matcher_default' ],
       \ }
 
-function! s:source_file_rec.gather_candidates(args, context) "{{{
+function! s:source_file_rec.gather_candidates(args, context) abort "{{{
   let a:context.source__directory =
         \ get(s:get_paths(a:args, a:context), 0, '')
 
@@ -103,7 +103,7 @@ function! s:source_file_rec.gather_candidates(args, context) "{{{
   return deepcopy(continuation.files)
 endfunction"}}}
 
-function! s:source_file_rec.async_gather_candidates(args, context) "{{{
+function! s:source_file_rec.async_gather_candidates(args, context) abort "{{{
   let continuation = a:context.source__continuation
 
   let ignore_dir = get(a:context, 'custom_rec_ignore_directory_pattern',
@@ -139,12 +139,12 @@ function! s:source_file_rec.async_gather_candidates(args, context) "{{{
   return deepcopy(candidates)
 endfunction"}}}
 
-function! s:source_file_rec.hooks.on_init(args, context) "{{{
+function! s:source_file_rec.hooks.on_init(args, context) abort "{{{
   let a:context.source__is_directory = 0
   call s:on_init(a:args, a:context, s:source_file_rec.name)
 endfunction"}}}
 
-function! s:source_file_rec.vimfiler_check_filetype(args, context) "{{{
+function! s:source_file_rec.vimfiler_check_filetype(args, context) abort "{{{
   let path = unite#util#substitute_path_separator(
         \ unite#util#expand(join(a:args, ':')))
   let path = unite#util#substitute_path_separator(
@@ -160,7 +160,7 @@ function! s:source_file_rec.vimfiler_check_filetype(args, context) "{{{
 
   return [type, lines, dict]
 endfunction"}}}
-function! s:source_file_rec.vimfiler_gather_candidates(args, context) "{{{
+function! s:source_file_rec.vimfiler_gather_candidates(args, context) abort "{{{
   let path = get(s:get_paths(a:args, a:context), 0, '')
 
   if !isdirectory(path)
@@ -204,7 +204,7 @@ function! s:source_file_rec.vimfiler_gather_candidates(args, context) "{{{
 
   return deepcopy(candidates)
 endfunction"}}}
-function! s:source_file_rec.vimfiler_dummy_candidates(args, context) "{{{
+function! s:source_file_rec.vimfiler_dummy_candidates(args, context) abort "{{{
   let path = unite#util#substitute_path_separator(
         \ unite#util#expand(join(a:args, ':')))
   let path = unite#util#substitute_path_separator(
@@ -222,10 +222,8 @@ function! s:source_file_rec.vimfiler_dummy_candidates(args, context) "{{{
   let exts = unite#util#is_windows() ?
         \ escape(substitute($PATHEXT . ';.LNK', ';', '\\|', 'g'), '.') : ''
 
-  let is_relative_path = path !~ '^\%(/\|\a\+:/\)'
-
   " Set vimfiler property.
-  let candidates = [ unite#sources#file#create_file_dict(path, is_relative_path) ]
+  let candidates = [ unite#sources#file#create_file_dict(path, '') ]
   for candidate in candidates
     call unite#sources#file#create_vimfiler_dict(candidate, exts)
   endfor
@@ -236,11 +234,11 @@ function! s:source_file_rec.vimfiler_dummy_candidates(args, context) "{{{
 
   return deepcopy(candidates)
 endfunction"}}}
-function! s:source_file_rec.vimfiler_complete(args, context, arglead, cmdline, cursorpos) "{{{
+function! s:source_file_rec.vimfiler_complete(args, context, arglead, cmdline, cursorpos) abort "{{{
   return unite#sources#file#complete_directory(
         \ a:args, a:context, a:arglead, a:cmdline, a:cursorpos)
 endfunction"}}}
-function! s:source_file_rec.complete(args, context, arglead, cmdline, cursorpos) "{{{
+function! s:source_file_rec.complete(args, context, arglead, cmdline, cursorpos) abort "{{{
   return unite#sources#file#complete_directory(
         \ a:args, a:context, a:arglead, a:cmdline, a:cursorpos)
 endfunction"}}}
@@ -251,7 +249,7 @@ let s:source_file_async.name = 'file_rec/async'
 let s:source_file_async.description =
       \ 'asynchronous candidates from directory by recursive'
 
-function! s:source_file_async.gather_candidates(args, context) "{{{
+function! s:source_file_async.gather_candidates(args, context) abort "{{{
   let paths = s:get_paths(a:args, a:context)
   let a:context.source__directory = join(paths, "\n")
 
@@ -328,7 +326,7 @@ function! s:source_file_async.gather_candidates(args, context) "{{{
   return []
 endfunction"}}}
 
-function! s:source_file_async.async_gather_candidates(args, context) "{{{
+function! s:source_file_async.async_gather_candidates(args, context) abort "{{{
   let stderr = a:context.source__proc.stderr
   if !stderr.eof
     " Print error.
@@ -376,11 +374,11 @@ function! s:source_file_async.async_gather_candidates(args, context) "{{{
   return deepcopy(candidates)
 endfunction"}}}
 
-function! s:source_file_async.hooks.on_init(args, context) "{{{
+function! s:source_file_async.hooks.on_init(args, context) abort "{{{
   let a:context.source__is_directory = 0
   call s:on_init(a:args, a:context, s:source_file_async.name)
 endfunction"}}}
-function! s:source_file_async.hooks.on_close(args, context) "{{{
+function! s:source_file_async.hooks.on_close(args, context) abort "{{{
   if has_key(a:context, 'source__proc')
     call a:context.source__proc.kill()
   endif
@@ -431,7 +429,7 @@ function! s:job_handler(job_id, data, event) abort "{{{
   let candidates += lines
 endfunction"}}}
 
-function! s:source_file_neovim.gather_candidates(args, context) "{{{
+function! s:source_file_neovim.gather_candidates(args, context) abort "{{{
   let paths = s:get_paths(a:args, a:context)
   let a:context.source__directory = join(paths, "\n")
 
@@ -509,7 +507,7 @@ function! s:source_file_neovim.gather_candidates(args, context) "{{{
   return []
 endfunction"}}}
 
-function! s:source_file_neovim.async_gather_candidates(args, context) "{{{
+function! s:source_file_neovim.async_gather_candidates(args, context) abort "{{{
   if !has_key(s:job_info, a:context.source__job)
     return []
   endif
@@ -544,11 +542,11 @@ function! s:source_file_neovim.async_gather_candidates(args, context) "{{{
   return deepcopy(candidates)
 endfunction"}}}
 
-function! s:source_file_neovim.hooks.on_init(args, context) "{{{
+function! s:source_file_neovim.hooks.on_init(args, context) abort "{{{
   let a:context.source__is_directory = 0
   call s:on_init(a:args, a:context, s:source_file_neovim.name)
 endfunction"}}}
-function! s:source_file_neovim.hooks.on_close(args, context) "{{{
+function! s:source_file_neovim.hooks.on_close(args, context) abort "{{{
   if has_key(a:context, 'source__job')
         \ && has_key(s:job_info, a:context.source__job)
     silent! call jobstop(a:context.source__job)
@@ -556,117 +554,12 @@ function! s:source_file_neovim.hooks.on_close(args, context) "{{{
   endif
 endfunction "}}}
 
-" Source neovim2.
-let s:source_file_neovim2 = deepcopy(s:source_file_rec)
-let s:source_file_neovim2.name = 'file_rec/neovim2'
-let s:source_file_neovim2.description =
-      \ 'neovim remote asynchronous candidates from directory by recursive'
-
-function! s:source_file_neovim2.gather_candidates(args, context) "{{{
-  let paths = s:get_paths(a:args, a:context)
-  let a:context.source__directory = join(paths, "\n")
-
-  if !has('nvim')
-    call unite#print_source_message(
-          \ 'Your vim is not neovim.', self.name)
-    let a:context.is_async = 0
-    return []
-  endif
-
-  if !has('python3')
-    call unite#print_source_message(
-          \ 'Your nvim has not Python3 support.', self.name)
-    let a:context.is_async = 0
-    return []
-  endif
-
-  if !exists(':UniteInitializePython')
-    call unite#print_source_message(
-          \ 'Please execute :UpdateRemotePlugins command.', self.name)
-    let a:context.is_async = 0
-    return []
-  endif
-
-  let directory = a:context.source__directory
-
-  call unite#print_source_message(
-        \ 'directory: ' . directory, self.name)
-
-  if type(g:unite_source_rec_async_command) == type('')
-    " You must specify list type.
-    call unite#print_source_message(
-          \ 'g:unite_source_rec_async_command must be list type.', self.name)
-    let a:context.is_async = 0
-    return []
-  endif
-
-  let args = g:unite_source_rec_async_command
-  if a:context.source__is_directory
-    " Use find command.
-    let args = ['find', '-L']
-  endif
-
-  if empty(args) || !executable(args[0])
-    if empty(args)
-      call unite#print_source_message(
-            \ 'You must install file list command and specify '
-            \  . 'g:unite_source_rec_async_command variable.', self.name)
-    else
-      call unite#print_source_message('async command : "'.
-            \ args[0].'" is not executable.', self.name)
-    endif
-    let a:context.is_async = 0
-    return []
-  endif
-
-  " Note: If find command and args used, uses whole command line.
-  let commands = args + paths
-  if args[0] ==# 'find'
-    " Default option.
-    let commands += g:unite_source_rec_find_args
-    let commands +=
-          \ ['-o', '-type',
-          \ (a:context.source__is_directory ? 'd' : 'f'), '-print']
-  endif
-
-  call unite#add_source_message(
-        \ 'Command-line: ' . string(commands), self.name)
-
-  let s:neovim_candidates = []
-  let s:neovim_eof = 0
-  call rpcnotify(g:unite#_channel_id, 'unite_rec', a:context, commands)
-
-  return []
-endfunction"}}}
-
-function! s:source_file_neovim2.async_gather_candidates(args, context) "{{{
-  if s:neovim_eof
-    let a:context.is_async = 0
-  endif
-  let ret = copy(s:neovim_candidates)
-  let s:neovim_candidates = []
-  return ret
-endfunction"}}}
-
-function! s:source_file_neovim2.hooks.on_init(args, context) "{{{
-  let a:context.source__is_directory = 0
-endfunction"}}}
-function! s:source_file_neovim.hooks.on_close(args, context) "{{{
-endfunction "}}}
-
-let s:neovim_candidates = []
-let s:neovim_eof = 0
-function! unite#sources#rec#_remote_append(candidates, eof) "{{{
-  let s:neovim_candidates += a:candidates
-  let s:neovim_eof = a:eof
-endfunction"}}}
-
 " Source git.
 let s:source_file_git = deepcopy(s:source_file_async)
 let s:source_file_git.name = 'file_rec/git'
 let s:source_file_git.description =
       \ 'git candidates from directory by recursive'
-function! s:source_file_git.gather_candidates(args, context) "{{{
+function! s:source_file_git.gather_candidates(args, context) abort "{{{
   if !unite#util#has_vimproc()
     call unite#print_source_message(
           \ 'vimproc plugin is not installed.', self.name)
@@ -722,14 +615,14 @@ function! s:source_file_git.gather_candidates(args, context) "{{{
 
   return []
 endfunction"}}}
-function! s:source_file_git.async_gather_candidates(args, context) "{{{
+function! s:source_file_git.async_gather_candidates(args, context) abort "{{{
   return map(s:source_file_async.async_gather_candidates(
         \ a:args, a:context), "{
         \   'word' : a:context.source__directory . v:val.word,
         \   'action__path' : a:context.source__directory . v:val.word,
         \}")
 endfunction"}}}
-function! s:source_file_git.complete(args, context, arglead, cmdline, cursorpos) "{{{
+function! s:source_file_git.complete(args, context, arglead, cmdline, cursorpos) abort "{{{
   return []
 endfunction"}}}
 
@@ -740,11 +633,11 @@ let s:source_directory_rec.description =
       \ 'candidates from directory by recursive'
 let s:source_directory_rec.default_kind = 'directory'
 
-function! s:source_directory_rec.hooks.on_init(args, context) "{{{
+function! s:source_directory_rec.hooks.on_init(args, context) abort "{{{
   let a:context.source__is_directory = 1
   call s:on_init(a:args, a:context, s:source_directory_rec.name)
 endfunction"}}}
-function! s:source_directory_rec.hooks.on_post_filter(args, context) "{{{
+function! s:source_directory_rec.hooks.on_post_filter(args, context) abort "{{{
   for candidate in filter(copy(a:context.candidates),
         \ "v:val.word[-1:] != '/'")
     let candidate.abbr = candidate.word . '/'
@@ -758,11 +651,11 @@ let s:source_directory_async.description =
       \ 'asynchronous candidates from directory by recursive'
 let s:source_directory_async.default_kind = 'directory'
 
-function! s:source_directory_async.hooks.on_init(args, context) "{{{
+function! s:source_directory_async.hooks.on_init(args, context) abort "{{{
   let a:context.source__is_directory = 1
   call s:on_init(a:args, a:context, s:source_directory_async.name)
 endfunction"}}}
-function! s:source_directory_async.hooks.on_post_filter(args, context) "{{{
+function! s:source_directory_async.hooks.on_post_filter(args, context) abort "{{{
   for candidate in filter(copy(a:context.candidates),
         \ "v:val.word[-1:] != '/'")
     let candidate.abbr = candidate.word . '/'
@@ -770,7 +663,7 @@ function! s:source_directory_async.hooks.on_post_filter(args, context) "{{{
 endfunction"}}}
 
 " Misc.
-function! s:get_paths(args, context) "{{{
+function! s:get_paths(args, context) abort "{{{
   let args = unite#helper#parse_source_args(a:args)
   let directory = get(args, 0, '')
   if directory == ''
@@ -792,7 +685,7 @@ function! s:get_paths(args, context) "{{{
 
   return paths
 endfunction"}}}
-function! s:get_files(context, files, level, max_unit, ignore_dir) "{{{
+function! s:get_files(context, files, level, max_unit, ignore_dir) abort "{{{
   let continuation_files = []
   let ret_files = []
   let files_index = 0
@@ -884,7 +777,7 @@ function! s:get_files(context, files, level, max_unit, ignore_dir) "{{{
   return [continuation_files, map(ret_files,
         \ "unite#util#substitute_path_separator(fnamemodify(v:val, ':p'))")]
 endfunction"}}}
-function! s:on_init(args, context, name) "{{{
+function! s:on_init(args, context, name) abort "{{{
   augroup plugin-unite-source-file_rec
     autocmd!
     autocmd BufEnter,BufWinEnter,BufFilePost,BufWritePost *
@@ -893,7 +786,7 @@ function! s:on_init(args, context, name) "{{{
 
   let a:context.source__name = a:name
 endfunction"}}}
-function! s:init_continuation(context, directory) "{{{
+function! s:init_continuation(context, directory) abort "{{{
   let cache_dir = printf('%s/%s/%s',
         \ unite#get_data_directory(),
         \ a:context.source__name,
@@ -933,7 +826,7 @@ function! s:init_continuation(context, directory) "{{{
         \   'isdirectory(v:val.action__path)' :
         \   'filereadable(v:val.action__path)')
 endfunction"}}}
-function! s:write_cache(context, directory, files) "{{{
+function! s:write_cache(context, directory, files) abort "{{{
   let cache_dir = printf('%s/%s/%s',
         \ unite#get_data_directory(),
         \ a:context.source__name,
@@ -951,7 +844,7 @@ function! s:write_cache(context, directory, files) "{{{
   endif
 endfunction"}}}
 
-function! unite#sources#rec#_append() "{{{
+function! unite#sources#rec#_append() abort "{{{
   let path = expand('%:p')
   if path !~ '\a\+:'
     let path = simplify(resolve(path))
@@ -976,15 +869,15 @@ function! unite#sources#rec#_append() "{{{
   endfor
 endfunction"}}}
 
-function! unite#sources#rec#define() "{{{
+function! unite#sources#rec#define() abort "{{{
   let sources = [ s:source_file_rec, s:source_directory_rec ]
   let sources += [ s:source_file_async, s:source_directory_async]
   let sources += [ s:source_file_git ]
-  let sources += [ s:source_file_neovim, s:source_file_neovim2 ]
+  let sources += [ s:source_file_neovim ]
   return sources
 endfunction"}}}
 
-function! s:resolve(file) "{{{
+function! s:resolve(file) abort "{{{
   " Detect symbolic link loop.
   let file_link = unite#util#substitute_path_separator(
         \ resolve(a:file))

@@ -26,22 +26,35 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#kinds#window#define() "{{{
+function! unite#kinds#window#define() abort "{{{
   return s:kind
 endfunction"}}}
 
 let s:kind = {
       \ 'name' : 'window',
-      \ 'default_action' : 'open',
+      \ 'default_action' : 'jump',
       \ 'action_table': {},
-      \ 'parents' : ['cdable'],
+      \ 'parents' : ['common', 'openable', 'cdable'],
       \}
 
 " Actions "{{{
 let s:kind.action_table.open = {
+      \ 'description' : 'open this window buffer',
+      \ 'is_selectable' : 1,
+      \ }
+function! s:kind.action_table.open.func(candidates) abort "{{{
+  for candidate in a:candidates
+    execute 'buffer' (has_key(candidate, 'action__tab_nr') ?
+          \ tabpagebuflist(candidate.action__tab_nr)[
+          \   candidate.action__window_nr - 1] :
+          \ winbufnr(candidate.action__window_nr))
+  endfor
+endfunction"}}}
+
+let s:kind.action_table.jump = {
       \ 'description' : 'move to this window',
       \ }
-function! s:kind.action_table.open.func(candidate) "{{{
+function! s:kind.action_table.jump.func(candidate) abort "{{{
   if has_key(a:candidate, 'action__tab_nr')
     execute 'tabnext' a:candidate.action__tab_nr
   endif
@@ -51,7 +64,7 @@ endfunction"}}}
 let s:kind.action_table.only = {
       \ 'description' : 'only this window',
       \ }
-function! s:kind.action_table.only.func(candidate) "{{{
+function! s:kind.action_table.only.func(candidate) abort "{{{
   if has_key(a:candidate, 'action__tab_nr')
     execute 'tabnext' a:candidate.action__tab_nr
   endif
@@ -65,7 +78,7 @@ let s:kind.action_table.delete = {
       \ 'is_invalidate_cache' : 1,
       \ 'is_quit' : 0,
       \ }
-function! s:kind.action_table.delete.func(candidates) "{{{
+function! s:kind.action_table.delete.func(candidates) abort "{{{
   let tabnr = tabpagenr()
   for candidate in sort(a:candidates, 's:compare')
     if has_key(candidate, 'action__tab_nr')
@@ -84,7 +97,7 @@ let s:kind.action_table.preview = {
       \ 'description' : 'preview window',
       \ 'is_quit' : 0,
       \ }
-function! s:kind.action_table.preview.func(candidate) "{{{
+function! s:kind.action_table.preview.func(candidate) abort "{{{
   let tabnr = tabpagenr()
   if has_key(a:candidate, 'action__tab_nr')
     execute 'tabnext' a:candidate.action__tab_nr
@@ -119,7 +132,7 @@ endfunction"}}}
 "}}}
 
 " Misc
-function! s:compare(candidate_a, candidate_b) "{{{
+function! s:compare(candidate_a, candidate_b) abort "{{{
   return a:candidate_b.action__window_nr - a:candidate_a.action__window_nr
 endfunction"}}}
 

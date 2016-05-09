@@ -1,6 +1,6 @@
 *unite.txt*	Unite and create user interfaces.
 
-Version: 6.2
+Version: 6.3
 Author:  Shougo <Shougo.Matsu@gmail.com>
 Documentation Author: ujihisa <ujihisa at gmail com>
 License: MIT license  {{{
@@ -274,8 +274,8 @@ More advanced configuration example:
 	  endif
 
 	  nnoremap <silent><buffer><expr> cd     unite#do_action('lcd')
-	  nnoremap <buffer><expr> S      unite#mappings#set_current_filters(
-	          \ empty(unite#mappings#get_current_filters()) ?
+	  nnoremap <buffer><expr> S      unite#mappings#set_current_sorters(
+	          \ empty(unite#mappings#get_current_sorters()) ?
 	          \ ['sorter_reverse'] : [])
 
 	  " Runs "split" action by <C-s>.
@@ -632,6 +632,12 @@ g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		Menu candidates.  If candidates type is a dictionary, keys are
 		ignored, but you can refer to the map attribute described below.
 
+		file_candidates
+				(List)			(Optional)
+		Menu candidates for files.
+		The first item is used for word.  The second item is file
+		path.
+
 		command_candidates
 				(List or Dictionary)	(Optional)
 		Menu candidates for commands.
@@ -676,6 +682,15 @@ g:unite_source_menu_menus			*g:unite_source_menu_menus*
 		let g:unite_source_menu_menus.test3.command_candidates = [
 		      \   ['ruby', 'VimShellInteractive ruby'],
 		      \   ['python', 'VimShellInteractive python'],
+		      \ ]
+
+		let g:unite_source_menu_menus.zsh = {
+		      \     'description' : 'zsh files',
+		      \ }
+		let g:unite_source_menu_menus.zsh.file_candidates = [
+		      \       ['zshenv'    , '~/.zshenv'],
+		      \       ['zshrc'     , '~/.zshrc'],
+		      \       ['zplug'     , '~/.zplug'],
 		      \ ]
 
 		nnoremap <silent> sm  :<C-u>Unite menu:test<CR>
@@ -1318,7 +1333,7 @@ unite#mappings#set_current_sorters({sorters})
 		Example:
 >
   nnoremap <buffer><expr> S      unite#mappings#set_current_sorters(
-        \ empty(unite#mappings#get_current_matchers()) ?
+        \ empty(unite#mappings#get_current_sorters()) ?
 	\ ['sorter_reverse'] : [])
 <
 				*unite#mappings#set_current_converters()*
@@ -2279,7 +2294,7 @@ grep		Nominates "grep" command output as candidates.
 		2. "grep" options.
 		3. the narrowing pattern (if you omit it, |unite-options-input|
 		or input prompt is used).
-		Max candidates: |g:unite_source_grep_max_candidates|
+		Max candidates: 100
 
 		Special Target:
 		%         : Current buffer name
@@ -2298,8 +2313,6 @@ grep		Nominates "grep" command output as candidates.
 <
 		Settings Example:
 >
-	let g:unite_source_grep_max_candidates = 200
-
 	if executable('hw')
 	  " Use hw (highway)
 	  " https://github.com/tkengo/highway
@@ -2351,7 +2364,7 @@ grep/git	Nominates "git grep" command output at the current
 		2. "git grep" options.
 		3. the narrowing pattern (if you omit it, |unite-options-input|
 		or input prompt is used).
-		Max candidates: |g:unite_source_grep_max_candidates|
+		Max candidates: 100
 
 		Special Target:
 		%         : Current buffer name
@@ -2948,6 +2961,7 @@ Opens a file into a new buffer.  This kind extends |unite-action-openable| and
 	dirdiff		|:DirDiff| with the other candidate.
 			(|DirDiff.vim| plugin is needed.)
 	backup		Simple backup files.
+	argadd		Add to the argument list.
 
 buffer						*unite-action-buffer*
 This kind extends |unite-action-file|.
@@ -2993,11 +3007,12 @@ command						*unite-action-command*
 	grep		Grep the command.
 
 window						*unite-action-window*
-This kind extends actions of |unite-action-cdable|.
-	open		Move to the window.
+This kind extends actions of |unite-action-cdable| and |unite-action-openable|.
+	jump		Move to the window.
 	delete		Close the window.
 	only		Close all windows except the window.
 	preview		Preview the window.
+	open		Open the window buffer.
 
 completion					*unite-action-completion*
 	insert		Insert the candidate.
@@ -3779,7 +3794,7 @@ A: >
 Q: Unite adds unite buffer to jumplist automatically.
 https://github.com/Shougo/unite.vim/issues/278
 
-A: You can use |unite-options-wipe| option.  But it is used, you cannot use
+A: You can use |unite-options-wipe| option.  But if it is used, you cannot use
 the |:UniteResume| feature.
 
 Q: unite.vim is too slow.
