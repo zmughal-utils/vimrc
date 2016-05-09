@@ -44,6 +44,7 @@ let g:EasyMotion_add_search_history = get(g: , 'EasyMotion_add_search_history' ,
 let g:EasyMotion_off_screen_search  = get(g: , 'EasyMotion_off_screen_search'  , 1)
 let g:EasyMotion_force_csapprox     = get(g: , 'EasyMotion_force_csapprox'     , 0)
 let g:EasyMotion_show_prompt        = get(g: , 'EasyMotion_show_prompt'        , 1)
+let g:EasyMotion_verbose            = get(g: , 'EasyMotion_verbose'            , 1)
 let g:EasyMotion_prompt             =
     \ get(g: , 'EasyMotion_prompt' , 'Search for {n} character(s): ')
 let g:EasyMotion_command_line_key_mappings =
@@ -130,7 +131,13 @@ call s:motion_map_helper({
     \ 'tln'             : {'fnc' : 'TL' , 'cnt' : -1, 'direction' : 0},
     \ 'Tln'             : {'fnc' : 'TL' , 'cnt' : -1, 'direction' : 1},
     \ 'bd-tln'          : {'fnc' : 'TL' , 'cnt' : -1, 'direction' : 2},
-    \ }) 
+    \ })
+
+nnoremap <silent> <Plug>(easymotion-overwin-f) :<C-u>call EasyMotion#OverwinF(1)<CR>
+nnoremap <silent> <Plug>(easymotion-overwin-f2) :<C-u>call EasyMotion#OverwinF(2)<CR>
+nnoremap <silent> <Plug>(easymotion-overwin-line) :<C-u>call EasyMotion#overwin#line()<CR>
+nnoremap <silent> <Plug>(easymotion-overwin-w) :<C-u>call EasyMotion#overwin#w()<CR>
+
 "}}}
 
 " -- Word Motion {{{
