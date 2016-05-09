@@ -1,17 +1,58 @@
-let s:grep_available = executable('grep')
-if s:grep_available
-  let s:grep_command = ' | '.(g:gitgutter_escape_grep ? '\grep' : 'grep')
-  let s:grep_help = gitgutter#utility#system('grep --help')
-  if s:grep_help =~# '--color'
-    let s:grep_command .= ' --color=never'
+if exists('g:gitgutter_grep_command')
+  let s:grep_available = 1
+  let s:grep_command = g:gitgutter_grep_command
+else
+  let s:grep_available = executable('grep')
+  if s:grep_available
+    let s:grep_command = 'grep --color=never -e'
   endif
-  let s:grep_command .= ' -e '.gitgutter#utility#shellescape('^@@ ')
 endif
 let s:hunk_re = '^@@ -\(\d\+\),\?\(\d*\) +\(\d\+\),\?\(\d*\) @@'
 
 let s:fish = &shell =~# 'fish'
 
-function! gitgutter#diff#run_diff(realtime, use_external_grep)
+let s:c_flag = gitgutter#utility#git_supports_command_line_config_override()
+
+let s:temp_index = tempname()
+let s:temp_buffer = tempname()
+
+" Returns a diff of the buffer.
+"
+" The way to get the diff depends on whether the buffer is saved or unsaved.
+"
+" * Saved: the buffer contents is the same as the file on disk in the working
+"   tree so we simply do:
+"
+"       git diff myfile
+"
+" * Unsaved: the buffer contents is not the same as the file on disk so we
+"   need to pass two instances of the file to git-diff:
+"
+"       git diff myfileA myfileB
+"
+"   The first instance is the file in the index which we obtain with:
+"
+"       git show :myfile > myfileA
+"
+"   The second instance is the buffer contents.  Ideally we would pass this to
+"   git-diff on stdin via the second argument to vim's system() function.
+"   Unfortunately git-diff does not do CRLF conversion for input received on
+"   stdin, and git-show never performs CRLF conversion, so repos with CRLF
+"   conversion report that every line is modified due to mismatching EOLs.
+"
+"   Instead, we write the buffer contents to a temporary file - myfileB in this
+"   example.  Note the file extension must be preserved for the CRLF
+"   conversion to work.
+"
+" Before diffing a buffer for the first time, we check whether git knows about
+" the file:
+"
+"     git ls-files --error-unmatch myfile
+"
+" After running the diff we pass it through grep where available to reduce
+" subsequent processing by the plugin.  If grep is not available the plugin
+" does the filtering instead.
+function! gitgutter#diff#run_diff(realtime, preserve_full_diff)
   " Wrap compound commands in parentheses to make Windows happy.
   " bash doesn't mind the parentheses; fish doesn't want them.
   let cmd = s:fish ? '' : '('
@@ -24,9 +65,9 @@ function! gitgutter#diff#run_diff(realtime, use_external_grep)
   endif
 
   if a:realtime
-    let blob_name = ':'.gitgutter#utility#shellescape(gitgutter#utility#file_relative_to_repo_root())
-    let blob_file = tempname()
-    let buff_file = tempname()
+    let blob_name = g:gitgutter_diff_base.':'.gitgutter#utility#shellescape(gitgutter#utility#file_relative_to_repo_root())
+    let blob_file = s:temp_index
+    let buff_file = s:temp_buffer
     let extension = gitgutter#utility#extension()
     if !empty(extension)
       let blob_file .= '.'.extension
@@ -42,25 +83,30 @@ function! gitgutter#diff#run_diff(realtime, use_external_grep)
     let op_mark_start = getpos("'[")
     let op_mark_end   = getpos("']")
 
-    execute 'keepalt silent write' buff_file
+    execute 'keepalt noautocmd silent write!' buff_file
 
     call setbufvar(bufnr, "&mod", modified)
     call setpos("'[", op_mark_start)
     call setpos("']", op_mark_end)
   endif
 
-  let cmd .= 'git diff --no-ext-diff --no-color -U0 '.g:gitgutter_diff_args.' -- '
+  let cmd .= 'git'
+  if s:c_flag
+    let cmd .= ' -c "diff.autorefreshindex=0"'
+  endif
+  let cmd .= ' diff --no-ext-diff --no-color -U0 '.g:gitgutter_diff_args.' '
+
   if a:realtime
-    let cmd .= blob_file.' '.buff_file
+    let cmd .= ' -- '.blob_file.' '.buff_file
   else
-    let cmd .= gitgutter#utility#shellescape(gitgutter#utility#filename())
+    let cmd .= g:gitgutter_diff_base.' -- '.gitgutter#utility#shellescape(gitgutter#utility#filename())
   endif
 
-  if a:use_external_grep && s:grep_available
-    let cmd .= s:grep_command
+  if !a:preserve_full_diff && s:grep_available
+    let cmd .= ' | '.s:grep_command.' '.gitgutter#utility#shellescape('^@@ ')
   endif
 
-  if (a:use_external_grep && s:grep_available) || a:realtime
+  if (!a:preserve_full_diff && s:grep_available) || a:realtime
     " grep exits with 1 when no matches are found; diff exits with 1 when
     " differences are found.  However we want to treat non-matches and
     " differences as non-erroneous behaviour; so we OR the command with one
@@ -77,24 +123,22 @@ function! gitgutter#diff#run_diff(realtime, use_external_grep)
     endif
   end
 
-  let diff = gitgutter#utility#system(gitgutter#utility#command_in_directory_of_file(cmd))
+  let cmd = gitgutter#utility#command_in_directory_of_file(cmd)
 
-  if a:realtime
-    call delete(blob_file)
-    call delete(buff_file)
-    execute 'keepalt silent! bwipeout' buff_file
+  if g:gitgutter_async && gitgutter#async#available() && !a:preserve_full_diff
+    call gitgutter#async#execute(cmd)
+    return 'async'
+
+  else
+    let diff = gitgutter#utility#system(cmd)
+
+    if gitgutter#utility#shell_error()
+      " A shell error indicates the file is not tracked by git (unless something bizarre is going on).
+      throw 'diff failed'
+    endif
+
+    return diff
   endif
-
-  if gitgutter#utility#shell_error()
-    " A shell error indicates the file is not tracked by git (unless something bizarre is going on).
-    throw 'diff failed'
-  endif
-
-  if !tracked
-    call setbufvar(bufnr, 'gitgutter_tracked', 1)
-  endif
-
-  return diff
 endfunction
 
 function! gitgutter#diff#parse_diff(diff)
@@ -236,14 +280,12 @@ endfunction
 
 " Generates a zero-context diff for the current hunk.
 "
-" type - stage | revert | preview
-function! gitgutter#diff#generate_diff_for_hunk(type)
-  " Although (we assume) diff is up to date, we don't store it anywhere so we
-  " have to regenerate it now...
-  let diff = gitgutter#diff#run_diff(0, 0)
-  let diff_for_hunk = gitgutter#diff#discard_hunks(diff, a:type == 'stage' || a:type == 'revert')
+" diff - the full diff for the buffer
+" type - stage | undo | preview
+function! gitgutter#diff#generate_diff_for_hunk(diff, type)
+  let diff_for_hunk = gitgutter#diff#discard_hunks(a:diff, a:type == 'stage' || a:type == 'undo')
 
-  if a:type == 'stage' || a:type == 'revert'
+  if a:type == 'stage' || a:type == 'undo'
     let diff_for_hunk = gitgutter#diff#adjust_hunk_summary(diff_for_hunk, a:type == 'stage')
   endif
 
@@ -268,17 +310,17 @@ function! gitgutter#diff#discard_hunks(diff, keep_header)
   endfor
 
   if a:keep_header
-    return join(modified_diff, "\n") . "\n"
+    return gitgutter#utility#stringify(modified_diff)
   else
     " Discard hunk summary too.
-    return join(modified_diff[1:], "\n") . "\n"
+    return gitgutter#utility#stringify(modified_diff[1:])
   endif
 endfunction
 
 " Adjust hunk summary (from's / to's line number) to ignore changes above/before this one.
 "
 " diff_for_hunk - a diff containing only the hunk of interest
-" staging       - truthy if the hunk is to be staged, falsy if it is to be reverted
+" staging       - truthy if the hunk is to be staged, falsy if it is to be undone
 "
 " TODO: push this down to #discard_hunks?
 function! gitgutter#diff#adjust_hunk_summary(diff_for_hunk, staging)
@@ -296,6 +338,6 @@ function! gitgutter#diff#adjust_hunk_summary(diff_for_hunk, staging)
     endif
     call add(adj_diff, line)
   endfor
-  return join(adj_diff, "\n") . "\n"
+  return gitgutter#utility#stringify(adj_diff)
 endfunction
 
