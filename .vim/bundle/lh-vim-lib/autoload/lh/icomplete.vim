@@ -4,8 +4,8 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/License.md>
-" Version:	3.3.10
-let s:version = '3.3.10'
+" Version:	3.5.0
+let s:version = '3.5.0'
 " Created:      03rd Jan 2011
 " Last Update:  16th Nov 2015
 "------------------------------------------------------------------------
@@ -17,6 +17,7 @@ let s:version = '3.3.10'
 "       Drop this file into {rtp}/autoload/lh
 "       Requires Vim7+
 " History:
+"       v3.5.0 : Smarter completion function added
 "       v3.3.10: Fix conflict with lh-brackets
 "       v3.0.0 : GPLv3
 " 	v2.2.4 : first version
@@ -38,19 +39,25 @@ function! lh#icomplete#version()
 endfunction
 
 " # Debug   {{{2
-let s:verbose = 0
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#icomplete#verbose(...)
-  if a:0 > 0 | let s:verbose = a:1 | endif
+  if a:0 > 0
+    let s:verbose = a:1
+  endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(...)
+  call call('lh#log#this', a:000)
+endfunction
+
+function! s:Verbose(...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log', a:000)
   endif
 endfunction
 
-function! lh#icomplete#debug(expr)
+function! lh#icomplete#debug(expr) abort
   return eval(a:expr)
 endfunction
 
@@ -125,6 +132,185 @@ function! lh#icomplete#_register_hook2(Hook)
         " \ ':call lh#icomplete#_clear_key_bindings()', 'CompleteGroup')
 endfunction
 
+"------------------------------------------------------------------------
+" ## Smart completion {{{2
+" Example:
+" see mu-template autoload/lh/mut.vim
+" TODO:
+" - permit to choose between completion and omnicompletion
+" - support options like:
+"   - characters used to cycle
+"   - autoclose preview window
+"   - ...
+" Function: lh#icomplete#new(startcol, matches, hook) {{{3
+function! lh#icomplete#new(startcol, matches, hook) abort
+  silent! unlet b:complete_data
+  let augroup = 'IComplete'.bufnr('%').'Done'
+  let b:complete_data = lh#on#exit()
+        \.restore('&completefunc')
+        \.restore('&complete')
+        \.restore('&omnifunc')
+        \.restore('&completeopt')
+        \.register('au! '.augroup)
+        \.register('call s:Verbose("finalized! (".getline(".").")")')
+  set complete=
+  " TODO: actually, remove most options but preview
+  set completeopt-=menu
+  set completeopt-=longest
+  set completeopt+=menuone
+  let b:complete_data.startcol        = a:startcol
+  let b:complete_data.all_matches     = map(copy(a:matches), 'type(v:val)==type({}) ? v:val : {"word": v:val}')
+  let b:complete_data.matches         = {'words': [], 'refresh': 'always'}
+  let b:complete_data.hook            = a:hook
+  let b:complete_data.cursor_pos      = []
+  let b:complete_data.last_content    = [line('.'), getline('.')]
+  let b:complete_data.no_more_matches = 0
+  call lh#log#clear()
+
+  if has('patch-7.4-314')
+    " Neutralize messages like "Match 1 of 7"/"Back at original"
+    call b:complete_data
+        \.restore('&shortmess')
+    set shortmess+=c
+  endif
+
+  " Keybindings {{{4
+  call b:complete_data
+        \.restore_buffer_mapping('<cr>', 'i')
+        \.restore_buffer_mapping('<c-y>', 'i')
+        \.restore_buffer_mapping('<esc>', 'i')
+        \.restore_buffer_mapping('<tab>', 'i')
+        \.restore_buffer_mapping('<s-tab>', 'i')
+  inoremap <buffer> <silent> <cr>  <c-y><c-\><c-n>:call b:complete_data.conclude()<cr>
+  inoremap <buffer> <silent> <c-y> <c-y><c-\><c-n>:call b:complete_data.conclude()<cr>
+  " Unlike usual <tab> behaviour, this time, <tab> cycle through the matches
+  inoremap <buffer> <silent> <tab> <down>
+  inoremap <buffer> <silent> <s-tab> <up>
+  " <c-o><Nop> doesn't work as expected...
+  " To stay in INSERT-mode:
+  " inoremap <silent> <esc> <c-e><c-o>:<cr>
+  " To return into NORMAL-mode:
+  inoremap <buffer> <silent> <esc> <c-e><esc>
+  " TODO: see to have <Left>, <Right>, <Home>, <End> abort
+
+  " Group {{{4
+  exe 'augroup '.augroup
+    au!
+    " Emulate InsertCharPost
+    " au CompleteDone <buffer> call b:complete_data.logger.log("Completion done")
+    au InsertLeave  <buffer> call b:complete_data.finalize()
+    au CursorMovedI <buffer> call b:complete_data.cursor_moved()
+  augroup END
+
+  function! s:start_completion() abort dict "{{{4
+    " <c-x><c-o>: start omni completion
+    " <c-p>       remove the first completion item
+    " <down>      but do select the first completion item
+    silent! call feedkeys( "\<C-X>\<C-O>\<C-P>\<Down>", 'n' )
+  endfunction
+  let b:complete_data.start_completion = function('s:start_completion')
+
+  function! s:cursor_moved() abort dict "{{{4
+    if self.no_more_matches
+      call self.finalize()
+      return
+    endif
+    if !self.has_text_changed_since_last_move()
+      call s:Verbose("cursor %1 just moved (text hasn't changed)", string(getpos('.')))
+      return
+    endif
+    call s:Verbose('cursor moved %1 and text has changed -> relaunch completion', string(getpos('.')))
+    call self.start_completion()
+  endfunction
+  let b:complete_data.cursor_moved = function('s:cursor_moved')
+
+  function! s:has_text_changed_since_last_move() abort dict "{{{4
+    let l = line('.')
+    let line = getline('.')
+    try
+      if l != self.last_content[0]  " moved vertically
+        let self.no_more_matches = 1
+        call s:Verbose("Vertical move => stop")
+        return 0
+        " We shall leave complete mode now!
+      endif
+      call s:Verbose("line was: %1, and becomes: %2; has_changed?%3", self.last_content[1], line, line != self.last_content[1])
+      return line != self.last_content[1] " text changed
+    finally
+      let self.last_content = [l, line]
+    endtry
+  endfunction
+  let b:complete_data.has_text_changed_since_last_move = function('s:has_text_changed_since_last_move')
+
+  function! s:complete(findstart, base) abort dict "{{{4
+    call s:Verbose('findstart?%1 -> %2', a:findstart, a:base)
+    if a:findstart
+      if self.no_more_matches
+        call s:Verbose("no more matches -> -3")
+        return -3
+        call self.finalize()
+      endif
+      if self.cursor_pos == getcurpos()
+        call s:Verbose("cursor hasn't moved -> -2")
+        return -2
+      endif
+      let self.cursor_pos = getcurpos()
+      return self.startcol
+    else
+      return self.get_completions(a:base)
+    endif
+  endfunction
+  let b:complete_data.complete = function('s:complete')
+
+  function! s:get_completions(base) abort dict "{{{4
+    let matching = filter(copy(self.all_matches), 'v:val.word =~ join(split(a:base, ".\\zs"), ".*")')
+    let self.matches.words = matching
+    call s:Verbose("'%1' matches: %2", a:base, string(self.matches))
+    if empty(self.matches.words)
+      call s:Verbose("No more matches...")
+      let self.no_more_matches = 1
+    endif
+    return self.matches
+  endfunction
+  let b:complete_data.get_completions = function('s:get_completions')
+
+  function! s:conclude() abort dict " {{{4
+    let selection = getline('.')[self.startcol : col('.')-1]
+    call s:Verbose("Successful selection of <".selection.">")
+    if !empty(self.hook)
+      call lh#function#execute(self.hook, selection)
+    endif
+    " call self.hook()
+    call self.finalize()
+  endfunction
+  let b:complete_data.conclude = function('s:conclude')
+
+  " Register {{{4
+  " call b:complete_data
+        " \.restore('b:complete_data')
+  " set completefunc=lh#icomplete#func
+  set omnifunc=lh#icomplete#func
+
+  " Return {{{4
+  return b:complete_data
+endfunction "}}}4
+
+" Function: lh#icomplete#new_on(pattern, matches, hook) {{{3
+function! lh#icomplete#new_on(pattern, matches, hook) abort
+  let l = getline('.')
+  let startcol = match(l[0:col('.')-1], '\v'.a:pattern.'+$')
+  if startcol == -1
+    let startcol = col('.')-1
+  endif
+  return lh#icomplete#new(startcol, a:matches, a:hook)
+endfunction
+
+" Function: lh#icomplete#func(startcol, base) {{{3
+function! lh#icomplete#func(findstart, base) abort
+  return b:complete_data.complete(a:findstart, a:base)
+endfunction
+
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

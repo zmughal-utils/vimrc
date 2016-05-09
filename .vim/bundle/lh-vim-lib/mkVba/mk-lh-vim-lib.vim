@@ -1,13 +1,13 @@
 "=============================================================================
 " File:		mkVba/mk-lh-lib.vim
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"               <URL:http://github.com/LucHermitte>
+"		<URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
-"               <URL:http://github.com/LucHermitte/lh-vim-lib/License.md>
-" Version:	3.3.20
-let s:version = '3.3.20'
+"               <URL:http://github.com/LucHermitte/lh-vim-lib/blob/master/License.md>
+" Version:	3.8.3
+let s:version = '3.8.3'
 " Created:	06th Nov 2007
-" Last Update:  04th Dec 2015
+" Last Update:  04th May 2016
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -40,13 +40,16 @@ autoload/lh/icomplete.vim
 autoload/lh/leader.vim
 autoload/lh/let.vim
 autoload/lh/list.vim
+autoload/lh/log.vim
 autoload/lh/mapping.vim
+autoload/lh/math.vim
 autoload/lh/menu.vim
 autoload/lh/on.vim
 autoload/lh/option.vim
 autoload/lh/path.vim
 autoload/lh/position.vim
 autoload/lh/stack.vim
+autoload/lh/string.vim
 autoload/lh/syntax.vim
 autoload/lh/vcs.vim
 autoload/lh/visual.vim
@@ -58,8 +61,10 @@ plugin/lhvl.vim
 plugin/ui-functions.vim
 plugin/words_tools.vim
 tests/lh/UT-fixpath.vim
+tests/lh/encoding.vim
 tests/lh/function.vim
 tests/lh/list.vim
+tests/lh/math.vim
 tests/lh/path.vim
 tests/lh/test-Fargs2String.vim
 tests/lh/test-askmenu.vim

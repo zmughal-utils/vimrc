@@ -17,7 +17,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 
   * [Miscellaneous functions](#miscellaneous-functions)
   * [System related functions](#system-related-functions)
-  * [Lists related functions](#lists-related-functions)
+  * [Lists and dictionaries related functions](#lists-and-dictionaries-related-functions)
   * [Stacks related functions](#stacks-related-functions)
   * [Graphs related functions](#graphs-related-functions)
   * [Paths related functions](#paths-related-functions)
@@ -32,6 +32,8 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | Function                                    | Purpose                                                                                                                                                                  |
 |---------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lh#askvim#exe()`                           | Returns what a VimL command echoes                                                                                                                                       |
+| `lh#askvim#scriptnames()`                   | Returns `:scriptnames` result as a list of [scriptid, name] arrays                                                                                                       |
+| `lh#askvim#scriptname(id)`                  | Returns the name of the script associate to {id}                                                                                                                         |
 | `lh#common#check_deps()`                    | Checks a VimL symbol is loaded                                                                                                                                           |
 | `lh#common#echomsg_multilines()`            | Applies `:echomsg` on a multi-lines text                                                                                                                                 |
 | `lh#common#error_msg()`                     | Displays an error message                                                                                                                                                |
@@ -50,11 +52,19 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#float#max(list)`                        | Returns the maximum of a list of floats                                                                                                                                  |
 | `lh#float#min(list)`                        | Returns the minimum of a list of floats                                                                                                                                  |
 | `lh#ft#is_text()`                           | Tells whether the filetype is a text filetype                                                                                                                            |
-| `lh#icomplete#run(startcol, matches, Hook)` | Prepares an insert mode completion menu that'll trigger actions instead of inserting text as `complete()` does                                                           |
+| `lh#icomplete#new(startcol, matches, Hook)` | Prepares a smart insert mode omni-completion menu that'll trigger actions instead of inserting text. _smart_ means characters may be typed to reduce choices.            |
+| `lh#icomplete#new_on(pat, matches, Hook)`   | Same as previous, but this time the startcol is automatically deduced from the word pattern.                                                                             |
+| `lh#icomplete#run(startcol, matches, Hook)` | Prepares an insert mode completion menu that'll trigger actions instead of inserting text as `complete()` does. **deprecated** prefer `lh#icomplete#new()`               |
 | `lh#leader#get()`                           | Returns the current value of `g:mapleader`, or `'\\'` if unset                                                                                                           |
 | `lh#leader#get_local()`                     | Returns the current value of `g:maplocalleader`, or `'\\'` if unset                                                                                                      |
 | `lh#leader#set_local_if_unset()`            | Sets a new value to `g:maplocalleader`, if and only if this variable wasn't already set                                                                                  |
 | `lh#let#let_if_undef()`                     | Defines a vim variable (with ` :let`) on the condition the variable does not exist yet                                                                                   |
+| `lh#log#echomsg()`                          | Returns a new logger object, that logs with `:echomsg` (internal use)                                                                                                    |
+| `lh#log#new()`                              | Returns a new logger object (internal use)                                                                                                                               |
+| `lh#log#none()`                             | Returns a new, inactive, logger object (internal use)                                                                                                                    |
+| `lh#log#set_logger(kind, opts)`             | Sets the global logging policy (quickfix/loclist window, none, `echomsg`)                                                                                                |
+| `lh#log#this({format}, {args...})`          | Logs a formatted message with the global logger                                                                                                                          |
+| `lh#log#exception(...)`                     | Logs the exception, and possibly its callstack, with the global logger.                                                                                                  |
 | `lh#on#exit()`                              | Prepares a finalizer object to be executed in a `:finally` clause in order to restore variables and execute functions                                                    |
 | `lh#option#add()`                           | Adds new values to a vim option -- and avoid the values being listed more than once                                                                                      |
 | `lh#option#get(name [,default [, scope]])`  | Fetches the value of a user defined option, that may be _empty_. `default` is returned if the option does not exists. Default value for `default` is `g:lh#option#unset` |
@@ -67,10 +77,12 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#position#char_at()`                     | Obtains the character at a given pair of coordinates                                                                                                                     |
 | `lh#position#extract(pos1,pos2)`            | Obtains the text between two positions                                                                                                                                   |
 | `lh#position#is_before()`                   | Tells if a position in a buffer is before another one                                                                                                                    |
+| `lh#string#matches()`                       | Extracts a list of all matches in a string                                                                                                                               |
+| `lh#string#trim()`                          | Trim a string                                                                                                                                                            |
 | `lh#vcs#get_type(...)`                      | Returns the type of the versioning system the file is under                                                                                                              |
-| `lh#vcs#as_http(...)`                       | Returns the url of the repo the parameter is under, or `g:url` if none is found. Enforce the rsult in the form http://, if possible                                      |
-| `lh#vcs#decode_github_url(url)`             | Extract user name and repo name from a github url                                                                                                                        |
-| `lh#vcs#get_url(...)`                       | Returns the url of the repo the parameter is under, or `g:url` if none is found                                                                                          |
+| `lh#vcs#as_http(...)`                       | Returns the url of the repository the parameter is under, or `g:url` if none is found. Enforce the result in the form http://, if possible                               |
+| `lh#vcs#decode_github_url(url)`             | Extract user name and repository name from a github url                                                                                                                  |
+| `lh#vcs#get_url(...)`                       | Returns the url of the repository the parameter is under, or `g:url` if none is found                                                                                    |
 | `lh#vcs#is_git(...)`                        | Tells whether the file is under a git repository                                                                                                                         |
 | `lh#vcs#is_svn(...)`                        | Tells whether the file is under a svn repository                                                                                                                         |
 | `lh#visual#cut()`                           | Cut and returns the visually selected text                                                                                                                               |
@@ -80,18 +92,18 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 
 See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 
-| Function                           | Purpose                                                                            |
-|------------------------------------|------------------------------------------------------------------------------------|
-| `lh#env#expand_all()`              | Expands environment variables found in strings                                     |
-| `lh#os#has_unix_layer_installed()` | Tells whether the enduser has declared a unix layer installed (on a Windows box)   |
-| `lh#os#OnDOSWindows()`             | Tells whether the current vim is a native windows flavour of gvim                  |
-| `lh#os#sys_cd()`                   | Build a portable string to use to change directoy when executing external commands |
-| `lh#os#chomp(text)`                | Like Perl `chomp`, remove the trailing character produced by `system()` calls      |
-| `lh#os#system(cmd)`                | Returns `lh#os#chomp(system(command))`                                             |
-| `lh#os#cpu_number()`               | Returns the number of processors on the machine                                    |
-| `lh#os#cpu_cores_number()`         | Returns the number of cores on the machine                                         |
+| Function                           | Purpose                                                                             |
+|------------------------------------|-------------------------------------------------------------------------------------|
+| `lh#env#expand_all()`              | Expands environment variables found in strings                                      |
+| `lh#os#has_unix_layer_installed()` | Tells whether the enduser has declared a unix layer installed (on a Windows box)    |
+| `lh#os#OnDOSWindows()`             | Tells whether the current vim is a native windows flavour of gvim                   |
+| `lh#os#sys_cd()`                   | Build a portable string to use to change directory when executing external commands |
+| `lh#os#chomp(text)`                | Like Perl `chomp`, remove the trailing character produced by `system()` calls       |
+| `lh#os#system(cmd)`                | Returns `lh#os#chomp(system(command))`                                              |
+| `lh#os#cpu_number()`               | Returns the number of processors on the machine                                     |
+| `lh#os#cpu_cores_number()`         | Returns the number of cores on the machine                                          |
 
-### Lists and dictionary related functions
+### Lists and dictionaries related functions
 | Function                    | Purpose                                                                                                           |
 |:----------------------------|:------------------------------------------------------------------------------------------------------------------|
 | `lh#dict#add_new()`         | Adds elements from the second dictionary if they are not set yet in the first                                     |
@@ -256,7 +268,7 @@ function, or a plain text UI function (defined by vim, or emulated)
 | `CONFIRM()` | Similar to `confirm()`                                                                                                                      |
 | `IF()`      | Acts as the ternary operator                                                                                                                |
 | `INPUT()`   | Calls `inputdialog()` or `input()`                                                                                                          |
-| `SWITCH()`  | Â«Â»                                                                                                                                    |
+| `SWITCH()`  | Â«Â»                                                                                                                                        |
 | `WHICH()`   | Wrapper around functions like `CONFIRM()` or `COMBO()` that returns the text of the selected item instead of the index of the selected item |
 
 In the same thematics, see also [VFT - Vim Form Toolkit](http://www.vim.org/scripts/script.php?script_id=2160)
@@ -287,10 +299,15 @@ flavor LucHermitte/lh-vim-lib
 Bundle 'LucHermitte/lh-vim-lib'
 ```
 
+## Credits
+  * Luc Hermitte, maintainer
+  * Troy Curtis Jr, for portability functions, and many tests/issues he raised
+  * Many other I've forgotten :(
+
 ## Some other VimL libraries
   * [genutils](http://www.vim.org/scripts/script.php?script_id=197)
   * [pathogen](http://www.vim.org/scripts/script.php?script_id=2332)
   * [Tom Link's tlib](http://www.vim.org/scripts/script.php?script_id=1863)
-  * [theonevimlib](http://github.com/MarcWeber/theonevimlib/tree/master), initiated by Marc Weber
+  * [theonevimlib](http://www.vim.org/scripts/script.php?script_id=1963), initiated by Marc Weber
   * [anwolib](http://www.vim.org/scripts/script.php?script_id=3800), by Andy Wokula
   * [l9](http://www.vim.org/scripts/script.php?script_id=3252), by Takeshi NISHIDA

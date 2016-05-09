@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v3.3.20)
-                        For Vim version 7+      Last change: 03rd Dec 2015
+*lh-vim-lib.txt*        Vim common libraries (v3.8.3)
+                        For Vim version 7+      Last change: 04th May 2016
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -27,6 +27,8 @@ FUNCTIONS                                    *lhvl-functions*     {{{1
                                                                         {{{2Functions list~
 Miscellanous functions:                                 |lhvl#misc|
 - |lh#askvim#exe()|
+- |lh#askvim#scriptnames()|
+- |lh#askvim#scriptname()|
 - |lh#common#check_deps()|
 - |lh#common#echomsg_multilines()|
 - |lh#common#error_msg()|
@@ -38,15 +40,13 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#event#register_for_one_execution_at()|
 - |lh#exception#callstack()|
 - |lh#fmt#printf()|
+- |lh#float#min()|, |lh#float#max()|,
+  |lh#float#arg_min()|, |lh#float#arg_max()|
 - |lh#leader#get()|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
+- |lh#math#abs()|
 - |lh#on#exit()|
-- |lh#option#get()|
-- |lh#option#get_non_empty()|
-- |lh#option#getbufvar()|
-- |lh#option#is_set()|
-- |lh#option#is_unset()|
 - |lh#position#char_at()|
 - |lh#position#char_at_mark()|
 - |lh#position#char_at_pos()|
@@ -54,6 +54,12 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#position#is_before()|
 - |lh#visual#cut()|
 - |lh#visual#selection()|
+Options related functions:                              |lhvl#option|
+- |lh#option#get()|
+- |lh#option#get_non_empty()|
+- |lh#option#getbufvar()|
+- |lh#option#is_set()|
+- |lh#option#is_unset()|
 Functors related functions:                             |lhvl#function|
 - |lh#function#bind()|
 - |lh#function#execute()|
@@ -82,6 +88,9 @@ Lists related functions:                                |lhvl#list|
 - |lh#list#Transform()| and |lh#list#transform()|
 - |lh#list#transform_if()|
 - |lh#list#unique_sort()| and |lh#list#unique_sort2()|
+String related functions:                               |lhvl#string|
+- |lh#string#matches()|
+- |lh#string#trim()|
 Graphs related functions:                               |lhvl#graph|
 - |lh#graph#tsort#depth()|
 - |lh#graph#tsort#breadth()|
@@ -145,10 +154,19 @@ OS/System related functions:                            |lhvl#os|
 - |lh#os#cpu_number()|
 - |lh#os#cpu_cores_number()|
 Completion related functions                            |lhvl#completion|
+- |lh#icomplete#new()|
+- |lh#icomplete#new_on()|
+- |lh#icomplete#run()|
+Log related functions                                   |lhvl#log|
+- |:LHLog|, |lh#log#set_logger()|
+- |lh#log#new()|
+- |lh#log#none()|
 
-
+------------------------------------------------------------------------------
 COMMANDS                                              *lhvl#commands*   {{{2
 - |LetIfUndef|
+- |PushOptions|
+- |PopOptions|
 }}}2
 ------------------------------------------------------------------------------
 MISCELLANOUS FUNCTIONS                                *lhvl#misc*       {{{2
@@ -178,7 +196,7 @@ This function displays an error message in a |confirm()| box if gvim is being
 used, or as a standard vim error message through |:echoerr| otherwise.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#common#WarningMsg()*           {{{3
+                                                 *lh#common#WarningMsg()*          {{{3
 lh#common#WarningMsg({text}) (*deprecated*)~
                                               *lh#common#warning_msg()*
 lh#common#warning_msg({text})~
@@ -224,7 +242,7 @@ lh#common#rand({max})~
 @return a random number in `[0..max[`.
 @requires vim to be compiled with |+python| feature.
 
-                                                *lh#fmt#printf()*                {{{3
+                                                *lh#fmt#printf()*                 {{{3
 lh#fmt#printf({format}, {args}...)~
 @return a formatted string
 Unlike |printf()|, this function takes positional parameters, i.e. >
@@ -235,10 +253,25 @@ Unlike |printf()|, this function takes positional parameters, i.e. >
   AssertEquals(lh#fmt#printf("foo %2 bar %1", 42, "toto"), "foo toto bar 42")
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#math#abs()*                   {{{3
+lh#math#abs(val)~
+@returns the absolute value of the number {val}.
+@author Troy Curtis Jr
+
+The purpose of the function is to emulate |abs()| on vim version where it
+isn't defined.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#on#exit()*                    {{{3
 lh#on#exit()~
 This function will register action to be executed at the end on a scope, and
 more precisally in a |:finally| section.
+It permits to do the following things:
+- `restore()`                restores a |variable| or a vim |option|.
+- `restore_option()`         restores a |lhvl#option|
+- `register()`               registers a |command| to execute.
+- `restore_buffer_mapping()` restores a |map-<buffer>|
+
 e.g. >
 
    " Here let suppose g:foo exists, but not g:bar
@@ -255,6 +288,175 @@ e.g. >
       call cleanup.finalize()
     endtry
     " Then g:foo and g:bar are restored, and "The END" has been echoed
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#leader#get()*                 {{{3
+                                                *lh#leader#get_local()*
+lh#leader#get([default='\'])~
+lh#leader#get_local([default='\'])~
+Returns the value of g:|mapleader| (/resp g:|maplocalleader|), or the default
+value otherwise. The default value for the {default} value (sic) for the leader is '\'.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#leader#set_local_if_unset()*  {{{3
+lh#leader#set_local_is_unset(value)~
+Sets g:|maplocalleader| to {value}, if and only if it isn't already set
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#askvim#Exe()*                 {{{3
+lh#askvim#Exe({command}) (*deprecated*)~
+                                                *lh#askvim#exe()*
+lh#askvim#exe({command})~
+@param {command}    Command to execute from vim.
+@return             What the command echoes while executed.
+@note               This function encapsultates |redir| without altering any
+                    register.
+
+Some information aren't directly accessible (yet) through vim API
+(|functions|).  However, they can be obtained by executing some commands, and
+redirecting the result of these commands.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#askvim#scriptnames()*         {{{3
+lh#askvim#scriptnames()~
+@return |:scriptnames| result as a list of [script_id, name] arrays.
+@internal `s:scripts` variables is updated
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#askvim#scriptname()*          {{{3
+lh#askvim#scriptname(id)~
+@return the name of the script associate to {id}.
+@internal Lazily updates `s:scripts`.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#askvim#menu()*                {{{3
+lh#askvim#menu({menuid},{modes})~
+@param {menuid}     Menu identifier.
+@param {modes}      List of modes
+@return             Information related to the {menuid}
+@todo               Still bugged
+
+This function provides a way to obtain information related to a menu entry in
+Vim.
+
+The format of the result being ?to be stabilized?
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#position#IsBefore()*          {{{3
+lh#position#IsBefore({lhs_pos},{rhs_pos})  (*deprecated*)~
+                                               *lh#position#is_before()*
+lh#position#is_before({lhs_pos},{rhs_pos})~
+@param[in]          Positions as those returned from |getpos()|
+@return             Whether {lhs_pos} is before {rhs_pos}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#position#char_at()*           {{{3
+lh#position#char_at({lig}, {col}~
+@return             The character at a given position.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#position#CharAtMark()*        {{{3
+lh#position#CharAtMark({mark})  (*deprecated*)~
+                                             *lh#position#char_at_mark()*
+lh#position#char_at_mark({mark})~
+@return             The character at a given |mark|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#position#CharAtPos()*         {{{3
+lh#position#CharAtPos({pos})  (*deprecated*)~
+                                              *lh#position#char_at_pos()*       {{{3
+lh#position#char_at_pos({pos})~
+@return             The character at a position (see |getpos()|).
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#position#extract()*           {{{3
+lh#position#extract({pos1}, {pos2})~
+@return             The string between the two positions (see |getpos()|).
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#visual#selection()*           {{{3
+lh#visual#selection()~
+@return             The current visual selection
+@post              |registers| are not altered by this function
+
+                                                *lh#visual#cut()*                 {{{3
+lh#visual#cut()~
+@return             The current visual selection
+@post              |registers| are not altered by this function ;
+                    selection is deleted.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#iconv()*             {{{3
+lh#encoding#iconv({expr}, {from}, {to})~
+This function just calls |iconv()| with the same arguments. The only
+difference is that it return {expr} when we know that |iconv()| will return an
+empty string.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#strlen()*            {{{3
+lh#encoding#strlen({mb_string})~
+This function returns the length of the multi-bytes string.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#at()*                {{{3
+lh#encoding#at({mb_string}, {i})~
+Returns the i-th character in a multi-bytes string.
+@param {i} 0-indexed offset.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#strpart()*           {{{3
+lh#encoding#strpart({mb_string}, {position}, {length})~
+Returns {length} extracted characters from {position} in a multi-bytes string.
+@param {position} 0-indexed offset.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                 *lh#event#RegisterForOneExecutionAt()*           {{{3
+lh#event#RegisterForOneExecutionAt({event}, {cmd}, {group})  (*deprecated*)~
+                                 *lh#event#register_for_one_execution_at()*
+lh#event#register_for_one_execution_at({event}, {cmd}, {group})~
+Registers a command to be executed once (and only once) when {event} is
+triggered on the current file.
+
+@param {event} Event that will trigger the execution of {cmd}|autocmd-events|
+@param   {cmd} |expression-command| to execute
+@param {group} |autocmd-groups| under which the internal autocommand will be
+               registered.
+@todo possibility to specify the file pattern
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#exception#callstack()*        {{{3
+lh#exception#callstack({throwpoint})~
+Decodes the {throwpoint} and return a list of dictionaries made of:
+- "`script`": name of the file where the exception comes from
+- "`pos`"   : abolute line number in the script where the exception has been issued
+- "`fname`" : name of the function where the exception has been issued
+- "`offset`": Relative line number from the function first line where the
+  exception....
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                               *lh#float#max()*     *lh#float#min()*             {{{3
+                               *lh#float#arg_max()* *lh#float#arg_min()*
+lh#float#min({list})~
+lh#float#arg_min({list})~
+lh#float#min({list})~
+lh#float#arg_min({list})~
+Returns The minimum, /arg-minimum, /maximum, /arg-maximum of a |List| of
+|expr-float|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                *lh#ft#is_text()*                                 {{{3
+lh#ft#is_text([ft])~
+Tells whether the corresponding filetype correspond to a text filetype.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                *lh#ft#is_script()*                               {{{3
+lh#ft#is_text([ft])~
+Tells whether the corresponding filetype correspond to a script filetype (sh,
+python, ruby, perl).
+
+------------------------------------------------------------------------------
+OPTIONS RELATED FUNCTIONS                             *lhvl#option*     {{{2
+This sub-library helps fetching option values for plugins.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#option#Get()*                 {{{3
@@ -280,7 +482,7 @@ argument {scopes}. By default, buffer-local options have the priority over
 global options.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                              *lh#option#GetNonEmpty()*           {{{3
+                                              *lh#option#GetNonEmpty()*         {{{3
 lh#option#GetNonEmpty({name},{default}[,{scopes}])  (*deprecated*)~
                                               *lh#option#get_non_empty()*
 lh#option#get_non_empty({name}[,{default}[,{scopes}]])~
@@ -336,159 +538,6 @@ lh#option#unset()~
 as it will get lazily loaded on need.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#leader#get()*                {{{3
-                                                *lh#leader#get_local()*
-lh#leader#get([default='\'])~
-lh#leader#get_local([default='\'])~
-Returns the value of g:|mapleader| (/resp g:|maplocalleader|), or the default
-value otherwise. The default value for the {default} value (sic) for the leader is '\'.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#leader#set_local_if_unset()* {{{3
-lh#leader#set_local_is_unset(value)~
-Sets g:|maplocalleader| to {value}, if and only if it isn't already set
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#askvim#Exe()*                 {{{3
-lh#askvim#Exe({command}) (*deprecated*)~
-                                                *lh#askvim#exe()*
-lh#askvim#exe({command})~
-@param {command}    Command to execute from vim.
-@return             What the command echoes while executed.
-@note               This function encapsultates |redir| without altering any
-                    register.
-
-Some information aren't directly accessible (yet) through vim API
-(|functions|).  However, they can be obtained by executing some commands, and
-redirecting the result of these commands.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#askvim#menu()*                {{{3
-lh#askvim#menu({menuid},{modes})~
-@param {menuid}     Menu identifier.
-@param {modes}      List of modes
-@return             Information related to the {menuid}
-@todo               Still bugged
-
-This function provides a way to obtain information related to a menu entry in
-Vim.
-
-The format of the result being ?to be stabilized?
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#position#IsBefore()*           {{{3
-lh#position#IsBefore({lhs_pos},{rhs_pos})  (*deprecated*)~
-                                               *lh#position#is_before()*
-lh#position#is_before({lhs_pos},{rhs_pos})~
-@param[in]          Positions as those returned from |getpos()|
-@return             Whether {lhs_pos} is before {rhs_pos}
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                             *lh#position#char_at()*              {{{3
-lh#position#char_at({lig}, {col}~
-@return             The character at a given position.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                             *lh#position#CharAtMark()*           {{{3
-lh#position#CharAtMark({mark})  (*deprecated*)~
-                                             *lh#position#char_at_mark()*
-lh#position#char_at_mark({mark})~
-@return             The character at a given |mark|.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                              *lh#position#CharAtPos()*           {{{3
-lh#position#CharAtPos({pos})  (*deprecated*)~
-                                              *lh#position#char_at_pos()*         {{{3
-lh#position#char_at_pos({pos})~
-@return             The character at a position (see |getpos()|).
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                             *lh#position#extract()*            {{{3
-lh#position#extract({pos1}, {pos2})~
-@return             The string between the two positions (see |getpos()|).
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#visual#selection()*           {{{3
-lh#visual#selection()~
-@return             The current visual selection
-@post              |registers| are not altered by this function
-
-                                                *lh#visual#cut()*                 {{{3
-lh#visual#cut()~
-@return             The current visual selection
-@post              |registers| are not altered by this function ;
-                    selection is deleted.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#encoding#iconv()*             {{{3
-lh#encoding#iconv({expr}, {from}, {to})~
-This function just calls |iconv()| with the same arguments. The only
-difference is that it return {expr} when we know that |iconv()| will return an
-empty string.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#encoding#strlen()*            {{{3
-lh#encoding#strlen({mb_string})~
-This function returns the length of the multi-bytes string.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#encoding#at()*                {{{3
-lh#encoding#at({mb_string}, {i})~
-Returns the i-th character in a multi-bytes string.
-@param {i} 0-indexed offset.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#encoding#strpart()*           {{{3
-lh#encoding#strpart({mb_string}, {position}, {length})~
-Returns {length} extracted characters from {position} in a multi-bytes string.
-@param {position} 0-indexed offset.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                 *lh#event#RegisterForOneExecutionAt()*           {{{3
-lh#event#RegisterForOneExecutionAt({event}, {cmd}, {group})  (*deprecated*)~
-                                 *lh#event#register_for_one_execution_at()*
-lh#event#register_for_one_execution_at({event}, {cmd}, {group})~
-Registers a command to be executed once (and only once) when {event} is
-triggered on the current file.
-
-@param {event} Event that will trigger the execution of {cmd}|autocmd-events|
-@param   {cmd} |expression-command| to execute
-@param {group} |autocmd-groups| under which the internal autocommand will be
-               registered.
-@todo possibility to specify the file pattern
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#exception#callstack()*      {{{3
-lh#exception#callstack({throwpoint})~
-Decodes the {throwpoint} and return a list of dictionaries made of:
-- "`script`": name of the file where the exception comes from
-- "`pos`"   : abolute line number in the script where the exception has been issued
-- "`fname`" : name of the function where the exception has been issued
-- "`offset`": Relative line number from the function first line where the
-  exception....
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                               *lh#float#max()*     *lh#float#min()*              {{{3
-                               *lh#float#arg_max()* *lh#float#arg_min()*
-lh#float#min({list})~
-lh#float#arg_min({list})~
-lh#float#min({list})~
-lh#float#arg_min({list})~
-Returns The minimum, /arg-minimum, /maximum, /arg-maximum of a |List| of
-|expr-float|.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                *lh#ft#is_text()*                                 {{{3
-lh#ft#is_text([ft])~
-Tells whether the corresponding filetype correspond to a text filetype.
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                *lh#ft#is_script()*                               {{{3
-lh#ft#is_text([ft])~
-Tells whether the corresponding filetype correspond to a script filetype (sh,
-python, ruby, perl).
-
-------------------------------------------------------------------------------
 FUNCTORS RELATED FUNCTIONS                            *lhvl#function*   {{{2
 
 This sub-library helps defining functors-like variables, and execute them.
@@ -577,6 +626,29 @@ The evaluation is meant to be done with |eval()|.
    >:let call = lh#function#prepare('Print', [1,2,"foo"])
    >:echo eval(call)
    1 ## 2 ## 'foo'
+
+
+------------------------------------------------------------------------------
+STRINGS RELATED FUNCTIONS                             *lhvl#string*     {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#matches()*             {{{3
+lh#string#matches(string, pattern)~
+@param    {string} |expr-string|
+@param   {pattern} |expr-string|
+@return            A |List| of all substrings that match {pattern} in {string}
+@return            An empty list if there is no match
+
+Example: >
+   let matches = lh#string#matches('sqjg %1 msqkg ml %2 mihs m%43%8', '%\zs\d\+')
+   let expected= ['1', '2', '43', '8']
+   AssertEquals(matches, expected)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#trim()*                {{{3
+lh#string#trim(string)~
+@param    {string} |expr-string|
+@return            {string} trimmed of spaces
 
 
 ------------------------------------------------------------------------------
@@ -943,6 +1015,10 @@ Examples: >
    :let llist = [ [1,2], [5,6], [3,4]]
    :echo lh#list#accumulate2(llist, [])
    [1, 2, 5, 6, 3, 4]
+
+   :let strings = [ 'foo', 'bar', 'toto' ]
+   :echo lh#list#accumulate2(strings, 0, 'v:1_ + strlen(v:2_)')
+   10
 
    :echo lh#list#accumulate2(llist, [], 'v:2_ + v:1_')
    [3, 4, 5, 6, 1, 2]
@@ -2100,7 +2176,7 @@ This is a shortcut to: >
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                               *lh#os#sys_cd()*                    {{{3
-lh#os#system({command)})~
+lh#os#sys_cd({command)})~
 This function is a wrapper that returns (as a string) the name of the program
 to use according to its associated task (change directory).
 
@@ -2137,15 +2213,209 @@ It will use /proc/cpuinfo when it exists.
 ------------------------------------------------------------------------------
 COMPLETION RELATED FUNCTIONS                          *lhvl#completion* {{{2
 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#icomplete#new()*                {{{3
+                                              *lh#icomplete#new_on()*
+lh#icomplete#new(startcol, matches, Hook)~
+lh#icomplete#new_on(pattern, matches, Hook)~
+Prepares an |omni-completion| menu on the text starting at {startcol} or that
+matches {pattern} just before the cursor.
+The items displayed in the menu comes from the {matches}.
+When completion succeeds, the {Hook} |lhvl-functor| is called with the
+selected item as parameter.
+
+In order to start the menu, execute *start_completion()* on the |Dict| object
+returned by these functions.
+NB: I may automate the start in the future.
+
+For more information on:
+- {startcol}, see |complete-functions|
+- {matches}, see |complete-items|
+
+So far, no special handling of the |preview-window| is done.
+
+When in completion, the following keybindings are made in complement of
+|popupmenu-keys|:
+<CR>  behaves as CTRL-Y: Accept the currently selected match and stop completion
+<ESC> behaves as CTRL-E: End completion, go back to what was there before
+                         selecting a match (what was typed or longest common string)
+<Tab>/<S-Tab>            Cycles to the next/previous match
+
+Example: >
+  let entries = [
+        \ {'word': 'un', 'menu': 1, 'kind': 's', 'info': ' '},
+        \ {'word': 'deux', 'menu': 2, 'kind': 's', 'info': 'takes a parameter'},
+        \ {'word': 'trois', 'menu': 3, 'info': ''},
+        \ {'word': 'trentre-deux', 'menu': 32, 'info': ''},
+        \ 'unité'
+        \ ]
+  inoremap <silent> <buffer> µ <c-o>:call lh#icomplete#new_on('\w', entries, 'lh#common#warning_msg("nominal: ".v:val)').start_completion()<cr>
+
+
+See also |mu-template| autoload/lh/mut.vim.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                               *lh#icomplete#run()*                {{{3
 lh#icomplete#run(startcol, matches, Hook)~
+@deprecated Prefer |lh#icomplete#new()| and |lh#icomplete#new_on()|.
 Runs |complete()| and registers the {Hook} to be executed when the user
 selects one entry in the menu.
 
 ------------------------------------------------------------------------------
+LOG RELATED FUNCTIONS                                 *lhvl#log*        {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lhvl-global-logger*              {{{3
+lh-vim-lib provides a global logger since version 3.6.0.
+By default, it'll echo everything with |:echomsg| (through |lh#log#echomsg|).
+
+The logging policy can be set thanks to |lh#log#set_logger()|.
+In plugins, logging can be done directly thanks to |lh#log#this()|, or though
+an encapsulation, see below.
+
+This logger doesn't support log level directly. Instead, the recommended way
+to use it is to have logging helper functions in each plugins (autoload
+plugins, or plain plugins, ftplugins, ...)  and to have these functions test a
+plugin related verbose option to decide whether they log anything or not.
+I use |mu-template| skeletons for vim plugins to automatically define these
+functions in my plugins.
+
+It looks like this: >
+    " # Debug
+    let s:verbose = get(s:, 'verbose', 0)
+    function! lh#icomplete#verbose(...)
+      if a:0 > 0
+        let s:verbose = a:1
+      endif
+      return s:verbose
+    endfunction
+
+    function! s:Log(...)
+      call call('lh#log#this', a:000)
+    endfunction
+
+    function! s:Verbose(...)
+      if s:verbose
+        call call('s:Log', a:000)
+      endif
+    endfunction
+
+
+Thus, if I want to trace what is done in my icomplete autoload plugin, I call >
+    call lh#icomplete#verbose(1)
+
+If I want to disable completely all logs, I can execute: >
+    :call lh#log#set_logger('none')
+
+If I prefer to see my traces on the right side, and in a |quickfix-window| in
+order to trace the files + line numbers along with the message to log, I'll
+execute >
+    :call lh#log#set_logger('qf', 'vert')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#set_logger()*             {{{3
+lh#log#set_logger(kind [, options])~
+Sets the global logger.
+@param[in] {kind} Depending on {kind}, the global logger becomes:
+  - `"none"`    -> |lh#log#none()| and won't ever log anything
+  - `"echomsg"` -> |lh#log#echomsg()| and log with |:echomsg|
+  - `"qf"`      -> |lh#log#new()| and log in |quickfix-window|
+                Takes another parameter that tells {where} the window is opened.
+  - `"log`      -> |lh#log#new()| and log in |location-list-window|
+                Takes another parameter that tells {where} the window is opened.
+
+
+                                                *:LHLog*                          {{{3
+:LHLog {kind}~
+Sets the global logger.
+@param {kind} any of `"none"`, `"echomsg"`, `"qf"`, `"log"`, and `"clear"`
+
+This command is simply a helper command that'll execute
+|lh#log#set_logger()||. It presents the advantage to support completion: i.e.
+no need to remember all possible parameter values. However, the {options}
+cannot be passed (for now).
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#this()*                   {{{3
+lh#log#this({format}, {args}...)~
+Logs the formatted message with the global logger.
+The message to log is prepared with |lh#fmt#printf()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#exception()*              {{{3
+lh#log#exception([{exception} [, {throwpoint}]])~
+Logs the {exception} with the global logger.
+If the global logger logs to the quickfix-window or to a location-list window,
+the callstack will also be logged.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#new()*                    {{{3
+lh#log#new({where}, {kind})~
+@param {where} Specifies where the list buffer shall appear ("vert", "lefta",
+               "abo" -- see |:vert|, |:lefta|, |:abo|)
+@param  {kind} Kind of list to fill:
+               - "qf":  |quickfix|-list
+               - "loc": |location-list|
+@returns a logger object that provides
+ - `log({msg})` -- adds a message to the qf/loclist (see |quickfix|)
+ - `reset()`    -- reset the qf/loclist; and returns `self`
+ - `clear()`    -- clears the qf/loclist
+ - `open()`     -- opens the qf/loclist
+It's isn't meant to be used directly. See |lhvl-global-logger|.
+
+@note In order to obtain the name of the calling function, an exception is
+thrown and the backtrace is analysed.
+In order to work, this trick requires:
+- A reasonable callstack size (past a point, vim shortens the names returned
+  by |v:throwpoint|.
+- Named functions ; i.e. |anonymous-function|s (i.e. functions defined on
+  dictionaries and not attached to them) will have their names mangled
+  (actually it'll be a number) and |lh#exception#callstack()| won't be able to
+  decode them.  i.e.: >
+     function s:foo() dict abort
+        logger.log("here I am");
+     endfunction
+     let dict.foo = function('s:foo')
+<  will correctly fill the quicklist/loclist, but >
+     function dict.foo() abort
+        logger.log("here I am");
+     endfunction
+<  won't.
+- Calls to the logging internal function can be wrapped into other functions.
+  However finding the depth between the function that do actually log and the
+  user function that wants to log, I had to adopt a convention: any function
+  with a name that contains `log` or `verbose` (which ever the case) will be
+  ignored.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#echomsg*                  {{{3
+lh#log#echomsg()~
+@return a logger that prints messages with |:echomsg|
+It provides the following no-op functions
+ - `log({msg})` -- display message with |:echomsg|
+ - `reset()`    -- no-op that still returns `self`
+It's isn't meant to be used directly. See |lhvl-global-logger|.
+
+Typical use, see |lh#log#set_logger()|: >
+    call lh#log#set_logger('none')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#none()*                   {{{3
+lh#log#none()~
+@return a logger that does nothing.
+It provides the following no-op functions
+ - `log({msg})` -- no-op
+ - `reset()`    -- no-op that still returns `self`
+It's isn't meant to be used directly. See |lhvl-global-logger|.
+
+Typical use, see |lh#log#set_logger()|: >
+    call lh#log#set_logger('none')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+------------------------------------------------------------------------------
                                                                      }}}1
 ==============================================================================
- (c) Luc Hermitte, 2001-2015 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
+ (c) Luc Hermitte, 2001-2016 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
  VIM: let b:VS_language = 'american'
  vim:ts=8:sw=4:tw=80:fo=tcq2:ft=help:
  vim600:fdm=marker:

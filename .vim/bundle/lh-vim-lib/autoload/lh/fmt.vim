@@ -1,18 +1,18 @@
 "=============================================================================
 " File:         autoload/lh/fmt.vim                               {{{1
-" Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
-"		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      3.3.14.
-let s:k_version = '3.3.14'
+" Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
+"               <URL:http://github.com/LucHermitte/lh-vim-lib>
+" License:      GPLv3 with exceptions
+"               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
+" Version:      3.6.1.
+let s:k_version = '3.6.01'
 " Created:      20th Nov 2015
-" Last Update:  20th Nov 2015
+" Last Update:  08th Jan 2016
 "------------------------------------------------------------------------
 " Description:
 "       Formatting functions
 "
 "------------------------------------------------------------------------
-" History:      «history»
-" TODO:         «missing features»
 " }}}1
 "=============================================================================
 
@@ -26,24 +26,25 @@ function! lh#fmt#version()
 endfunction
 
 " # Debug   {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#fmt#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(...)
+  call call('lh#log#this', a:000)
+endfunction
+
+function! s:Verbose(...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log', a:000)
   endif
 endfunction
 
-function! lh#fmt#debug(expr)
+function! lh#fmt#debug(expr) abort
   return eval(a:expr)
 endfunction
-
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
@@ -52,8 +53,10 @@ endfunction
 " TODO:
 " - support precision/width/fill
 " - %%1 that would expand into %1
+" - support named fields
 function! lh#fmt#printf(format, ...) abort
-  let res = substitute(a:format, '\v\%(\d+)', '\=a:000[submatch(1)-1]', 'g')
+  let args = map(copy(a:000), 'lh#string#as(v:val)')
+  let res = substitute(a:format, '\v\%(\d+)', '\=args[submatch(1)-1]', 'g')
   return res
 endfunction
 

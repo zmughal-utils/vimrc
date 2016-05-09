@@ -1,13 +1,13 @@
 "=============================================================================
 " File:         autoload/lh/on.vim                                {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://github.com/LucHermitte/lh-vim-lib/>
+"               <URL:http://github.com/LucHermitte/lh-vim-lib/>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/License.md>
-" Version:      3.3.9.
-let s:k_version = 339
+" Version:      3.5.0.
+let s:k_version = 350
 " Created:      15th Jan 2015
-" Last Update:  09th Nov 2015
+" Last Update:  23rd Dec 2015
 "------------------------------------------------------------------------
 " Description:
 "
@@ -51,21 +51,23 @@ function! lh#on#version()
 endfunction
 
 " # Debug   {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#on#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(...)
+  call call('lh#log#this', a:000)
+endfunction
+
+function! s:Verbose(...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log', a:000)
   endif
 endfunction
 
-function! lh#on#debug(expr)
+function! lh#on#debug(expr) abort
   return eval(a:expr)
 endfunction
 
@@ -78,17 +80,10 @@ endfunction
 function! lh#on#exit()
   let res = {'actions':[] }
 
-  function! res.finalize() dict
-    for Action in self.actions
-      if type(Action) == type(function('has'))
-        call Action()
-      else
-        exe Action
-      endif
-    endfor
-  endfunction
-  function! res.restore(varname) dict
-    if stridx(a:varname, '~')!=-1 || exists(a:varname)
+  let res.finalize = function(s:getSNR('finalize'))
+
+  function! res.restore(varname) dict abort " {{{4
+    if a:varname =~ '[~@]' || exists(a:varname)
       let action = 'let '.a:varname.'='.string(eval(a:varname))
     else
       let action = 'unlet '.a:varname
@@ -97,7 +92,7 @@ function! lh#on#exit()
 
     return self
   endfunction
-  function! res.restore_option(varname, ...) dict
+  function! res.restore_option(varname, ...) dict abort " {{{4
     let scopes = a:0 > 0 ? a:1 : 'wbg'
     let actions = []
     let lScopes = split(scopes, '\s*')
@@ -116,16 +111,54 @@ function! lh#on#exit()
     let self.actions += actions
     return self
   endfunction
-  function! res.register(action) dict
+  function! res.register(action) dict abort " {{{4
     let self.actions += [a:action]
     return self
   endfunction
 
+  function! res.restore_buffer_mapping(key, mode) dict abort " {{{4
+    let keybinding = maparg(a:key, a:mode, 0, 1)
+    if get(keybinding, 'buffer', 0)
+      let self.actions += [ 'silent! call lh#mapping#define('.string(keybinding).')']
+    else
+      let self.actions += [ 'silent! '.a:mode.'unmap <buffer> '.a:key ]
+    endif
+    return self
+  endfunction
+
+  " return {{{4
   return res
 endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
+
+" # finalizer methods {{{2
+function! s:finalize() dict " {{{4
+  " This function shall not fail!
+  for Action in self.actions
+    try
+      if type(Action) == type(function('has'))
+        call Action()
+      else
+        exe Action
+      endif
+    catch /.*/
+      call lh#log#exception()
+    finally
+      unlet Action
+    endtry
+  endfor
+endfunction
+
+" # misc functions {{{2
+" s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
 
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
