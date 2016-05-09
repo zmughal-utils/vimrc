@@ -1,7 +1,6 @@
 "=============================================================================
-" FILE: neocomplete.vim
+" FILE: matcher_nothing.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
-"          manga_osyo (Original)
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -27,43 +26,17 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! unite#sources#file_include#define()
-  return s:source
-endfunction
-
-let s:source = {
-      \ 'name' : 'file_include',
-      \ 'description' : 'candidates from include files',
-      \ 'hooks' : {},
-      \}
-function! s:source.hooks.on_init(args, context) "{{{
-  " From neocomplete include files.
-  let a:context.source__include_files =
-        \ neocomplete#sources#include#get_include_files(bufnr('%'))
-  let a:context.source__path = &path
+function! neocomplete#filters#matcher_nothing#define() abort "{{{
+  return s:matcher
 endfunction"}}}
 
-function! s:source.gather_candidates(args, context) "{{{
-  let files = map(copy(a:context.source__include_files), '{
-        \ "word" : neocomplete#util#substitute_path_separator(v:val),
-        \ "abbr" : neocomplete#util#substitute_path_separator(v:val),
-        \ "source" : "file_include",
-        \ "kind" : "file",
-        \ "action__path" : v:val
-        \ }')
+let s:matcher = {
+      \ 'name' : 'matcher_nothing',
+      \ 'description' : 'input nothing matcher',
+      \}
 
-  for word in files
-    " Path search.
-    for path in map(split(a:context.source__path, ','),
-          \ 'neocomplete#util#substitute_path_separator(v:val)')
-      if path != '' && neocomplete#head_match(word.word, path . '/')
-        let word.abbr = word.abbr[len(path)+1 : ]
-        break
-      endif
-    endfor
-  endfor
-
-  return files
+function! s:matcher.filter(context) abort "{{{
+  return a:context.candidates
 endfunction"}}}
 
 let &cpo = s:save_cpo

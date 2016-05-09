@@ -1,5 +1,5 @@
 "=============================================================================
-" FILE: matcher_head.vim
+" FILE: converter_add_paren.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
@@ -26,42 +26,23 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! neocomplete#filters#matcher_head#define() abort "{{{
-  return s:matcher
+function! neocomplete#filters#converter_add_paren#define() abort "{{{
+  return s:converter
 endfunction"}}}
 
-let s:matcher = {
-      \ 'name' : 'matcher_head',
-      \ 'description' : 'head matcher',
+let s:converter = {
+      \ 'name' : 'converter_add_paren',
+      \ 'description' : 'add parenthesis if needed',
       \}
 
-function! s:matcher.filter(context) abort "{{{
-  lua << EOF
-do
-  local pattern = vim.eval(
-      "'^' . neocomplete#filters#escape(a:context.complete_str)")
-  local input = vim.eval('a:context.complete_str')
-  local candidates = vim.eval('a:context.candidates')
-  if vim.eval('&ignorecase') ~= 0 then
-    pattern = string.lower(pattern)
-    for i = #candidates-1, 0, -1 do
-      local word = vim.type(candidates[i]) == 'dict' and
-      string.lower(candidates[i].word) or string.lower(candidates[i])
-      if string.find(word, pattern, 1) == nil then
-        candidates[i] = nil
-      end
-    end
-  else
-    for i = #candidates-1, 0, -1 do
-      local word = vim.type(candidates[i]) == 'dict' and
-      candidates[i].word or candidates[i]
-      if string.find(word, pattern, 1) == nil then
-        candidates[i] = nil
-      end
-    end
-  end
-end
-EOF
+function! s:converter.filter(context) abort "{{{
+  for candidate in filter(copy(a:context.candidates), "
+        \ v:val.word !~ '()\\?$' &&
+        \   (get(v:val, 'abbr', '') =~ '(.*)'
+        \ || get(v:val, 'info', '') =~ '(.*)')
+        \ ")
+    let candidate.word .= '('
+  endfor
 
   return a:context.candidates
 endfunction"}}}

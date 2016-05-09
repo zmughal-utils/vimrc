@@ -26,7 +26,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! neocomplete#helper#get_cur_text(...) "{{{
+function! neocomplete#helper#get_cur_text(...) abort "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   let is_skip_char = get(a:000, 0, 0)
 
@@ -56,21 +56,7 @@ function! neocomplete#helper#get_cur_text(...) "{{{
   return neocomplete.cur_text
 endfunction"}}}
 
-function! neocomplete#helper#get_force_omni_complete_pos(cur_text) "{{{
-  " Check eskk complete length.
-  if neocomplete#is_eskk_enabled()
-        \ && exists('g:eskk#start_completion_length')
-    if !neocomplete#is_eskk_convertion(a:cur_text)
-          \ || !neocomplete#is_multibyte_input(a:cur_text)
-      return -1
-    endif
-
-    let complete_pos = call(&l:omnifunc, [1, ''])
-    let complete_str = a:cur_text[complete_pos :]
-    return (neocomplete#util#mb_strlen(complete_str) >=
-          \ g:eskk#start_completion_length) ? complete_pos : -1
-  endif
-
+function! neocomplete#helper#get_force_omni_complete_pos(cur_text) abort "{{{
   let filetype = neocomplete#get_context_filetype()
   let omnifunc = &l:omnifunc
 
@@ -94,27 +80,22 @@ function! neocomplete#helper#get_force_omni_complete_pos(cur_text) "{{{
   return match(a:cur_text, '\%(' . pattern . '\m\)$')
 endfunction"}}}
 
-function! neocomplete#helper#is_enabled_source(source, filetype) "{{{
+function! neocomplete#helper#is_enabled_source(source, filetype) abort "{{{
   let source = type(a:source) == type('') ?
         \ get(neocomplete#variables#get_sources(), a:source, {})
         \ : a:source
 
   return !empty(source) && (empty(source.filetypes) ||
-        \     !empty(neocomplete#helper#ftdictionary2list(
-        \      source.filetypes, a:filetype)))
+        \     neocomplete#helper#check_filetype(source.filetypes))
         \  && (!get(source.disabled_filetypes, '_', 0) &&
-        \      empty(neocomplete#helper#ftdictionary2list(
-        \      source.disabled_filetypes, a:filetype)))
+        \      !neocomplete#helper#check_filetype(source.disabled_filetypes))
 endfunction"}}}
 
-function! neocomplete#helper#get_source_filetypes(filetype) "{{{
-  return exists('*context_filetype#get_filetypes') ?
-        \                      context_filetype#get_filetypes(a:filetype) :
-        \ (a:filetype == '') ? ['nothing'] :
-        \                      [a:filetype] + split(a:filetype, '\.')
+function! neocomplete#helper#get_source_filetypes(filetype) abort "{{{
+  return neocomplete#context_filetype#filetypes()
 endfunction"}}}
 
-function! neocomplete#helper#complete_check() "{{{
+function! neocomplete#helper#complete_check() abort "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
   if g:neocomplete#enable_debug
     echomsg split(reltimestr(reltime(neocomplete.start_time)))[0]
@@ -134,13 +115,13 @@ function! neocomplete#helper#complete_check() "{{{
   return ret
 endfunction"}}}
 
-function! neocomplete#helper#get_syn_name(is_trans) "{{{
+function! neocomplete#helper#get_syn_name(is_trans) abort "{{{
   return len(getline('.')) < 200 ?
         \ synIDattr(synIDtrans(synID(line('.'), mode() ==# 'i' ?
         \          col('.')-1 : col('.'), a:is_trans)), 'name') : ''
 endfunction"}}}
 
-function! neocomplete#helper#match_word(cur_text, ...) "{{{
+function! neocomplete#helper#match_word(cur_text, ...) abort "{{{
   let pattern = a:0 >= 1 ? a:1 : neocomplete#get_keyword_pattern_end()
 
   " Check wildcard.
@@ -152,7 +133,7 @@ function! neocomplete#helper#match_word(cur_text, ...) "{{{
   return [complete_pos, complete_str]
 endfunction"}}}
 
-function! neocomplete#helper#filetype_complete(arglead, cmdline, cursorpos) "{{{
+function! neocomplete#helper#filetype_complete(arglead, cmdline, cursorpos) abort "{{{
   " Dup check.
   let ret = {}
   for item in map(
@@ -168,7 +149,7 @@ function! neocomplete#helper#filetype_complete(arglead, cmdline, cursorpos) "{{{
   return sort(keys(ret))
 endfunction"}}}
 
-function! neocomplete#helper#unite_patterns(pattern_var, filetype) "{{{
+function! neocomplete#helper#unite_patterns(pattern_var, filetype) abort "{{{
   let keyword_patterns = []
 
   lua << EOF
@@ -203,12 +184,12 @@ EOF
   return join(keyword_patterns, '\m\|')
 endfunction"}}}
 
-function! neocomplete#helper#ftdictionary2list(dictionary, filetype) "{{{
-  return map(filter(neocomplete#get_source_filetypes(a:filetype),
-        \ 'has_key(a:dictionary, v:val)'), 'a:dictionary[v:val]')
+function! neocomplete#helper#check_filetype(dictionary) abort "{{{
+  return !empty(filter(neocomplete#context_filetype#filetypes(),
+        \ 'get(a:dictionary, v:val, 0)'))
 endfunction"}}}
 
-function! neocomplete#helper#get_sources_list(...) "{{{
+function! neocomplete#helper#get_sources_list(...) abort "{{{
   let filetype = neocomplete#get_context_filetype()
 
   let source_names = exists('b:neocomplete_sources') ?
@@ -238,15 +219,14 @@ function! neocomplete#helper#get_sources_list(...) "{{{
 
   let neocomplete = neocomplete#get_current_neocomplete()
   let neocomplete.sources = filter(sources, "
-        \   (empty(v:val.filetypes) ||
-        \    !empty(neocomplete#helper#ftdictionary2list(
-        \      v:val.filetypes, neocomplete.context_filetype)))")
+        \   empty(v:val.filetypes) ||
+        \   neocomplete#helper#check_filetype(v:val.filetypes)")
   let neocomplete.sources_filetype = neocomplete.context_filetype
 
   return neocomplete.sources
 endfunction"}}}
 
-function! neocomplete#helper#clear_result() "{{{
+function! neocomplete#helper#clear_result() abort "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
 
   let neocomplete.complete_str = ''
@@ -261,7 +241,7 @@ function! neocomplete#helper#clear_result() "{{{
   endif
 endfunction"}}}
 
-function! neocomplete#helper#call_hook(sources, hook_name, context) "{{{
+function! neocomplete#helper#call_hook(sources, hook_name, context) abort "{{{
   for source in neocomplete#util#convert2list(a:sources)
     try
       if has_key(source.hooks, a:hook_name)
@@ -280,7 +260,7 @@ function! neocomplete#helper#call_hook(sources, hook_name, context) "{{{
   endfor
 endfunction"}}}
 
-function! neocomplete#helper#call_filters(filters, source, context) "{{{
+function! neocomplete#helper#call_filters(filters, source, context) abort "{{{
   let context = extend(a:source.neocomplete__context, a:context)
   for filter in a:filters
     try
@@ -299,7 +279,7 @@ function! neocomplete#helper#call_filters(filters, source, context) "{{{
   return context.candidates
 endfunction"}}}
 
-function! neocomplete#helper#sort_human(candidates) "{{{
+function! neocomplete#helper#sort_human(candidates) abort "{{{
   " Use lua interface.
   lua << EOF
 do
@@ -317,11 +297,11 @@ EOF
   return a:candidates
 endfunction"}}}
 
-function! neocomplete#helper#check_invalid_omnifunc(omnifunc) "{{{
+function! neocomplete#helper#check_invalid_omnifunc(omnifunc) abort "{{{
   return a:omnifunc == '' || (a:omnifunc !~ '#' && !exists('*' . a:omnifunc))
 endfunction"}}}
 
-function! neocomplete#helper#indent_current_line() "{{{
+function! neocomplete#helper#indent_current_line() abort "{{{
   let pos = getpos('.')
   let len = len(getline('.'))
   let equalprg = &l:equalprg
@@ -335,7 +315,7 @@ function! neocomplete#helper#indent_current_line() "{{{
   endtry
 endfunction"}}}
 
-function! neocomplete#helper#complete_configure() "{{{
+function! neocomplete#helper#complete_configure() abort "{{{
   set completeopt-=menu
   set completeopt-=longest
   set completeopt+=menuone
@@ -356,7 +336,7 @@ function! neocomplete#helper#complete_configure() "{{{
   endif
 endfunction"}}}
 
-function! neocomplete#helper#clean(directory) "{{{
+function! neocomplete#helper#clean(directory) abort "{{{
   let directory = neocomplete#get_data_directory() .'/'.a:directory
   for file in split(glob(directory . '/*'), '\n')
     let orig = substitute(substitute(fnamemodify(file, ':t'),
