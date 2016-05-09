@@ -19,7 +19,7 @@ if has('reltime')
     lockvar! g:_SYNTASTIC_START
 endif
 
-let g:_SYNTASTIC_VERSION = '3.7.0-54'
+let g:_SYNTASTIC_VERSION = '3.7.0-135'
 lockvar g:_SYNTASTIC_VERSION
 
 " Sanity checks {{{1
@@ -94,7 +94,7 @@ let g:_SYNTASTIC_DEFAULTS = {
         \ 'loc_list_height':          10,
         \ 'nested_autocommands':      0,
         \ 'quiet_messages':           {},
-        \ 'reuse_loc_lists':          0,
+        \ 'reuse_loc_lists':          1,
         \ 'shell':                    &shell,
         \ 'sort_aggregated_errors':   1,
         \ 'stl_format':               '[Syntax: line:%F (%t)]',
@@ -292,7 +292,7 @@ function! s:BufEnterHook() abort " {{{2
         let loclist = filter(copy(getloclist(0)), 'v:val["valid"] == 1')
         let owner = str2nr(getbufvar(bufnr(''), 'syntastic_owner_buffer'))
         let buffers = syntastic#util#unique(map(loclist, 'v:val["bufnr"]') + (owner ? [owner] : []))
-        if get(w:, 'syntastic_loclist_set', 0) && !empty(loclist) && empty(filter( buffers, 'syntastic#util#bufIsActive(v:val)' ))
+        if !empty(get(w:, 'syntastic_loclist_set', [])) && !empty(loclist) && empty(filter( buffers, 'syntastic#util#bufIsActive(v:val)' ))
             call SyntasticLoclistHide()
         endif
     endif
@@ -307,7 +307,7 @@ function! s:QuitPreHook(fname) abort " {{{2
         call add(s:_quit_pre, buf . '_' . getbufvar(buf, 'changetick') . '_' . w:syntastic_wid)
     endif
 
-    if get(w:, 'syntastic_loclist_set', 0)
+    if !empty(get(w:, 'syntastic_loclist_set', []))
         call SyntasticLoclistHide()
     endif
 endfunction " }}}2
@@ -333,9 +333,7 @@ function! s:UpdateErrors(auto_invoked, checker_names) abort " {{{2
     let run_checks = !a:auto_invoked || s:modemap.doAutoChecking()
     if run_checks
         call s:CacheErrors(a:checker_names)
-        unlockvar! b:syntastic_changedtick
-        let b:syntastic_changedtick = b:changedtick
-        lockvar! b:syntastic_changedtick
+        call syntastic#util#setChangedtick()
     else
         if a:auto_invoked
             return
@@ -358,11 +356,14 @@ function! s:UpdateErrors(auto_invoked, checker_names) abort " {{{2
         let do_jump = 0
     endif
 
-    let w:syntastic_loclist_set = 0
+    let w:syntastic_loclist_set = []
     if syntastic#util#var('always_populate_loc_list') || do_jump
         call syntastic#log#debug(g:_SYNTASTIC_DEBUG_NOTIFICATIONS, 'loclist: setloclist (new)')
         call setloclist(0, loclist.getRaw())
-        let w:syntastic_loclist_set = 1
+        if !exists('b:syntastic_changedtick')
+            call syntastic#util#setChangedtick()
+        endif
+        let w:syntastic_loclist_set = [bufnr(''), b:syntastic_changedtick]
         if run_checks && do_jump && !loclist.isEmpty()
             call syntastic#log#debug(g:_SYNTASTIC_DEBUG_NOTIFICATIONS, 'loclist: jump')
             execute 'silent! lrewind ' . do_jump
@@ -510,6 +511,7 @@ function! SyntasticMake(options) abort " {{{2
 
     if has_key(a:options, 'errorformat')
         let &errorformat = a:options['errorformat']
+        set errorformat<
     endif
 
     if has_key(a:options, 'cwd')
@@ -662,7 +664,8 @@ function! s:_skip_file() abort " {{{2
     let fname = expand('%', 1)
     let skip = s:_is_quitting(bufnr('%')) || get(b:, 'syntastic_skip_checks', 0) ||
         \ (&buftype !=# '') || !filereadable(fname) || getwinvar(0, '&diff') ||
-        \ s:_ignore_file(fname) || fnamemodify(fname, ':e') =~? g:syntastic_ignore_extensions
+        \ getwinvar(0, '&previewwindow') || s:_ignore_file(fname) ||
+        \ fnamemodify(fname, ':e') =~? g:syntastic_ignore_extensions
     if skip
         call syntastic#log#debug(g:_SYNTASTIC_DEBUG_TRACE, '_skip_file: skipping checks')
     endif
@@ -689,6 +692,9 @@ function! s:_explain_skip(filetypes) abort " {{{2
         endif
         if getwinvar(0, '&diff')
             call add(why, 'diff mode')
+        endif
+        if getwinvar(0, '&previewwindow')
+            call add(why, 'preview window')
         endif
         if s:_ignore_file(fname)
             call add(why, 'filename matching g:syntastic_ignore_files')

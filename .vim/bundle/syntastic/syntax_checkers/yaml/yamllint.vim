@@ -1,7 +1,7 @@
 "============================================================================
-"File:        mdl.vim
-"Description: Syntax checking plugin for syntastic.vim
-"Maintainer:  Charles Beynon <etothepiipower at gmail dot com>
+"File:        yamllint.vim
+"Description: YAML files linting for syntastic.vim
+"Maintainer:  Adrien Vergé
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,34 +10,41 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_markdown_mdl_checker')
+if exists('g:loaded_syntastic_yaml_yamllint_checker')
     finish
 endif
-let g:loaded_syntastic_markdown_mdl_checker = 1
-
-if !exists('g:syntastic_markdown_mdl_sort')
-    let g:syntastic_markdown_mdl_sort = 1
-endif
+let g:loaded_syntastic_yaml_yamllint_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_markdown_mdl_GetLocList() dict
-    let makeprg = self.makeprgBuild({ 'args': '--warnings' })
+function! SyntaxCheckers_yaml_yamllint_GetLocList() dict
+    let makeprg = self.makeprgBuild({ 'args_after': '-f parsable' })
 
     let errorformat =
-        \ '%E%f:%\s%\=%l: %m,'.
-        \ '%W%f: Kramdown Warning: %m found on line %l'
+        \ '%f:%l:%c: [%trror] %m,' .
+        \ '%f:%l:%c: [%tarning] %m'
 
-    return SyntasticMake({
+    let env = syntastic#util#isRunningWindows() ? {} : { 'TERM': 'dumb' }
+
+    let loclist = SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
-        \ 'subtype': 'Style' })
+        \ 'env': env,
+        \ 'returns': [0, 1] })
+
+    for e in loclist
+        if e['type'] ==? 'W'
+            let e['subtype'] = 'Style'
+        endif
+    endfor
+
+    return loclist
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'markdown',
-    \ 'name': 'mdl'})
+    \ 'filetype': 'yaml',
+    \ 'name': 'yamllint' })
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
