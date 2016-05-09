@@ -147,10 +147,16 @@ architecture explicitly. E.g.:
 <
 Note: The `vimproc_cygwin.dll` compiled in Cygwin won't work with Windows Vim.
 
-If you use |neobundle.vim|, you can update and build vimproc automatically.
+If you use |dein.vim| or |neobundle.vim|, you can update and build vimproc
+automatically.
+http://github.com/Shougo/dein.vim
 http://github.com/Shougo/neobundle.vim
 
-Example for neobundle:
+Example for dein.vim:
+>
+	call dein#add('Shougo/vimproc.vim', {'build': 'make'})
+<
+Example for neobundle.vim:
 >
 	NeoBundle 'Shougo/vimproc.vim', {
 	      \   'build' : {
@@ -176,6 +182,7 @@ COMMANDS 					*vimproc-commands*
 :VimProcBang {path}					*:VimProcBang*
 			Executes {path} command and echo result.  This
 			command replaces |:!|.
+			Note: It is not asynchronous.
 
 :VimProcRead {path}					*:VimProcRead*
 			Executes {path} command and paste result in current
@@ -389,6 +396,15 @@ g:vimproc#dll_path	(default
 g:vimproc#disable	(default : not defined)
 		If it is defined, you cannot call vimproc functions.
 		You can use it to disable vimproc before loading it.
+
+					*g:vimproc#download_windows_dll*
+g:vimproc#download_windows_dll	(default : 0)
+		If this is non-zero, vimproc tries downloading MS Windows DLL
+		file from GitHub Releases page(*).
+		Vimproc also tries updating DLL file if it is outdated.
+		Vimproc does nothing if you don't use MS Windows.
+
+		(*) https://github.com/Shougo/vimproc.vim/releases
 
 						*g:vimproc#popen2_commands*
 g:vimproc#popen2_commands	(default : refer to autoload/vimproc.vim)

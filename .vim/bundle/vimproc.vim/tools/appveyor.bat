@@ -106,7 +106,7 @@ goto :eof
 :: ----------------------------------------------------------------------
 :: Install Vim and themis
 echo Downloading Vim
-appveyor DownloadFile http://files.kaoriya.net/vim/vim74-kaoriya-win%BIT%.zip -FileName vim.zip
+py tools\dl-kaoriya-vim.py --arch win%BIT% --filename vim.zip
 echo Installing Vim
 7z x vim.zip > nul
 git clone -q https://github.com/thinca/vim-themis.git themis --depth=1
