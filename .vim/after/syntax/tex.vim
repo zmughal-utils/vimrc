@@ -18,6 +18,9 @@ if has("conceal") && &enc == 'utf-8'
  endif
 endif
 
+" Enable spell checking in verbatim environments
+let g:tex_verbspell = 1
+
 " Taken from the system tex.vim but added a containedin so that it is always in
 " the texComment syntax group. This is because there is a little error in the
 " system tex.vim syntax that excludes contains=texTodo when folding is enabled.
