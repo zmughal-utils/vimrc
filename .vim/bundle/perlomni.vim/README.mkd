@@ -1,0 +1,207 @@
+
+Screencast
+==========
+
+http://www.youtube.com/watch?v=hZ7871WcIv0
+
+
+Description
+===========
+
+perl-completion plugin supports basic perl completion and Moose / DBIx::Class completion.
+
+the rules could be easily extended. see ( ftplugin/perl/perlomni.vim )
+
+core rules including:
+
+* variable name completion
+* function name completion
+* package method name completion
+* base class method name completion
+* basic Moose completion
+* basic DBIx completion
+
+Supports deoplete completion
+
+
+Requirement
+===========
+
+perlomni completion requires *vim 7.2 or newer.*
+
+and filetype feature should be enabled.
+
+Install
+========
+
+just run make:
+
+    $ make install
+
+and add ~/.vim/bin/ to your $PATH env variable , for example, add these lines to your .bashrc or .zshrc:
+
+    export PATH=~/.vim/bin:$PATH
+
+please make sure you've enable filetype plugin your `.vimrc`:
+
+    filetype on
+    filetype plugin on
+    filetype indent on
+
+NOTE) If you install pathogen.vim , you can make this working without installing.
+
+If you are you want completion as you type and are using neovim you can install https:://github.com/Shougo/deoplete.vim
+
+Usage
+=====
+
+In insert mode , press C-x C-o to emit omni completion.
+
+P.S. The completion works in terminal vim is faster than gvim/MacVim.
+
+Write your perl omni completion extensions
+=========================================
+
+Perl omni completion plugin is extensible, you can extend completion rules by
+simple regular expressions.
+
+your omni completion extension should put in ~/.vim/after/ftplugin/perl/what-ever.vim.
+
+## API Functions
+
+**AddPerlOmniRule(rule)**, for example:
+
+    cal AddPerlOmniRule({ 'only':1, 'head': '^has\s\+\w\+' , 
+        \'context': '\s\+is\s*=>\s*$'  , 
+        \'backward': '[''"]\?\w*$' , 
+        \'comp': function('s:CompMooseIs') } )
+
+    cal AddPerlOmniRule({
+        \'only':1, 
+        \'context': '&$', 
+        \'backward': '\<\U\w\+$', 
+        \'comp': function('s:CompBufferFunction') })
+
+Available Rule attributes
+
+only:
+    if one rule is matched, then rest rules won't be check.
+
+contains:
+    if file contains some string (can be regexp)
+
+context:
+    completion context pattern
+
+backward:
+    regexp for moving cursor back to the completion position.
+
+head:
+    pattern that matches paragraph head.
+
+comp:
+    completion function reference.
+
+
+### Cache Functions
+
+**GetCacheNS(ns,key)**
+
+    ns: cache namespace
+    key:  cache key
+
+**SetCacheNS(ns,key,value)**
+
+    ns: cache namespace
+    key:  cache key
+    value:  cache value
+
+
+
+Development
+===========
+
+Please feel free to ask commit bit of this. just drop me a line. :-)
+
+
+Author
+======
+
+- Cornelius (林佑安) cornelius.howl@gmail.com
+- Mattn (Yasuhiro Matsumoto) mattn.jp@gmail.com
+
+
+Contibutors
+==========
+- cazador481 (Edward Ash) eddie@ashfamily.net
+
+
+
+Samples
+=======
+
+    " SAMPLES {{{
+
+    extends 'Moose::Meta::Attribute';
+    extends 'AAC::Pvoice';
+
+    " module compeltion
+    my $obj = new B::C;
+
+
+    " complete class methods
+    Jifty::DBI::Record->
+
+    " complete built-in function
+    seekdir see
+
+
+    " $self completion
+    "   my $self
+    " to 
+    "   my $self = shift;
+    my $self
+
+    " complete current object methods
+    sub testtest { }
+    sub foo1 { }
+    sub foo2 { }
+
+    $self->
+
+    " smart object method completion
+    my $var = new Jifty;
+    $var->
+
+    " smart object method completion 2
+    my $var = Jifty::DBI->new;
+    $var->
+
+    my %hash = ( );
+    my @array = ( );
+
+    " complete variable
+    $var1 $var2 $var3 $var_test $var__adfasdf
+    $var__adfasd  $var1 
+
+
+    " moose complete
+
+    has url => (
+        metaclass => 'Labeled',
+        is        => 'rw',
+        isa       => 'Str',
+        label     => "The site's URL",
+    );
+
+    " role
+
+    with 'Restartable' => {
+        -alias => {
+            stop  => '_stop',
+            start => '_start'
+        },
+        -excludes => [ 'stop', 'start' ],
+    };
+
+    " }}}

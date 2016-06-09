@@ -1,0 +1,20 @@
+# vim:fdm=expr:fdl=1:foldexpr=getline(v\:lnum)=~'^=='?'>1'\:getline(v\:lnum)[0]=~'[*x(]'?'>2'\:getline(v\:lnum)=~'^--'?'<2'\:'='
+x base class function completion
+* support moose type constraint completion
+* support for class::accessor::fast accessor completion (with r,w attribute)
+* grouping rule 
+    :to be able to disable/enable specified group (extension)
+* template declare completion extension
+* class variable completion
+* exported function completion
+* support class method completion from 'isa', for example:
+
+        has handle =>
+            isa => 'DBI::Handle';
+
+        $self->handle->
+
+* completion priority
+* completion dictionary components
+    - for loading completion data instead of parsing , eg:
+            [completion item]\t[preview]\t[type] ...
