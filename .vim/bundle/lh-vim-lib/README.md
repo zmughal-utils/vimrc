@@ -111,6 +111,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#list#accumulate()`      | Accumulates the elements from a list                                                                              |
 | `lh#list#accumulate2()`     | Accumulates the elements from a list -- version closer to C++ std::accumulate()                                   |
 | `lh#list#chain_transform()` | Applies a series of transformation on each element from a list ; unlike `map()`, the input list is left unchanged |
+| `lh#list#concurrent_for()`  | Concurrently searches for symettric differences and intersection of two sorted sets                               |
 | `lh#list#copy_if()`         | Copies the elements from a list that match a predicate                                                            |
 | `lh#list#equal_range()`     | See C++ [`std::equal_range`](http://en.cppreference.com/w/cpp/algorithm/equal_range)                              |
 | `lh#list#find_if()`         | Searches the first element in a list that verifies a predicate                                                    |
@@ -137,6 +138,8 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#list#unique_sort()`     | Sorts the elements of a list, and makes sure they are all unique                                                  |
 | `lh#list#unique_sort2()`    | Another implementation of `unique_sort`                                                                           |
 | `lh#list#upper_bound()`     | See C++ [`std::upper_bound`](http://en.cppreference.com/w/cpp/algorithm/upper_bound)                              |
+| `lh#list#zip()`             | Zip two lists into one list.                                                                                      |
+| `lh#list#zip_as_dict()`     | Zip two lists into a dictionary                                                                                   |
 
 
 ### Stacks related functions
@@ -231,6 +234,8 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 | `lh#window#split()`              | Forces to open a new split, ignoring E36                                                                                         |
 | `lh#window#new()`                | Forces to open a new window, ignoring E36                                                                                        |
 | `lh#window#create_window_with()` | Forces to create a new split, with any split related command, ignoring E36                                                       |
+| `lh#window#getid()`              | Emulates recent `win_getid()` function                                                                                           |
+| `lh#window#gotoid()`             | Emulates recent `win_gotoid()` function                                                                                          |
 
 
 ### Syntax related functions

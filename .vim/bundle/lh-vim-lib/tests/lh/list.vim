@@ -4,9 +4,9 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/License.md>
-" Version:      3.4.0
+" Version:      3.10.0
 " Created:	19th Nov 2008
-" Last Update:  15th Dec 2015
+" Last Update:  23rd May 2016
 "------------------------------------------------------------------------
 " Description:
 " 	Tests for autoload/lh/list.vim
@@ -30,8 +30,8 @@ function! s:Test_Find_If_string_predicate()
     :let l = [ 1, 5, 48, 25, 5, 28, 6]
     :let i = lh#list#Find_if(l, 'v:val>v:1_.min  && v:val<v:1_.max && v:val%v:2_==0', [b, 2] )
     " echo i . '/' . len(l)
-    Assert i == 5
-    Assert l[i] == 28
+    AssertEquals (i ,  5)
+    AssertEquals (l[i] ,  28)
     " :echo l[i]
 endfunction
 
@@ -39,8 +39,8 @@ function! s:Test_Find_If_functor_predicate()
     :let l = [ 1, 5, 48, 25, 5, 28, 6]
     :let i = lh#list#find_if(l, 'v:1_>12  && v:1_<42 && v:1_%2==0')
     " echo i . '/' . len(l)
-    Assert i == 5
-    Assert l[i] == 28
+    AssertEquals (i ,  5)
+    AssertEquals (l[i] ,  28)
     " :echo l[i]
 endfunction
 
@@ -49,8 +49,8 @@ function! s:Test_Find_If_param_functor_predicate()
     let f = lh#function#bind('v:1_>v:2_  && v:1_<42 && v:1_%2==0', 'v:1_', 12)
     :let i = lh#list#find_if(l, f)
     " echo i . '/' . len(l)
-    Assert i == 5
-    Assert l[i] == 28
+    AssertEquals (i ,  5)
+    AssertEquals (l[i] ,  28)
     " :echo l[i]
 endfunction
 
@@ -102,7 +102,7 @@ function! s:Test_usort()
     :let expected = [ 1, 5, 6, 25, 28, 48]
     :let s = lh#list#unique_sort(l, 'n')
     " Comment string(s)
-    Assert s == expected
+    AssertEquals (s ,  expected)
 endfunction
 
 function! s:Test_usort2()
@@ -110,7 +110,7 @@ function! s:Test_usort2()
     :let expected = [ 1, 5, 6, 25, 28, 48]
     :let s = lh#list#unique_sort2(l, 'n')
     " Comment string(s)
-    Assert s == expected
+    AssertEquals (s ,  expected)
 endfunction
 
 "------------------------------------------------------------------------
@@ -118,29 +118,29 @@ endfunction
 function! s:TestBinarySearches()
   let v1 = [ -3, -2, -1, -1, 0, 0, 1, 2, 3, 4, 6 ]
   let i = lh#list#lower_bound(v1, 3)
-  Assert v1[i] == 3
+  AssertEquals (v1[i] ,  3)
   let i = lh#list#upper_bound(v1, 3)
-  Assert v1[i] == 4
+  AssertEquals (v1[i] ,  4)
   let r = lh#list#equal_range(v1, 3)
-  Assert v1[r[0]:r[1]-1] == [3]
+  AssertEquals (v1[r[0]:r[1]-1] ,  [3])
 
   let i = lh#list#lower_bound(v1, -1)
-  Assert v1[i] == -1
+  AssertEquals (v1[i] ,  -1)
   let i = lh#list#upper_bound(v1, -1)
-  Assert v1[i] == 0
+  AssertEquals (v1[i] ,  0)
   let r = lh#list#equal_range(v1, -1)
-  Assert v1[r[0]:r[1]-1] == [-1, -1]
+  AssertEquals (v1[r[0]:r[1]-1] ,  [-1, -1])
 
   let i = lh#list#lower_bound(v1, 5)
-  Assert v1[i] == 6
+  AssertEquals (v1[i] ,  6)
   let i = lh#list#upper_bound(v1, 5)
-  Assert v1[i] == 6
+  AssertEquals (v1[i] ,  6)
   let r = lh#list#equal_range(v1, 5)
-  Assert v1[r[0]:r[1]-1] == []
+  AssertEquals (v1[r[0]:r[1]-1] ,  [])
 
-  Assert len(v1) == lh#list#lower_bound(v1, 10)
-  Assert len(v1) == lh#list#upper_bound(v1, 10)
-  Assert [len(v1), len(v1)] == lh#list#equal_range(v1, 10)
+  AssertEquals (len(v1) ,  lh#list#lower_bound(v1, 10))
+  AssertEquals (len(v1) ,  lh#list#upper_bound(v1, 10))
+  AssertEquals ([len(v1), len(v1)] ,  lh#list#equal_range(v1, 10))
 endfunction
 
 "------------------------------------------------------------------------
@@ -149,13 +149,13 @@ endfunction
 function! s:Test_accumulate_len_strings()
   let strings = [ 'foo', 'bar', 'toto' ]
   let len = eval(lh#list#accumulate(strings, 'strlen', 'join(v:1_,  "+")'))
-  Assert len == 3+3+4
+  AssertEquals (len ,  3+3+4)
 endfunction
 
 function! s:Test_accumulate_join()
   let ll = [ 1, 2, 'foo', ['bar'] ]
   let res = lh#list#accumulate(ll, 'string', 'join(v:1_,  " ## ")')
-  Assert res == "1 ## 2 ## 'foo' ## ['bar']"
+  AssertEquals (res ,  "1 ## 2 ## 'foo' ## ['bar']")
   " This test will fail because it seems :for each loop cannot iterate on
   " heterogeneous containers
 endfunction
@@ -203,7 +203,7 @@ function! s:Test_copy_if()
     :let expected = [ 25, 48, 25, 28, 6]
     :let s = lh#list#copy_if(l, [], "v:1_ > 5")
     " Comment string(s)
-    Assert s == expected
+    AssertEquals (s ,  expected)
 endfunction
 
 "------------------------------------------------------------------------
@@ -214,7 +214,7 @@ function! s:Test_subset()
     :let expected = [ 1, 5, 6, 48 ]
     :let s = lh#list#subset(l, indices)
     " Comment string(s)
-    Assert s == expected
+    AssertEquals (s ,  expected)
 endfunction
 
 "------------------------------------------------------------------------
@@ -225,7 +225,62 @@ function! s:Test_intersect()
     :let expected = [ 25, 7, 6 ]
     :let s = lh#list#intersect(l1, l2)
     " Comment string(s)
-    Assert s == expected
+    AssertEquals (s ,  expected)
+endfunction
+
+" linear intersect {{{2
+" numbers {{{3
+function! s:Test_linear_intersect_numbers()
+    :let l1 = [ 1, 25, 7, 48, 26, 5, 28, 6]
+    :let l2 = [ 3, 8, 7, 25, 6 ]
+    :let expected = [ 25, 7, 6 ]
+    :call lh#list#sort(l1, 'n')
+    :call lh#list#sort(l2, 'n')
+    :call lh#list#sort(expected, 'n')
+    :let o1 = []
+    :let o2 = []
+    :let s = []
+    :call lh#list#concurrent_for(l1, l2, o1, o2, s, 'n')
+    " Comment string(s)
+    AssertEquals (s ,  expected)
+    AssertEquals (o1 , [1, 5, 26, 28, 48])
+    AssertEquals (o2 , [3, 8])
+endfunction
+
+" string as numbers {{{3
+function! s:Test_linear_intersect_numbers_as_strings()
+    :let l1 = [ '1', '25', '7', '48', '26', '5', '28', '6']
+    :let l2 = [ '3', '8', '7', '25', '6' ]
+    :let expected = [ '25', '7', '6' ]
+    :call lh#list#sort(l1, 'N')
+    :call lh#list#sort(l2, 'N')
+    :call lh#list#sort(expected, 'N')
+    :let o1 = []
+    :let o2 = []
+    :let s = []
+    :call lh#list#concurrent_for(l1, l2, o1, o2, s, 'N')
+    " Comment string(s)
+    AssertEquals (s ,  expected)
+    AssertEquals (o1 , ['1', '5', '26', '28', '48'])
+    AssertEquals (o2 , ['3', '8'])
+endfunction
+
+" strings {{{3
+function! s:Test_linear_intersect_strings()
+    :let l1 = [ '1', '25', '7', '48', '26', '5', '28', '6']
+    :let l2 = [ '3', '8', '7', '25', '6' ]
+    :let expected = [ '25', '7', '6' ]
+    :call lh#list#sort(l1)
+    :call lh#list#sort(l2)
+    :call lh#list#sort(expected)
+    :let o1 = []
+    :let o2 = []
+    :let s = []
+    :call lh#list#concurrent_for(l1, l2, o1, o2, s)
+    " Comment string(s)
+    AssertEquals (s ,  expected)
+    AssertEquals (o1 , ['1', '26', '28', '48', '5'])
+    AssertEquals (o2 , ['3', '8'])
 endfunction
 
 "------------------------------------------------------------------------
@@ -418,6 +473,24 @@ function! s:Test_flatten() abort
 
   AssertEquals(lh#list#flatten(l), range(7))
 endfunction
+
+" Zip {{{2
+" Function: s:Test_zip_lists() {{{3
+function! s:Test_zip_lists() abort
+  let l1 = ['a', 'b', 'c']
+  let l2 = [1, 2, 3]
+  AssertEquals(lh#list#zip(l1, l2), ['a', 1, 'b', 2, 'c', 3])
+  AssertThrows(lh#list#zip([1], [1,2]))
+endfunction
+
+" Function: s:Test_zip_dict() {{{3
+function! s:Test_zip_dict() abort
+  let l1 = ['a', 'b', 'c']
+  let l2 = [1, 2, 3]
+  AssertEquals(lh#list#zip_as_dict(l1, l2), {'a': 1, 'b': 2, 'c': 3})
+  AssertThrows(lh#list#zip_as_dict([1], [1,2]))
+endfunction
+
 " }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
