@@ -1,16 +1,37 @@
 let s:jobs = {}
-" Async broken on MacVim in GUI mode:
-" https://github.com/macvim-dev/macvim/issues/272
-let s:available = has('nvim') "|| (has('patch-7-4-1791') && !(has('gui_macvim') && has('gui_running')))
+
+" Nvim has always supported async commands.
+"
+" Vim introduced async in 7.4.1826.
+"
+" gVim didn't support aync until 7.4.1850 (though I haven't been able to
+" verify this myself).
+"
+" MacVim-GUI didn't support async until 7.4.1832 (actually commit
+" 88f4fe0 but 7.4.1832 was the first subsequent patch release).
+let s:available = has('nvim') || (
+      \ (has('patch-7-4-1826') && !has('gui_running')) ||
+      \ (has('patch-7-4-1850') &&  has('gui_running')) ||
+      \ (has('patch-7-4-1832') &&  has('gui_macvim'))
+      \ )
 
 function! gitgutter#async#available()
   return s:available
 endfunction
 
-function! gitgutter#async#execute(cmd)
+function! gitgutter#async#execute(cmd) abort
+  let bufnr = gitgutter#utility#bufnr()
+
   if has('nvim')
-    let bufnr = gitgutter#utility#bufnr()
-    let job_id = jobstart([&shell, &shellcmdflag, a:cmd], {
+    if has('unix')
+      let command = ["/bin/sh", "-c", a:cmd]
+    elseif has('win32')
+      let command = ["cmd.exe", "/c", a:cmd]
+    else
+      throw 'unknown os'
+    endif
+    " Make the job use a shell while avoiding (un)quoting problems.
+    let job_id = jobstart(command, {
           \ 'buffer':    bufnr,
           \ 'on_stdout': function('gitgutter#async#handle_diff_job_nvim'),
           \ 'on_stderr': function('gitgutter#async#handle_diff_job_nvim'),
@@ -27,19 +48,36 @@ function! gitgutter#async#execute(cmd)
     call s:job_started(job_id)
 
   else
+    " Make the job use a shell.
+    "
     " Pass a handler for stdout but not for stderr so that errors are
     " ignored (and thus signs are not updated; this assumes that an error
     " only occurs when a file is not tracked by git).
-    let job = job_start([&shell, &shellcmdflag, a:cmd], {
-          \ 'out_cb': 'gitgutter#async#handle_diff_job_vim'
+
+    if has('unix')
+      let command = ["/bin/sh", "-c", a:cmd]
+    elseif has('win32')
+      " Help docs recommend {command} be a string on Windows.  But I think
+      " they also say that will run the command directly, which I believe would
+      " mean the redirection and pipe stuff wouldn't work.
+      " let command = "cmd.exe /c ".a:cmd
+      let command = ["cmd.exe", "/c", a:cmd]
+    else
+      throw 'unknown os'
+    endif
+
+    let job = job_start(command, {
+          \ 'out_cb':   'gitgutter#async#handle_diff_job_vim',
+          \ 'close_cb': 'gitgutter#async#handle_diff_job_vim_close'
           \ })
-          " \ 'close_cb': 'gitgutter#handle_diff_job_vim_close'
-    call gitgutter#debug#log('[vim job: '.string(job_info(job)).'] '.a:cmd)
+    call gitgutter#debug#log('[vim job: '.string(job_info(job)).', buffer: '.bufnr.'] '.a:cmd)
+
+    call s:job_started(s:channel_id(job_getchannel(job)), bufnr)
   endif
 endfunction
 
 
-function! gitgutter#async#handle_diff_job_nvim(job_id, data, event)
+function! gitgutter#async#handle_diff_job_nvim(job_id, data, event) abort
   call gitgutter#debug#log('job_id: '.a:job_id.', event: '.a:event.', buffer: '.self.buffer)
 
   let current_buffer = gitgutter#utility#bufnr()
@@ -69,48 +107,90 @@ endfunction
 
 
 " Channel is in NL mode.
-function! gitgutter#async#handle_diff_job_vim(channel, line)
+function! gitgutter#async#handle_diff_job_vim(channel, line) abort
   call gitgutter#debug#log('channel: '.a:channel.', line: '.a:line)
 
-  " This seems to be the only way to get info about the channel once closed.
-  let channel_id = matchstr(a:channel, '\d\+')
+  call s:accumulate_job_output(s:channel_id(a:channel), a:line)
+endfunction
 
-  if a:line ==# 'DETACH'  " End of job output
-    call gitgutter#handle_diff(s:job_output(channel_id))
-    call s:job_finished(channel_id)
-  else
-    call s:accumulate_job_output(channel_id, a:line)
+function! gitgutter#async#handle_diff_job_vim_close(channel) abort
+  call gitgutter#debug#log('channel: '.a:channel)
+
+  let channel_id = s:channel_id(a:channel)
+
+  let current_buffer = gitgutter#utility#bufnr()
+  call gitgutter#utility#set_buffer(s:job_buffer(channel_id))
+
+  call gitgutter#handle_diff(s:job_output(channel_id))
+  call s:job_finished(channel_id)
+
+  call gitgutter#utility#set_buffer(current_buffer)
+endfunction
+
+
+function! s:channel_id(channel) abort
+  " This seems to be the only way to get info about the channel once closed.
+  return matchstr(a:channel, '\d\+')
+endfunction
+
+
+"
+" Keep track of jobs.
+"
+" nvim: receives all the job's output at once so we don't need to accumulate
+" it ourselves.  We can pass the buffer number into the job so we don't need
+" to track that either.
+"
+"   s:jobs {} -> key: job's id, value: anything truthy
+"
+" vim: receives the job's output line by line so we need to accumulate it.
+" We also need to keep track of the buffer the job is running for.
+" Vim job's don't have an id.  Instead we could use the external process's id
+" or the channel's id (there seems to be 1 channel per job).  Arbitrarily
+" choose the channel's id.
+"
+"   s:jobs {} -> key: channel's id, value: {} key: output, value: [] job's output
+"                                             key: buffer: value: buffer number
+
+
+" nvim:
+"        id: job's id
+"
+" vim:
+"        id: channel's id
+"        arg: buffer number
+function! s:job_started(id, ...) abort
+  if a:0  " vim
+    let s:jobs[a:id] = {'output': [], 'buffer': a:1}
+  else    " nvim
+    let s:jobs[a:id] = 1
   endif
 endfunction
 
-
-function! s:job_started(id)
-  let s:jobs[a:id] = 1
-endfunction
-
-function! s:is_job_started(id)
+function! s:is_job_started(id) abort
   return has_key(s:jobs, a:id)
 endfunction
 
-function! s:accumulate_job_output(id, line)
-  if has_key(s:jobs, a:id)
-    let s:jobs[a:id] = add(s:jobs[a:id], a:line)
-  else
-    let s:jobs[a:id] = [a:line]
-  endif
+function! s:accumulate_job_output(id, line) abort
+  call add(s:jobs[a:id].output, a:line)
 endfunction
 
 " Returns a string
-function! s:job_output(id)
+function! s:job_output(id) abort
   if has_key(s:jobs, a:id)
-    return gitgutter#utility#stringify(s:jobs[a:id])
+    return gitgutter#utility#stringify(s:jobs[a:id].output)
   else
     return ""
   endif
 endfunction
 
-function! s:job_finished(id)
+function! s:job_buffer(id) abort
+  return s:jobs[a:id].buffer
+endfunction
+
+function! s:job_finished(id) abort
   if has_key(s:jobs, a:id)
     unlet s:jobs[a:id]
   endif
 endfunction
+
