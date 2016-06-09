@@ -31,4 +31,6 @@ autocmd BufNewFile,BufRead cpanfile	setf perl
 
 autocmd BufNewFile,BufRead *.md	setf markdown
 
+autocmd BufNewFile,BufRead Vagrantfile	setf ruby
+
 runtime! ftdetect/*.vim
