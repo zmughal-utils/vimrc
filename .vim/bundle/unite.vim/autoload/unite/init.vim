@@ -205,8 +205,6 @@ function! unite#init#_unite_buffer() abort "{{{
             \ call unite#handlers#_on_insert_enter()
       autocmd InsertLeave <buffer>
             \ call unite#handlers#_on_insert_leave()
-      autocmd CursorHoldI <buffer>
-            \ call unite#handlers#_on_cursor_hold_i()
       autocmd CursorMovedI <buffer>
             \ call unite#handlers#_on_cursor_moved_i()
       autocmd CursorMoved,CursorMovedI <buffer>  nested
@@ -226,6 +224,12 @@ function! unite#init#_unite_buffer() abort "{{{
       " Enable auto narrow feature.
       autocmd plugin-unite TextChanged <buffer>
             \ call unite#handlers#_on_text_changed()
+    endif
+    if !has('timers')
+      autocmd plugin-unite CursorHoldI <buffer>
+            \ call unite#handlers#_on_cursor_hold_i()
+    else
+      call unite#handlers#_init_timer()
     endif
 
     if context.prompt != ''
