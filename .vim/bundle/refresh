@@ -89,3 +89,6 @@ refresh_git https://github.com/tpope/vim-projectionist vim-projectionist
 refresh_git https://github.com/easymotion/vim-easymotion vim-easymotion
 
 refresh_git https://github.com/altercation/vim-colors-solarized vim-colors-solarized
+
+refresh_git https://github.com/c9s/perlomni.vim perlomni.vim
+refresh_git https://github.com/c9s/cpan.vim cpan.vim
