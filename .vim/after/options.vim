@@ -258,4 +258,13 @@ let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
 let tlist_r_settings="R;g:global variable;v:function variable;f:function"
 
 "}}}
+
+" For <url:~/.vim/bundle-vim-scripts/3223_LanguageTool >{{{
+" Download from <https://www.languagetool.org/>.
+"
+"  wget -c -P ~/Downloads/ https://www.languagetool.org/download/LanguageTool-3.3.zip
+"  unzip -d ~/bin/ ~/Downloads/LanguageTool-3.3.zip
+let g:languagetool_jar='$HOME/bin/LanguageTool-3.3/languagetool-commandline.jar'
+"}}}
+
 " vim:fdm=marker
