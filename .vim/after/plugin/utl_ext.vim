@@ -116,8 +116,12 @@ vmap <Leader>Gu	:call Set_utl_vim()<bar>Utl o v<CR>zv
 nmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl<CR>zv
 vmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl o v<CR>zv
 
+function! Utl_AddressScheme_pm(url, fragment, dispMode)
+	return Utl_AddressScheme_file("file:".a:url, a:fragment, a:dispMode)
+endfunction
+
 fu! Utl_AddressScheme_find(url, fragment, dispMode)
     let findId = UtlUri_unescape( UtlUri_opaque(a:url) )
     let findUrl = findfile(findId)
-    return  Utl_AddressScheme_file(findUrl, a:fragment, a:dispMode)
+    return Utl_AddressScheme_file(findUrl, a:fragment, a:dispMode)
 endfu
