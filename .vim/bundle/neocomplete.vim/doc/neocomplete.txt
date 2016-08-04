@@ -134,8 +134,8 @@ Manual:
 Package manager:
 
 For instructions on how to set up a Vim package manager see the documentation
-of the package manager of your choice. For example after the set up of
-neobundle you can install the neocomplete plugin by following steps:
+of the package manager of your choice. For example after installing
+neobundle you can install the neocomplete plugin with the following steps:
 
 1. Let the plugin manger know about the package (.vimrc) >
 	NeoBundle 'Shougo/neocomplete.vim'
@@ -161,13 +161,13 @@ further information in the vimproc documentation.
 
 						*neocomplete-snippets*
 
-If you like to use the snippet feature with neocomplete, you need to install
-the neosnippet plugin (https://github.com/Shougo/neosnippet.vim) or UltiSnips
-(https://github.com/SirVer/ultisnips).
+If you would like to use the snippet feature with neocomplete, you need to
+install the neosnippet plugin (https://github.com/Shougo/neosnippet.vim) or
+UltiSnips (https://github.com/SirVer/ultisnips).
 
 						*neocomplete-context-filetype*
 
-If you like to use the context filetype feature, you need to install the
+If you would like to use the context filetype feature, you need to install the
 context_filetype.vim plugin which you can find under the following repository:
 https://github.com/Shougo/context_filetype.vim
 
@@ -347,21 +347,13 @@ g:neocomplete#disable_auto_complete
 
 		Default value is 0.
 
-					*g:neocomplete#enable_cursor_hold_i*
-g:neocomplete#enable_cursor_hold_i
-		This variable controls whether neocomplete use |CursorHoldI|
-		event when complete candidates.
-		Note: This option must be set before call
-		|:NeoCompleteEnable|.
+					*g:neocomplete#auto_complete_delay*
+g:neocomplete#auto_complete_delay
+		It is the auto completion delay time after your input.
+		The unit is ms.
+		Note: It requires |+timers| feature.
 
-		Default value is 0.
-
-					*g:neocomplete#cursor_hold_i_time*
-g:neocomplete#cursor_hold_i_time
-		If g:neocomplete#enable_cursor_hold_i is non-zero and in
-		insert mode, this value changes 'updatetime' option.
-
-		Default value is 300.
+		Default value is 50.
 
 					*g:neocomplete#enable_auto_select*
 g:neocomplete#enable_auto_select
@@ -478,6 +470,8 @@ g:neocomplete#text_mode_filetypes
 		dictionary's key is filetype and value is number.  If the
 		value is non-zero, this filetype is text mode.  In text mode,
 		neocomplete supports word conversion to write English.
+		If the key is "_" and the value is non-zero, all filetypes are
+		text mode.
 
 		For example, if you input "Fo", neocomplete will convert
 		candidate "foo" to "Foo".  If you input "foo", neocomplete

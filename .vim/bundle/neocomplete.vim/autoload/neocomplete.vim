@@ -51,10 +51,8 @@ let g:neocomplete#disable_auto_complete =
       \ get(g:, 'neocomplete#disable_auto_complete', 0)
 let g:neocomplete#enable_fuzzy_completion =
       \ get(g:, 'neocomplete#enable_fuzzy_completion', 1)
-let g:neocomplete#enable_cursor_hold_i =
-      \ get(g:, 'neocomplete#enable_cursor_hold_i', 0)
-let g:neocomplete#cursor_hold_i_time =
-      \ get(g:, 'neocomplete#cursor_hold_i_time', 300)
+let g:neocomplete#auto_complete_delay =
+      \ get(g:, 'neocomplete#auto_complete_delay', 50)
 let g:neocomplete#enable_auto_select =
       \ get(g:, 'neocomplete#enable_auto_select', 0)
 let g:neocomplete#enable_auto_delimiter =
@@ -206,8 +204,9 @@ function! neocomplete#is_multibyte_input(cur_text) abort "{{{
 endfunction"}}}
 function! neocomplete#is_text_mode() abort "{{{
   let neocomplete = neocomplete#get_current_neocomplete()
-  return get(g:neocomplete#text_mode_filetypes,
-        \ neocomplete.context_filetype, 0)
+  let filetypes = g:neocomplete#text_mode_filetypes
+  return get(filetypes, neocomplete.context_filetype, 0)
+        \ || get(filetypes, '_', 0)
 endfunction"}}}
 function! neocomplete#is_windows() abort "{{{
   return neocomplete#util#is_windows()
