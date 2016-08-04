@@ -35,7 +35,7 @@ function! unite#view#_redraw_prompt() abort "{{{
   let modifiable_save = &l:modifiable
   try
     setlocal modifiable
-    call setline(unite.prompt_linenr,
+    silent! call setline(unite.prompt_linenr,
           \ unite.context.prompt . unite.context.input)
 
     silent! syntax clear uniteInputLine
@@ -682,6 +682,14 @@ function! unite#view#_quit(is_force, ...) abort  "{{{
     finally
       execute unite.prev_winnr 'wincmd w'
     endtry
+  endif
+
+  if g:unite_restore_alternate_file
+        \ && bufexists(unite.alternate_bufnr)
+        \ && bufnr('%') != unite.alternate_bufnr
+        \ && unite.alternate_bufnr > 0
+    silent! execute 'buffer!' unite.alternate_bufnr
+    silent! buffer! #
   endif
 
   if context.complete
