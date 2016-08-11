@@ -599,6 +599,11 @@ if filereadable(g:project_manager_script)
 	exe "so " . g:project_manager_script
 endif
 
+let g:ikiwiki_preview_rtp = expand("~/sw_projects/ikiwiki-tavi/ikiwiki-preview/ikiwiki-preview/vim")
+if isdirectory(g:ikiwiki_preview_rtp)
+	exe "set rtp+=".g:ikiwiki_preview_rtp
+endif
+
 "}}}
 "**********************************************************************************"
 " A.vim things {{{
