@@ -1,13 +1,5 @@
 package FIXME;
 
-use strict;
-use warnings;
-# FIXME
-# use Moose;
+use Moo;
 
-
-# FIXME
-# no Moose;
-# __PACKAGE__->meta->make_immutable;
-# FIXME
 1;
