@@ -486,7 +486,7 @@ function! ReverseLines(line1,line2)
 endfunction
 command! -range=% -nargs=0 ReverseLines	call ReverseLines(<line1>,<line2>)
 command! -nargs=0 Alphabet	call append(line("."),"abcdefghijklmnopqrstuvwxyz")
-
+command! -range=% -nargs=0 CharCountNoHardReturns <line1>,<line2>w !perl -00 -lpE 's/\n/ /g; s/ +/ /g; $total += length $_; }{ say "Characters: $total" '
 
 command! -nargs=0 Duplicates	/\(\<[[:alnum:]]\+\>\)\([[:space:]]\|\n\)\+\<\1\>
 
