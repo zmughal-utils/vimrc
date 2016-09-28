@@ -606,6 +606,11 @@ if isdirectory(g:ikiwiki_preview_rtp)
 	exe "set rtp+=".g:ikiwiki_preview_rtp
 endif
 
+let g:otl_agenda_script = expand("~/sw_projects/zmughal/otl-parser/otl-parser/editor/vo_agenda.vim")
+if filereadable(g:otl_agenda_script)
+	exe "so " . g:otl_agenda_script
+endif
+
 "}}}
 "**********************************************************************************"
 " A.vim things {{{
