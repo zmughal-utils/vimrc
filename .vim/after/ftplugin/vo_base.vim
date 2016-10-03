@@ -32,3 +32,5 @@ map <silent><buffer> }  <Plug>(IndentWiseNextEqualIndent)
 map <silent><buffer> [] <Plug>(IndentWisePreviousAbsoluteIndent)
 map <silent><buffer> ][ <Plug>(IndentWiseNextAbsoluteIndent)
 
+
+inoreabbrev xtodo <todo<CR>< due:
