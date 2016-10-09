@@ -1,11 +1,14 @@
 " <http://stackoverflow.com/questions/3828606/vim-markdown-folding>
 " Extended from <http://stackoverflow.com/questions/3828606/vim-markdown-folding#comment16309004_4677454>
-function markdown_fold#MarkdownLevel()
+function! markdown_fold#MarkdownLevel()
 	let h = matchstr(getline(v:lnum), '^#\+')
 	if empty(h)
-		let l = matchstr(getline(v:lnum), '^\s*[*+-]')
-		let ln = matchstr(getline(v:lnum+1), '^\s*[*+-]')
-		let lp = matchstr(getline(v:lnum-1), '^\s*[*+-]')
+		" List item on current line
+		let l = matchstr(getline(v:lnum), '^\s*[ *+-]')
+		" List item on next line
+		let ln = matchstr(getline(v:lnum+1), '^\s*[ *+-]')
+		" List item on previous line
+		let lp = matchstr(getline(v:lnum-1), '^\s*[ *+-]')
 		let blp = match(getline(v:lnum-1), '^$')
 		let bln = match(getline(v:lnum+1), '^$') 
 		let beglist = blp!=-1 || v:lnum == 1
