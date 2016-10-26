@@ -596,7 +596,7 @@ nnoremap <C-P><C-P>	:CtrlPSmartTabs<CR>
 let g:LustyExplorerSuppressRubyWarning=1
 let g:CSApprox_verbose_level=0
 
-let g:project_manager_script = expand("~/sw_projects/SeeLucid/p5-Project-Manager/p5-Project-Manager/editor/pm.vim")
+let g:project_manager_script = expand("~/sw_projects/zmughal/p5-Project-Manager/p5-Project-Manager/editor/pm.vim")
 if filereadable(g:project_manager_script)
 	exe "so " . g:project_manager_script
 endif
