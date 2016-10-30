@@ -33,4 +33,7 @@ autocmd BufNewFile,BufRead *.md	setf markdown
 
 autocmd BufNewFile,BufRead Vagrantfile	setf ruby
 
+autocmd BufNewFile,BufRead *.tjp	setf tjp
+autocmd BufNewFile,BufRead *.tji	setf tjp
+
 runtime! ftdetect/*.vim
