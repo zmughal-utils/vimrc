@@ -6,7 +6,7 @@ function! DictLoad(word)
 		let delnr=bufnr(name)
 		exe delnr."bd"
 	endif
-	silent exe "new +setlocal\\ modifiable\\|r!dict\\ ".escape(dword," \"'\\()<>&|!?")
+	silent exe "new +setlocal\\ modifiable\\|r!dict\\ -d\\ all\\ \\ ".escape(dword," \"'\\()<>&|!?")
 	silent exe "file ".name
 	normal gg"_dd
 	setlocal nomod noma
