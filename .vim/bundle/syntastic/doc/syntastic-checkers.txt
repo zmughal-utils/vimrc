@@ -101,6 +101,7 @@ SYNTAX CHECKERS BY LANGUAGE                          *syntastic-checkers-lang*
     Sh.......................................|syntastic-checkers-sh|
     Slim.....................................|syntastic-checkers-slim|
     SML......................................|syntastic-checkers-sml|
+    Solidity.................................|syntastic-checkers-solidity|
     SQL......................................|syntastic-checkers-sql|
     Stylus...................................|syntastic-checkers-stylus|
 
@@ -116,6 +117,7 @@ SYNTAX CHECKERS BY LANGUAGE                          *syntastic-checkers-lang*
     Vala.....................................|syntastic-checkers-vala|
     Verilog..................................|syntastic-checkers-verilog|
     VHDL.....................................|syntastic-checkers-vhdl|
+    Vim help.................................|syntastic-checkers-help|
     VimL.....................................|syntastic-checkers-vim|
 
     xHTML....................................|syntastic-checkers-xhtml|
@@ -352,6 +354,7 @@ SYNTAX CHECKERS FOR ASCIIDOC                     *syntastic-checkers-asciidoc*
 The following checkers are available for AsciiDoc (filetype "asciidoc"):
 
     1. Asciidoc.................|syntastic-asciidoc-asciidoc|
+    2. proselint................|syntastic-asciidoc-proselint|
 
 ------------------------------------------------------------------------------
 1. Asciidoc                                      *syntastic-asciidoc-asciidoc*
@@ -372,6 +375,27 @@ Checker options~
 
 This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
+
+------------------------------------------------------------------------------
+2. proselint                                    *syntastic-asciidoc-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-help-proselint|, |syntastic-html-proselint|,
+|syntastic-markdown-proselint|, |syntastic-nroff-proselint|,
+|syntastic-pod-proselint|, |syntastic-rst-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
 
 ==============================================================================
 SYNTAX CHECKERS FOR ASSEMBLY LANGUAGES                *syntastic-checkers-asm*
@@ -1985,7 +2009,7 @@ Security~
 
 This checker executes the code in the files it checks:
 
-    https://github.com/scrooloose/syntastic/issues/1141
+    https://github.com/vim-syntastic/syntastic/issues/1141
 
 This is probably fine if you wrote the files yourself, but it can be a problem
 if you're trying to check third party files. If you are 100% willing to let
@@ -2585,10 +2609,12 @@ The following checkers are available for HTML (filetype "html"):
     1. ESLint...................|syntastic-html-eslint|
     2. gjslint..................|syntastic-html-gjslint|
     3. HTML tidy................|syntastic-html-tidy|
-    4. JSHint...................|syntastic-html-jshint|
-    5. textlint.................|syntastic-html-textlint|
-    6. Validator................|syntastic-html-validator|
-    7. W3.......................|syntastic-html-w3|
+    4. HTMLHint.................|syntastic-html-htmlhint|
+    5. JSHint...................|syntastic-html-jshint|
+    6. proselint................|syntastic-html-proselint|
+    7. textlint.................|syntastic-html-textlint|
+    8. Validator................|syntastic-html-validator|
+    9. W3.......................|syntastic-html-w3|
 
 ------------------------------------------------------------------------------
 1. ESLint                                              *syntastic-html-eslint*
@@ -2678,7 +2704,25 @@ List of additional empty tags, to be added to "--new-empty-tags".
 See also: |syntastic-xhtml-tidy|.
 
 ------------------------------------------------------------------------------
-4. jshint                                              *syntastic-html-jshint*
+4. HTMLHint                                          *syntastic-html-htmlhint*
+
+Name:        HTMLHint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"JSHint" is a static code analysis tool for HTML. See the project's page for
+details:
+
+    http://htmlhint.com/
+
+Syntastic requires "HTMLHint" version 0.9.13 or later.
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+------------------------------------------------------------------------------
+5. jshint                                              *syntastic-html-jshint*
 
 Name:        JSHint
 Maintainer:  LCD 47 <lcd047@gmail.com>
@@ -2724,7 +2768,28 @@ in "JSHint". If that is undesirable, your only other option is to leave
 See also: |syntastic-javascript-jshint|, |syntastic-xhtml-jshint|.
 
 ------------------------------------------------------------------------------
-5. textlint                                          *syntastic-html-textlint*
+6. proselint                                        *syntastic-html-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-markdown-proselint|, |syntastic-nroff-proselint|,
+|syntastic-pod-proselint|, |syntastic-rst-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
+
+------------------------------------------------------------------------------
+7. textlint                                          *syntastic-html-textlint*
 
 Name:        textlint
 Maintainer:  LCD 47 <lcd047@gmail.com>
@@ -2749,7 +2814,7 @@ work:
 See also: |syntastic-markdown-textlint|, |syntastic-text-textlint|.
 
 ------------------------------------------------------------------------------
-6. Validator                                        *syntastic-html-validator*
+8. Validator                                        *syntastic-html-validator*
 
 Name:        validator
 Maintainer:  LCD 47 <lcd047@gmail.com>
@@ -2822,7 +2887,7 @@ You can lookup the meaning of these codes in cURL's manual:
     http://curl.haxx.se/docs/manpage.html#EXIT
 
 ------------------------------------------------------------------------------
-7. W3                                                      *syntastic-html-w3*
+9. W3                                                      *syntastic-html-w3*
 
 Name:        w3
 Maintainer:  Martin Grenfell <martin.grenfell@gmail.com>
@@ -2947,6 +3012,14 @@ you want to include the "checkstyle" jar and all of its dependencies.
 Name:        javac
 Maintainers: Jochen Keil <jochen.keil@gmail.com>
              Dmitry Geurkov <d.geurkov@gmail.com>
+
+Note~
+
+This checker is not suitable for use with large Java projects. The design
+of "javac" makes this checker prone to running into various limitations of
+your shell, Vim, and your Java compiler. You are strongly advised to use
+something like Eclim (http://eclim.org/) instead of syntastic for projects of
+any substantial size or complexity.
 
 Commands~
 
@@ -3146,13 +3219,13 @@ accepts the standard options described at |syntastic-config-makeprg|.
 
 Notes~
 
-Syntastic requires "Flow" version 0.6 or later.
+Syntastic requires "Flow" version 0.18.1 or later.
 
 To use "Flow" with your projects, you must:
 
 a. Install it:
 
-    https://github.com/sindresorhus/flow-bin
+    https://github.com/flowtype/flow-bin
 
 b. Configure your project:
 >
@@ -3683,7 +3756,8 @@ SYNTAX CHECKERS FOR MARKDOWN                     *syntastic-checkers-markdown*
 The following checkers are available for Markdown (filetype "markdown"):
 
     1. Markdown lint tool.......|syntastic-markdown-mdl|
-    2. textlint.................|syntastic-markdown-textlint|
+    2. proselint................|syntastic-markdown-proselint|
+    3. textlint.................|syntastic-markdown-textlint|
 
 ------------------------------------------------------------------------------
 1. Markdown lint tool                                 *syntastic-markdown-mdl*
@@ -3720,7 +3794,28 @@ to a set of valid "markdownlint-cli" options): >
     let g:syntastic_markdown_mdl_args = ""
 <
 ------------------------------------------------------------------------------
-2. textlint                                      *syntastic-markdown-textlint*
+2. proselint                                    *syntastic-markdown-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-nroff-proselint|,
+|syntastic-pod-proselint|, |syntastic-rst-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
+
+------------------------------------------------------------------------------
+3. textlint                                      *syntastic-markdown-textlint*
 
 Name:        textlint
 Maintainer:  LCD 47 <lcd047@gmail.com>
@@ -3835,6 +3930,7 @@ The following checkers are available for nroff (filetype "nroff"):
 
     1. Igor.....................|syntastic-nroff-igor|
     2. mandoc...................|syntastic-nroff-mandoc|
+    3. proselint................|syntastic-nroff-proselint|
 
 ------------------------------------------------------------------------------
 1. Igor                                                 *syntastic-nroff-igor*
@@ -3873,6 +3969,27 @@ Checker options~
 
 This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
+
+------------------------------------------------------------------------------
+3. proselint                                       *syntastic-nroff-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-pod-proselint|, |syntastic-rst-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
 
 ==============================================================================
 SYNTAX CHECKERS FOR OBJECTIVE-C                      *syntastic-checkers-objc*
@@ -4361,6 +4478,7 @@ SYNTAX CHECKERS FOR POD                               *syntastic-checkers-pod*
 The following checkers are available for POD (filetype "pod"):
 
     1. Pod::Checker.............|syntastic-pod-podchecker|
+    2. proselint................|syntastic-pod-proselint|
 
 ------------------------------------------------------------------------------
 1. Pod::Checker                                     *syntastic-pod-podchecker*
@@ -4379,6 +4497,27 @@ This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
 See also: |syntastic-perl-podchecker|.
+
+------------------------------------------------------------------------------
+2. proselint                                         *syntastic-pod-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-nroff-proselint|, |syntastic-rst-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
 
 ==============================================================================
 SYNTAX CHECKERS FOR PUG (FORMERLY JADE)               *syntastic-checkers-pug*
@@ -4984,7 +5123,7 @@ Security~
 
 This checker executes the code in the files it checks:
 
-    https://github.com/scrooloose/syntastic/issues/1773
+    https://github.com/vim-syntastic/syntastic/issues/1773
 
 This is probably fine if you wrote the files yourself, but it can be a problem
 if you're trying to check third party files. If you are 100% willing to let
@@ -5033,12 +5172,34 @@ SYNTAX CHECKERS FOR RESTRUCTUREDTEXT                  *syntastic-checkers-rst*
 
 The following checkers are available for reStructuredText (filetype "rst"):
 
-    1. rst2pseudoxml............|syntastic-rst-rst2pseudoxml|
-    2. rstcheck.................|syntastic-rst-rstcheck|
-    3. Sphinx...................|syntastic-rst-sphinx|
+    1. proselint................|syntastic-rst-proselint|
+    2. rst2pseudoxml............|syntastic-rst-rst2pseudoxml|
+    3. rstcheck.................|syntastic-rst-rstcheck|
+    4. Sphinx...................|syntastic-rst-sphinx|
 
 ------------------------------------------------------------------------------
-1. rst2pseudoxml                                 *syntastic-rst-rst2pseudoxml*
+1. proselint                                         *syntastic-rst-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-nroff-proselint|, |syntastic-pod-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
+
+------------------------------------------------------------------------------
+2. rst2pseudoxml                                 *syntastic-rst-rst2pseudoxml*
 
 Name:        rst2pseudoxml
 Maintainer:  James Rowe <jnrowe@gmail.com>
@@ -5056,7 +5217,7 @@ This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
 ------------------------------------------------------------------------------
-2. rstcheck                                           *syntastic-rst-rstcheck*
+3. rstcheck                                           *syntastic-rst-rstcheck*
 
 Name:        rstcheck
 Maintainer:  Steven Myint <git@stevenmyint.com>
@@ -5072,7 +5233,7 @@ This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
 ------------------------------------------------------------------------------
-3. Sphinx                                               *syntastic-rst-sphinx*
+4. Sphinx                                               *syntastic-rst-sphinx*
 
 Name:        sphinx
 Maintainer:  Buck Evan <buck@yelp.com>
@@ -5780,6 +5941,37 @@ This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
 ==============================================================================
+SYNTAX CHECKERS FOR SOLIDITY                     *syntastic-checkers-solidity*
+
+The following checkers are available for Solidity (filetype "solidity"):
+
+    1. solc.....................|syntastic-solidity-solc|
+
+------------------------------------------------------------------------------
+1. solc                                              *syntastic-solidity-solc*
+
+Name:        solc 
+Maintainer:  Jacob Cholewa <jacob@cholewa.dk>
+
+"solc" is a compiler for Ethereum's smart-contract language "Solidity"
+(https://solidity.readthedocs.io/). See the project's page for details:
+
+    https://github.com/ethereum/solidity
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+Note~
+
+You probably also need a plugin to set |filetype| for Solidity files, such as
+"vim-solidity":
+
+    https://github.com/tomlion/vim-solidity
+
+
+==============================================================================
 SYNTAX CHECKERS FOR SQL                               *syntastic-checkers-sql*
 
 The following checkers are available for SQL (filetype "sql"):
@@ -5818,7 +6010,7 @@ Maintainer:  LCD 47 <lcd047@gmail.com>
 "Stylint" is a linter for Stylus (http://learnboost.github.io/stylus). See
 the project's page at GitHub for details:
 
-    https://github.com/rossPatton/stylint
+    https://github.com/SimenB/stylint
 
 Checker options~
 
@@ -5860,6 +6052,7 @@ The following checkers are available for TeX (filetype "tex"):
 
     1. ChkTeX...................|syntastic-tex-chktex|
     2. lacheck..................|syntastic-tex-lacheck|
+    3. proselint................|syntastic-tex-proselint|
 
 ------------------------------------------------------------------------------
 1. ChkTeX                                               *syntastic-tex-chktex*
@@ -5905,12 +6098,34 @@ Limitations~
 At the time of this writing "lacheck" can't expand "\def" commands. As a
 result, most "\input" commands using macros are signaled as errors.
 
+------------------------------------------------------------------------------
+3. proselint                                         *syntastic-tex-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-nroff-proselint|, |syntastic-pod-proselint|,
+|syntastic-rst-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
+
 ==============================================================================
 SYNTAX CHECKERS FOR TEXINFO                       *syntastic-checkers-texinfo*
 
 The following checkers are available for Texinfo (filetype "texinfo"):
 
     1. Makeinfo.................|syntastic-texinfo-makeinfo|
+    2. proselint................|syntastic-texinfo-proselint|
 
 ------------------------------------------------------------------------------
 1. Makeinfo                                       *syntastic-texinfo-makeinfo*
@@ -5928,6 +6143,27 @@ Checker options~
 This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
+------------------------------------------------------------------------------
+2. proselint                                     *syntastic-texinfo-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-nroff-proselint|, |syntastic-pod-proselint|,
+|syntastic-rst-proselint|, |syntastic-tex-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
+
 ==============================================================================
 SYNTAX CHECKERS FOR TEXT                             *syntastic-checkers-text*
 
@@ -5936,7 +6172,8 @@ The following checkers are available for plain text (filetype "text"):
     1. atdtool..................|syntastic-text-atdtool|
     2. Igor.....................|syntastic-text-igor|
     3. language-check...........|syntastic-text-language_check|
-    4. textlint.................|syntastic-text-textlint|
+    4. proselint................|syntastic-text-proselint|
+    5. textlint.................|syntastic-text-textlint|
 
 ------------------------------------------------------------------------------
 1. atdtool                                            *syntastic-text-atdtool*
@@ -5999,7 +6236,28 @@ This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
 ------------------------------------------------------------------------------
-4. textlint                                          *syntastic-text-textlint*
+4. proselint                                        *syntastic-text-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-nroff-proselint|, |syntastic-pod-proselint|,
+|syntastic-rst-proselint|, |syntastic-tex-proselint|,
+|syntastic-texinfo-proselint|, |syntastic-xhtml-proselint|.
+
+------------------------------------------------------------------------------
+5. textlint                                          *syntastic-text-textlint*
 
 Name:        textlint
 Maintainer:  LCD 47 <lcd047@gmail.com>
@@ -6151,7 +6409,7 @@ Maintainer:  LCD 47 <lcd047@gmail.com>
 
 "ESLint" is a tool for identifying and reporting on patterns found
 in ECMAScript/JavaScript code. With the "babel-eslint" plugin
-(https://github.com/babel/babel-eslint) "ESLint" can also can also be
+(https://github.com/babel/babel-eslint) "ESLint" can also be
 used to check TypeScript files. See the project's page for details:
 
     https://github.com/nzakas/eslint
@@ -6363,6 +6621,34 @@ This checker is initialised using the "makeprgBuild()" function and thus it
 accepts the standard options described at |syntastic-config-makeprg|.
 
 ==============================================================================
+SYNTAX CHECKERS FOR VIM HELP                         *syntastic-checkers-help*
+
+The following checkers are available for Vim help (filetype "help"):
+
+    1. proselint................|syntastic-help-proselint|
+
+------------------------------------------------------------------------------
+1. proselint                                        *syntastic-help-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-html-proselint|,
+|syntastic-markdown-proselint|, |syntastic-nroff-proselint|,
+|syntastic-pod-proselint|, |syntastic-rst-proselint|,
+|syntastic-tex-proselint|, |syntastic-texinfo-proselint|,
+|syntastic-text-proselint|, |syntastic-xhtml-proselint|.
+
+==============================================================================
 SYNTAX CHECKERS FOR VIML                              *syntastic-checkers-vim*
 
 The following checkers are available for VimL (filetype "vim"):
@@ -6447,6 +6733,7 @@ The following checkers are available for xHTML (filetype "xhtml"):
 
     1. HTML Tidy................|syntastic-xhtml-tidy|
     2. jshint...................|syntastic-xhtml-jshint|
+    3. proselint................|syntastic-xhtml-proselint|
 
 ------------------------------------------------------------------------------
 1. HTML tidy                                            *syntastic-xhtml-tidy*
@@ -6520,6 +6807,27 @@ in "JSHint". If that is undesirable, your only other option is to leave
     set tabstop=4
 <
 See also: |syntastic-html-jshint|, |syntastic-javascript-jshint|.
+
+------------------------------------------------------------------------------
+3. proselint                                       *syntastic-xhtml-proselint*
+
+Name:        proselint
+Maintainer:  LCD 47 <lcd047@gmail.com>
+
+"proselint" is a linter for prose. See the page for details:
+
+    http://proselint.com/
+
+Checker options~
+
+This checker is initialised using the "makeprgBuild()" function and thus it
+accepts the standard options described at |syntastic-config-makeprg|.
+
+See also: |syntastic-asciidoc-proselint|, |syntastic-help-proselint|,
+|syntastic-html-proselint|, |syntastic-markdown-proselint|,
+|syntastic-nroff-proselint|, |syntastic-pod-proselint|,
+|syntastic-rst-proselint|, |syntastic-tex-proselint|,
+|syntastic-texinfo-proselint|, |syntastic-text-proselint|.
 
 ==============================================================================
 SYNTAX CHECKERS FOR XML                               *syntastic-checkers-xml*
