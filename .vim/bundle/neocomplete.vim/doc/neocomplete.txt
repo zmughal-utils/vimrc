@@ -81,6 +81,7 @@ works with, for your operating system.
 
 On Windows:
 
+github release https://github.com/vim/vim-win32-installer/releases
 For 32bit http://files.kaoriya.net/goto/vim73w32
 For 32bit (alternative) http://tuxproject.de/projects/vim/
                         http://wyw.dcweb.cn/#download
@@ -352,6 +353,7 @@ g:neocomplete#auto_complete_delay
 		It is the auto completion delay time after your input.
 		The unit is ms.
 		Note: It requires |+timers| feature.
+		Note: It is disabled in MacVim.
 
 		Default value is 50.
 
@@ -639,9 +641,9 @@ g:neocomplete#sources#member#input_patterns
 				*g:neocomplete#sources#omni#functions*
 g:neocomplete#sources#omni#functions
 		This dictionary which appoints omni source call functions.
-		The key is |&filetype|.  The value is omnifunc name String or
+		The key is 'filetype'.  The value is omnifunc name String or
 		List of omnifunc name String.
-		If |g:neocomplete#sources#omni#functions| [|&filetype|] is
+		If |g:neocomplete#sources#omni#functions| [&filetype] is
 		undefined, omni source calls 'omnifunc'.
 		If the key is "_", used for all filetypes.
 
@@ -1844,6 +1846,10 @@ display the popup menu. However, there is no need to do this after 7.4.775
 since neocomplete.vim handles that part. If that's the case, you will need to
 contact the author of the plugin and have it not send those key strokes if
 "noselect" or "noinsert" option is present in 'completeopt'.
+
+Q: Any plan to support Vim 8.0 async API?
+
+A: No.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:noet:fen:noet:
