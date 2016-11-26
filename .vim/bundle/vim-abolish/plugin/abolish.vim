@@ -134,6 +134,10 @@ function! s:dashcase(word)
   return substitute(s:snakecase(a:word),'_','-','g')
 endfunction
 
+function! s:spacecase(word)
+  return substitute(s:snakecase(a:word),'_',' ','g')
+endfunction
+
 function! s:dotcase(word)
   return substitute(s:snakecase(a:word),'_','.','g')
 endfunction
@@ -144,7 +148,8 @@ call extend(Abolish, {
       \ 'snakecase':  s:function('s:snakecase'),
       \ 'uppercase':  s:function('s:uppercase'),
       \ 'dashcase':   s:function('s:dashcase'),
-      \ 'dotcase':    s:function('s:dotcase')
+      \ 'dotcase':    s:function('s:dotcase'),
+      \ 'spacecase':  s:function('s:spacecase')
       \ }, 'keep')
 
 function! s:create_dictionary(lhs,rhs,opts)
@@ -322,7 +327,7 @@ endfunction
 " Searching {{{1
 
 function! s:subesc(pattern)
-  return substitute(a:pattern,'[][\\/.*~%()&]','\\&','g')
+  return substitute(a:pattern,'[][\\/.*+?~%()&]','\\&','g')
 endfunction
 
 function! s:sort(a,b)
@@ -563,6 +568,7 @@ call extend(Abolish.Coercions, {
       \ '-': Abolish.dashcase,
       \ 'k': Abolish.dashcase,
       \ '.': Abolish.dotcase,
+      \ ' ': Abolish.spacecase,
       \ "function missing": s:function("s:unknown_coercion")
       \}, "keep")
 
