@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v3.10.0)
-                        For Vim version 7+      Last change: 23rd May 2016
+*lh-vim-lib.txt*        Vim common libraries (v4.0.0)
+                        For Vim version 7+      Last change: 24th Oct 2016
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -27,8 +27,10 @@ FUNCTIONS                                    *lhvl-functions*     {{{1
                                                                         {{{2Functions list~
 Miscellanous functions:                                 |lhvl#misc|
 - |lh#askvim#exe()|
+- |lh#askvim#execute()|
 - |lh#askvim#scriptnames()|
 - |lh#askvim#scriptname()|
+- |lh#askvim#where_is_function_defined()|
 - |lh#common#check_deps()|
 - |lh#common#echomsg_multilines()|
 - |lh#common#error_msg()|
@@ -39,35 +41,54 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#encoding#strpart()|
 - |lh#event#register_for_one_execution_at()|
 - |lh#exception#callstack()|
+- |lh#exception#callstack_as_qf()|
 - |lh#fmt#printf()|
 - |lh#float#min()|, |lh#float#max()|,
   |lh#float#arg_min()|, |lh#float#arg_max()|
+- *lh#has#partials()* returns whether |Partial|s are implemented
+- *lh#has#jobs()*     returns whether |+job|s are correctly implemented
+- *lh#has#default_in_getbufvar()* returns whether |getbufvar()| has 3 parameters
 - |lh#leader#get()|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
 - |lh#math#abs()|
+- |lh#mapping#define()|
+- |lh#mapping#plug()|
 - |lh#on#exit()|
 - |lh#position#char_at()|
 - |lh#position#char_at_mark()|
 - |lh#position#char_at_pos()|
+- |lh#position#compare()|
 - |lh#position#extract()|
 - |lh#position#is_before()|
+- |lh#time#bench()|
+- |lh#time#date()|
 - |lh#visual#cut()|
 - |lh#visual#selection()|
 Options related functions:                              |lhvl#option|
+- |lh#option#exists_in_buf()|
 - |lh#option#get()|
 - |lh#option#get_non_empty()|
+- |lh#option#get_from_buf()|
 - |lh#option#getbufvar()|
+- |lh#option#getbufglobvar()|
 - |lh#option#is_set()|
 - |lh#option#is_unset()|
+- |lh#ft#option#get()|
+- |lh#ft#option#get_postfixed()|
+- |lh#ft#option#get_all()|
+- |lh#ref#bind()|
+- |lh#ref#is_bound()|
 Functors related functions:                             |lhvl#function|
 - |lh#function#bind()|
 - |lh#function#execute()|
 - |lh#function#prepare()|
 Lists related functions:                                |lhvl#list|
 - |lh#list#accumulate()|
+- |lh#list#arg_min()|, |lh#list#arg_max()|
 - |lh#list#chain_transform()|
 - |lh#list#concurrent_for()|
+- |lh#list#contain_entity()|
 - |lh#list#copy_if()|
 - |lh#list#equal_range()|
 - |lh#list#Find_if()| and |lh#list#find_if()|
@@ -83,13 +104,21 @@ Lists related functions:                                |lhvl#list|
 - |lh#list#not_found()|
 - |lh#list#possible_values()|
 - |lh#list#push_if_new()|
+- |lh#list#push_if_new_elements()|
 - |lh#list#remove()|
+- |lh#list#separate()|
 - |lh#list#sort()|
 - |lh#list#subset()|
 - |lh#list#Transform()| and |lh#list#transform()|
 - |lh#list#transform_if()|
+- |lh#list#uniq()|
 - |lh#list#unique_sort()| and |lh#list#unique_sort2()|
 - |lh#list#zip()|, and |lh#list#zip_as_dict()|
+Dicts related functions:                                |lhvl#dict|
+- |lh#dict#add_new()|
+- |lh#dict#get_composed()|
+- |lh#dict#key()|
+- |lh#dict#subset()|
 Stack related functions:                                |lhvl#stack|
 - |lh#stack#push()|
 - |lh#stack#pop()|
@@ -111,13 +140,17 @@ Graphs related functions:                               |lhvl#graph|
 Paths related functions:                                |lhvl#path|
 - |lh#path#common()|
 - |lh#path#depth()|
+- |lh#path#exists()|
 - |lh#path#fix()|
 - |lh#path#glob_as_list()|
 - |lh#path#is_absolute_path()|
+- |lh#path#is_distant_or_scratch()|
 - |lh#path#is_in()|
 - |lh#path#is_url()|
+- |lh#path#new_permission_lists()|
 - |lh#path#readlink()|
 - |lh#path#relative_to()|
+- |lh#path#remove_dir_mark()|
 - |lh#path#select_one()|
 - |lh#path#simplify()|
 - |lh#path#strip_common()|
@@ -126,6 +159,10 @@ Paths related functions:                                |lhvl#path|
 - |lh#path#to_regex()|
 - |lh#path#to_relative()|
 Commands related functions:                             |lhvl#command|
+- |lh#command#analyse_args()|
+- |lh#command#matching_variables()|
+- |lh#command#matching_askvim()|
+- |lh#command#matching_for_command()|
 - |lh#command#new()| (alpha version)
 - |lh#command#Fargs2String()| (alpha version)
 - |lh#command#complete()| (alpha version)
@@ -163,6 +200,10 @@ Syntax related functions:                               |lhvl#syntax|
 - |lh#syntax#list_raw()|
 - |lh#syntax#list()|
 OS/System related functions:                            |lhvl#os|
+- |lh#async#queue()|
+- |:Jobs|
+- |:JobUnpause|
+- |:StopBGExecution|
 - |lh#os#has_unix_layer_installed()|
 - |lh#os#system_detected()|
 - |lh#os#OnDOSWindows()|
@@ -179,12 +220,53 @@ Log related functions                                   |lhvl#log|
 - |:LHLog|, |lh#log#set_logger()|
 - |lh#log#new()|
 - |lh#log#none()|
+- |lh#log#callstack()||
+- |lh#log#exception()||
+- |lh#log#this()||
+Version Control System functions                        |lhvl#vcs|
+- |lh#vcs#get_svn_root()|
+- |lh#vcs#get_git_root()|
+- |lh#vcs#is_svn()|
+- |lh#vcs#is_git()|
+- |lh#vcs#get_type()|
+- |lh#vcs#get_url()|
+- |lh#vcs#decode_github_url()|
+- |lh#vcs#as_http()|
+OO helpers                                              |lhvl#oo|
+- |lh#object#make_top_type()|
+- |lh#object#to_string()|
+- |lh#object#_to_string()|
+Variables helper functions                              |lhvl#variable|
+- |lh#let#if_undef()|
+- |lh#let#to()|
+- |lh#let#undef()|
+Project related defintions                              |lhvl#project|
+- |p:| |project-variable|
+- |:Project|
+- |lh#project#define()|
+- |lh#project#new()|
+- |lh#project#_get()|
+- |lh#project#crt_bufvar_name()|
+- |lh#project#_crt_var_name()|
+Design by Contract related functions                    |lhvl#DbC|
+- |lh#assert#mode()|
+- |lh#assert#clear()|
+- |lh#assert#errors()|
+- Assertions:
+  - |lh#assert#equal()|
+  - |lh#assert#false()|
+  - |lh#assert#match()|
+  - |lh#assert#not_equal()|
+  - |lh#assert#true()|
+  - |lh#assert#unexpected()|
 
 ------------------------------------------------------------------------------
 COMMANDS                                              *lhvl#commands*   {{{2
-- |LetIfUndef|
-- |PushOptions|
-- |PopOptions|
+- |:LetIfUndef|
+- |:LetTo|
+- |:Unlet|
+- |:PushOptions|
+- |:PopOptions|
 }}}2
 ------------------------------------------------------------------------------
 MISCELLANOUS FUNCTIONS                                *lhvl#misc*       {{{2
@@ -269,6 +351,7 @@ Unlike |printf()|, this function takes positional parameters, i.e. >
   AssertEquals(lh#fmt#printf("foo %1 bar", 42), "foo 42 bar")
   AssertEquals(lh#fmt#printf("foo %1 bar %2", 42, "toto"), "foo 42 bar toto")
   AssertEquals(lh#fmt#printf("foo %2 bar %1", 42, "toto"), "foo toto bar 42")
+  AssertEquals(lh#fmt#printf("foo %{2.toto}-%{1.titi} bar %1", {'a':42, 'titi': 'tutu'}, {'toto': {'foo': 42}}), "foo {'foo': 42}-tutu bar {'a': 42, 'titi': 'tutu'}")
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#math#abs()*                   {{{3
@@ -280,6 +363,30 @@ The purpose of the function is to emulate |abs()| on vim version where it
 isn't defined.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mapping#define()*             {{{3
+lh#mapping#define(map_dict)~
+Defines a |mapping| from:
+- `"mode"`  : i, n, ..
+- `"nore"`  : 1/[0]
+- `"silent"`: 1/[0]
+- `"expr"`  : 1/[0]
+- `"buffer"`: 1/[0]
+- `"lhs"`   : keybinding
+- `"rhs"`   : action bound
+- `"sid"`   : optional number
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mapping#plug()*               {{{3
+lh#mapping#plug(keybinding, name, modes)~
+Helper function to define in one go several default and unique mappings for a
+plug mapping.
+
+For all the mode specified, it executes: >
+    if !hasmapto(name, mode) && (mapcheck(keybinding, mode) == "")
+        exe mode.'map <silent> <unique> '.keybinding.' '.name
+    endif
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#on#exit()*                    {{{3
 lh#on#exit()~
 This function will register action to be executed at the end on a scope, and
@@ -288,6 +395,8 @@ It permits to do the following things:
 - `restore()`                restores a |variable| or a vim |option|.
 - `restore_option()`         restores a |lhvl#option|
 - `register()`               registers a |command| to execute.
+                           it takes a second facultative argument `"priority"`
+                           to give the highest priority to the command.
 - `restore_buffer_mapping()` restores a |map-<buffer>|
 
 e.g. >
@@ -327,12 +436,25 @@ lh#askvim#Exe({command}) (*deprecated*)~
 lh#askvim#exe({command})~
 @param {command}    Command to execute from vim.
 @return             What the command echoes while executed.
-@note               This function encapsultates |redir| without altering any
+@note               This function encapsulates |redir| without altering any
                     register.
 
 Some information aren't directly accessible (yet) through vim API
 (|functions|).  However, they can be obtained by executing some commands, and
 redirecting the result of these commands.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#askvim#execute()*             {{{3
+lh#askvim#execute({command})~
+Portable (to old vim versions) of |execute()| that returns a |List|.
+@param {command}    Command to execute from vim.
+@return             What the command echoes while executed.
+@note               This function encapsulates |redir| without altering any
+                    register.
+
+If *lh#askvim#_beware_running_through_client_server()* has been called, and if
+|execute()| is not supported by your vim version (v < 7.4-2008)
+`lh#askvim#execute()` will return an empty list.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#askvim#scriptnames()*         {{{3
@@ -345,6 +467,16 @@ lh#askvim#scriptnames()~
 lh#askvim#scriptname(id)~
 @return the name of the script associate to {id}.
 @internal Lazily updates `s:scripts`.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#askvim#where_is_function_defined()* {{{3
+lh#askvim#where_is_function_defined({funcname})~
+@return the scriptname where {funcname} has been defined.
+
+If |lh#askvim#_beware_running_through_client_server()| has been called, and if
+|execute()| is not supported by your vim version (v < 7.4-2008)
+`lh#askvim#where_is_function_defined` will try to decode the name of an
+autoloaded function, or return an empty string otherwise.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#askvim#menu()*                {{{3
@@ -360,12 +492,83 @@ Vim.
 The format of the result being ?to be stabilized?
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#async#queue()*                {{{3
+lh#async#queue(job)~
+This function is a wrapper around recent |job_start()| function. As such it
+requires a recent version of Vim without any bugs in the |+job| related part.
+I've chosen to require v7.4-1980 at least.
+
+This function implements a queue of jobs to run. Only one job can be ran
+simultaneously. When a job has finished, the next one is started.
+So far it has been designed to register a |close_cb|, and it has been used
+also with a |callback|. There is one default callback provided for |close_cb|
+that won't do any thing.
+
+All jobs are started through the |'shell'| in order to support
+`cd dirname && cmd` and more complex things.
+Under Windows it's ran with `[&shell, &shellcmdflag, command]`
+Otherwise, it's ran with `&shell .' '. &shellcmdflag .' '. command`
+
+@param {job} |Dict| that contains:
+  - options for |job_start()|
+  - `'cmd'`: command to execute
+  - `'txt'`: optional description of what is executed for |airline|
+  - `'before_starting_cb'`: optional callback for a function to execute before
+    starting any new job. Indeed, things that must be executed before a job
+    starts shall not be executed before the previous job has ended. This
+    callback helps to delay operations written in |VimL|.
+  - `'start_fail_cb'`: optional callback executed when starting the job fails.
+@todo Support for |job_stop()|
+@todo Support multiple queues -> `lh#async#new_queue()`
+
+Active queues and background job will be presented in |airline-section|`_b`.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *:Jobs*                           {{{3
+:Jobs~
+Opens a dialog scratch window displaying all jobs being executed in background
+and programmed to be through |lh#async#queue()|.
+
+For the moment this window will:
+- keep the queue displayed up to date
+- permit to cancel jobs with `x`, `<del>` or `d`
+- permit to un-pause the job queue with `p`. See |:JobUnpause|.
+
+Eventually, it'll permit to reorganize pending jobs.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *:JobUnpause*                     {{{3
+:JobUnpause~
+When a process execution fails, if there are pending jobs, the job queue will
+be paused if you confirm it.
+The only ways to un-pause the queue are through `:JobUnpause` command or
+through the |:Jobs| console.
+
+For the moment, the queue cannot be pause voluntarily.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *:StopBGExecution*                {{{3
+:StopBGExecution <pattern>~
+This command will cancel the first job (registered through |lh#async#queue()|)
+it founds that matches the {pattern}.
+This command supports |command-completion| to help select the right job.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#position#IsBefore()*          {{{3
 lh#position#IsBefore({lhs_pos},{rhs_pos})  (*deprecated*)~
                                                *lh#position#is_before()*
 lh#position#is_before({lhs_pos},{rhs_pos})~
 @param[in]          Positions as those returned from |getpos()|
 @return             Whether {lhs_pos} is before {rhs_pos}
+@see also |lh#position#compare()| for a result compatible with |sort()|.
+
+                                               *lh#position#compare()*           {{{3
+lh#position#compare({lhs_pos},{rhs_pos})~
+@param[in]          Positions as those returned from |getpos()|
+@return             -1 {lhs_pos} if is before {rhs_pos}
+@return             +1 {lhs_pos} if is after  {rhs_pos}
+@return              0 {lhs_pos} is at        {rhs_pos}
+@see also |lh#position#is_before()| for a boolean result.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                              *lh#position#char_at()*           {{{3
@@ -390,6 +593,19 @@ lh#position#char_at_pos({pos})~
                                              *lh#position#extract()*           {{{3
 lh#position#extract({pos1}, {pos2})~
 @return             The string between the two positions (see |getpos()|).
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#time#bench()*                 {{{3
+lh#time#bench(Function[, args])~
+@return the time spent by the execution of `Function()`.
+@param[in] {Function} is expected to be something like a |function| --
+|lhvl-functor|s are not yet supported.
+@require |reltime()| support (hence, a recent Vim version)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#time#date()*                  {{{3
+lh#time#date()~
+@return the equivalent of `strftime('%D-th %b %Y)`
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#visual#selection()*           {{{3
@@ -444,12 +660,23 @@ triggered on the current file.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#exception#callstack()*        {{{3
 lh#exception#callstack({throwpoint})~
-Decodes the {throwpoint} and return a list of dictionaries made of:
+Decodes the {throwpoint} and returns a list of dictionaries made of:
 - "`script`": name of the file where the exception comes from
 - "`pos`"   : abolute line number in the script where the exception has been issued
 - "`fname`" : name of the function where the exception has been issued
 - "`offset`": Relative line number from the function first line where the
   exception....
+@see also |lh#exception#callstack_as_qf()|
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#exception#callstack_as_qf()*        {{{3
+lh#exception#callstack_as_qf({filter} [{msg}])~
+Decodes the current callstack and returns a list of dictionaries compatible
+with |setqflist()| and |setloclist()|.
+Entries with a `fname` field  matching `'\vlh#exception#'.{filter}` will be
+filtered out. If you plan to use this field, don't forget to prepend with
+a `/\|`, (magic mode).
+@see also |lh#exception#callstack()|
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                *lh#float#max()*     *lh#float#min()*             {{{3
@@ -477,23 +704,32 @@ OPTIONS RELATED FUNCTIONS                             *lhvl#option*     {{{2
 This sub-library helps fetching option values for plugins.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#option#exists_in_buf()*       {{{3
+lh#option#exists_in_buf({expr}, {name})~
+@return what `exists({name})` would return when the current buffer matches
+{expr}.
+This function encapsulates  |getbufvar| >
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#option#Get()*                 {{{3
-lh#option#Get({name},{default}[,{scopes}])  (*deprecated*)~
+lh#option#Get({names},{default}[,{scopes}])  (*deprecated*)~
                                                 *lh#option#get()*
-lh#option#get({name}[,{default}[,{scopes}]])~
-@param {name}       Name of the option to fetch
+lh#option#get({names}[,{default}[,{scopes}]])~
+@param {name}       Names of the option to fetch
 @param {default}    Default value in case the option is not defined.
                     Its default value is |g:lh#option#unset|.
 @param {scopes}     Vim scopes in which the options must be searched,
-                    default="bg".
-@return             b:{name} if it exists, or g:{name} if it exists, or
-                    {default} otherwise.
+                    default="bpg".
+@return             b:{names[0]} if it exists, or b:{names[1...]} if any
+                    exist, or p:{names[0...]} if any exist, or g:{names[0...]}
+                    if any exist, or {default} if none exists.
 @see                For development oriented options, |lh-dev| provides a
                     dedicated function: |lh#dev#option#get()|.
 
 This function fetches the value of an user defined option (not Vim |options|).
-The option can be either a |global-variable|, a |buffer-variable|, or even
-a|window-variable|.
+The option can be of any variable kind between |g:|, |b:|, |w:|, |t:| or lh-vim-lib |p:|.
+If the option is bound to another variable, it'll be resolved to return the
+other variable value. See |lh#ref#bind()|.
 
 The order of the variables checked can be specified through the optional
 argument {scopes}. By default, buffer-local options have the priority over
@@ -519,10 +755,43 @@ An |expr-string| will be considered empty if its |strlen()| is 0, an
 is 0.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#option#get_from_buf()*        {{{3
+lh#option#get_from_buf({bufid}, {name}[,{default}[,{scopes}]])~
+@param {bufid}      Buffer identifier (name of number)
+@param {name}       Name of the option to fetch
+@param {default}    Default value in case the option is not defined.
+                    Its default value is |g:lh#option#unset|.
+@param {scopes}     Vim scopes in which the options must be searched,
+                    default="bpg".
+@return             {b}:{name} if it exists, or p:{var} if it exists, or
+                    g:{name} if it exists, or {default} otherwise.
+@see                For development oriented options, |lh-dev| provides a
+                    dedicated function: |lh#dev#option#get()|.
+
+This function works exactly as |lh#option#get()| except that it searches the
+`b:var` and `p:var` into the {bufid} buffer.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#option#getbufvar()*           {{{3
 lh#option#getbufvar({expr}, {name}[,{default}])~
 This function encapsulates  |getbufvar| >
     getbufvar(expr, name, g:lh#option#unset)
+
+Unlike the direct call of the previous expression, this function ensures
+|g:lh#option#unset| is known (the lazy-loading mecanism of autoload plugins
+doesn't apply to variables, only to functions).
+See also |lh#option#getbufglobvar()|.
+
+                                                *lh#option#getbufglobvar()*       {{{3
+lh#option#getbufglobvar({expr}, {name}[,{default}])~
+This function is a crossover between |lh#option#getbufvar()| and
+|lh#option#get()|. The later searches in the current buffer for a given
+buffer-local variable. Sometimes, we want to search into another well known
+buffer without having to change the current buffer, and still search in the
+global variables.
+
+This function encapsulates  |getbufvar| >
+    getbufvar(expr, name, get(g:, name, g:lh#option#unset))
 
 Unlike the direct call of the previous expression, this function ensures
 |g:lh#option#unset| is known (the lazy-loading mecanism of autoload plugins
@@ -545,6 +814,105 @@ This function will permit to test whether an option is set or not: >
     let b:foobar = 1
     Assert lh#option#is_set(lh#option#getbufvar('%', 'foobar'))
 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#ft#option#get()*              {{{3
+lh#ft#option#get({name}, {ft}, {default} [,{scopes}])~
+@return which ever exists first among: b:{ft}_{name}, or p:{ft}_{name}, or
+g:{ft}_{name}, or b:{name}, or p:{name}, or g:{name}. {default} is returned
+if none exists.
+@note filetype inheritance is supported -- see |lhdev-filetype|.
+The order of the scopes for the variables checked can be specified through the
+optional argument {scope}
+@see also |lh#ft#option#get_postfixed()|
+@see also |lh#ft#option#get_all()|
+@since Version 4.0.0, moved from |lh-dev| `lh#dev#option#get()`.
+
+Example: >
+    LetTo g:foo.glob        = 'g'
+    LetTo g:foo.spe_buff    = 'g'
+    LetTo g:foo.spe_gFT     = 'g'
+    LetTo g:FT_foo.gFT      = 'gft'
+    LetTo g:FT_foo.spe_gFT  = 'gft'
+    LetTo g:FT_foo.spe_bFT  = 'gft'
+    LetTo b:foo.buff        = 'b'
+    LetTo b:foo.spe_buff    = 'b'
+    LetTo b:foo.spe_bFT     = 'b'
+    LetTo b:FT_foo.bFT      = 'bft'
+    LetTo b:FT_foo.spe_bFT  = 'bft'
+
+    let d = lh#ft#option#get_all('foo', 'FT')
+
+    AssertEquals(d.glob,     'g')
+    AssertEquals(d.buff,     'b')
+    AssertEquals(d.spe_buff, 'b')
+    AssertEquals(d.gFT,      'gft')
+    AssertEquals(d.spe_gFT,  'gft')
+    AssertEquals(d.bFT,      'bft')
+    AssertEquals(d.spe_bFT,  'bft')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#ft#option#get_postfixed()*    {{{3
+lh#ft#option#get({name}, {ft}, {default} [,{scopes}])~
+@return which ever exists first among: b:{name}_{ft}, or p:{name}_{ft}, or
+g:{name}_{ft}, or b:{name}, or p:{name}, or g:{name}. {default} is returned
+if none exists.
+@note filetype inheritance is supported -- see |lhdev-filetype|.
+The order of the scopes for the variables checked can be specified through the
+optional argument {scope}
+@see also |lh#ft#option#get()|
+@since Version 4.0.0, moved from |lh-dev| `lh#dev#option#get_postfixed()`.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#ft#option#get_all()*          {{{3
+lh#ft#option#get_all({name} [, {ft}})~
+Considering that the following variables will be |dictionaries| -- expecting they
+exists --, this function will merge all their values into one, keeping the
+most specialized value when there are.
+Possible variable names: b:{ft}_{name}, or p:{ft}_{name}, or g:{ft}_{name}, or
+b:{name}, or p:{name}, or g:{name}.
+@note filetype inheritance is supported -- see |lhdev-filetype|.
+The order of the scopes for the variables checked can be specified through the
+optional argument {scope}
+@see also |lh#ft#option#get()|
+@since Version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#ref#bind()*                   {{{3
+lh#ref#bind(varname)~
+lh#ref#bind(dict, key)~
+This function builds a reference to another variable.
+The long term objective is to be able to habe global preferences, and project
+specific preferences that either default to the global ones, or that can be
+overriden.
+A bound value shall be obtained with |lh#option#get()| and
+|lh#dev#option#get()| functions.
+
+The first overload builds a symbolic link to a named variables.
+The second overload build a link to the soft-linked {key} relative to the
+hard-linked |dictionary| variable.
+
+The linked variable can be interrogated with `ref.resolve()`, or assigned with
+`ref.assign(value)`.
+
+*lh#ref#is_bound()* tells whether its parameter is the name of a variable bound to another.
+
+Example: >
+    let g:dummy = [1,2,3]
+
+    " What we don't want
+    let b:dummy = g:dummy
+    Assert ! lh#ref#is_bound(b:dummy)
+    AssertEqual(lh#option#get('dummy'), g:dummy)
+    let g:dummy = [1, 2, 3, 4]
+    AssertDiffer(lh#option#get('dummy'), g:dummy)
+
+    " What we want!
+    let b:dummy = lh#ref#bind('g:dummy')
+    Assert lh#ref#is_bound(b:dummy)
+    AssertEqual(lh#option#get('dummy'), g:dummy)
+    let g:dummy = [1, 2, 3, 4, 5]
+    AssertEqual(lh#option#get('dummy'), g:dummy)
+
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#option#unset()*
@@ -555,7 +923,7 @@ lh#option#unset()~
 @note Never use |g:lh#option#unset| from your plugins but |lh#option#unset()|
 as it will get lazily loaded on need.
 
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+------------------------------------------------------------------------------
 FUNCTORS RELATED FUNCTIONS                            *lhvl#function*   {{{2
 
 This sub-library helps defining functors-like variables, and execute them.
@@ -692,7 +1060,6 @@ lh#string#trim(string)~
 @param    {string} |expr-string|
 @return            {string} trimmed of spaces
 
-
 ------------------------------------------------------------------------------
 STACKS RELATED FUNCTIONS                              *lhvl#stack*      {{{2
 Stacks functions helps to implement the LIFO/FILO ADT type.
@@ -803,6 +1170,13 @@ lh#list#match({list},{pattern}[, {start-pos}])~
 @return            [] if no item matches {pattern}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                        *lh#list#contain_entity()*         {{{3
+lh#list#contain_entity({list}, {entity})~
+@param    {list}  |List|
+@param  {entity}  |List| or |Dict| to search within the list with |expr-is|.
+@return Whether an {entity} is present within {list}.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                             *lh#list#find_if()* *lh#list#Find_if()*               {{{3
 lh#list#Find_if({list},{string-predicate} [, {pred-parameters}][, {start-pos}])~
 lh#list#find_if({list},{functor-predicate} [, {pred-parameters}][, {start-pos}])~
@@ -881,6 +1255,13 @@ The difference between the two functions is the following:
   stored in the dictionary ;
 - `unique_sort2()` sorts all the elements from the initial |List|, and then
   keeps only the elements that appear once.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                           *lh#list#uniq*                     {{{3
+lh#list#uniq({list})~
+@return Emulates |uniq()| when it doesn't exists. Or directly call it
+otherwise.
+@pre The emulation doesn't support all parameters supported by |uniq()|.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#list#Transform()*              {{{3
@@ -1087,6 +1468,18 @@ Examples: >
    720
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                               *lh#list#arg_max()* *lh#list#arg_min()*            {{{3
+lh#list#arg_min({list} [, Transfo])~
+lh#list#arg_min({list} [, Transfo])~
+@since v4.0.0
+Returns The arg-minimum, /arg-maximum of a |List| of elements.
+If provided, the transformation |function| {Transfo} is applied on each
+element before checking which one is greater/lesser of them all.
+@see also |lh#float#arg_min()| and |lh#float#arg_max| which are dedicated
+|expr-float|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Accumulates elements from {input}.
                                                *lh#list#flatten()*                {{{3
 lh#list#flatten({list})~
 @param[in] {list} to flatten
@@ -1095,6 +1488,26 @@ This function flattens a list >
 
   let l = [ [[[0]]], 1, 2, [3,4], [5, [6]]]
   AssertEquals(lh#list#flatten(l), range(7))
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#separate()*               {{{3
+lh#dict#separate(list, pred)~
+@param[in] {list} |List| to filter
+@param[in] {pred} |Function| predicate  that takes two parameters (element index, and
+element value)
+@return        An array of two |List|s. The first contains the elements from
+               {list} that match the predicate, while the second contains
+               those that don't match.
+@since Version 3.14.1
+@see |filter()|
+
+Examples: >
+  let l = [ 1, 5, 48, 25, 5, 28, 6]
+  if has('lambda')
+    let [min, max] = lh#list#separate(l, {idx, val -> val <10})
+    AssertEquals(min, [1, 5, 5, 6])
+    AssertEquals(max, [48, 25, 28])
+  endif
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#sort()*                   {{{3
@@ -1133,6 +1546,21 @@ Example: >
     :let indices = [ 0, 5, 7, 3 ]
     :echo lh#list#subset(l, indices)
     [ 1, 5, 6, 48 ]
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#subset()*                 {{{3
+lh#dict#subset({input},{keys})~
+Returns a subset slice of the {input} dict.
+
+@param[in] {input}  Input |Dict| from which elements will be extracted
+@param[in] {keys}   |List| of keys to extract
+@return a |Dict| of the elements from {input} indexed by the {keys}.
+
+Example: >
+    :let d = {'a':1, 'b':2, 'c':3, 'd':4, 'e':5}
+    :let keys = [ 'a', 'c', 'd']
+    :echo s = lh#dict#subset(d, keys)
+    {'a':1, 'c':3, 'd':4}
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#rotate()*                 {{{3
@@ -1197,10 +1625,35 @@ Examples: >
                                        \ {'k1': 1, 'k2': 2, 'k3': 'trois'})
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#get_composed()*           {{{3
+lh#dict#get_composed(dict, keys [, default])~
+@param[in] {dict}    |Dict| to poke
+@param[in] {keys}    Composition of keys
+@param[in] {default} Default value return instead of |lh#option#unset()| in
+                     case the variable doesn't exist.
+@return `{dict}[keys]`
+
+Examples: >
+
+  LetTo g:foo.bar.team = 12
+
+  AssertEquals(lh#dict#get_composed(g:, 'foo.bar.team'), 12)
+  AssertEquals(lh#dict#get_composed(g:foo,  'bar.team'), 12)
+  AssertEquals(lh#dict#get_composed(g:foo.bar,  'team'), 12)
+  AssertThrows lh#dict#get_composed(g:foo, 'beer.team')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#key()*                    {{{3
+lh#dict#key(one_key_dict)~
+@param[in]     {one_key_dict} Dictionary to test
+@return        The first element of the dictionary
+@throw         An exception if the dictionary has more than one element.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#push_if_new()*            {{{3
 lh#list#push_if_new(list, value)~
 @param[in,out] {list} |List| to extend
-@param[in]      {rhs} Element to insert, if new.
+@param[in]     {value} Element to insert, if new.
 @return        The {list}
 Adds an element into a list, if not already present
 
@@ -1210,6 +1663,20 @@ Examples: >
 
   AssertEquals(lh#list#push_if_new(copy(list), 5), [1,2,3,5])
   AssertEquals(lh#list#push_if_new(copy(list), 2), [1,2,3])
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#list#push_if_new_elements()*   {{{3
+lh#list#push_if_new_elements(list, values)~
+@param[in,out] {list} |List| to extend
+@param[in]     {values} Elements to insert, if new.
+@return        The {list}
+Adds elements into a list, if not already present
+
+Examples: >
+
+  let list = [1,2,3]
+
+  AssertEquals(lh#list#push_if_new_elements(copy(list), [1, 2, 5, 8]), [1,2,3,5,8])
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#remove()*                 {{{3
@@ -1423,12 +1890,11 @@ These two functions implement a topological sort on the Direct Acyclic Graph.
 @since Version 2.1.0
 @test tests/lh/topological-sort.vim
 
-
 ------------------------------------------------------------------------------
 PATHS RELATED FUNCTIONS                               *lhvl#path*       {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                   *lh#path#depth()*              {{{3
+                                                   *lh#path#depth()*                 {{{3
 lh#path#depth({dirname})~
 Returns the depth of a directory name.
 
@@ -1441,12 +1907,24 @@ Returns the depth of a directory name.
       -1 or 3.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                 *lh#path#dirname()*              {{{3
-lh#path#dirname({dirname})~
+                                                   *lh#path#exists()*                {{{3
+lh#path#exists({pathname})~
+@return whether {pathname} can be read (with |filereadable|) or whether a
+buffer exists with that name (see |bufexists()|).
+@since Version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#path#to_dirname()*            {{{3
+lh#path#to_dirname({dirname})~
 Ensures the returned directory name ends with a '`/`' or a '`\`'.
 
 @todo On windows, it should take 'shellslash' into account to decide the
       character to append.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#path#remove_dir_mark()*       {{{3
+lh#path#remove_dir_mark({dirname})~
+Remove the trailing 'shellslash' character ('`/`' or a '`\`') from {dirname}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#path#fix()*                   {{{3
@@ -1510,7 +1988,7 @@ containing "`..\`". (It likelly works this way when vim is compiled without
 'shellslash' support)
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                    *lh#path#common()*            {{{3
+                                                    *lh#path#common()*                {{{3
 lh#path#common({pathnames})~
 @param[in] {pathnames} |List| of pathnames to analyse
 @return the common leading path between all {pathnames}
@@ -1537,7 +2015,7 @@ echoes >
  ['bar/file','file', 'foo/file']
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                 *lh#path#StripStart()*           {{{3
+                                                 *lh#path#StripStart()*            {{{3
 lh#path#StripStart({pathname}, {pathslist})  (*deprecated*)~
                                                  *lh#path#strip_start()*
 lh#path#strip_start({pathname}, {pathslist})~
@@ -1555,20 +2033,29 @@ echoes >
  template/bar.template
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#IsAbsolutePath()*        {{{3
-lh#path#IsAbsolutePath({path})  (*deprecated*)~
-                                                *lh#path#is_absolute_path()*
+                                                *lh#path#is_absolute_path()*      {{{3
 lh#path#is_absolute_path({path})~
-@return {path} Path to test
+                                                *lh#path#IsAbsolutePath()*
+lh#path#IsAbsolutePath({path})  (*deprecated*)~
+@param[in] {path} Path to test
 @return whether the path is an absolute path
 @note Supports Unix absolute paths, Windows absolute paths, and UNC paths
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#IsURL()*                 {{{3
-lh#path#IsURL({path})  (*deprecated*)~
-                                                *lh#path#is_url()*
+                                                *lh#path#is_distant_or_scratch()* {{{3
+lh#path#is_distant_or_scratch({path})~
+@param[in] {path} Path to test
+@return
+- whether the path is an URL or a name for a scratch buffer (according to
+  recent conventions), i.e. whether it contains `"://"`,
+- or whether it's an UNC path, i.e. starting with either `"//"` or `"\\"`.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#path#is_url()*                {{{3
 lh#path#is_url({path})~
-@return {path} Path to test
+                                                *lh#path#IsURL()*
+lh#path#IsURL({path})  (*deprecated*)~
+@param[in] {path} Path to test
 @return whether the path is an URL
 @note Supports http(s)://, (s)ftp://, dav://, fetch://, file://, rcp://,
 rsynch://, scp://
@@ -1632,7 +2119,7 @@ In case {expr} is a |List|, |globpath()| is applied on each expression in
 {expr}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                    *lh#path#find()*              {{{3
+                                                    *lh#path#find()*                  {{{3
 lh#path#find({pathslist}, {regex})~
 @param[in] {pathslist} List of paths which can be received as a |List| or as a
                        string made of coma separated paths.
@@ -1669,6 +2156,28 @@ lh#path#is_in({file}, {path})~
 Tells whether a {file} is within a directory tree.
 The function first tries to check whether the names match, then it tries again
 but on resolved pathnames (with |lh#path#readlink()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#path#new_permission_lists()*  {{{3
+                                                *lhvl#permission-list*
+lh#path#new_permission_lists(options)~
+Prepares a permission lists object.
+@param[in] {options} |Dictionary| made of the |List|s:
+  - `"whitelist"`:    |List| of paths always accepted.
+  - `"blacklist"`:    |List| of paths always rejected.
+  - `"asklist"`:      |List| of paths that needs interactive approval.
+  - `"sandboxlist"`:  |List| of paths approved, in the |sandbox| only.
+  - `"_do_handle()"`: |Function| executed of approved file,
+                    required only by |handle_file()| and |handle_paths()|.
+  - `"_action_name"`: Name of the action to display in messages.
+@return An object completed with the methods:
+  - *prepare()*          -- internal
+  - *handle_paths()*     -- applies `"_do_handle()"` to files compatibles with permissions
+  - *handle_file()*      -- internal
+  - *check_paths()*      -- tells whether a file is compatible with current permissions
+  - *is_file_accepted()* -- internal
+@since v4.0.0
+@see |local_vimrc| documentation for more details.
 
 ------------------------------------------------------------------------------
 MENUS RELATED FUNCTIONS                               *lhvl#menu*       {{{2
@@ -1796,6 +2305,13 @@ Creates a menu entry and its associated mappings for several modes at once.
 @param[in] {menu-priority} |sub-menu-priority| for the new menu entry
 @param[in] {menu-text}      Name of the new menu entry
 @param[in] {key-binding}    Sequence of keys to execute the associated action
+                            If empty, no mapping will be done.
+                            It can be a key to help fill a menu reminder, and
+                            yet not define a mapping, it that case it takes
+                            the attributes:
+            - `'binding'`: what {key-binding} would have contained otherwise
+            - `'modes'`:   (not yet implemented)
+            - `'action'`:  (not yet implemented)
 @param[in] "<buffer>"       If the string "<buffer>" is provided, then the
                             associated mapping will be a |map-<buffer>|, and
                             the menu will be available to the current buffer
@@ -1805,7 +2321,6 @@ Creates a menu entry and its associated mappings for several modes at once.
                             or from a |local_vimrc|.
 @param[in] {action}         Action to execute when {key-binding} is typed, or
                             when the menu entry is selected.
-@todo support select ('s') and visual-not-select ('x') modes
 
 First example:~
 The following call will add the menu "LaTeX.Run LaTeX once <C-L><C-O>", with
@@ -1971,9 +2486,37 @@ This function is a helper function that defines several mappings at once as
 The action to execute will be corrected depending on the current mode. See
 |lh#menu#make()_modes| for more details.
 
-
 ------------------------------------------------------------------------------
 COMMANDS RELATED FUNCTIONS                            *lhvl#command*    {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#analyse_args()*       {{{3
+lh#command#analyse_args(a:ArgLead, a:CmdLine, a:CursorPos)~
+Helper function to define |:command-completion-custom| functions.
+It parses the function parameters to return a |List| of:
+" - the position of the token where the cursor is
+" - all the tokens up to cursor position
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#matching_variables()* {{{3
+lh#command#matching_variables(lead [, scopes=all])~
+Helper function to define |:command-completion-custom| functions.
+Returns a list of variables matching the {lead}. Supported variables are:
+|g:var|, |b:var|, |t:var|, |w:var|,  |expr-env|ironment variables, |options|.
+|p:var| are not supported (yet).
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#matching_for_command()* {{{3
+lh#command#matching_for_command(lead)~
+Helper function to define |:command-completion-custom| functions.
+Returns what vim would have expanded for the command contained in the {lead}
+string.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#command#matching_askvim()*    {{{3
+lh#command#matching_askvim(attribute, lead)~
+Helper function to define |:command-completion-custom| functions.
+Returns what vim would have expanded for |:command-complete| {attribute}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#command#new()*                {{{3
@@ -1989,7 +2532,6 @@ lh#command#Fargs2String({aList})~
                                             *lh#command#complete()*               {{{3
 lh#command#complete({argLead}, {cmdLine}, {cursorPos})~
 Under developpement
-
 
 ------------------------------------------------------------------------------
 BUFFERS RELATED FUNCTIONS                             *lhvl#buffer*     {{{2
@@ -2184,7 +2726,6 @@ The second tries to execute `:split {options}`
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#window#getid()*               {{{3
-                                                *lh#window#gotoid()*
 lh#window#getid([{win}])~
 Encapsulation over vim recent function |win_getid()|.
 An emulation is provided for older versions of vim.
@@ -2326,10 +2867,37 @@ It helps to clean |system()| results from extra newlines at the end of the
 result.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#os#make()*                      {{{3
+lh#os#make({options}, {bang})~
+This is a shortcut to: >
+    exe ':make '.bang.' '.option
+
+Any |p:$env| variable will be injected on the fly.
+@internal a temporary script will be created for the occasion.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#os#new_runner_script()*         {{{3
+lh#os#new_runner_script({cmd}, {env})~
+This'll create a finalizable script to execute in 'shell' that initialises
+environment variables, and execute a command.
+
+You'll find in the |dictionary|:
+- `"_script_name"` that contain the name of the temporary script created
+- `"run()"` that'll execute the script
+- `"lines"` that caches the lines stored in the temporary script.
+
+By _finalizable_, understand that the result inherits |lh#on#exit()|, and that
+finalization will |delete()| the temporary file created by the function.
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                               *lh#os#system()*                    {{{3
 lh#os#system({command)})~
 This is a shortcut to: >
     lh#os#chomp(system(cmd))
+
+Any |p:$env| variable will be injected on the fly.
+@internal a temporary script will be created for the occasion.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                               *lh#os#sys_cd()*                    {{{3
@@ -2424,6 +2992,7 @@ LOG RELATED FUNCTIONS                                 *lhvl#log*        {{{2
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lhvl-global-logger*              {{{3
 lh-vim-lib provides a global logger since version 3.6.0.
+s_bo
 By default, it'll echo everything with |:echomsg| (through |lh#log#echomsg|).
 
 The logging policy can be set thanks to |lh#log#set_logger()|.
@@ -2478,25 +3047,33 @@ Sets the global logger.
   - `"echomsg"` -> |lh#log#echomsg()| and log with |:echomsg|
   - `"qf"`      -> |lh#log#new()| and log in |quickfix-window|
                 Takes another parameter that tells {where} the window is opened.
-  - `"log`      -> |lh#log#new()| and log in |location-list-window|
+  - `"loc`      -> |lh#log#new()| and log in |location-list-window|
                 Takes another parameter that tells {where} the window is opened.
+  - `"file"`    -> |lh#log#new()| and log in a file named {where}
+                @since v4.0.0
 
 
                                                 *:LHLog*                          {{{3
-:LHLog {kind}~
+:LHLog {kind} [{where}]~
 Sets the global logger.
-@param {kind} any of `"none"`, `"echomsg"`, `"qf"`, `"log"`, and `"clear"`
+@param {kind} any of `"none"`, `"echomsg"`, `"qf"`, `"log"`, `"file"` and `"clear"`
 
 This command is simply a helper command that'll execute
 |lh#log#set_logger()||. It presents the advantage to support completion: i.e.
-no need to remember all possible parameter values. However, the {options}
-cannot be passed (for now).
+no need to remember all possible parameter values.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#log#this()*                   {{{3
 lh#log#this({format}, {args}...)~
 Logs the formatted message with the global logger.
 The message to log is prepared with |lh#fmt#printf()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#log#callstack()*              {{{3
+lh#log#callstack(msg)~
+Logs the current callstack with the global logger.
+Relies on |lh#log#exception()|
+@since Version 3.13.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#log#exception()*              {{{3
@@ -2568,8 +3145,551 @@ It's isn't meant to be used directly. See |lhvl-global-logger|.
 Typical use, see |lh#log#set_logger()|: >
     call lh#log#set_logger('none')
 
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ------------------------------------------------------------------------------
+VERSION CONTROL SYSTEM RELATED FUNCTIONS              *lhvl#vcs*        {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#as_http()*               {{{3
+lh#vcs#as_http([dirname])~
+@param[in] {dirname} repository dirname, defaults to `expand(%:p:h)`.
+@return the url associated to the {dirname} expressed in http form.
+@warning Only github is supported right now.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#decode_github_url()*     {{{3
+lh#vcs#decode_github_url(url)~
+@param[in] {url} of a github repository
+@return a |List| made of:
+- `"ssh"`  if detected in the url
+- github username name
+- project name
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#get_git_root()*          {{{3
+lh#vcs#get_git_root([path])~
+Searches for a up-directory from {path} that contains a `.svn/` subdirectory.
+@param[in] {path} repository dirname, defaults to `expand(%:p:h)`.
+@return the matching directory name, or an empty string.
+@version 3.12.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#get_svn_root()*          {{{3
+lh#vcs#get_svn_root([path])~
+Searches for a up-directory from {path} that contains a `.svn/` subdirectory.
+@param[in] {path} repository dirname, defaults to `expand(%:p:h)`.
+@return the matching directory name, or an empty string.
+@warning This won't work well with older subversion clients that put a `.svn/`
+directory into each directory checked out.
+@version 3.12.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#get_type()*              {{{3
+lh#vcs#get_type([path])~
+@param[in] {path} repository dirname, defaults to `expand(%:p:h)`.
+@return the type of VCS detected. Uses |VCSCommand| routines if installed.
+Otherwise, only `git` and `svn` are recognized.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#get_url()*               {{{3
+lh#vcs#get_url([path])~
+@param[in] {path} repository dirname, defaults to `expand(%:p:h)`.
+@return the `remore.origin` url associated to the repository.
+@warning Only git repositories are supported at the moment.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#is_git()*                {{{3
+lh#vcs#is_git([path])~
+@param[in] {path} repository dirname, defaults to `expand(%:p:h)`.
+@return whether the {path} belongs to a git repository.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#vcs#is_svn()*                {{{3
+lh#vcs#is_svn([path])~
+@param[in] {path} repository dirname, defaults to `expand(%:p:h)`.
+@return whether the {path} belongs to a svn repository.
+
+------------------------------------------------------------------------------
+OO HELPERS                                            *lhvl#oo*         {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Quite a few times I've defined |Dictionaries| that behave as objects, but when
+I wanted to display their value, I've been annoyed to see a gigantic (and
+useless) list of methods. Hence the following helpers.
+For the moment only stringification is addressed, may be other services will
+be provided in the future. I can't tell.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#object#make_top_type()* {{{3
+lh#object#make_top_type(dict-params)~
+Creates a |Dictionary| that implements:
+- *__lhvl_oo_type()*
+  that returns 1 -- meant to be checked w/ `get(obj, '__lhvl_oo_type', 0)`
+- *_to_string()*
+  that stringifies the current object without its methods.
+  Call `lh#object#verbose(1)` to also display the list of methods.
+
+In order to have a dedicated stringification method, just override `_to_string()`
+to an implementation that fits your needs. You may need to use
+|lh#object#_to_string()| in order to display internal fields without recursion
+issues.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#object#to_string()* {{{3
+lh#object#to_string(data)~
+This function will work as `:echo data`, i.e. multiple occurrences of a same
+object will be shorten to `[...]` or `{...}`, but it will also hide methods
+from objects created with |lh#object#make_top_type()|, or it'll call a
+`_to_string()` or a `to_string()` when found.
+
+Internally, it relies on |lh#object#_to_string()| to build the string to
+display. Actually, it's just a call to: >
+    lh#object#_to_string(a:data, [])
+<
+                                                 *lh#object#_to_string()* {{{3
+lh#object#to_string(data, list_of_already_handled_data)~
+This is the internal function used to print objects once. Unless you're
+defining your own `_to_string()` overload, don't use it. See
+autoload/lh/object.vim `s:to_string()` implementation to see how to use it.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#object#is_an_object()* {{{3
+lh#object#is_an_object(var)~
+@return whether the {var} is an object. It tests whether it contains a
+`'__lhvl_oo_type'` field which is automatically added to objects built through
+|lh#object#make_top_type()|.
+
+------------------------------------------------------------------------------
+VARIABLES HELPERS                                     *lhvl#variables*  {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#let#if_undef()*  *:LetIfUndef* {{{3
+lh#let#if_undef({varname}, {value})~
+:LetIfUndef {varname} {value}~
+:LetIfUndef {varname} = {value}~
+@param[in] {varname} scoped named of a variable (|w:|, |b:|, |p:|, |P:|, |t:|,
+                     |g:|), or environment variable.
+@param[in] {value}
+@return variable built
+
+@note |command-completion| is supported on {varname}.
+@warning
+    The interface has changed with v4.0.0, {value} must no longer be quoted.
+@warning
+    Environment variable only support string and numeric values.
+@warning
+    The command flavor (and the next one that takes a {assignment-string})
+    only support expressions that aren't modified by function context. I.e.
+    variables must be explictly global, buffer-, windows-, or tab-local.  |s:|
+    variables won't give the correct result, nor expressions like
+    `expand('<sfile>')`.
+
+lh#let#if_undef({assignment-string})~
+Flavour meant to be used internally by |:LetIfUndef|
+
+These function and command make sure the variable named {varname} exists. If
+it didn't exist before, it's assigned to {value}.
+The {varname} can be a |Dictionary| with all its fields.
+
+Examples: >
+    call lh#let#if_undef('g:dummy_test1', 42)
+    LetIfUndef g:dummy_test1 42
+    LetIfUndef g:dummy_test1 = 42
+
+    LetIfUndef g:dummy_test1 = some#func(g:var+t:var) " OK
+    LetIfUndef g:dummy_test1 = s:(g:var+t:var)        " Error
+    LetIfUndef g:dummy_test1 = some#func(var)         " Error
+
+    call lh#let#if_undef('g:dummy_test2', {'a':1, 'b':{'c':5}})
+    LetIfUndef g:dummy_test2.un.deux {'a':1, 'b':{'c':5}})
+    LetIfUndef g:dummy_test2.un.deux = {'a':1, 'b':{'c':5}})
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#let#to()*        *:LetTo*      {{{3
+lh#let#to({varname}, {value})~
+:LetTo {varname} {value}~
+:LetTo {varname} = {value}~
+@param[in] {varname} scoped named of a variable (|w:|, |b:|, |p:|, |P:|, |t:|,
+                     |g:|), or environment variable.
+@param[in] {value} assigned, must no be quoted
+@return variable built
+
+@note |command-completion| is supported on {varname}.
+@warning
+    The interface has changed with v4.0.0, {value} must no longer be quoted.
+@warning
+    Environment variable only support string and numeric values.
+@warning
+    The command flavor (and the next one that takes a {assignment-string})
+    only support expressions that aren't modified by function context. I.e.
+    variables must be explictly global, buffer-, windows-, or tab-local.  |s:|
+    variables won't give the correct result, nor expressions like
+    `expand('<sfile>')`.
+
+lh#let#to({assignment-string})~
+Flavour meant to be used internally by |:LetTo|
+
+These function and command make sure the variable named {varname} exists and
+values {value}.
+The {varname} can be a |Dictionary| with all its fields.
+
+Examples: >
+    call lh#let#to('g:dummy_test1', 42)
+    LetTo g:dummy_test1 42
+    LetTo g:dummy_test1 = 42
+
+    LetTo g:dummy_test1 = some#func(g:var+t:var) " OK
+    LetTo g:dummy_test1 = s:(g:var+t:var)        " Error
+    LetTo g:dummy_test1 = some#func(var)         " Error
+
+    call lh#let#to('g:dummy_test2', {'a':1, 'b':{'c':5}})
+    LetTo g:dummy_test2.un.deux {'a':1, 'b':{'c':5}})
+    LetTo g:dummy_test2.un.deux = {'a':1, 'b':{'c':5}})
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                 *lh#let#unlet()*     *:Unlet*      {{{3
+lh#let#unlet({varname})~
+:Unlet {varname}~
+@param[in] {varname} scoped named of a variable (|w:|, |b:|, |p:|, |t:|, |g:|)
+@note `p:`Environment variables are supported as well. But vanilla environment
+variables aren't.
+@note |command-completion| is supported on {varname}.
+
+These function and command make sure the variable named {varname} doesn't exists.
+The {varname} can be a |Dictionary| with all its fields. It that case, only
+the last field is removed.
+
+Examples: >
+    Unlet g:dummy_test1
+    " or
+    call lh#let#unlet('g:dummy_test1')
+
+    Unlet g:dummy_test1.un.deux
+    " or
+    call lh#let#unlet('g:dummy_test2.un.deux')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+PROJECT DEFINITIONS                                   *lhvl#project*    {{{2
+@since Version 4.0.0
+
+Vim support various means to define options.
+ * First there are vim options that are used to tune how Vim behaves in various
+   situations. They are set with |:set|. Some are global, other are local to
+   buffers. In this later case we usually choose their value either on a
+   filetype basis, or a project basis.
+ * Then there are plugin options. Again, they can be |g:|lobal,
+   |b:|uffer-local, or even |w:|indow or |t:|ab local. In lh-vim-lib I've been
+   providing |lh#option#get()| to obtain in a simple call the most refined
+   value of an option. In
+   [|lh-dev|](http://github.com/LucHermitte/lh-dev#options-1), I've went a little
+   bit further in order to support specialization for buffer and/or filetypes.
+
+Given the objective to have options that are project specific, it's quite easy
+to achieve it thanks to plugins like
+[|local_vimrc|](https://github.com/LucHermitte/local_vimrc/) (or similar
+techniques). With these plugins, we say a file belongs to a project when it's
+located in a directory under the one where a `_vimrc_local` file resides.
+
+In that `_vimrc_local` file, we define project-specific options as local
+options with |:setlocal|, and |b:|uffer_local_options.
+
+That works well I've said. Up to a point: a same option could be duplicated
+hundred times: once in each buffer that belongs to a project. As long as we
+don't want to change an option this is fine. But as soon as we want to change a
+setting we have to change it in every opened buffer belonging to the project,
+which is tedious to do correctly.
+
+How often does this need arise? Much to often IMO. In
+[|BuildToolsWrappers|](https://github.com/LucHermitte/BuildToolsWrappers/),
+I've experimented the issue when I wanted to change the current compilation
+directory (from _Debug_ to _Release_ for instance). This is just one option,
+but it impacts CMake configuration directory, included directory list (for
+`.h.in` files), build directory, etc.
+
+Being able to toggle an option between several values, when this is a buffer
+local option, quickly becomes a nightmare. This is because we don't have
+`p:roject_options`.
+
+So? Let's have them then!
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *project-options*                {{{3
+*g:lh#project.auto_detect*
+Tells whether we should try to automatically detect whether a file belongs to
+a project.
+So far, we use |lh#project#root()| result as an indicator of belonging to a
+project.
+
+See also |g:lh#project.permissions|.
+
+When set to 1, there is no need to explicitly define a project.
+
+Default value is 0
+
+*g:lh#project.auto_chdir*
+Tells whether we should automatically change the local current working
+directory for every files in projects to reflect the source paths associated
+to their associated project *p:paths.sources*
+
+So far, we use |lh#project#root()| result as default value for `p:paths.sources`.
+
+Default value is 0
+
+*g:lh#project.permissions*
+Specifies whitelist, blacklist, asklist and sandboxlist of pathnames to be
+used when trying to automagically find projects with |g:lh#project.auto_detect|.
+Default values for:
+- *g:lh#project.permissions.whitelist*   : []
+- *g:lh#project.permissions.asklist*     : [$HOME]
+- *g:lh#project.permissions.blacklist*   : ['/']
+- *g:lh#project.permissions.sandboxlist* : []
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *p:* *project-variable*          {{{3
+Can be a project specific variable:
+- a vim |option|
+- an |environment| variable (which will be set on the fly by functions like
+  |lh#os#system()|, or |lh#asynch#queue()|)
+- any variable.
+
+These variables can be set with:
+- |:LetTo|
+- |:LetIfUndef|
+
+Their value is meant to be retrived with:
+- |lh#option#get()| (and |lh#dev#option#get()| eventually) in variable cases
+- or use on the fly in case of |environment| variables
+
+TODO: add word about special handling of |options|
+
+But first, we need to define a project (see |:Project--define|, and
+|lh#project#define()|).
+
+*P:*
+|:LetIfUndef|, |:LetTo| and co also support the special `P:` scope. In their
+context it means: try to set the related |p:| variable, if the current buffer
+is under no project, then set instead a |b:| variable with the same name.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *:Project*                       {{{3
+:Project --help~
+Displays this help.
+
+:Project --usage~
+Shows the various ways to use this command.
+
+                                                    *:Project--define*
+:Project --define {prj-name}~
+Defines a new project named {prj-name} -- see |lhvl-project_name|.
+
+If a project with that name already exists, the current buffer will be
+automatically registered to this project.
+Otherwise, a project named {prj-name} will be defined. If the current buffer
+belonged to another project, the new project will automatically inherit from
+the old one. See |lhvl#project-inherit|.
+
+@post there exists a project named {prj-name}
+@post the current buffer belong to a project named {prj-name}
+@seealso |lh#project#new()| and |lh#project#define()|.
+
+                                                    *:Project--list*
+:Project --list~
+Lists all known projects.
+An project without an explicit name will be provided one automatically.
+See |lhvl-project_name|.
+
+                                                    *:Project--which*
+:Project --which~
+Lists all projects to which the current buffer belongs.
+
+                                                    *:Project-:ls*
+:Project [{prj-name}] :ls~
+Displays the buffers associated to the project {prj-name}, or the current
+project (is none was specified) in the same way as builtin |:ls| command.
+
+                                                    *:Project-:cd*
+:Project [{prj-name}] :cd {dirname}~
+Changes the project current directory with |:lcd|.
+Applies the change to all windows where buffers from the project are
+displayed.
+@pre {dirname} must be a valid directory
+@pre a project (named {prj-name} if specified) must exist.
+@post `p:paths.sources` equals {dirname}
+
+                                                    *:Project-:echo*
+:Project [{prj-name}] :echo {varname}~
+Echoes the value of the |p:|variable {varname} associated to specified
+project, or the current project otherwise.
+
+                                                    *:Project-:doonce*
+:Project [{prj-name}] :doonce {cmd}~
+Executes {cmd} in the first window found that is associated to specified
+(or current) project. If no buffer from the project is opened in a window, we
+try to open one (which'll be automatically discarded).
+@pre the project shall have listed buffers.
+
+                                                    *:Project-:windo*
+:Project [{prj-name}] :windo {cmd}~
+Executes {cmd} in all windows associated to the specified (or current)
+project. This is similar to |:windo|, except the windows used are filtered
+beforehand.
+@pre the project shall have listed buffers.
+
+                                                    *:Project-:bufdo*
+:Project [{prj-name}] :bufdo {cmd}~
+Executes {cmd} in all buffers associated to the specified (or current)
+project. A temporary window is opened for the occasion (contrary to
+|:bufdo| which uses the current window) .
+@pre the project shall have listed buffers.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#project#new()*               {{{3
+lh#project#new(options)~
+@internal
+Prefer |:Project--define| or |lh#project#define()|.
+
+@post A project without an explicit name will be provided one automatically.
+
+Reserved fields:
+- "name"      <- Project name   *lhvl-project_name*
+- "parents"
+- "paths.root" ? TODO!!
+- "buffers"
+- "variables" <- where p:foobar will be stored
+- "options"   <- where altered vim options will be stored
+- "env"       <- where $ENV variables will be stored
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#project#define()*            {{{3
+lh#project#define(s:, options [, varname])~
+@post the current buffer is registered to the project returned.
+Unless the current buffer is not eligible to belong to a project, in which
+case |lh#option#unset()| is returned. To be eligible to a project a buffer
+shall neither be distant, nor be a scratch buffer, nor be a quickfix buffer.
+
+While |:Project--define| permit to create new projects quite easily, it
+doesn't return a variable to the new project.
+
+Instead we could use `lh#project#define()` to store the new project variable
+into `s:project`, or `s:{varname}` automatically. If a project already exists
+in that variable, it get returned.
+
+Unlike |:Project--define|, `lh#project#define()` doesn't require a name. A
+default one will be provided.
+
+In the case different independent project configurations may co-exist in a
+`_vimrc_local.vim` file, you may need to have several branches, and call
+`lh#project#define()` with a third parameter to distinguish the projects. This
+will permit to store project information in a variable with a name which is not
+from `s:project`.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#project#crt()*               {{{3
+lh#project#crt()~
+@return the current project.
+@return In case there is no project associated to the current buffer,
+|lh#option#unset()| will be returned.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#project#_get()*              {{{3
+lh#project#_get(varname)~
+@return a variable named {varname} under the current project, or its parents.
+@return |lh#option#unset()| if the current buffer doesn't belong to a project
+or if there is such project variable.
+
+@internal Used by |lh#option#get()|
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#project#crt_bufvar_name()*   {{{3
+lh#project#crt_bufvar_name()~
+@return the name of the current project variable
+
+In case there is no project associated to the current buffer,
+an exception will be thrown.
+
+This will most likely return `b:crt_project`, the exact name depends on
+*g:lh#project#varname* global which can be overridden in your |.vimrc|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#project#_crt_var_name()*     {{{3
+lh#project#_crt_var_name(p:var)~
+This internal function is use by `lh#let#*` functions.
+It'll return:
+- A |dictionary| if {var} starts with `&` or `$`:
+  - `"realname"` =
+    - `lh#project#crt_bufvar_name().env.{var}` for environment variables
+    - `lh#project#crt_bufvar_name().options.{var}` for vim |option|s
+  - `"name"` = {var} (without the `"p:"`part)
+  - `"project"` a reference to the associated project variable
+- The |string| `lh#project#crt_bufvar_name().variables.{var}` otherwise.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DESIGN BY CONTRACT FUNCTIONS                          *lhvl#project*    {{{2
+@since Version 4.0.0
+This set of functions introduce DbC helpers. There are here to help plugin
+developers to detect and eradicate VimL programming errors.
+When an assertion fails, we cannot expect the script to go on correctly. There
+IS an error in its logic. We cannot expect anything good after that. That's
+where `lh#assert#*()` functions differs from Vim |test-functions| and my
+vim-|UT.txt| plugin: these other functions aim at providing tools to write
+unit tests.
+
+As with Vim |test-functions|, all errors will be traced in an internal
+variable that can be:
+- fetched with *lh#assert#errors()*
+- and cleared with *lh#assert#clear()*
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                   *dbc-mode*   *lh#assert#mode()*     {{{3
+lh#assert#mode([mode])~
+As with C++17+ DbC proposal, end-user can select the assertion mode he wants
+to run with. The default behaviour will remind things to Windows users: a
+|confirm| box will ask whether we want to |dbc-ignore|, |dbc-abort|, or enter
+in |dcb-debug|.
+
+- |dbc-ignore|, we'll try to go on. But don't (you, the end-user) expect
+  miracles, the plugin will certainly fail miserably in a few seconds.
+  Pray.
+- |dbc-abort|, we'll |:throw| an exception with as much context as possible.
+- |bdc-debug| is a tricky one. This mode is aimed at plugin writers.
+  |:debug| mode will be entered. Don't expect to be able to run anything
+  useful that isn't |>bt|, |>up|, |>down| or |:echo|.
+  - At the current level, the `cb` variable contains the call stack in a format
+  compatible with |setqflist()| and |setloclist()|. This means you can fill
+  them with either >
+    :call setqflist(cb) " or
+    :call setloclist(0, cb)
+<  - At the next level (run `:up` once), the `bt` variable contains unfiltered
+information about the backtrace. You should not need it.
+  - In order to exist this debugging mode, you have the choice between |>cont|,
+  |>next|, |>interrupt| or |>quit| (beware, `>q` will not trigger the
+  execution of |:finally| blocks.)
+
+Executing `lh#assert#mode()` with either `'ignore'`, `'abort'` or `'debug'`
+will force the assertion mode globally. (TODO: provide a |:Toggle| option for
+this mode). To go back to the |confirm| box, call the function with an empty
+string.
+Calling the function with no argument will permit to know which mode is the
+current one.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#assert#X()*     {{{3
+Let me know if you really need to know what is tested...
+In doubt, remember that I've mimicked the interfaces from Vim |test-functions|.
+
+lh#assert#true({actual} [, {msg}])                     *lh#assert#true()*
+lh#assert#false({actual} [, {msg}])                    *lh#assert#false()*
+lh#assert#equal({expected}, {actual} [, {msg}])        *lh#assert#equal()*
+lh#assert#not_equal({expected}, {actual}  [, {msg}])   *lh#assert#not_equal()*
+lh#assert#match({pattern}, {actual} [, {msg}])         *lh#assert#match()*
+
+lh#assert#unexpected([, {msg}])                        *lh#assert#unexpected()*
+    This one is new: it marks unexpected situations, without the need to call
+    `lh#assert#true(0, msg)`
+
                                                                      }}}1
 ==============================================================================
  (c) Luc Hermitte, 2001-2016 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1

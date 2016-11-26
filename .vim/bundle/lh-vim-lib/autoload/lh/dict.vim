@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      3.6.1.
-let s:k_version = '3601'
+" Version:      4.0.0.0
+let s:k_version = '40000'
 " Created:      26th Nov 2015
-" Last Update:  08th Jan 2016
+" Last Update:  28th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       |Dict| helper functions
@@ -16,6 +16,7 @@ let s:k_version = '3601'
 
 let s:cpo_save=&cpo
 set cpo&vim
+let s:k_unset = lh#option#unset()
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
@@ -58,6 +59,22 @@ function! lh#dict#add_new(dst, src) abort
   " return a:dst
 endfunction
 
+" Function: lh#dict#let(dict, key, value) {{{3
+function! lh#dict#let(dict, key, value) abort
+  let [all, key, subkey ; dummy] = matchlist(a:key, '^\v(.{-})%(\.(.+))=$')
+  call s:Verbose('%1 --> key=%2 --- subkey=%3', a:key, key, subkey)
+  if empty(subkey)
+    let a:dict[key] = a:value
+  else
+    if !has_key(a:dict, key)
+      let a:dict[key] = {}
+    elseif type(a:dict[key]) != type({})
+      unlet a:dict[key]
+      let a:dict[key] = {}
+    endif
+    call lh#dict#let(a:dict[key], subkey, a:value)
+  endif
+endfunction
 " # Dictionary in read-only {{{2
 
 " Function: lh#dict#key(one_key_dict) {{{3
@@ -67,6 +84,39 @@ function! lh#dict#key(one_key_dict) abort
     throw "[expect] The dictionary hasn't one key exactly (".string(a:one_key_dict).")"
   endif
   return it[0]
+endfunction
+
+" Function: lh#dict#subset(dict, keys) {{{3
+function! lh#dict#subset(dict, keys) abort
+  let result={}
+  for e in a:keys
+    let Val = get(a:dict, e, s:k_unset)
+    if lh#option#is_set(Val)
+      let result[e] = Val
+    endif
+    unlet Val
+  endfor
+  return result
+endfunction
+
+" Function: lh#dict#get_composed(dst, key[, def]) {{{3
+" @since v4.0.0
+function! lh#dict#get_composed(dst, key, ...) abort
+  try
+    let [all, key, subkey ; dummy] = matchlist(a:key, '^\v(.{-})%(\.(.+))=$')
+    call s:Verbose('%1 --> key=%2 --- subkey=%3', a:key, key, subkey)
+    if !has_key(a:dst, key)
+      call s:Verbose('Return default value: Key %1 not found in %2.', key, a:dst)
+      return get(a:, 1, s:k_unset)
+    endif
+    if empty(subkey)
+      return a:dst[a:key]
+    else
+      return call('lh#dict#get_composed', [a:dst[key], subkey]+a:000)
+    endif
+  catch /.*/
+    echoerr "Cannot get ".a:key." in ".string(a:dst).": ".(v:exception .' @ '. v:throwpoint)
+  endtry
 endfunction
 
 "------------------------------------------------------------------------

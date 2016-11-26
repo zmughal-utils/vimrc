@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      3.10.4
-let s:k_version = 31004
+" Version:      4.0.0
+let s:k_version = 40000
 " Created:      23rd Jan 2007
-" Last Update:  27th May 2016
+" Last Update:  25th Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to the handling of pathnames
@@ -96,6 +96,15 @@ let s:k_version = 31004
 "       (*) BUG: Support comma-separated lists in lh#path#munge()
 "       v3.10.4
 "       (*) PERF: Optimize lh#path#glob_as_list()
+"       v3.13.2
+"       (*) ENH: Add `lh#path#remove_dir_mark()`
+"       v4.0.0
+"       (*) TST: Fix `lh#path#find()` to always work w/ vimrunner
+"       (*) Move Permission lists code from local_vimrc
+"       (*) Add `p:var` support to `lh#path#add_path_if_exists()`
+"       (*) Escape `_` in `lh#path#select_one()` confirm box
+"       (*) Support `lh#path#glob_as_list(list`
+"       (*) Add `lh#path#is_distant_or_scratch()`
 " TODO:
 "       (*) Fix #simplify('../../bar')
 " }}}1
@@ -316,12 +325,17 @@ function! lh#path#IsURL(path)
   return lh#path#is_url(a:path)
 endfunction
 
+" Function: lh#path#is_distant_or_scratch(path) {{{3
+function! lh#path#is_distant_or_scratch(path) abort
+  return a:path =~ '\v://|^//|^\\\\'
+endfunction
+
 " Function: lh#path#select_one({pathnames},{prompt}) {{{3
 function! lh#path#select_one(pathnames, prompt) abort
   if len(a:pathnames) > 1
     let simpl_pathnames = deepcopy(a:pathnames)
     let simpl_pathnames = lh#path#strip_common(simpl_pathnames)
-    let simpl_pathnames = [ '&Cancel' ] + simpl_pathnames
+    let simpl_pathnames = [ '&Cancel' ] + map(simpl_pathnames, 'substitute(v:val, "_", "&&", "g")')
     " Consider guioptions+=c is case of difficulties with the gui
     try
       let guioptions_save = &guioptions
@@ -366,6 +380,11 @@ function! lh#path#to_dirname(dirname) abort
   return dirname
 endfunction
 
+" Function: lh#path#remove_dir_mark(dirname) {{{3
+function! lh#path#remove_dir_mark(dirname) abort
+  return substitute(a:dirname, '\v.{-}\zs[/\\]$', '', '')
+endfunction
+
 " Function: lh#path#depth({dirname}) {{{3
 " todo: make a choice about "negative" paths like "../../foo"
 function! lh#path#depth(dirname) abort
@@ -405,7 +424,8 @@ endfunction
 " Function: lh#path#glob_as_list({pathslist}, {expr} [, mustSort=1]) {{{3
 if has("patch-7.4-279")
   function! s:DoGlobPath(pathslist, expr) abort
-    return globpath(a:pathslist, a:expr, 1, 1)
+    let pathslist = type(a:pathslist) == type([]) ? join(a:pathslist, ',') : a:pathslist
+    return globpath(pathslist, a:expr, 1, 1)
   endfunction
 else
   function! s:DoGlobPath(pathslist, expr) abort
@@ -462,15 +482,6 @@ function! lh#path#strip_start(pathname, pathslist) abort
   endif
 
   " apply a realpath like operation
-  let nb_paths = len(pathslist) " set before the loop
-  let i = 0
-  " while i != nb_paths
-    " if pathslist[i] =~ '^\.\%(/\|$\)'
-      " let path2 = getcwd().pathslist[i][1:]
-      " call add(pathslist, path2)
-    " endif
-    " let i += 1
-  " endwhile
   let pathslist_abs=filter(copy(pathslist), 'v:val =~ "^\\.\\%(/\\|$\\)"')
   let pathslist += pathslist_abs
   " replace path separators by a regex that can match them
@@ -515,12 +526,9 @@ function! lh#path#find(paths, regex) abort
   let paths = (type(a:paths) == type([]))
         \ ? (a:paths)
         \ : split(a:paths,',')
-  for path in paths
-    if match(path ,a:regex) != -1
-      return path
-    endif
-  endfor
-  return ''
+  call filter(paths, 'match(v:val, a:regex) != -1')
+  let shortest = lh#list#arg_min(paths, function('len'))
+  return empty(paths) ? '' : paths[shortest]
 endfunction
 
 " Function: lh#path#vimfiles() {{{3
@@ -559,7 +567,12 @@ endfunction
 function! lh#path#add_path_if_exists(listname, path) abort
   let path = substitute(a:path, '[/\\]\*\*$', '', '')
   if isdirectory(path)
-    let {a:listname} += [a:path]
+    if a:listname =~ '^p:'
+      let var = lh#project#_get(a:listname[2:])
+      let var += [a:path]
+    else
+      let {a:listname} += [a:path]
+    endif
   endif
 endfunction
 
@@ -571,74 +584,82 @@ endfunction
 " Function: lh#path#find_in_parents(paths, kinds, last_valid_path) {{{3
 " @param {last_valid_path} will likelly contain a REGEX pattern aimed at
 " identifying things like $HOME
+let s:indent = 1
 function! lh#path#find_in_parents(path, path_patterns, kinds, last_valid_path) abort
-  if a:path =~ '^\(//\|\\\\\)$'
-    " The root path (/) is not a place where to store files like _vimrc_local
-    call s:Verbose('Stop recursion in UNC invalid root path: '.a:path)
-    return []
-  elseif a:path =~ '^\v(|\a:[/\\]*|[/\\])$'
-    " The root path (/) is not a place where to store files like _vimrc_local
-    call s:Verbose('Wont recurse anymore in root path: '.a:path)
-    let can_try_to_recurse = 0
-  else
-    let can_try_to_recurse = 1
-  endif
-
-  let res = []
-
-  let path = fnamemodify(a:path, ':p')
-
-  if can_try_to_recurse
-    if path[len(path)-1] =~ '[/\\]'
-      let path = path[:-2]
-    endif
-    let up_path = fnamemodify(path,':h')
-    if up_path == '.' " Likely a non existent path
-      if ! isdirectory(path)
-        call lh#common#warning_msg("The current file '".expand('%:p:')."' seems to be in a non-existent directory: '".path."'")
-      endif
-      let up_path = getcwd()
-    endif
-    " call confirm('crt='.path."\nup=".up_path."\n$HOME=".s:home, '&Ok', 1)
-    " echomsg ('crt='.path."\nup=".up_path."\n$HOME=".s:home)
-
-    " Recursive call:
-    " - first check the parent directory
-    if path !~ a:last_valid_path && path != up_path
-      " Terminal condition
-      let res += lh#path#find_in_parents(up_path, a:path_patterns, a:kinds, a:last_valid_path)
+  let indent_str = repeat('  ', s:indent)
+  call s:Verbose('%5#path#find_in_parents(%1, %2, %3, %4)', a:path, a:path_patterns, a:kinds, a:last_valid_path, indent_str)
+  try
+    let s:indent += 1
+    if a:path =~ '^\(//\|\\\\\)$'
+      " The root path (/) is not a place where to store files like _vimrc_local
+      call s:Verbose('%1Stop recursion in UNC invalid root path: '.a:path, indent_str)
+      return []
+    elseif a:path =~ '^\v(|\a:[/\\]*|[/\\])$'
+      " The root path (/) is not a place where to store files like _vimrc_local
+      call s:Verbose('%1Wont recurse anymore in root path: '.a:path, indent_str)
+      let can_try_to_recurse = 0
     else
-      call s:Verbose('Terminal condition reached: path '.path.' matches '.string(a:last_valid_path). ' or parent dir is the same')
-
+      let can_try_to_recurse = 1
     endif
-  endif
 
-  " - then check the current path
-  "   Unless it's not a directory
-  if ! isdirectory(path)
-    return res
-  endif
-  " Restore the trailling '/'
-  if empty(path) || path[len(path)-1] !~ '[/\\]'
-    let path .= lh#path#shellslash()
-  endif
-  let path_patterns = type(a:path_patterns) == type([]) ? a:path_patterns : [a:path_patterns]
-  for pattern in path_patterns
-    let tested_path = path.pattern
+    let res = []
+
+    let path = fnamemodify(a:path, ':p')
+
+    if can_try_to_recurse
+      if path[len(path)-1] =~ '[/\\]'
+        let path = path[:-2]
+      endif
+      let up_path = fnamemodify(path,':h')
+      if up_path == '.' " Likely a non existent path
+        if ! isdirectory(path)
+          call lh#common#warning_msg("The current file '".expand('%:p:')."' seems to be in a non-existent directory: '".path."'")
+        endif
+        let up_path = getcwd()
+      endif
+      " call confirm('crt='.path."\nup=".up_path."\n$HOME=".s:home, '&Ok', 1)
+      " echomsg ('crt='.path."\nup=".up_path."\n$HOME=".s:home)
+
+      " Recursive call:
+      " - first check the parent directory
+      if path !~ a:last_valid_path && path != up_path
+        " Terminal condition
+        let res += lh#path#find_in_parents(up_path, a:path_patterns, a:kinds, a:last_valid_path)
+      else
+        call s:Verbose('%1Terminal condition reached: path '.path.' matches '.string(a:last_valid_path). ' or parent dir is the same', indent_str)
+
+      endif
+    endif
+
+    " - then check the current path
+    "   Unless it's not a directory
+    if ! isdirectory(path)
+      return res
+    endif
+    " Restore the trailling '/'
+    if empty(path) || path[len(path)-1] !~ '[/\\]'
+      let path .= lh#path#shellslash()
+    endif
+    let path_patterns = type(a:path_patterns) == type([]) ? a:path_patterns : [a:path_patterns]
     let smthg_found = 0
-    if a:kinds =~ '.*dir.*' && isdirectory(tested_path)
-      let res += [tested_path]
-      let smthg_found = 1
-      call s:Verbose('Check '.path.' ... '.pattern.' directory found!')
-    elseif a:kinds =~ '.*file.*' && filereadable(tested_path)
-      let res += [tested_path]
-      let smthg_found = 1
-      call s:Verbose('Check '.path.' ... '.pattern.' file found!')
+    for pattern in path_patterns
+      let tested_path = path.pattern
+      if a:kinds =~ '.*dir.*' && isdirectory(tested_path)
+        let res += [tested_path]
+        let smthg_found = 1
+        call s:Verbose('%1Check '.path.' ... '.pattern.' directory found!', indent_str)
+      elseif a:kinds =~ '.*file.*' && filereadable(tested_path)
+        let res += [tested_path]
+        let smthg_found = 1
+        call s:Verbose('%1Check '.path.' ... '.pattern.' file found!', indent_str)
+      endif
+    endfor
+    if smthg_found == 0
+      call s:Verbose('%1Check '.path.' for '.string(path_patterns).' ... none found!', indent_str)
     endif
-  endfor
-  if smthg_found == 0
-    call s:Verbose('Check '.path.' for '.string(path_patterns).' ... none found!')
-  endif
+  finally
+    let s:indent -= 1
+  endtry
 
   return res
 endfunction
@@ -656,6 +677,170 @@ function! lh#path#munge(pathlist, path) abort
     return a:pathlist
   endif
 endfunction
+
+" Function: lh#path#exists(pathname) {{{3
+" @return whether the file is readable or a buffer with the same name exists
+function! lh#path#exists(pathname) abort
+  return filereadable(a:pathname) || bufexists(a:pathname)
+endfunction
+
+" # Permission lists {{{2
+" @since v4.0.0, code moved from local_vimrc
+" Function: lh#path#new_permission_lists(options) {{{3
+" @pre a:options shall contain:
+"  - "_do_handle(file)", e.g. { file -> execute('source '.escape(file, ' \$')) }
+"  - "_action_name", e.g. source
+function! lh#path#new_permission_lists(options) abort
+  if !has_key(a:options, '_action_name')
+    throw "Invalid use of `lh#path#new_filtered_list()`"
+  endif
+  let res = lh#object#make_top_type(a:options)
+  let res.valided_paths    = []
+  let res.rejected_paths   = []
+  let res.prepare          = function(s:getSNR('lists_prepare'))
+  let res.handle_paths     = function(s:getSNR('lists_handle_paths'))
+  let res.handle_file      = function(s:getSNR('lists_handle_file'))
+  let res.check_paths      = function(s:getSNR('lists_check_paths'))
+  let res.is_file_accepted = function(s:getSNR('lists_is_file_accepted'))
+
+  return res
+endfunction
+
+" Methods: {{{3
+" - prepare() {{{4
+function! s:lists_prepare() dict abort
+  let whitelist   = s:GetList('whitelist'  , self)
+  let blacklist   = s:GetList('blacklist'  , self)
+  let asklist     = s:GetList('asklist'    , self)
+  let sandboxlist = s:GetList('sandboxlist', self)
+
+  let mergedlists = whitelist + blacklist + asklist + sandboxlist
+  call reverse(sort(mergedlists, function(s:getSNR('SortLists'))))
+  return mergedlists
+endfunction
+
+" - handle_paths() {{{4
+function! s:lists_handle_paths(paths) dict abort
+  if !empty(a:paths)
+    let indent_str = repeat('  ', s:indent)
+    let filtered_pathnames = self.prepare()
+    let fp_keys = map(copy(filtered_pathnames), '"^".lh#path#to_regex((v:val)[0])')
+    for path in a:paths
+      let idx = lh#list#find_if(fp_keys, string(fnamemodify(path, ':h')).'=~ v:1_')
+      let permission = (idx != -1)
+            \ ? filtered_pathnames[idx][1]
+            \ : "default"
+      call s:Verbose('%5%1 =~ fp_keys[%2]=%3 -- %4', fnamemodify(path, ':h'), idx, (idx != -1 ? fp_keys[idx] : 'default'), permission, indent_str)
+      call self.handle_file(path, permission)
+    endfor
+  endif
+endfunction
+
+" - handle_file() {{{4
+function! s:lists_handle_file(file, permission) dict abort
+  if !has_key(self, '_do_handle')
+    throw "Invalid use of `lh#path#new_filtered_list().handle_file()`
+  endif
+  if a:permission == 'blacklist'
+    call s:Verbose( '(blacklist) Ignoring ' . a:file)
+    return
+  elseif a:permission == 'sandboxlist'
+    call s:Verbose( '(sandbox) '. self._action_name . ' '. a:file)
+    sandbox call self._do_handle(a:file)
+    return
+  elseif match(self.rejected_paths, a:file) >= 0
+    call s:Verbose('Path %1 has already been rejected for this session.', a:file)
+    return
+    " TODO: add a way to remove pathnames from validated list
+  elseif match(self.valided_paths, a:file) >= 0
+    call s:Verbose('Path %1 has already been validated for this session.', a:file)
+    " TODO: add a way to remove pathnames from validated list
+  elseif a:permission == 'asklist'
+    let choice = CONFIRM('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No\n&Always\nNe&ver", 1)
+    if choice == 3 " Always
+      call s:Verbose("Add %1 to current session whitelist", a:file)
+      call lh#path#munge(self.valided_paths, a:file)
+    elseif choice == 4 " Never
+      call s:Verbose("Add %1 to current session blacklist", a:file)
+      call lh#path#munge(self.rejected_paths, a:file)
+      return
+    elseif choice != 1 " not Yes
+      return
+    endif
+  endif
+  call s:Verbose('('.a:permission.') '. self._action_name. ' ' . a:file)
+  call self._do_handle(a:file)
+endfunction
+
+" - check_paths() {{{4
+function! s:lists_check_paths(paths) dict abort
+  if !empty(a:paths)
+    let filtered_pathnames = self.prepare()
+    let fp_keys = map(copy(filtered_pathnames), '"^".lh#path#to_regex((v:val)[0])')
+    for path in a:paths
+      let idx = lh#list#find_if(fp_keys, string(fnamemodify(path, ':h')).'=~ v:1_')
+      let permission = (idx != -1)
+            \ ? filtered_pathnames[idx][1]
+            \ : "default"
+      call s:Verbose('%1 =~ fp_keys[%2]=%3 -- %4', fnamemodify(path, ':h'), idx, fp_keys[idx], permission)
+      return self.is_file_accepted(path, permission)
+    endfor
+  endif
+endfunction
+
+" - is_file_accepted() {{{4
+function! s:lists_is_file_accepted(file, permission) dict abort
+  if a:permission == 'blacklist'
+    call s:Verbose( '(blacklist) Ignoring ' . a:file)
+    return 0
+  elseif a:permission == 'sandboxlist'
+    call s:Verbose( '(sandbox) '. self._action_name . ' '. a:file)
+    return 'sandbox'
+  elseif match(self.rejected_paths, a:file) >= 0
+    call s:Verbose('Path %1 has already been rejected.')
+    return 0
+    " TODO: add a way to remove pathnames from validated list
+  elseif match(self.valided_paths, a:file) >= 0
+    call s:Verbose('Path %1 has already been validated.')
+    " TODO: add a way to remove pathnames from validated list
+  elseif a:permission == 'asklist'
+    if CONFIRM('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No", 1) != 1
+      call lh#path#munge(self.rejected_paths, a:file)
+      return 0
+    endif
+    " And remember previous choices!
+    call lh#path#munge(self.valided_paths, a:file)
+  endif
+  call s:Verbose('('.a:permission.') '. self._action_name. ' ' . a:file)
+  return 1
+endfunction
+
+"=============================================================================
+" ## Internal functions {{{1
+" # Prepare Permission lists {{{2
+" Function: s:SortLists(lhs, rhs) {{{3
+function! s:SortLists(lhs, rhs)
+  return    (a:lhs)[0] <  (a:rhs)[0] ? -1
+        \ : (a:lhs)[0] == (a:rhs)[0] ? 0
+        \ :                            1
+endfunction
+
+" Function: s:GetList(listname, options) {{{3
+function! s:GetList(listname, options)
+  let list = copy(get(a:options, a:listname, []))
+  call map(list, '[substitute(v:val, "[/\\\\]", lh#path#shellslash(), "g"), a:listname]')
+  return list
+endfunction
+
+" # Misc {{{2
+" s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
+
 " }}}1
 "=============================================================================
 let &cpo=s:cpo_save

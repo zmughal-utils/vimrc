@@ -4,9 +4,9 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/License.md>
-" Version:      3.10.0
+" Version:      4.0.0
 " Created:	19th Nov 2008
-" Last Update:  23rd May 2016
+" Last Update:  02nd Nov 2016
 "------------------------------------------------------------------------
 " Description:
 " 	Tests for autoload/lh/list.vim
@@ -21,6 +21,7 @@ set cpo&vim
 " # Dependencies {{{1
 runtime autoload/lh/function.vim
 runtime autoload/lh/list.vim
+runtime autoload/lh/dict.vim
 
 " # Tests {{{1
 "------------------------------------------------------------------------
@@ -66,6 +67,15 @@ endfunction
 UTIgnore Test_find_if_double_bind
 
 "------------------------------------------------------------------------
+" Uniq {{{2
+function! s:Test_uniq()
+  AssertEquals([], lh#list#uniq([]))
+  AssertEquals([1], lh#list#uniq([1]))
+  AssertEquals([1,2,3,4,5,8], lh#list#uniq([1,2,3,4,5,8]))
+  AssertEquals([1,2,3,4,5,8], lh#list#uniq([1,1,2,3,4,5,8]))
+  AssertEquals([1,2,3,4,2,5,8], lh#list#uniq([1,2,2,2,3,4,2,5,8]))
+endfunction
+
 " Unique Sorting {{{2
 function! s:Test_sort_num()
     :let l = [ 1, 5, 48, 25, 5, 28, 6]
@@ -208,11 +218,20 @@ endfunction
 
 "------------------------------------------------------------------------
 " subset {{{2
-function! s:Test_subset()
+function! s:Test_subset_list()
     :let l = [ 1, 25, 5, 48, 25, 5, 28, 6]
     :let indices = [ 0, 5, 7, 3 ]
     :let expected = [ 1, 5, 6, 48 ]
     :let s = lh#list#subset(l, indices)
+    " Comment string(s)
+    AssertEquals (s ,  expected)
+endfunction
+
+function! s:Test_subset_dict()
+    :let d = {'a':1, 'b':2, 'c':3, 'd':4, 'e':5}
+    :let keys = [ 'a', 'c', 'd']
+    :let expected = {'a':1, 'c':3, 'd':4}
+    :let s = lh#dict#subset(d, keys)
     " Comment string(s)
     AssertEquals (s ,  expected)
 endfunction
@@ -306,7 +325,7 @@ function! s:Test_possible_values_list_list()
   " OK, this line is odd, but it works!
   if has("patch-7.4-411")
     " It'll fail with vim 7.3, but I don't care
-    AssertEquals (lh#list#possible_values(list, 3), [ 12, [], {}])
+    AssertEquals (lh#list#possible_values(list, 3), [ 12, [], lh#option#unset()])
   endif
 endfunction
 
@@ -491,9 +510,36 @@ function! s:Test_zip_dict() abort
   AssertThrows(lh#list#zip_as_dict([1], [1,2]))
 endfunction
 
+" Separate {{{2
+" Function: s:Test_separate() {{{3
+function! s:Test_separate() abort
+  let l = [ 1, 5, 48, 25, 5, 28, 6]
+  if has('lambda')
+    let [min, max] = lh#list#separate(l, {idx, val -> val <10})
+    AssertEquals(min, [1, 5, 5, 6])
+    AssertEquals(max, [48, 25, 28])
+  endif
+endfunction
+
+" lh#dict#let() {{{2
+" Function: s:Test_dict_let() {{{3
+function! s:Test_dict_let() abort
+  let d = { 'a': { 'b': 1}, 'c': 2}
+  AssertEquals(d.a.b, 1)
+  AssertEquals(d.c, 2)
+
+  call lh#dict#let(d, 'd', 42)
+  AssertEquals(d.d, 42)
+  call lh#dict#let(d, 'd.d', 42)
+  AssertEquals(d.d, {'d': 42})
+
+  call lh#dict#let(d, 'a.b.z', 42)
+  AssertEquals(d.a.b.z, 42)
+  call lh#dict#let(d, 'a.z1.z2.z3', 42)
+  AssertEquals(d.a.z1.z2.z3, 42)
+endfunction
 " }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================
 " vim600: set fdm=marker:
-"

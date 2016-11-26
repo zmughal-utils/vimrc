@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      3.6.1
-let s:k_version = 361
+" Version:      4.0.0
+let s:k_version = 400
 " Created:      03rd Nov 2008
-" Last Update:  08th Jan 2016
+" Last Update:  17th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Implements:
@@ -18,6 +18,7 @@ let s:k_version = 361
 "
 "------------------------------------------------------------------------
 " History:
+"       v4.0.0:  ENH: Use new OO top class
 "       v3.6.1:  ENH: Use new logging framework
 "       v3.4.0:  ENH: lh#function#bind supports composition
 "       v3.3.20: Explicit error msg w/ lh#function#execute
@@ -197,7 +198,6 @@ function! lh#function#bind(Fn, ...) abort
       let i = 0
       let t_args = [] " necessary to avoid type changes
       while i != N
-        silent! unlet arg
         let arg = a:Fn.args[i]
         if arg =~ 'v:\d\+_$'
           let arg2 = eval(s:DoBindString(arg, string(args)))
@@ -208,6 +208,7 @@ function! lh#function#bind(Fn, ...) abort
         endif
         call add(t_args, arg)
         let i += 1
+        unlet arg
       endwhile
       unlet a:Fn.args
       let a:Fn.args = t_args
@@ -222,15 +223,26 @@ function! lh#function#bind(Fn, ...) abort
     let Fn = a:Fn
   endif
 
-  let binded_fn = {
+  let binded_fn = lh#object#make_top_type({
         \ 'function': Fn,
-        \ 'execute':  function('s:Execute')
-        \}
+        \ 'execute':  function(s:getSNR('Execute'))
+        \})
   if !empty(args)
     " Special case: when bind is used abusivelly
     let binded_fn.args = args
   endif
   return binded_fn
+endfunction
+
+"=============================================================================
+" ## Internal functions {{{1
+"
+" " s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
 endfunction
 
 " }}}1

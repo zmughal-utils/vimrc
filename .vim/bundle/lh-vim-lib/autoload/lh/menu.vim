@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      3.6.1
-let s:k_version = 361
+" Version:      4.0.0
+let s:k_version = 4000
 " Created:      13th Oct 2006
-" Last Update:  08th Jan 2016
+" Last Update:  24th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Defines the global function lh#menu#def_menu
@@ -28,6 +28,7 @@ let s:k_version = 361
 "       v3.1.2: Enhancements for string options, required by BTW 0.2.0
 "       v3.1.3: BugFix for CMake options, required by BTW 0.2.1
 "       v3.6.1  ENH: Use new logging framework
+"       v4.0.0  ENH: Extend to work with project p:variables
 " TODO: {{{2
 "       * Should the argument to :Toggle be simplified to use the variable name
 "       instead ? May be a banged :Toggle! could work on the real variable
@@ -97,7 +98,7 @@ endfunction
 " Menu variable names are either global (without g: said), or from the
 " environment.
 function! lh#menu#_var_name(varname)
-  return (a:varname[0]=='$' ? '' : 'g:') . a:varname
+  return (a:varname=~'\v^(\$|[gp]:)' ? '' : 'g:') . a:varname
 endfunction
 
 " # Toggling menu item {{{2
@@ -140,8 +141,12 @@ function! s:Set(Data) abort
   try
     let value = a:Data.values[a:Data.idx_crt_value]
     let variable = a:Data.variable
-    if variable[0] == '$' " environment variabmes
+    if     lh#ref#is_bound(variable)
+      call variable.assign(value)
+    elseif variable[0] == '$' " environment variabmes
       exe "let ".variable." = ".string(value)
+    elseif variable[0:1] == 'p:' " environment variabmes
+      call lh#let#to(variable, value)
     else
       " the following syntax doesn't work with dictionaries => use :exe
       " let g:{variable} = value
@@ -165,7 +170,8 @@ function! s:Set(Data) abort
     endif
     return value
   catch /.*/
-    throw "Cannot set: ".variable."=".value.": ".v:exception." in ".v:throwpoint
+    throw lh#fmt#printf('Cannot set: %1=%2: %3 in %4', variable, value, v:exception, v:throwpoint)
+    " throw "Cannot set: ".variable."=".value.": ".v:exception." in ".v:throwpoint
   finally
   endtry
 endfunction
@@ -193,7 +199,7 @@ function! s:SetTextValue(Data, text)
   let old = s:Fetch(a:Data, labels_key)
   let new_idx = s:SearchText(a:Data, a:text)
   if -1 == new_idx
-    throw "toggle-menu: unsupported value for {".(a:Data.variable)."}"
+    throw "toggle-menu: unsupported value for {".lh#object#to_string(a:Data.variable)."}"
   endif
   if a:Data.idx_crt_value == new_idx
     " value unchanged => abort
@@ -211,7 +217,7 @@ function! s:SetTextValue(Data, text)
   call s:UpdateMenu(a:Data.menu, new, a:Data.command)
   " Update the binded global variable
   let value = s:Set(a:Data)
-  echo a:Data.variable.'='.value
+  echo lh#object#to_string(a:Data.variable).'='.string(value)
 endfunction
 
 " Function: s:NextValue({Data})                            {{{3
@@ -234,7 +240,7 @@ function! s:NextValue(Data)
   call s:UpdateMenu(a:Data.menu, new, a:Data.command)
   " Update the binded global variable
   let value = s:Set(a:Data)
-  echo a:Data.variable.'='.value
+  echo lh#object#to_string(a:Data.variable).'='.string(value)
 endfunction
 
 " Function: s:ClearMenu({Menu}, {text})                    {{{3
@@ -262,6 +268,7 @@ endfunction
 " @param[in] command       Toggle command to execute when the menu-item is selected
 function! s:UpdateMenu(Menu, text, command)
   if has('gui_running')
+    call s:Verbose('nnoremenu <silent> %1 %2<tab>(%3) :%4 %5<cr>', a:Menu.priority, a:Menu.name, a:text, s:k_Toggle_cmd, a:command)
     let cmd = 'nnoremenu <silent> '.a:Menu.priority.' '.
           \ lh#menu#text(a:Menu.name.'<tab>('.a:text.')').
           \ ' :'.s:k_Toggle_cmd.' '.a:command."\<cr>"
@@ -290,6 +297,7 @@ endfunction
 " Sets a toggle-able menu-item defined by {Data}.
 "
 function! lh#menu#def_toggle_item(Data)
+  call s:Verbose('Def toggle menu: %1', a:Data)
   function! a:Data.eval() dict
     let key = s:MenuKey(self)
     return s:Fetch(self, key)
@@ -304,7 +312,11 @@ function! lh#menu#def_toggle_item(Data)
   " associated variable
   if !has_key(a:Data, "idx_crt_value")
     " Fetch the value of the associated variable
-    let value = lh#option#get(a:Data.variable, 0, 'g')
+    if lh#ref#is_bound(a:Data.variable)
+      let value = a:Data.variable.resolve()
+    else
+      let value = lh#option#get(a:Data.variable, 0, 'g')
+    endif
     " echo a:Data.variable . " <- " . value
     " Update the index of the current value
     let a:Data.idx_crt_value  = s:Search(a:Data, value)
@@ -343,7 +355,7 @@ endfunction
 
 function! lh#menu#_toggle_complete(ArgLead, CmdLine, CursorPos)
   let cmdline = split(a:CmdLine)
-  " echomsg "cmd line: " . string(cmdline)." # ". (a:CmdLine =~ ' $')
+  call s:Verbose('cmd line: %1 # %2',cmdline, a:CmdLine =~' $')
   let nb_args = len(cmdline)
   if (a:CmdLine !~ ' $')
     let nb_args -= 1
@@ -371,9 +383,16 @@ endfunction
 " @param[in] key  Table table from which the result will be fetched
 " @return the current value
 function! s:VarFetch(Data, key)
-  let len = len(a:Data[a:key])
-  let variable = (a:Data.variable[0] == '$' ? '' : 'g:') . a:Data.variable
-  let value = eval(variable)
+  call s:Verbose('Fetching variable <%1> for menu', a:Data.variable)
+  if lh#ref#is_bound(a:Data.variable)
+    return a:Data.variable.resolve()
+  endif
+  let variable = lh#menu#_var_name(a:Data.variable)
+  if variable =~ '^p:'
+    return lh#project#_get(variable[2:])
+  else
+    let value = eval(variable)
+  endif
   return value
 endfunction
 
@@ -385,12 +404,17 @@ endfunction
 function! s:VarSet(Data, value)
   let variable = a:Data.variable
   let value = a:value
-  if variable[0] == '$' " environment variabmes
+  if lh#ref#is_bound(variable)
+    call variable.assign(value)
+  elseif variable[0] == '$' " environment variables
     exe "let ".variable." = ".string(value)
+  elseif variable[0:1] == 'p:'
+    call lh#let#to(variable, value)
   else
     " the following syntax doesn't work with dictionaries => use :exe
     " let g:{variable} = value
     exe 'let g:'.variable.' = '.string(value)
+    " tODO/FIXME: what about lh#let#to('g:'.variable, value) ?
   endif
   if has_key(a:Data, "hook")
     let l:Action = a:Data.hook
@@ -423,7 +447,7 @@ function! s:VarSetTextValue(Data, text)
   call s:VarUpdateMenu(a:Data.menu, a:text, a:Data.command)
   " Update the binded global variable
   let value = s:VarSet(a:Data, a:text)
-  echo a:Data.variable.'='.value
+  echo lh#objet#to_string(a:Data.variable).'='.lh#object#to_string(value)
 endfunction
 
 " Function: s:VarUpdateMenu({Menu}, {text}, {command})     {{{3
@@ -439,7 +463,7 @@ function! s:VarUpdateMenu(Menu, text, command)
   if has('gui_running')
     let cmd = 'nnoremenu '.a:Menu.priority.' '.
           \ lh#menu#text(a:Menu.name.'<tab>('.a:text.')').
-          \ ' :'.s:k_Set_cmd.' '.a:command.' '
+          \ ' :'.s:k_Set_cmd.' '.a:command
     silent! exe cmd
   endif
 endfunction
@@ -450,7 +474,6 @@ endfunction
 " @param Data.menu        == { name:, position: }
 "
 " Sets a string-variable defined by {Data}.
-"
 function! lh#menu#def_string_item(Data)
   " Add evaluation function
   function! a:Data.eval() dict
@@ -478,6 +501,10 @@ function! lh#menu#def_string_item(Data)
   " Add the menu entry according to the current value
   let key = s:MenuKey(a:Data)
   let crt_value = s:VarFetch(a:Data, key)
+  if lh#option#is_unset(crt_value)
+    let crt_value = '{(undefined)}'
+    call lh#common#warning_msg('Warning: '.(a:Data.menu.name).' is currently undefined')
+  endif
   call s:VarUpdateMenu(a:Data.menu, crt_value, cmdName)
   " Update the associated global variable to the default value
   call s:VarSet(a:Data, crt_value)
@@ -498,7 +525,7 @@ endfunction
 " Function: lh#menu#_string_complete(ArgLead, CmdLine, CursorPos) {{{3
 function! lh#menu#_string_complete(ArgLead, CmdLine, CursorPos)
   let cmdline = split(a:CmdLine)
-  " echomsg "cmd line: " . string(cmdline)." # ". (CmdLine =~ ' $')
+  call s:Verbose('cmd line: %1 # %2',cmdline, a:CmdLine =~' $')
   let nb_args = len(cmdline)
   if (a:CmdLine !~ ' $')
     let nb_args -= 1
@@ -588,37 +615,38 @@ endfunction
 " Function: lh#menu#make({prefix},{code},{text},{binding},...) {{{3
 " Build the menu and map its associated binding to all the modes required
 function! lh#menu#make(prefix, code, text, binding, ...)
-  let nore   = (match(a:prefix, '[aincv]*nore') != -1) ? "nore" : ""
-  let prefix = matchstr(substitute(a:prefix, nore, '', ''), '[aincv]*')
-  let b = (a:1 == "<buffer>") ? 1 : 0
-  let i = b + 1
-  let cmd = a:{i}
-  let i += 1
-  while i <= a:0
-    let cmd .=  ' ' . a:{i}
-    let i += 1
-  endwhile
-  let build_cmd = nore . "menu <silent> " . a:code . ' ' . lh#menu#text(a:text)
-  if strlen(a:binding) != 0
+  let nore    = (match(a:prefix, '[aincvsx]*nore') != -1) ? "nore" : ""
+  let prefix  = matchstr(substitute(a:prefix, nore, '', ''), '[aincvsx]*')
+  let b       = (a:1 == '<buffer>') ? 1 : 0
+  let cmd = join(a:000[b : ], ' ')
+  let build_cmd = nore . 'menu <silent> ' . a:code . ' ' . lh#menu#text(a:text)
+  if type(a:binding) == type({})
+    let binding = get(a:binding, 'binding', '')
+    " TODO: Support action
+    let no_mapping = has_key(a:binding, 'action')
+  else
+    let binding = a:binding
+    let no_mapping = empty(binding)
+  endif
+  if !empty(binding)
     let build_cmd .=  '<tab>' .
-          \ substitute(lh#menu#text(a:binding), '&', '\0\0', 'g')
+          \ substitute(lh#menu#text(binding), '&', '\0\0', 'g')
+  endif
+  if !empty(binding)
     if prefix == 'i' && exists('*IMAP')
       if b != 0
-        call IMAP(a:binding, cmd, &ft)
+        call IMAP(binding, cmd, &ft)
       else
-        call IMAP(a:binding, cmd)
+        call IMAP(binding, cmd)
       endif
     else
-      if b != 0
-        call lh#menu#map_all(prefix.nore."map", ' <buffer> '.a:binding, cmd)
-      else
-        call lh#menu#map_all(prefix.nore."map", a:binding, cmd)
-      endif
+      let sBuffer = (a:1 == '<buffer>') ? ' <buffer> ' : ''
+      call lh#menu#map_all(prefix.nore.'map', sBuffer.binding, cmd)
     endif
   endif
   if has("gui_running") && has ('menu')
     while strlen(prefix)
-      execute <SID>BMenu(b).prefix[0].build_cmd.<SID>Build_CMD(prefix[0],cmd)
+      execute s:BMenu(b) . prefix[0] . build_cmd . s:Build_CMD(prefix[0],cmd)
       let prefix = strpart(prefix, 1)
     endwhile
   endif

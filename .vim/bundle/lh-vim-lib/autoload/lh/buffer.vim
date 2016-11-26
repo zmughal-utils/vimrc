@@ -90,7 +90,10 @@ function! lh#buffer#find(filename) abort
   " Workaround a bug in event execution: we may a have a non null buffer, but
   " with a name that doesn't match what is looked for.
   " -> "|| bufname(winbufnr(b)) != a:filename"
-  if b == -1 || bufname(winbufnr(b)) != a:filename | return -1 | endif
+  " The second case is used when the filename is actually a buffer name
+  if b == -1 || (bufname(winbufnr(b)) != a:filename && winbufnr(b) != a:filename)
+    return -1
+  endif
   exe b.'wincmd w'
   return b
 endfunction
@@ -101,7 +104,7 @@ endfunction
 " Function: lh#buffer#jump({filename},{cmd}) {{{2
 function! lh#buffer#jump(filename, cmd) abort
   let b = lh#buffer#find(a:filename)
-  if b != -1 | return b | endif
+  if b != -1 || type(a:filename) == type(0) | return b | endif
   call lh#window#create_window_with(a:cmd . ' ' . a:filename)
   return winnr()
 endfunction
