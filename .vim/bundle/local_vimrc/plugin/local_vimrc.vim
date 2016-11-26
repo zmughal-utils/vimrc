@@ -2,9 +2,9 @@
 " File:		plugin/local_vimrc.vim                                     {{{1
 " Author:	Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
 "		<URL:http://github.com/LucHermitte/local_vimrc>
-" Version:	2.2.3
+" Version:	2.2.9
 " Created:	09th Apr 2003
-" Last Update:	08th Sep 2015
+" Last Update:	07th Nov 2016
 " License:      GPLv3
 "------------------------------------------------------------------------
 " Description:	Solution to Yakov Lerner's question on Vim ML {{{2
@@ -52,7 +52,14 @@
 "	   :SourceLocalVimrc before doing the actual expansion.
 "
 " History:	{{{2
-"       v2.2.3  Merge pull requests: 
+"       v2.2.9  ENH: Simplify permission list management
+"       v2.2.8  BUG: Fix regression to support Vim7.3
+"       v2.2.7  ENH: Listen for BufRead and BufNewFile
+"       v2.2.6  ENH: Use lhvl 4.0.0 permission lists
+"       v2.2.5  BUG: Fix #7 -- support of config in directory
+"       v2.2.4  Use new logging framework
+"               Fix issue when g:local_vimrc is a string.
+"       v2.2.3  Merge pull requests:
 "               - Incorrect addon-info extension (txt -> json)
 "               - Fix :SourceLocalVimrc path
 "       v2.2.2  Directory lists were incorrectly sorted (bis) + shellslash
@@ -103,8 +110,8 @@ if exists("g:loaded_local_vimrc")
       \ && !exists('g:force_reload_local_vimrc')
   finish
 endif
-if lh#path#version() < 3204
-  call lh#common#error_msg('local_vimrc requires a version of lh-vim-lib >= 3.2.4. Please upgrade it.')
+if lh#path#version() < 40000
+  call lh#common#error_msg('local_vimrc requires a version of lh-vim-lib >= 4.0.0. Please upgrade it.')
   finish
 endif
 let g:loaded_local_vimrc = s:k_version
@@ -113,26 +120,10 @@ set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " Commands {{{1
-command! -nargs=0 SourceLocalVimrc call s:Main(expand('%:p:h'))
+command! -nargs=0 SourceLocalVimrc call s:SourceLocalVimrc(expand('%:p:h'))
 
 " Default Options {{{1
-runtime plugin/let.vim " from lh-vim-lib
-LetIfUndef g:local_vimrc_options             {}
-LetIfUndef g:local_vimrc_options.whitelist   []
-LetIfUndef g:local_vimrc_options.blacklist   []
-LetIfUndef g:local_vimrc_options.asklist     []
-LetIfUndef g:local_vimrc_options.sandboxlist []
-
-" Accept user defined ~/.vim/_vimrc_local.vim, but no file from the various addons,
-" bundles, ...
-call lh#path#munge(g:local_vimrc_options.whitelist, lh#path#vimfiles())
-call lh#path#munge(g:local_vimrc_options.blacklist, lh#path#vimfiles().'/.*')
-
-" Accept $HOME, but nothing from parent directories
-call lh#path#munge(g:local_vimrc_options.asklist, $HOME)
-call lh#path#munge(g:local_vimrc_options.blacklist, fnamemodify($HOME, ':p:h:h'))
-" The directories where projects (we trust) are stored shall be added into
-" whitelist
+let s:permission_lists = lh#path#new_permission_lists(lh#local_vimrc#lists())
 
 " Functions {{{1
 " NB: Not all functions are moved into the autoload plugin.
@@ -164,43 +155,45 @@ function! s:IsAForbiddenPath(path)
   return forbidden
 endfunction
 
-function! s:Main(path) abort
-  " echomsg 'Sourcing: '.a:path
+function! s:SourceLocalVimrc(path) abort
+  call lh#local_vimrc#_verbose("* Sourcing %1", a:path)
   if s:IsAForbiddenPath(a:path) | return | endif
 
   let config_found = lh#path#find_in_parents(a:path, s:local_vimrc, 'file,dir', s:re_last_path)
   let configs = []
   for config in config_found
     if filereadable(config)
+      call lh#local_vimrc#_verbose(" - File config found -> %1", config)
       let configs += [config]
     elseif isdirectory(config)
-      let gpat = len(s:local_vimrc) > 1
+      let gpat = type(s:local_vimrc) == type([])
             \ ? ('{'.join(s:local_vimrc, ',').'}')
             \ : (s:local_vimrc)
-      let configs += glob(gpat, 0, 1)
+      " let new_conf = globpath(config, gpat, 0, 1) " This version ignored suffixes and wildignore
+      let new_conf = lh#path#glob_as_list(config, gpat) " This version doesn't
+      let configs += new_conf
+      call lh#local_vimrc#_verbose(" - dir config found %1 -> %2", config, new_conf)
     endif
   endfor
 
-  if !empty(configs)
-    let filtered_pathnames = lh#local_vimrc#_prepare_lists()
-    let fp_keys = map(copy(filtered_pathnames), '"^".lh#path#to_regex((v:val)[0])')
-    for config in configs
-      let idx = lh#list#find_if(fp_keys, string(fnamemodify(config, ':h')).'=~ v:1_')
-      let permission = (idx != -1)
-            \ ? filtered_pathnames[idx][1]
-            \ : "default"
-      call lh#local_vimrc#_verbose( fnamemodify(config, ':h')." =~ fp_keys[".idx."]=".fp_keys[idx]."   -- ".permission)
-      call lh#local_vimrc#_handle_file(config, permission)
-    endfor
-  endif
+  let configs = lh#list#uniq(configs)
+  call s:permission_lists.handle_paths(configs)
 endfunction
 
 " Auto-command                                                        {{{2
 aug LocalVimrc
   au!
-  " => automate the loading of local-vimrc's every time we change buffers
-  " Note: BufEnter seems to be triggerred twice on a "vim foo.bar"
-  au BufEnter * :call s:Main(expand('<afile>:p:h'))
+  " => automate the loading of local-vimrc's:
+  " - BufRead: before things using BufReadPost, and lhvl-project
+  "   Note: BufRead is used by filetype detection, which should be triggered
+  "   first.
+  " - BufNewFile:
+  "   Note: BufNewFile is also used by template expanders like mu-template
+  " - BufEnter: every time we change buffers
+  "   As some plugins use global option, we need to load local vimrcs on
+  "   BufEnter, even if they've been already loaded on BufEnter and BufNewFile.
+  "   TODO: Register that BufLeave hasn't been triggered => no need to reload
+  au BufEnter,BufRead,BufNewFile * :call s:SourceLocalVimrc(expand('<afile>:p:h'))
   " => Update script version every time it is saved.
   for s:_pat in s:local_vimrc
     exe 'au BufWritePre '.s:_pat. ' call lh#local_vimrc#_increment_version_on_save()'

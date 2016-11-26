@@ -2,10 +2,11 @@
 " File:         autoload/lh/local_vimrc.vim                       {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/local_vimrc>
-" Version:      2.2.2.
-let s:k_version = 222
+" Version:      2.2.9.
+let s:k_version = 229
 " Created:      04th Mar 2015
-" Last Update:  18th Apr 2015
+" Last Update:  07th Nov 2016
+" License:      GPLv3
 "------------------------------------------------------------------------
 " Description:
 "       Internal functions for local_vimrc
@@ -22,17 +23,19 @@ function! lh#local_vimrc#version()
 endfunction
 
 " # Debug   {{{2
-if !exists('s:verbose')
-  let s:verbose = 0
-endif
+let s:verbose = get(s:, 'verbose', 0)
 function! lh#local_vimrc#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
 
-function! lh#local_vimrc#_verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! lh#local_vimrc#_verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -40,9 +43,64 @@ function! lh#local_vimrc#debug(expr)
   return eval(a:expr)
 endfunction
 
+" # Misc    {{{2
+" s:getSNR([func_name]) {{{3
+function! s:getSNR(...) abort
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
+
+" s:source(file)  {{{3
+function! s:source(file) abort
+  exe 'source '.escape(a:file, ' \$')
+endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions     {{{1
+" # Lists management        {{{2
+" Function: lh#local_vimrc#lists() {{{3
+function! lh#local_vimrc#lists() abort
+  return g:local_vimrc_options
+endfunction
+
+" Function: lh#local_vimrc#munge(listname, path) {{{3
+function! lh#local_vimrc#munge(listname, path) abort
+  return lh#path#munge(g:local_vimrc_options[a:listname], a:path)
+endfunction
+
+" Function: lh#local_vimrc#filter_list(listname, expr) {{{3
+function! lh#local_vimrc#filter_list(listname, expr) abort
+  return filter(g:local_vimrc_options[a:listname], a:expr)
+endfunction
+
+"------------------------------------------------------------------------
+" ## Default options {{{1
+runtime plugin/let.vim " from lh-vim-lib
+LetIfUndef g:local_vimrc_options              = {}
+LetIfUndef g:local_vimrc_options.whitelist    = []
+LetIfUndef g:local_vimrc_options.blacklist    = []
+LetIfUndef g:local_vimrc_options.asklist      = []
+LetIfUndef g:local_vimrc_options.sandboxlist  = []
+LetIfUndef g:local_vimrc_options._action_name = 'recognize a local vimrc at'
+" letifundef g:local_vimrc_options._do_handle  { file -> execute('source '.escape(file, ' \$'))}
+call lh#let#if_undef('g:local_vimrc_options._do_handle', function(s:getSNR('source')))
+
+" Accept user defined ~/.vim/_vimrc_local.vim, but no file from the various addons,
+" bundles, ...
+call lh#local_vimrc#munge('whitelist', lh#path#vimfiles())
+call lh#local_vimrc#munge('blacklist', lh#path#vimfiles().'/.*')
+
+" Accept $HOME, but nothing from parent directories
+if         index(g:local_vimrc_options.whitelist,   $HOME) < 0
+      \ && index(g:local_vimrc_options.blacklist,   $HOME) < 0
+      \ && index(g:local_vimrc_options.sandboxlist, $HOME) < 0
+  call lh#local_vimrc#munge('asklist', $HOME)
+endif
+call lh#local_vimrc#munge('blacklist', fnamemodify('/', ':p'))
+" The directories where projects (we trust) are stored shall be added into
+" whitelist
 
 "------------------------------------------------------------------------
 " ## Internal API functions {{{1
@@ -93,6 +151,7 @@ function! lh#local_vimrc#_increment_version_on_save()
 endfunction
 
 " ## Internal functions     {{{1
+" # Misc                                                                {{{2
 " # Prepare Permission lists                                            {{{2
 " Function: s:SortLists(lhs, rhs) {{{3
 function! s:SortLists(lhs, rhs)

@@ -29,7 +29,7 @@ sources the one found.
 ## Requirements / Installation
 
 The latest version of this script requires vim 7.0 and
-[lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v3.2.4+.
+[lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v4.0.0+.
 [UT](http://github.com/LucHermitte/vim-UT) v0.1.0 will be required to
 execute the unit tests.
 
@@ -98,12 +98,23 @@ that'll dynamically adapt to the current project settings, have a look at my
 [`lh#dev#option#get()`](http://github.com/LucHermitte/lh-dev)
 functions.
 
+You'll find examples of use in my
+[dedicated repository](http://github.com/LucHermitte/config).
+
 ## Options
 
 The behaviour of this plugin can be tuned with the following options:
 
 - `g:local_vimrc` variable specifies the filenames and filepaths to be searched. The default
   is `"_vimrc_local.vim"`. It can contain a list (`:h List`) of pathnames, or a simple string.
+  It's meants to contain something that'll be relative to your current project
+  root.  
+  This can contain a directory or list of directories. In that case, in order
+  to find any file named `_vimrc_local.vim` in directories named `.config/` at
+  the root of current project directory, set the variable to 
+  ```vim
+  let g:local_vimrc = ['.config', '_vimrc_local.vim']
+  ```
 
 - `g:local_vimrc_options` dictionary will hold four lists (`whitelist`,
   `blacklist`, `asklist`, and `sandboxlist`) that define how security issues
@@ -182,10 +193,10 @@ ActivateAddons local_vimrc
 ...
 " Let's assume you put all projects you are working on in your
 " corporation under $HOME/dev/my_corporation/
-call lh#path#munge(g:local_vimrc_options.whitelist, $HOME.'/dev/my_corporation')
+call lh#local_vimrc#munge('whitelist', $HOME.'/dev/my_corporation')
 " But projects from 3rd parties/projects downloaded from the internet go
 " into $HOME/dev/3rdparties/
-call lh#path#munge(g:local_vimrc_options.blacklist, $HOME.'/dev/3rdparties')
+call lh#local_vimrc#munge('blacklist', $HOME.'/dev/3rdparties')
 ```
 
 If you want to override default settings, change them in your `.vimrc`
@@ -195,12 +206,12 @@ __after__ this plugin has been loaded. e.g.:
 ActivateAddons local_vimrc
 ...
 " Remove $HOME from the asklist,
-call filter(g:local_vimrc_options, 'v:val != $HOME')
+call lh#local_vimrc#filter_list('asklist', 'v:val != $HOME')
 " Add it in the sandbox list instead
-call lh#path#munge(g:local_vimrc_options.sandboxlist, $HOME)
+call lh#local_vimrc#munge('sandboxlist', $HOME)
 
 " Clean the whitelist
-let g:local_vimrc_options.whitelist = []
+let lh#local_vimrc#lists().whitelist = []
 ```
 
 ## Alternatives
@@ -262,6 +273,14 @@ name a few, there is for instance:
 
 ## History
 
+- v2.2.9  ENH: Simplify permission list management
+- v2.2.8  BUG: Fix regression to support Vim7.3
+- v2.2.7  ENH: Listen for BufRead and BufNewFile
+- v2.2.6  ENH: Use lhvl 4.0.0 permission lists  
+          This implicitly fix asklist management
+- v2.2.5  BUG: Fix #7 -- support of config in directory
+- v2.2.4  Use new logging framework  
+          Fix issue when `g:local_vimrc` is a string.
 - v2.2.3  Merge pull requests:   
          - Incorrect addon-info extension (txt -> json)  
          - Fix :SourceLocalVimrc path
