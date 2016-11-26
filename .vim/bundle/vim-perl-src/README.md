@@ -3,7 +3,9 @@
 [![Build Status](https://api.travis-ci.org/vim-perl/vim-perl.png?branch=master)](https://travis-ci.org/vim-perl/vim-perl)
 
 This is the aggregation of all the various Perl-related syntax and
-helper files for Perl 5 and Perl 6.
+helper files for Perl 5.
+
+For Perl 6 files, please see [vim-perl6](https://github.com/vim-perl/vim-perl6).
 
 # Installation
 
@@ -68,7 +70,3 @@ You can also populate the local `after/syntax/perl/` via `make`:
 Vim itself only considers double quotes in this scenario; the matchit plugin, however,
 can deal with this scenario and vim-perl's files are set up to work with it should you
 choose to use it.
-
-xoxo,<br />
-eiro,<br />
-Andy (andy@petdance.com)
