@@ -2,26 +2,7 @@
 " FILE: neomru.vim
 " AUTHOR:  Zhao Cai <caizhaoff@gmail.com>
 "          Shougo Matsushita <Shougo.Matsu at gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" License: MIT license
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -38,6 +19,9 @@ endfunction"}}}
 function! s:substitute_path_separator(path) abort "{{{
   return s:is_windows ? substitute(a:path, '\\', '/', 'g') : a:path
 endfunction"}}}
+function! s:expand(path) abort "{{{
+  return s:substitute_path_separator(expand(a:path))
+endfunction"}}}
 
 " Variables  "{{{
 " The version of MRU file format.
@@ -45,7 +29,7 @@ let s:VERSION = '0.3.0'
 
 let s:is_windows = has('win16') || has('win32') || has('win64') || has('win95')
 
-let s:base = expand($XDG_CACHE_HOME != '' ?
+let s:base = s:expand($XDG_CACHE_HOME != '' ?
         \   $XDG_CACHE_HOME . '/neomru' : '~/.cache/neomru')
 
 call neomru#set_default(
@@ -138,12 +122,7 @@ function! s:mru.gather_candidates(args, context) abort "{{{
     call self.reload()
   endif
 
-  return exists('*unite#helper#paths2candidates') ?
-        \ unite#helper#paths2candidates(self.candidates) :
-        \ map(copy(self.candidates), "{
-        \ 'word' : v:val,
-        \ 'action__path' : v:val,
-        \}")
+  return copy(self.candidates)
 endfunction"}}}
 function! s:mru.delete(candidates) abort "{{{
   for candidate in a:candidates
@@ -273,7 +252,7 @@ endfunction"}}}
 "
 let s:file_mru = extend(deepcopy(s:mru), {
       \ 'type'          : 'file',
-      \ 'mru_file'      : g:neomru#file_mru_path,
+      \ 'mru_file'      : s:expand(g:neomru#file_mru_path),
       \ 'limit'         : g:neomru#file_mru_limit,
       \ }
       \)
@@ -286,7 +265,7 @@ endfunction"}}}
 " Directory MRU:   "{{{2
 let s:directory_mru = extend(deepcopy(s:mru), {
       \ 'type'          : 'directory',
-      \ 'mru_file'      : g:neomru#directory_mru_path,
+      \ 'mru_file'      : s:expand(g:neomru#directory_mru_path),
       \ 'limit'         : g:neomru#directory_mru_limit,
       \ }
       \)
@@ -307,8 +286,7 @@ endfunction"}}}
 function! neomru#_import_file(path) abort "{{{
   let path = a:path
   if path == ''
-    let path = s:substitute_path_separator(
-      \  expand('~/.unite/file_mru'))
+    let path = s:expand('~/.unite/file_mru')
   endif
 
   let candidates = s:file_mru.candidates
@@ -323,8 +301,7 @@ endfunction"}}}
 function! neomru#_import_directory(path) abort "{{{
   let path = a:path
   if path == ''
-    let path = s:substitute_path_separator(
-          \  expand('~/.unite/directory_mru'))
+    let path = s:expand('~/.unite/directory_mru')
   endif
 
   let s:directory_mru.candidates = s:uniq(
@@ -339,7 +316,7 @@ function! neomru#_append() abort "{{{
     return
   endif
 
-  let path = s:substitute_path_separator(expand('%:p'))
+  let path = s:expand('%:p')
   if path !~ '\a\+:'
     let path = s:substitute_path_separator(
           \ simplify(s:resolve(path)))

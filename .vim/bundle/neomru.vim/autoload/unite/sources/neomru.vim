@@ -2,26 +2,7 @@
 " FILE: neomru.vim
 " AUTHOR:  Zhao Cai <caizhaoff@gmail.com>
 "          Shougo Matsushita <Shougo.Matsu at gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" License: MIT license
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -84,11 +65,23 @@ function! s:dir_mru_source.hooks.on_post_filter(args, context) abort "{{{
 endfunction"}}}
 function! s:file_mru_source.gather_candidates(args, context) abort "{{{
   let mru = neomru#_get_mrus().file
-  return mru.gather_candidates(a:args, a:context)
+  let candidates = mru.gather_candidates(a:args, a:context)
+  return exists('*unite#helper#paths2candidates') ?
+        \ unite#helper#paths2candidates(candidates) :
+        \ map(copy(candidates), "{
+        \ 'word' : v:val,
+        \ 'action__path' : v:val,
+        \}")
 endfunction"}}}
 function! s:dir_mru_source.gather_candidates(args, context) abort "{{{
   let mru = neomru#_get_mrus().directory
-  return mru.gather_candidates(a:args, a:context)
+  let candidates = mru.gather_candidates(a:args, a:context)
+  return exists('*unite#helper#paths2candidates') ?
+        \ unite#helper#paths2candidates(candidates) :
+        \ map(copy(candidates), "{
+        \ 'word' : v:val,
+        \ 'action__path' : v:val,
+        \}")
 endfunction"}}}
 "}}}
 " Actions "{{{
