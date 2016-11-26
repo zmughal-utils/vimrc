@@ -1,26 +1,7 @@
 "=============================================================================
 " FILE: handlers.vim
 " AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" License: MIT license
 "=============================================================================
 
 let s:save_cpo = &cpo
@@ -74,7 +55,7 @@ function! unite#handlers#_on_cursor_hold_i() abort  "{{{
     call s:check_redraw()
   endif
 
-  if unite.is_async && &l:modifiable && !has('timers')
+  if unite.is_async && &l:modifiable && !unite#util#has_timers()
     " Ignore key sequences.
     call feedkeys("a\<BS>", 'n')
   endif
@@ -159,7 +140,7 @@ function! unite#handlers#_on_cursor_hold() abort  "{{{
     endfor
   endif
 
-  if is_async && !has('timers')
+  if is_async && !unite#util#has_timers()
     " Ignore key sequences.
     call feedkeys("g\<ESC>" . (v:count > 0 ? v:count : ''), 'n')
   endif
@@ -314,7 +295,7 @@ function! unite#handlers#_save_updatetime() abort  "{{{
 
   if unite.is_async && unite.context.update_time > 0
         \ && &updatetime > unite.context.update_time
-        \ && !has('timers')
+        \ && !unite#util#has_timers()
     let unite.update_time_save = &updatetime
     let &updatetime = unite.context.update_time
   endif
@@ -328,7 +309,7 @@ function! unite#handlers#_restore_updatetime() abort  "{{{
 
   if unite.context.update_time > 0
         \ && &updatetime < unite.update_time_save
-        \ && !has('timers')
+        \ && !unite#util#has_timers()
     let &updatetime = unite.update_time_save
   endif
 endfunction"}}}
@@ -364,7 +345,7 @@ function! s:timer_handler(timer) abort "{{{
   unlet s:timer
 endfunction"}}}
 function! unite#handlers#_init_timer() abort  "{{{
-  if has('timers') && !exists('s:timer')
+  if unite#util#has_timers() && !exists('s:timer')
     let s:timer = timer_start(500,
           \ function('s:timer_handler'), {'repeat': -1})
     autocmd plugin-unite VimLeavePre *

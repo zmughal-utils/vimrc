@@ -2,26 +2,7 @@
 " FILE: grep.vim
 " AUTHOR:  Shougo Matsushita <Shougo.Matsu at gmail.com>
 "          Tomohiro Nishimura <tomohiro68 at gmail.com>
-" License: MIT license  {{{
-"     Permission is hereby granted, free of charge, to any person obtaining
-"     a copy of this software and associated documentation files (the
-"     "Software"), to deal in the Software without restriction, including
-"     without limitation the rights to use, copy, modify, merge, publish,
-"     distribute, sublicense, and/or sell copies of the Software, and to
-"     permit persons to whom the Software is furnished to do so, subject to
-"     the following conditions:
-"
-"     The above copyright notice and this permission notice shall be included
-"     in all copies or substantial portions of the Software.
-"
-"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-" }}}
+" License: MIT license
 "=============================================================================
 
 " Variables  "{{{
@@ -30,10 +11,13 @@ call unite#util#set_default(
       \ 'g:unite_source_grep_command', 'grep')
 call unite#util#set_default(
       \ 'g:unite_source_grep_default_opts', '-inH')
-
 call unite#util#set_default('g:unite_source_grep_recursive_opt', '-r')
-call unite#util#set_default('g:unite_source_grep_search_word_highlight', 'Search')
+call unite#util#set_default('g:unite_source_grep_search_word_highlight',
+      \ 'Search')
 call unite#util#set_default('g:unite_source_grep_encoding', 'char')
+" Note: jvgrep does not support "--" separator
+call unite#util#set_default('g:unite_source_grep_separator',
+      \ (g:unite_source_grep_command !=# 'jvgrep' ? '--' : ''))
 "}}}
 
 function! unite#sources#grep#define() abort "{{{
@@ -42,7 +26,7 @@ endfunction "}}}
 
 let s:source = {
       \ 'name': 'grep',
-      \ 'max_candidates': 100,
+      \ 'max_candidates': 1000,
       \ 'hooks' : {},
       \ 'syntax' : 'uniteSource__Grep',
       \ 'matchers' : 'matcher_regexp',
@@ -182,11 +166,12 @@ function! s:source.gather_candidates(args, context) abort "{{{
     let a:context.is_async = 1
   endif
 
-  let cmdline = printf('"%s" %s %s %s -- %s %s',
+  let cmdline = printf('"%s" %s %s %s %s %s %s',
     \   unite#util#substitute_path_separator(command),
     \   default_opts,
     \   recursive_opt,
     \   a:context.source__extra_opts,
+    \   g:unite_source_grep_separator,
     \   string(a:context.source__input),
     \   unite#helper#join_targets(a:context.source__targets)
     \)
@@ -210,9 +195,6 @@ function! s:source.gather_candidates(args, context) abort "{{{
 endfunction "}}}
 
 function! s:source.async_gather_candidates(args, context) abort "{{{
-  let default_opts = get(a:context, 'custom_grep_default_opts',
-        \ g:unite_source_grep_default_opts)
-
   if !has_key(a:context, 'source__proc')
     let a:context.is_async = 0
     return []
@@ -237,45 +219,17 @@ function! s:source.async_gather_candidates(args, context) abort "{{{
 
   let lines = map(unite#util#read_lines(stdout, 1000),
           \ "unite#util#iconv(v:val, g:unite_source_grep_encoding, &encoding)")
-  if default_opts =~ '^-[^-]*l'
-        \ || a:context.source__extra_opts =~ '^-[^-]*l'
-    let lines = map(filter(lines, 'v:val != ""'),
-          \ '[v:val, [v:val[2:], 0]]')
-  else
-    let lines = map(filter(lines, 'v:val =~ "^.\\+:.\\+$"'),
-          \ '[v:val, split(v:val[2:], ":", 1)]')
-  endif
 
   let candidates = []
-  for [line, fields] in lines
-    let col = 0
-
-    if len(fields) <= 1 || fields[1] !~ '^\d\+$'
-      let path = a:context.source__targets[0]
-      if len(fields) <= 1
-        let linenr = line[:1][0]
-        let text = fields[0]
-      else
-        let linenr = line[:1] . fields[0]
-        let text = join(fields[1:], ':')
-      endif
-    else
-      let path = line[:1] . fields[0]
-      let linenr = fields[1]
-      let text = join(fields[2:], ':')
-      if text =~ '^\d\+:'
-        let col = matchstr(text, '^\d\+')
-        let text = text[len(col)+1 :]
-      endif
-    endif
-
-    if path ==# '.'
+  for line in lines
+    let ret = unite#sources#grep#parse(line)
+    if empty(ret)
       call unite#print_source_error(
-            \ 'Your grep configuration is wrong.'
-            \ . ' Please check ":help unite-source-grep" example.',
-            \ s:source.name)
-      break
+            \ 'Invalid grep line: ' . line,  s:source.name)
+      continue
     endif
+
+    let [path, linenr, col, text] = ret
 
     call add(candidates, {
           \ 'word' : printf('%s: %s: %s', path,
@@ -294,6 +248,32 @@ endfunction "}}}
 function! s:source.complete(args, context, arglead, cmdline, cursorpos) abort "{{{
   return ['%', '#', '$buffers'] + unite#sources#file#complete_directory(
         \ a:args, a:context, a:arglead, a:cmdline, a:cursorpos)
+endfunction"}}}
+
+function! unite#sources#grep#parse(line) abort "{{{
+  let ret = matchlist(a:line, '^\(.*\):\(\d\+\)\%(:\(\d\+\)\)\?:\(.*\)$')
+  if empty(ret) || ret[1] == '' || ret[4] == ''
+    return []
+  endif
+
+  if ret[1] =~ ':\d\+$'
+    " Use column pattern
+    let ret = matchlist(a:line, '^\(.*\):\(\d\+\):\(\d\+\):\(.*\)$')
+  endif
+
+  let path = ret[1]
+  let linenr = ret[2]
+  let col = ret[3]
+  let text = ret[4]
+
+  if linenr == ''
+    let linenr = '1'
+  endif
+  if col == ''
+    let col = '0'
+  endif
+
+  return [path, linenr, col, text]
 endfunction"}}}
 
 " vim: foldmethod=marker
