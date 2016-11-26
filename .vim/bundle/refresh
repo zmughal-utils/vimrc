@@ -92,3 +92,5 @@ refresh_git https://github.com/altercation/vim-colors-solarized vim-colors-solar
 
 refresh_git https://github.com/c9s/perlomni.vim perlomni.vim
 refresh_git https://github.com/c9s/cpan.vim cpan.vim
+
+refresh_git https://github.com/jeetsukumaran/vim-buffergator vim-buffergator
