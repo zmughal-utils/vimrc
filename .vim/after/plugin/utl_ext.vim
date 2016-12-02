@@ -81,20 +81,26 @@ func! Utl_Get_Browser_Arg(uri, frag)
 	return l:uri
 endfunc
 if has("unix")
+	let g:utl_cfg_hdl_scm_http__quadra_local = "exe 'silent !ssh quadra.local \"DISPLAY=:0 firefox --new-tab '.Utl_Get_Browser_Arg('%u', '%f').' & \"'"
 	if exists("$DISPLAY")
-		let g:utl_cfg_hdl_scm_http__system = "exe 'silent !firefox \"'.Utl_Get_Browser_Arg('%u', '%f').'\" &'"
+		let g:utl_cfg_hdl_scm_http__system_local = "exe 'silent !firefox \"'.Utl_Get_Browser_Arg('%u', '%f').'\" &'"
 	else
 		if executable("elinks")
-			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !elinks \"'.Utl_Get_Browser_Arg('%u','%f').'\"'"
+			let g:utl_cfg_hdl_scm_http__system_local = "exe 'silent !elinks \"'.Utl_Get_Browser_Arg('%u','%f').'\"'"
 		elseif executable("lynx")
-			let g:utl_cfg_hdl_scm_http__system = "exe 'silent !lynx \"'.Utl_Get_Browser_Arg('%u','%f').'\"'"
+			let g:utl_cfg_hdl_scm_http__system_local = "exe 'silent !lynx \"'.Utl_Get_Browser_Arg('%u','%f').'\"'"
 		else
-			let g:utl_cfg_hdl_scm_http__system = "echoerr 'No browser found for terminal'"
+			let g:utl_cfg_hdl_scm_http__system_local = "echoerr 'No browser found for terminal'"
 		endif
 	endif
+	let g:utl_cfg_hdl_scm_http__system = g:utl_cfg_hdl_scm_http__system_local
 	let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
 	let g:utl_cfg_hdl_mt_generic = "silent !see_smarter '%p'"
 endif
+
+func! Set_utl_system()
+	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__system
+endfunc
 
 func! Set_utl_system()
 	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__system
