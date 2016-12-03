@@ -7,6 +7,8 @@ nmap <buffer> <F5> :exe "new +r!ikiwiki_render\\ ". fnameescape(expand("%")) ."\
 " open render in Firefox
 nmap <buffer> <F6> :exe "!ikiwiki_render ".fnameescape(expand('%')). "\| pipe_into_firefox"<CR>
 
+iabbr <buffer> xmap <C-R>=printf('[[!map pages="%s/* and ! %s/*/*"]]', expand("%:h"), expand("%:h"))<CR>
+
 " So that markdown syntax gets loaded by syntax/ikiwiki.vim
 let g:ikiwiki_render_filetype="markdown"
 
