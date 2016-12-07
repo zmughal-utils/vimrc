@@ -95,3 +95,4 @@ refresh_git https://github.com/c9s/cpan.vim cpan.vim
 
 refresh_git https://github.com/jeetsukumaran/vim-buffergator vim-buffergator
 refresh_git https://github.com/tpope/vim-vinegar vim-vinegar
+refresh_git https://github.com/jamessan/vim-gnupg vim-gnupg
