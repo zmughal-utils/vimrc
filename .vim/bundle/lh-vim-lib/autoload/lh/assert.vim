@@ -5,7 +5,7 @@
 " Version:      4.0.0.0.
 let s:k_version = '4000'
 " Created:      23rd Nov 2016
-" Last Update:  24th Nov 2016
+" Last Update:  06th Dec 2016
 "------------------------------------------------------------------------
 " Description:
 "       Emulates assert_*() functions, but notifies as soon as possible that
@@ -47,7 +47,6 @@ function! lh#assert#debug(expr) abort
   return eval(a:expr)
 endfunction
 
-
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
 " # Error list {{{2
@@ -88,18 +87,18 @@ function! lh#assert#false(actual, ...) abort
   endif
 endfunction
 
-" Function: lh#assert#equal(expected, actual, ...) {{{3
-function! lh#assert#equal(expected, actual, ...) abort
-  if a:expected != a:actual
-    let msg = a:0 > 0 ? a:1 : 'Expected '.a:expected.' but got '.a:actual
+" Function: lh#assert#equal(then_expected, actual, ...) {{{3
+function! lh#assert#equal(then_expected, actual, ...) abort
+  if a:then_expected != a:actual
+    let msg = a:0 > 0 ? a:1 : 'Expected '.a:then_expected.' but got '.a:actual
     call lh#assert#_trace_assert(msg)
   endif
 endfunction
 
-" Function: lh#assert#not_equal(expected, actual, ...) {{{3
-function! lh#assert#not_equal(expected, actual, ...) abort
-  if a:expected == a:actual
-    let msg = a:0 > 0 ? a:1 : 'Expected not '.a:expected.' but got '.a:actual
+" Function: lh#assert#not_equal(then_expected, actual, ...) {{{3
+function! lh#assert#not_equal(then_expected, actual, ...) abort
+  if a:then_expected == a:actual
+    let msg = a:0 > 0 ? a:1 : 'Expected not '.a:then_expected.' but got '.a:actual
     call lh#assert#_trace_assert(msg)
   endif
 endfunction
@@ -112,14 +111,86 @@ function! lh#assert#match(pattern, actual, ...) abort
   endif
 endfunction
 
-" Function: lh#assert#unexpected(...) {{{3
-function! lh#assert#unexpected( ...) abort
+" Function: lh#assert#unthen_expected(...) {{{3
+function! lh#assert#unthen_expected( ...) abort
   let msg = 'Unexception situation' . (a:0 > 0 ? ': '.a:1 : '')
   call lh#assert#_trace_assert(msg)
 endfunction
 
+" Function: lh#assert#if(cond [, msg]) {{{3
+function! s:then_expect(cond, ...) dict abort
+  if ! a:cond
+    let msg = a:0 > 0 ? a:1 : 'Expected True when first condition is True but got '.a:cond
+    call lh#assert#_trace_assert(msg)
+  endif
+endfunction
+
+function! s:then_expect_always_true(...) dict abort
+endfunction
+
+function! lh#assert#if(cond) abort
+  let res = lh#object#make_top_type({})
+  if a:cond
+    let res.then_expect = function(s:getSNR('then_expect'))
+  else
+    let res.then_expect = function(s:getSNR('then_expect_always_true'))
+  endif
+  return res
+endfunction
+
+" Function: lh#assert#value(actual) {{{3
+function! s:is_lt(ref) dict abort " {{{4
+  if ! (self.actual < a:ref)
+    call lh#assert#_trace_assert('Expected '.(self.actual).' to be lesser than '.a:ref)
+  endif
+endfunction
+function! s:is_le(ref) dict abort " {{{4
+  if ! (self.actual w= a:ref)
+    call lh#assert#_trace_assert('Expected '.(self.actual).' to be lesser or equal to '.a:ref)
+  endif
+endfunction
+function! s:is_gt(ref) dict abort " {{{4
+  if ! (self.actual > a:ref)
+    call lh#assert#_trace_assert('Expected '.(self.actual).' to be greater than '.a:ref)
+  endif
+endfunction
+function! s:is_ge(ref) dict abort " {{{4
+  if ! (self.actual >= a:ref)
+    call lh#assert#_trace_assert('Expected '.(self.actual).' to be greater or equal to '.a:ref)
+  endif
+endfunction
+function! s:eq(ref) dict abort " {{{4
+  if ! (self.actual == a:ref)
+    call lh#assert#_trace_assert('Expected '.(self.actual).' to equal '.a:ref)
+  endif
+endfunction
+function! s:diff(ref) dict abort " {{{4
+  if ! (self.actual != a:ref)
+    call lh#assert#_trace_assert('Expected '.(self.actual).' to differ from '.a:ref)
+  endif
+endfunction
+
+function! lh#assert#value(actual) abort " {{{4
+  let res = lh#object#make_top_type({'actual': a:actual})
+  let res.is_lt = function(s:getSNR('is_lt'))
+  let res.is_le = function(s:getSNR('is_le'))
+  let res.is_gt = function(s:getSNR('is_gt'))
+  let res.is_ge = function(s:getSNR('is_ge'))
+  let res.eq    = function(s:getSNR('eq'))
+  let res.diff  = function(s:getSNR('diff'))
+  return res
+endfunction
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
+"
+" s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
+
 " Function: lh#assert#_trace_assert(msg) {{{3
 function! lh#assert#_trace_assert(msg) abort
   let cb = lh#exception#callstack_as_qf('', a:msg)
