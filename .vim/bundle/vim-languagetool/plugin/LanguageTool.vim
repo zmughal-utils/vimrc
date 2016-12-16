@@ -140,6 +140,15 @@ function s:LanguageToolSetUp() "{{{1
   let s:languagetool_disable_rules = exists("g:languagetool_disable_rules")
   \ ? g:languagetool_disable_rules
   \ : 'WHITESPACE_RULE,EN_QUOTES'
+  let s:languagetool_enable_rules = exists("g:languagetool_enable_rules")
+  \ ? g:languagetool_enable_rules
+  \ : ''
+  let s:languagetool_disable_categories = exists("g:languagetool_disable_categories")
+  \ ? g:languagetool_disable_categories
+  \ : ''
+  let s:languagetool_enable_categories = exists("g:languagetool_enable_categories")
+  \ ? g:languagetool_enable_categories
+  \ : ''
   let s:languagetool_win_height = exists("g:languagetool_win_height")
   \ ? g:languagetool_win_height
   \ : 14
@@ -201,7 +210,7 @@ function <sid>JumpToCurrentError() "{{{1
     endif
 
     echon 'Jump to error ' . l:error_idx . '/' . len(s:errors)
-    \ . ' (' . l:rule . ') ...@ ' . l:line . 'L ' . l:col . 'C'
+    \ . ' ' . l:rule . ' @ ' . l:line . 'L ' . l:col . 'C'
     norm! zz
   else
     call setpos('.', l:save_cursor)
@@ -241,6 +250,9 @@ function s:LanguageToolCheck(line1, line2) "{{{1
   \ . ' -jar '  . s:languagetool_jar
   \ . ' -c '    . s:languagetool_encoding
   \ . (empty(s:languagetool_disable_rules) ? '' : ' -d '.s:languagetool_disable_rules)
+  \ . (empty(s:languagetool_enable_rules) ?  '' : ' -e '.s:languagetool_enable_rules)
+  \ . (empty(s:languagetool_disable_categories) ? '' : ' --disablecategories '.s:languagetool_disable_categories)
+  \ . (empty(s:languagetool_enable_categories) ?  '' : ' --enablecategories '.s:languagetool_enable_categories)
   \ . ' -l '    . s:languagetool_lang
   \ . ' --api ' . l:tmpfilename
   \ . ' 2> '    . l:tmperror
@@ -294,14 +306,14 @@ function s:LanguageToolCheck(line1, line2) "{{{1
     setlocal nospell
     syn clear
     call matchadd('LanguageToolCmd',        '\%1l.*')
-    call matchadd('LanguageToolErrorCount', '^Error:\s\+\d\+.\d\+')
+    call matchadd('LanguageToolErrorCount', '^Error:\s\+\d\+/\d\+')
     call matchadd('LanguageToolLabel',      '^\(Context\|Message\|Correction\|URL\):')
     call matchadd('LanguageToolUrl',        '^URL:\s*\zs.*')
 
-    let l:i = 0
+    let l:i = 1
     for l:error in s:errors
       call append('$', 'Error:      '
-      \ . (l:i + 1) . '/' . len(s:errors)
+      \ . l:i . '/' . len(s:errors)
       \ . ' '  . l:error['ruleId'] . ((len(l:error['subId']) ==  0) ? '' : ':') . l:error['subId']
       \ . ' @ ' . l:error['fromy'] . 'L ' . l:error['fromx'] . 'C')
       call append('$', 'Message:    '     . l:error['msg'])
