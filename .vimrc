@@ -191,6 +191,7 @@ imap <C-R>w <C-R>=bufname(winbufnr(winnr('#')))<Return>
 cabbr cdir	<C-R>=expand("%:p:h")<C-J>
 
 nmap \o	o<Esc>
+nmap \gf :sb <C-R>=expand("<cfile>")<CR><CR>
 
 " Makes more sense and yy is easy enough
 nnoremap Y y$
