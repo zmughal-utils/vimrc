@@ -1,4 +1,5 @@
 package FIXME;
+# ABSTRACT: TODO
 
 use Moo;
 
