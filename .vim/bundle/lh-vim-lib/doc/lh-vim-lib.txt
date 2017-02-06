@@ -1,5 +1,5 @@
 *lh-vim-lib.txt*        Vim common libraries (v4.0.0)
-                        For Vim version 7+      Last change: 24th Oct 2016
+                        For Vim version 7+      Last change: 03rd Feb 2017
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -55,6 +55,7 @@ Miscellanous functions:                                 |lhvl#misc|
 - |lh#mapping#define()|
 - |lh#mapping#plug()|
 - |lh#on#exit()|
+- |lh#po#context()|
 - |lh#position#char_at()|
 - |lh#position#char_at_mark()|
 - |lh#position#char_at_pos()|
@@ -398,29 +399,38 @@ lh#on#exit()~
 This function will register action to be executed at the end on a scope, and
 more precisally in a |:finally| section.
 It permits to do the following things:
-- `restore()`                restores a |variable| or a vim |option|.
-- `restore_option()`         restores a |lhvl#option|
-- `register()`               registers a |command| to execute.
-                           it takes a second facultative argument `"priority"`
-                           to give the highest priority to the command.
-- `restore_buffer_mapping()` restores a |map-<buffer>|
+- `restore()`                       restores a |variable| or a vim |option|.
+- `restore_option()`                restores a |lhvl#option.|
+- `register()`                      registers a |command| to execute.
+                                  it takes a second facultative argument
+                                  `"priority"` to give the highest priority to
+                                  the command.
+- `restore_buffer_mapping()`        restores a |:map-<buffer>|.
+- `restore_mapping_and_clear_now()` restores |:map| and |:map-<buffer>| on
+                                  `finalize()` and undefine them right away.
 
 e.g. >
 
    " Here let suppose g:foo exists, but not g:bar
+   let l:d = {'a': 1}
    let cleanup = lh#on#exit()
       \ . restore('g:foo')
       \ . restore('g:bar')
+      \ . restore(l:d, 'a')
+      \ . restore(l:d, 'b')
       \ . register('echo "The END"')
       " note: |function|s can be registered as well
     try
       let g:foo = 1 - g:foo
       let g:bar = 42
+      let l:d.a = 12
+      let l:d.b = 13
       other actions that may throw
     finally
       call cleanup.finalize()
     endtry
-    " Then g:foo and g:bar are restored, and "The END" has been echoed
+    " Then g:foo and g:bar are restored, "The END" has been echoed
+    " l:d.a is restored to 1, and l:d.b is removed
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#leader#get()*                 {{{3
@@ -558,6 +568,23 @@ For the moment, the queue cannot be pause voluntarily.
 This command will cancel the first job (registered through |lh#async#queue()|)
 it founds that matches the {pattern}.
 This command supports |command-completion| to help select the right job.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#po#context()*                 {{{3
+lh#po#context([textdomain, textdomaindir])~
+@require `&shell == "bash`," otherwise no translation will be performed.
+Builds a context that'll permit to translate messages. The default values for
+the options will permit to translate Vim messages.
+
+The context permits to request the translation of any messageId from a
+.po/.mo file with *lh#po#context().translate()*
+
+For instance, >
+    :language mes fr_FR.UTF-8
+    :echo lh#po#context().translate('[readonly]')
+
+will print >
+    [lecture-seule]
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#position#IsBefore()*          {{{3
@@ -2523,6 +2550,16 @@ string.
 lh#command#matching_askvim(attribute, lead)~
 Helper function to define |:command-completion-custom| functions.
 Returns what vim would have expanded for |:command-complete| {attribute}.
+
+For instance:
+- To obtain the list of known options >
+    let opts = lh#command#matching_askvim('option', '')
+- To obtain the list of active mappings: >
+    let opts = lh#command#matching_askvim('mapping', '')
+<  WARNING: This will not work correctly with vim versions that don't have
+    |getcmdline()|.
+    Mapping list will end at the first mapping keybinding with a double quote
+    in it.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#command#new()*                {{{3
