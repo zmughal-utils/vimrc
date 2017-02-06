@@ -1,0 +1,145 @@
+*stakeholders.txt*  Charismatic, overachieving, dynamically expansive place-holders
+                    Author: Tom Link, micathom at gmail com
+
+Older templating plugins for VIM often used simple markup for 
+placeholders (e.g. <+VARIABLE_NAME+>). A placeholder was simply a 
+pattern you could easily search for. Some newer templating plugins (e.g. 
+xptemplate vimscript #2611) support dynamic replacement of placeholders 
+with the same name.
+
+The stakeholders plugin turns your old templating system into a high 
+potential overachiever. It provides dynamic replacement of placeholders 
+for older templating plugins. By default, it assumes placeholders match 
+/<+\([[:alpha:]_]\+\)+>/ since this pattern is used in several 
+templating systems. You can easily change that pattern by setting 
+|g:stakeholders#def| or b:stakeholders_def.
+
+
+Usage~
+
+The tskeleton templating plugin provides a parameter 
+(|g:tskeleton#enable_stakeholders|) that enables integration with the 
+stakeholders plugin. For other templating plugins, you have to enable 
+stakeholders by calling either |stakeholders#EnableBuffer()| or 
+|stakeholders#EnableInRange()|.
+
+Demo: 
+http://vimsomnia.blogspot.com/2010/11/tskeleton-and-stakeholders-vim-plugins.html
+
+
+Known issues~
+
+    - Replacing a visual selection by pasting text (using paste#Paste()) 
+      doesn't work. You have to delete the selection first and paste the 
+      text afterwards.
+
+
+Also available via git: http://github.com/tomtom/stakeholders_vim/
+
+-----------------------------------------------------------------------
+Install~
+
+In order to install the vba, open the vba file in VIM and type: >
+
+    :so %
+
+See :help vimball for details.
+
+
+========================================================================
+Contents~
+
+        :StakeholdersEnable ................... |:StakeholdersEnable|
+        :StakeholdersDisable .................. |:StakeholdersDisable|
+        g:stakeholders#def .................... |g:stakeholders#def|
+        g:stakeholders#expansion .............. |g:stakeholders#expansion|
+        g:stakeholders#exclude_rx ............. |g:stakeholders#exclude_rx|
+        g:stakeholders#undo_breaks ............ |g:stakeholders#undo_breaks|
+        stakeholders#Disable .................. |stakeholders#Disable()|
+        stakeholders#Enable ................... |stakeholders#Enable()|
+        stakeholders#EnableInRange ............ |stakeholders#EnableInRange()|
+        stakeholders#EnableBuffer ............. |stakeholders#EnableBuffer()|
+        stakeholders#DisableBuffer ............ |stakeholders#DisableBuffer()|
+        stakeholders#CursorMoved .............. |stakeholders#CursorMoved()|
+        stakeholders#delayed#Init ............. |stakeholders#delayed#Init()|
+        stakeholders#immediate#Init ........... |stakeholders#immediate#Init()|
+
+
+========================================================================
+plugin/stakeholders.vim~
+
+                                                    *:StakeholdersEnable*
+:StakeholdersEnable[!]
+    Enable stakeholders for the current buffer.
+    With the optional '!', enable stakeholders globally.
+
+                                                    *:StakeholdersDisable*
+:StakeholdersDisable[!]
+    Disable stakeholders for the current buffer.
+    With the optional '!', disable stakeholders globally.
+
+
+========================================================================
+autoload/stakeholders.vim~
+
+                                                    *g:stakeholders#def*
+g:stakeholders#def             (default: {'rx': '<+\([[:alnum:]_]\+\)\(/.\{-}\)\?+>'})
+    The placeholder definition. A dictionary with the fields:
+      rx ....... A |regexp| that matches placeholders.
+
+                                                    *g:stakeholders#expansion*
+g:stakeholders#expansion       (default: 'immediate')
+    The type of placeholder expansion. Possible values:
+      - delayed (see |stakeholders#delayed#Init()|)
+      - immediate (see |stakeholders#immediate#Init()|)
+
+                                                    *g:stakeholders#exclude_rx*
+g:stakeholders#exclude_rx      (default: '^\(TODO\|\)$')
+    Ignore placeholders with labels matching this |regexp|.
+
+                                                    *g:stakeholders#undo_breaks*
+g:stakeholders#undo_breaks     (default: 0)
+    If non-null, break the undo sequence (see |i_CTRL-G_u|) before 
+    updating the replacement string.
+
+                                                    *stakeholders#Disable()*
+stakeholders#Disable()
+
+                                                    *stakeholders#Enable()*
+stakeholders#Enable()
+
+                                                    *stakeholders#EnableInRange()*
+stakeholders#EnableInRange(line1, line2)
+    Enable stakeholders for a range of lines.
+
+                                                    *stakeholders#EnableBuffer()*
+stakeholders#EnableBuffer()
+    Enable stakeholders for the current buffer.
+
+                                                    *stakeholders#DisableBuffer()*
+stakeholders#DisableBuffer()
+    Disable stakeholders for the current buffer.
+
+                                                    *stakeholders#CursorMoved()*
+stakeholders#CursorMoved(mode)
+
+
+========================================================================
+autoload/stakeholders/delayed.vim~
+
+                                                    *stakeholders#delayed#Init()*
+stakeholders#delayed#Init(ph_def)
+    Replace placeholders after the cursor leaves the pre-defined place or 
+    the moves to another line.
+
+
+========================================================================
+autoload/stakeholders/immediate.vim~
+
+                                                    *stakeholders#immediate#Init()*
+stakeholders#immediate#Init(ph_def)
+    Expand placeholders as the user types.
+
+
+
+vim:tw=78:fo=w2croql:isk=!-~,^*,^|,^":ts=8:ft=help:norl:

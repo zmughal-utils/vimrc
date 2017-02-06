@@ -1,0 +1,16 @@
+version: "0.02"
+  - Alternative, slightly more robust approach
+  - g:stakeholders#undo_breaks: Break undo sequences
+  - Globally enable, disable stakeholders; Replace* functions became methods of the stakeholders prototype
+  - If b:stakeholders_range is defined (e.g. by #EnableInRange()), replace placeholder only in that range.
+  MD5 checksum: 9878bd0328b2abd4a162f9efa45d3599
+
+version: "0.03"
+  - .gitignore
+  - Support for tSkeleton's <+NAME/replacement+> syntax
+  - Make s:CursorMoved() accessible as stakeholders#CursorMoved() .
+  - s:Init(): run :g with :silent prefix
+  - addon-info
+  - Help template
+  MD5 checksum: acb1eb60cee1c8d45b4f519fd0f3fa3e
+
