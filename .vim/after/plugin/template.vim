@@ -17,16 +17,16 @@ endfunction
 "}}}
 augroup Templates "{{{
 	au!
-	autocmd BufNewFile *.c		call Read_template("c")
-	autocmd BufNewFile *.h		call Read_template("h")
-	autocmd BufNewFile *.html,*.htm	call Read_template("html")
-	autocmd BufNewFile *.sh		call Read_template("sh")
-	autocmd BufNewFile *.bat	call Read_template("bat")
-	autocmd BufNewFile *.java	call Read_template("java")
-	autocmd BufNewFile *.py		call Read_template("py")
-	autocmd BufNewFile *.pl		call Read_template("pl")
-	autocmd BufNewFile *.pm		call Read_template("pm")
-	autocmd BufNewFile *.p6		call Read_template("p6")
-	autocmd BufNewFile *.mdwn	call Read_template("mdwn")
+	"autocmd BufNewFile *.c		call Read_template("c")
+	"autocmd BufNewFile *.h		call Read_template("h")
+	"autocmd BufNewFile *.html,*.htm	call Read_template("html")
+	"autocmd BufNewFile *.sh		call Read_template("sh")
+	"autocmd BufNewFile *.bat	call Read_template("bat")
+	"autocmd BufNewFile *.java	call Read_template("java")
+	"autocmd BufNewFile *.py		call Read_template("py")
+	"autocmd BufNewFile *.pl		call Read_template("pl")
+	"autocmd BufNewFile *.pm		call Read_template("pm")
+	"autocmd BufNewFile *.p6		call Read_template("p6")
+	"autocmd BufNewFile *.mdwn	call Read_template("mdwn")
 augroup END "}}}
 "}}}
