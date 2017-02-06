@@ -1,0 +1,9 @@
+VimL:" Parameter File Template, Luc Hermitte, 30th Apr 2015
+VimL:" hint: let s:arg = s:Param(...)
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+MuT:  let s:parameter = s:SurroundableParam('parameter', 1)
+MuT:  let s:default   = s:SurroundableParam('default', 2, lh#marker#txt('lh#marker#txt("default")'))
+s:Param("<+s:parameter+>", <+s:default+>)<+s:TerminalPlaceHolder()+>

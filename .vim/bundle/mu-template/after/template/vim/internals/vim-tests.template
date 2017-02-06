@@ -1,0 +1,13 @@
+VimL: "«Vim» tests Template File, Luc Hermitte
+UTSuite [<+suite+>] Testing <+plugin+>
+
+runtime autoload/<+plugin+>
+
+let s:cpo_save=&cpo
+set cpo&vim
+
+"------------------------------------------------------------------------
+function! s:Test_<+stuff+>()
+  Assert <+expr+>
+endfunction
+

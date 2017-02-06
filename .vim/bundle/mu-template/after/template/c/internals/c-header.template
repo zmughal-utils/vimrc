@@ -1,0 +1,8 @@
+VimL: "C/C++ Header File-Template, Luc Hermitte
+VimL: call s:Include('c-header-guard', 'c/internals')
+#ifndef <+¡s:guard¡+>
+#define <+¡s:guard¡+>
+
+VimL: call s:Include('c-header-content', 'c/internals', lh#marker#txt("Definitions here"))
+
+#endif // <+¡s:guard¡+>

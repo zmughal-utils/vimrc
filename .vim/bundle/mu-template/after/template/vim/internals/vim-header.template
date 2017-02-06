@@ -1,0 +1,37 @@
+VimL: "«Vim» scripts header Template File, Luc Hermitte
+"=============================================================================
+VimL: call s:Include('dollar_id', '_')
+VimL: let s:root = IF(s:localvimrc, (exists('g:root')?resolve(g:root).','.g:root.',' : '').$HOME , &rtp)
+VimL: let s:path  = lh#path#strip_start(expand('%:p'), s:root)
+VimL: "let s:path  = lh#path#strip_start(expand('%:p'), &rtp)
+VimL: let s:align = repeat(' ', 49-strlen(s:path))
+" File:         ¡s:path.s:align¡ {{{1
+" Author:       ¡Author()¡
+VimL: let s:mkvba = expand('%:p')[0:-1+stridx(expand('%:p'), s:path)] . 'mkVba/mk-*.vim'
+VimL: let s:mkvba = glob(s:mkvba)
+MuT:  if !empty(s:mkvba) && -1 == stridx(s:mkvba, "\n")
+VImL:   let s:version_lines = filter(readfile(s:mkvba), 'v:val =~ "\\vlet\\s+s:(k_)=version\\s*\\="')
+VimL:   let s:version = empty(s:version_lines) ? lh#marker#txt('001') : matchstr(substitute(s:version_lines[0], '\.', '', 'g'), '.*=\s*\zs.*')
+MuT:  else
+VimL:   let s:version = lh#marker#txt('001')
+MuT:  endif
+" Version:      <+substitute(substitute(s:version, "'", '', 'g'), '\d', '&.', 'g')+>
+let s:k_version = <+s:version+>
+" Created:      <+lh#time#date()+>
+" Last Update:  <+s:Include('dollar_date', '_')+>
+"------------------------------------------------------------------------
+VimL: let s:_prj_description = s:Param('description', lh#marker#txt('description'))
+" Description:
+"       <+s:_prj_description+>
+"
+"------------------------------------------------------------------------
+MuT:  if s:localvimrc
+" Installation:
+"       The file must be present in a directory parent of every directories
+"       where the definitions must apply.
+MuT:  endif
+" History:      <+history+>
+" TODO:         <+missing features+>
+" }}}1
+"=============================================================================
+

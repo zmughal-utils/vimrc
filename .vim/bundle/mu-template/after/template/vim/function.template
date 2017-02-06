@@ -1,0 +1,19 @@
+VimL:"«Vim» function Template File, Luc Hermitte
+VimL:" hint: :function! definition
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL: call s:Include('get-script-kind', 'vim/internals')
+MuT:  if s:alplug
+VimL:    call s:Include('vim-autoload-function', 'vim/internals')
+MuT:  elseif s:tests
+VimL:    let s:function_prefix='s:Test_'
+MuT:  else
+VimL:    let s:function_prefix='s:'
+MuT:  endif
+VimL: "
+" Function: ¡s:function_prefix¡<+funcname+>(<+params+>) {{{<+3+>
+function! ¡s:function_prefix¡<+funcname+>(<+params+>) abort
+  ¡s:Surround(1, '<+code+>')¡
+endfunction

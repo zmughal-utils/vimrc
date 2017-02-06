@@ -1,0 +1,176 @@
+VimL:" vim-rc-local C/C++ projects File Template, Luc Hermitte <hermitte {at} free {dot} fr>, 01st Oct 2013
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+MuT:  let s:_prj_config = s:Param('_prj_config', 'g:'.lh#marker#txt('MyProject').'_config')
+
+" ======================[ &path {{{2
+" Alternate-lite configuration: .h and .cpp are in the same directory
+LetIfUndef p:alternates.searchpath = 'sfr:.'
+" don't search into included file how to complete
+setlocal complete-=i
+
+" No sub project
+" let b:project_crt_sub_project = matchstr(lh#path#strip_common([<+s:_prj_config+>.paths.trunk, expand('%:p:h')])[1], '[^/\\]*[/\\][^/\\]*')
+
+" Local vimrc variable for source dir
+" Will be simplified eventually to use p:paths.sources everywhere
+let s:project_sources_dir = lh#option#get('paths.sources')
+call lh#let#to('p:project_sources_dir', s:project_sources_dir)
+
+" Option for Mu-Template-> |s:path_from_root()|
+" Now: p:paths.sources is enough!
+
+" Used by mu-template to generate file headers and header-gates.
+let s:cpp_included_paths = lh#let#to('p:cpp_included_paths', [s:project_sources_dir])
+
+" If the project has .h.in files that are generated in the build
+" directory, uncomment the next line
+" let s:cpp_included_paths += [lh#option#get('BTW.compilation_dir')]
+
+" Configures lh-cpp complete includes sub-plugin -> ftplugin/c/c_complete_include.vim
+" -> :h i_CTRL-X_i
+" TODO:
+" - adapt it automatically to the current compilation dir
+" - find how to fetch include directories added with
+"   (target_)include_directories
+"   -> Cmake server-mode or json compilation database
+" For now:
+" - Fetch standard includes (hard coded in the compiler)
+" - Fetch project specific includes
+" - Use all directories under the source directory (OTB and ITK use many
+"   -Isubpath -> '**') -- Other (best?) practices tell us to include
+"   "module1/sub_a/foobar.h" instead of "foobar.h". If you're in that
+"   case, remove the "'**'".
+" - Use all directories under the compilation directory (for files like
+"   config.h.in)
+let s:includes = lh#let#to('p:includes',
+    \ [ lh#path#to_dirname(s:project_sources_dir) . '**'
+    \ , lh#path#to_dirname(lh#btw#compilation_dir()) . '**'])
+try
+  let s:includes +=
+    \ lh#cpp#tags#compiler_includes()
+MuT:  if has_key(s:_prj_kind, 'cmake')
+    \ + lh#cmake#get_includes()
+MuT:  endif
+MuT:  if ! has_key(s:_prj_kind, 'cmake')
+catch /.*/
+  call lh#common#warning_msg('Cannot update p:includes: '.v:exception)
+endtry
+
+" As we aren't using CMake, we'll have to register all 3rd party
+" libraries manually!
+if SystemDetected() == 'unix'
+  " Add your 3rd party libraries used in the project here
+  call lh#path#add_path_if_exists('p:includes', $HOME.'/dev/boost/1_51_0/install/include/')
+  call lh#path#add_path_if_exists('p:includes', '/usr/local/include/**')
+  call lh#path#add_path_if_exists('p:includes', '/usr/include/**')
+endif
+MuT:  endif
+
+" Setting &path
+call s:project.set('&path', '+='.lh#path#fix(lh#btw#compilation_dir()).'/**')
+" If the project has .h.in files that are generated in the build
+" directory, uncomment the next line
+" sources dir is automatically added thanks to lh-tags v2
+for p in lh#option#get('includes', [])
+  if p !~ '^/usr'
+    call s:project.set('&path', '+='.lh#path#fix(p))
+  endif
+endfor
+
+if 0
+  " gcov output path
+  LetIfUndef p:gcov_files_path = lh#option#get('paths.sources').'/obj/debug/Testing/CoverageInfo'
+endif
+
+" ======================[ Settings for compil_hints {{{2
+LetIfUndef p:compil_hints_autostart = 1
+
+" ======================[ Settings for BTW {{{2
+if SystemDetected() == 'msdos'
+  :BTW setlocal cmake
+  " echomsg SystemDetected()
+  if SystemDetected() == 'unix' " cygwin
+    " then cygwin's cmake does not work -> use win32 cmake
+    let $PATH=substitute($PATH, '\(.*\);\([^;]*CMake[^;]*\)', '\2;\1', '')
+    BTW addlocal cygwin
+  endif
+endif
+:BTW addlocal STLFilt
+
+LetIfUndef p:BTW.executable.type 'ctest'
+" sets p:BTW.executable.rule
+" TODO: convert -> call <+s:_prj_config+>_menu.def_ctest_targets.set_ctest_argument()
+
+LetIfUndef p:BTW.target = ''
+let s:project_config = {
+   \ 'type': 'ccmake',
+   \ 'arg': lh#ref#bind('p:paths.sources'),
+   \ 'wd' : lh#ref#bind('p:BTW.compilation_dir')
+   \ }
+call lh#let#if_undef('p:BTW.project_config', s:project_config)
+
+" ======================[ tags generation {{{2
+" Be sure tags are automatically updated on the current file
+LetIfUndef p:tags_options.no_auto 0
+" Declare the indexed filetypes
+call lh#tags#add_indexed_ft('c', 'cpp')
+" Update Vim &tags option w/ the tag file produced for the current project
+call lh#tags#update_tagfiles() " uses s:project_sources_dir/BTW_project_config
+
+" Instruct to ignore spelling of code constructs
+call lh#tags#ignore_spelling()
+
+" TODO: projectify these pathnames
+" You'll have to generate thoses files for your system...
+let s:tags = s:project.get('&tags', '') " It may be absolute as well as starting with '+='
+let s:tags = substitute(s:tags, '^+=', '', '')
+let s:tags = lh#path#munge(s:tags, $HOME.'/dev/tags/stl.tags')
+let s:tags = lh#path#munge(s:tags, $HOME.'/dev/tags/boost.tags')
+
+" HERE: Import tags from 3rd party libraries
+
+" And commit back the option at project level
+call s:project.set('&tags', '+='.s:tags)
+
+" ======================[ Project's style {{{2
+" ---[ Templates
+" Where templates related to the project will be stored. You'll have to
+" adjust the number of ':h', -> :h expand()
+call lh#let#to('p:mt_templates_paths', s:config_dir.'/templates')
+" ---[ Style
+silent! source <sfile>:p:h/_vimrc_cpp_style.vim
+LetTo p:ProjectVersion        = '<+_version_+>'
+let s:ns = lh#let#to('p:cpp_project_namespace', '<+project_ns+>')
+call lh#let#to('b:cpp_project_namespace', [s:ns] + split(expand('%:h'), '/')[1:]) " [1:] -> ignore sources/ dir
+" Expecting your project has a <+project_ns+>::Exception type
+call lh#let#to('p:exception_type', s:ns.'::'.lh#dev#naming#type('Exception'))
+
+" Special management of tests and unit tests
+if expand('%:p') =~ s:project_sources_dir.'/Testing'
+  LetIfUndef p:is_unit_test = 1
+endif
+" Auto define doxygen group name
+LetIfUndef p:dox.group.name = 'g'.lh#dev#naming#to_upper_camel_case(substitute(expand('%:r'), '/', '_', 'g'))
+
+" ======================[ Settings for searchfile and gf {{{2
+let b:searchfile_ext = 'h,H,C,cpp,cxx,hxx,txx'
+setlocal suffixesadd+=.h,.H,.C,.cpp,.cxx,.hxx,.txx'
+
+" ======================[ Menus {{{2
+MuT:  if has_key(s:_prj_kind, 'cmake')
+call lh#menu#make('nic', '50.11', '&Project.Edit local &CMake file', '<localleader><F7>', '<buffer>', ':call lh#project#crt().get("BTW.config.functions").EditLocalCMakeFile()<cr>')
+call lh#menu#make('nic', '50.12', '&Project.Edit local &CMake file (vertical)', '<localleader>v<F7>', '<buffer>', ':call lh#project#crt().get("BTW.config.functions").EditLocalCMakeFile("vert")<cr>')
+MuT:  endif
+" call lh#menu#make('nic', '50.11', '&Project.Edit local &Scons file', '', '<buffer>', ':call EditLocalSconsFile()<cr>')
+call lh#menu#make('nic', '50.76', '&Project.Edit local &vimrc', '<localleader>le', '<buffer>', ':call lh#buffer#jump('.string(s:script).', "sp")<cr>' )
+
+" ======================[ Local variables to automagically import in QuickFix buffer {{{2
+QFImport tags_select
+" QFImport &path
+" QFImport BTW_project_target
+" QFImport BTW_compilation_dir
+" QFImport BTW_project_config
+" QFImport includes

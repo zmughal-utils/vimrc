@@ -1,0 +1,7 @@
+VimL:" add_subdirectory snippet, Luc Hermitte, 29th Sep 2013
+VimL:" hint: add_subdirectory(dir)
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+VimL: "
+MuT:  let s:_dir = s:SurroundableParam('directory', 1)
+add_subdirectory(<+s:_dir+>)

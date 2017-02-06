@@ -1,0 +1,7 @@
+VimL:" s:Surround() File Template, Luc Hermitte <hermitte at free.fr>, 17th Mar 2014
+VimL:" hint: s:Surround(<+1+>, '<+default+>')
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+MuT:  let s:id      = s:SurroundableParam('id', 2, lh#marker#txt(1))
+MuT:  let s:default = s:SurroundableParam('default', 2, lh#marker#txt('lh#marker#txt("default")'))
+s:Surround(<+s:id+>, <+s:default+>)<+s:TerminalPlaceHolder()+>

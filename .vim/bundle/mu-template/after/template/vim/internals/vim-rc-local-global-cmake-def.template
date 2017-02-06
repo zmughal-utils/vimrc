@@ -1,0 +1,90 @@
+VimL:" «vim-rc-local-global-cmake-def» File Template, Luc Hermitte <hermitte {at} free {dot} fr>, 02nd Oct 2013
+VimL:" hint: «vim-rc-local-global-cmake-def-hint»
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+MuT:  let s:_prj_config  = s:Param('_prj_config', 'g:'.lh#marker#txt('MyProject').'_config')
+MuT:  let s:_prj_src_dir = s:Param('_prj_src_dir', lh#marker#txt('expand("<sfile>:p:h")'))
+MuT:  let s:_prj_name    = s:Param('_prj_name', lh#marker#txt('MyProjectName'))
+
+" ======================[ Global project configuration {{{2
+let cleanup = lh#on#exit()
+      \.restore('g:sources_dir')
+try
+  " We use a global variable that'll be removed at the end of the block in
+  " order to be able to use :LetIfUndef directly
+  " This source directory is a relative path from the root path of the project
+  " to the directory where the source files are.
+  let g:sources_dir = '<+s:_prj_src_dir+>'
+
+  " Mandatory Project options
+  " You may have to adapt the relative location of the various files and
+  " directories
+  LetIfUndef p:BTW.config.name  = '<+s:_prj_name+>'
+  LetIfUndef p:paths.project    = fnamemodify(lh#option#get('paths.sources'),':h')
+
+  " Build directories/Build modes (choose what you prefer):
+  " - Option 1: automatic detection
+  LetIfUndef p:paths.build_root_dir = 'build'
+  " - Option 2: manual registration
+  " Note: this could be anything like: ARM-release
+  " LetIfUndef p:BTW.build.mode.list.Debug      = 'build/debug'
+  " LetIfUndef p:BTW.build.mode.list.Release    = 'build/release'
+  " LetIfUndef p:BTW.build.mode.list.RelDeb     = 'build/reldeb'
+  " LetIfUndef p:BTW.build.mode.list.Sanitize   = 'build/sanitize'
+
+  " Optional Project options
+  LetIfUndef p:paths.doxyfile         = lh#option#get('paths.project')
+  LetIfUndef p:BTW.build.mode.current = 'Debug'
+  LetIfUndef p:BTW.tests.verbosity    = '-VV'
+  " LetIfUndef p:BTW.tests.test_regex   = ''
+finally
+  call cleanup.finalize()
+endtry
+
+" ======================[ Menus {{{2
+" let s:menu_priority = '50.120.'
+" let s:menu_name     = '&Project.&<+s:_prj_name+>.'
+LetIfUndef p:menu.priority = '50.120.'
+call lh#let#if_undef('p:menu.name', '&Project.&<+s:_prj_name+>.')
+
+" Function: s:getSNR([func_name]) {{{3
+function! s:getSNR(...)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')
+  endif
+  return s:SNR . (a:0>0 ? (a:1) : '')
+endfunction
+
+" Function: s:EditLocalCMakeFile([pos]) {{{3
+function! s:EditLocalCMakeFile(...)
+  let where = a:0==0 ? '' : a:1.' '
+  let file = lh#path#to_relative(expand('%:p:h').'/CMakeLists.txt')
+  call lh#buffer#jump(file, where.'sp')
+endfunction
+
+call lh#let#if_undef ('p:BTW.config.functions',
+    \ {'EditLocalCMakeFile': function(s:getSNR('EditLocalCMakeFile'))})
+
+"------------------------------------------------------------------------
+" ======================[ Compilation mode, & CTest options {{{2
+MuT:  if 0
+VimL: " This part doesn't seem required now. To be verified!
+let <+s:_prj_config+>_menu = {
+  \ '_project': '<+substitute(s:_prj_config, "^g:", "", "")+>',
+  \ 'menu': {'priority': s:menu_priority, 'name': s:menu_name}
+  \ }
+  call lh#let#to('p:BTW.config.menu', <+s:_prj_config+>_menu)
+MuT:  endif
+
+" <+TODO: comment what you won't use+>
+let s:cmake_integration = []
+let s:cmake_integration += [ 'auto_detect_compil_modes2' ]
+let s:cmake_integration += [ 'def_toggable_ctest_verbosity2' ]
+let s:cmake_integration += [ 'def_toggable_ctest_checkmem2' ]
+let s:cmake_integration += [ 'def_ctest_targets2' ]
+" let s:cmake_integration += [ 'add_gen_clic_DB' ]
+" let s:cmake_integration += [ 'update_list' ] -- not ready yet for lh#project
+call lh#btw#cmake#define_options(s:cmake_integration)
+
+" ======================[ Misc functions {{{2
+
