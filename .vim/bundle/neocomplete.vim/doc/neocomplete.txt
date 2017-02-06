@@ -874,7 +874,14 @@ EXAMPLES					*neocomplete-examples*
 	  "return pumvisible() ? "\<C-y>" : "\<CR>"
 	endfunction
 	" <TAB>: completion.
-	inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+	inoremap <silent><expr> <TAB>
+	      \ pumvisible() ? "\<C-n>" :
+	      \ <SID>check_back_space() ? "\<TAB>" :
+	      \ neocomplete#start_manual_complete()
+	function! s:check_back_space() abort "{{{
+	  let col = col('.') - 1
+	  return !col || getline('.')[col - 1]  =~ '\s'
+	endfunction"}}}
 	" <C-h>, <BS>: close popup and delete backword char.
 	inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
 	inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
@@ -1596,8 +1603,8 @@ Q: I want to use Ruby omni completion.
 
 A: Please set |g:neocomplete#force_omni_input_patterns|.  But this completion
 is heavy, so disabled by default.
-Note: But you should use |neocomplete-rsense| instead of rubycomplete.
-https://github.com/Shougo/neocomplete-rsense
+Note: But you should use |vim-monster| instead of rubycomplete.
+https://github.com/osyo-manga/vim-monster
 >
 	autocmd FileType ruby setlocal omnifunc=rubycomplete#Complete
 	if !exists('g:neocomplete#force_omni_input_patterns')
