@@ -1,0 +1,273 @@
+*searchInRuntime.txt*   Plugin for searching within list of directories
+                        For Vim version 7.1+.   Last change: 15th Mar 2015
+
+
+                     SearchInRuntime MANUAL     by Luc Hermitte
+                     Version 3.0.4
+
+
+------------------------------------------------------------------------------
+Contents~
+|SiR-presentation|      Presentation
+  |SiR-parameters|      Parameters of the three :SearchIn* commands.
+  |:SearchInVar|        Command to search into a specified list of directories
+  |:SearchInPATH|       Command to search into $PATH
+  |:SearchInRuntime|    Command to search into 'runtimepath'
+  |:Sp| |:Vsp|          Commands to split open a file found into 'path'
+  |:GSp| |:GVSp|        Commands to go to file found into 'path', or split
+                        open a new window
+  |glf| |SiR-gf|
+  |SiR-CTRL-W_f|        Overrides of |gf| and |CTRL-W_f|
+  |SiR-CTRL-W_v|        Overrides |CTRL-W_v|
+  |:Runtime|            Wrapper for |:runtime| with auto-completion.
+|SiR-examples|          Examples and tips
+|SiR-obtain|            Where to obtain this plugin
+|SiR-completion|        A few words about automatic-completion
+|add-local-help|        Instructions on installing this file
+
+
+------------------------------------------------------------------------------
+                                                *SiR-presentation*
+                                                *search-in-directories-list* 
+Presentation~
+
+The plugin *searchInRuntime.vim* defines commands that:
+1- search for files whose name match specified {file-patterns} within list of
+   directories ({var}, $PATH or 'runtimepath').
+2- execute the Ex command {cmd} on the files found, if any.
+
+If you are a worshiper of: >
+    $> find {path} -name {pattern} -exec {command}
+then, you may be interested by these three VIM commands:
+    :SearchInVar[!] {var} {cmd} {file-patterns} .. [ "|[0]" {params} .. ]
+    :SearchInPATH[!]      {cmd} {file-patterns} .. [ "|[0]" {params} .. ]
+    :SearchInRuntime[!]   {cmd} {file-patterns} .. [ "|[0]" {params} .. ]
+
+It also defines wrappers for |:sp| and |:vsp|: |:Sp| and |:Vsp| that split open
+a file searched into 'path', and a wrapper for |:runtime|: |:Runtime|.
+
+
+All these commands support automatic completion. |SiR-completion|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                *SiR-parameters*
+Parameters~
+When [!] is included, all found files are passed to the Ex command {cmd}.
+When it is not included only the first file found is passed to {cmd}.
+
+
+When {file-patterns} contains wildcards, it is expanded to all matching files.
+Example: >
+        :SearchInRuntime! Echo plugin/*.vim
+Will echo the name of all VIM plugins.
+This similar command: >
+        :SearchInRuntime Echo plugin/*.vim
+would echo the name of the first file only.
+
+Contrary to |:runtime|, the search accepts absolute paths ; for instance: >
+    :runtime! /usr/local/share/vim/foo*.vim macros/foo*.vim
+is not valid while: >
+    :SearchInRuntime! source /usr/local/share/vim/foo*.vim macros/foo*.vim
+is accepted. 
+
+
+When 'verbose' is one or higher, there is a message when no file could be found.
+When 'verbose' is two or higher, there is a message about each file found.
+When 'verbose' is three or higher, there is a message about each searched
+directory.
+
+
+Additional parameters~
+When "| {params} .." is passed to :SearchIn*, then for each {file} found,
+:SearchIn* will execute:
+    :{cmd} {file} {params} ..
+
+When "|0 {params} .." is passed to :SearchIn*, then for each {file} found,
+:SearchIn* will execute:
+    :{cmd} {params} .. {file}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *:SearchInVar*
+:SearchInVar[!] {var} {cmd} {file-patterns} .. [ "|[0]" {params} .. ]~
+
+
+Important:~
+The variable {var} (containing the list of directories), that :SearchInVar is
+expecting the name, must be visible outside the current scope. ie.: the variable
+must be a |global-variable|, a |buffer-variable|, a |window-variable|, an
+environment variable, or one of the vim |options| prepended by ampersand like
+"&runtimepath". 
+{var} can not be a |local-variable| nor a |script-variable|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *:SearchInPATH*
+:SearchInPATH[!] {cmd} {file-patterns} .. [ "|[0]" {params} .. ]~
+is equivalent to:
+    |:SearchInVar|[!] $PATH {cmd} {file-patterns} .. [ "|[0]" {params} .. ]
+
+I.e.: the list of directories is taken from $PATH.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *:SearchInRuntime*
+                                                    *search-in-runtimepath* 
+:SearchInRuntime {cmd} {file-patterns} .. [ "|[0]" {params} .. ]~
+is equivalent to:
+    |:SearchInVar|[!] &runtimepath {cmd} {file-patterns}.. ["|[0]" {params}..]
+
+I.e.: the list of directories is taken from 'runtimepath'.
+
+Moreover,
+    :SearchInRuntime[!] source {file-patterns} ..
+is equivalent to:
+    |:runtime|[!] {file-patterns} ..
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *:Split* *:Vsplit*
+:Split[!] {file-patterns} ...~
+and
+:Vsplit[!] {file-patterns} ...~
+look for files into 'path' and split open them like |:sp| or |:vsp| do.
+
+When [!] is included, all found files are opened.
+When it is not included only the first file found is opened.
+
+They are somehow equivalent to: >
+    :SearchInVar &path :sp {file-patterns}
+
+NB:
+- File-completion is provided, unlike |:sp| and |:vsp|. |SiR-completion|
+
+See also |:GSplit| and |:GVSplit|
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *:GSplit* *:GVSplit*
+:GSplit[!] {file-patterns} ...~
+and
+:GVSplit[!] {file-patterns} ...~
+look for files into 'path'.
+
+If several files match the {file-patterns}, the user will be asked to choose
+one file to open.
+
+If a matching file is already opened in a window, this window is made the
+active window. If several files match, we jump to the first matching window. 
+Using {bang} (!) will override this bahavior. Instead, the user will be asked
+which file must be opened if more than one match the {file-patterns}.
+
+In either cases, if the selected (implictly or explicitly) file is not already
+opened in a window, then a new window is split opened (like |:sp| or |:vsp| do)
+with the selected file.
+
+NB:
+- These commands are related to |:Sp| and |:Vsp|.
+- "G" stands for "Goto-or-".
+- These commands require Vim 7+.
+- File-completion is provided. |SiR-completion|
+- When several files match, common path denominator are stripped from the
+  choices proposed (e.g. "/some/path/bar/file" and "/some/path/foo/file" are
+  presented as "bar/file" and "foo/file").
+
+It is possible to use other command names if we define *g:sir_goto_hsplit* and
+*g:sir_goto_vsplit* in the |.vimrc|. Their respective default values are
+"GSplit" and "GVSplit". If "Split" or "Vsplit" are used, the default
+bindings for |:Split|, or |:Vsplit|, are overridden by those of defaulted to
+|:GSplit|, or |:GVSplit|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *SiR-gf* *SiR-CTRL-W_f*
+                                                    *SiR-CTRL-W_v*
+Overrides of standard keybindings~
+|gf|, |CTRL-W_f|, and |CTRL-W_v| are overridden in order:
+- to ask the user which file must be opened if several files match, 
+- and to jump to an already opened window containing the selected file.
+- |CTRL-W_v| will do work as |CTRL-W_f|, but the window will be split
+vertically. @todo support an option to not override default mecanism.
+- Both mappings work in visual and in normal modes.
+
+*glf* displays the list of files, in 'path', that match the filename under the
+cursor.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+                                                    *:Runtime*
+:Runtime[!] {file-patterns}...~
+is just a wrapper for |:runtime| but with auto-completion. See |SiR-completion|.
+
+
+------------------------------------------------------------------------------
+                                                *SiR-examples*
+Examples and tips~
+
+Note: this plugin also defines the command: >
+    :command -nargs=+ Echo echo "<args>" 
+
+
+And now are some of the different ways I use to use this plugin.
+>
+    :SearchInRuntime sp plugin/searchInRuntime.vim 
+<       Will open in a split window the source of the file searchInRuntime.vim. 
+        [the full path can be very long and not always the same] 
+>
+    :SearchInVar $INCLUDE sp vector
+<       Will (if $INCLUDE is correctly set) open, in a |:split| window, the C++
+        header file vector.
+>
+    :SearchInVar! $INCLUDE Echo *
+<       Will echo the name of all the files present in the directories specified
+        in $INCLUDE.
+>
+    :SearchInRuntime! Echo *.vim ftplugin/*_set.vim
+<       Will echo the names of all the files, respecting the globing pattern,
+        that can be found in the directories specified by 'runtimepath'.
+>
+    :SearchInRuntime! Echo *.vim ftplugin/*_set.vim | has been found!
+<       Will echo the same files followed by the string "has been found!", on
+        the same line. 
+>
+    :SearchInRuntime! grep plugin/*foo*.vim |0 text
+<       For every {file} named plugin/*foo*.vim found within the 'runtimepath',
+        this will execute: >
+            :grep text {path-to-the-file}
+>
+    :command -nargs=+ ExeThis exe "!<args> ".bufname('%') 
+    :SearchInRuntime! ExeThis tools/vimlatex
+<       Will search where the executable vimlatex is, and execute it with
+        bufname('%') as a parameter. 
+>
+    :exe ":SearchInRuntime 0r template/template.".&ft 
+<       Will load the content of the file template/template.{filetype} that
+        should be somewhere in the 'runtimepath'. 
+>
+    :command! -nargs=+ MemorizeSiRFiles exe 
+        \ ':let s:SiR_files=s:SiR_files."\n<args>"'
+    :SearchInRuntime! MemorizeSiRFiles 
+        \ plugin/searchInRuntime.vim
+        \ doc/searchInRuntime.txt
+<       Will build s:SiR_files with the exact paths of the two files
+        searchInRuntime.vim and searchInRuntime.txt.
+        Then, in tar-scripts.vim (on my web site), I use this variable to check
+        if any of the two files has been updated since last check up.
+>
+    :e /tmp/searchInRuntime-feedback.vim
+    :SearchInRuntime diffsplit plugin/searchInRuntime.vim
+<       Will compare a working copy of a file with the one in the
+        'runtimepath'.
+
+
+------------------------------------------------------------------------------
+                                                *SiR-completion*
+A few word about automatic completion~
+
+Since the version 2.0.1 of searchInRuntime, all these commands support
+|cmdline-completion|. This means we can hit |c_CTRL-D|, |c_<Tab>|, |C_CTRL-A|,
+|c_CTRL-L|, ..., to expand the pattern in front of the cursor according to the
+type of the parameters expected by the current command (see all three syntaxes).
+
+Note however this feature requires Vim compiled with the |+cmdline_compl|
+feature not disabled. 
+
+
+------------------------------------------------------------------------------
+ © Luc Hermitte, 2001-2015 <http://github.com/LucHermitte/SearchInRuntime>, CC by SA 3.0 {{{1
+ VIM: let b:VS_language = 'american' 
+ vim:ts=8:sw=4:tw=80:fo=tcq2:isk=!-~,^*,^\|,^\":ft=help:
