@@ -1,0 +1,261 @@
+*lh-dev.txt*            Vim library for development oriented scripts (v2.0.0.)
+                        For Vim version 7+.    Last change: 16th Oct 2016
+
+                        By Luc Hermitte
+                        hermitte {at} free {dot} fr
+
+
+------------------------------------------------------------------------------
+CONTENTS                                *lhdev-contents*      {{{1
+|lhdev-presentation|    Presentation
+|lhdev-filetype|        Filetype polymorphism
+|lhdev-style|           Coding style
+|lhdev-naming|          Naming policies
+|lhdev-import|          Importing modules/includes
+|lhdev-analysis|        Code Analysis
+|add-local-help|        Instructions on installing this file (:helptags %:h)
+
+
+------------------------------------------------------------------------------
+PRESENTATION                            *lhdev-presentation* {{{1
+|lh-dev| is a library that defines some common VimL functions I use to
+implements development oriented plugins and ftplugins.
+This library has been conceived as a suite of |autoload| plugins.  As such, it
+requires Vim 7+.
+
+
+------------------------------------------------------------------------------
+FILETYPE POLYMORPHISM                   *lhdev-filetype* {{{1
+
+                                                *lh#dev#option#get()*
+                                                *lh#dev#option#get_postfixed()*
+lh#dev#option#get({name}, {ft}, {default} [,{scopes}])~
+lh#dev#option#get_postfixed({name}, {ft}, {default} [,{scopes}])~
+@deprecated since v2.0.0
+Use |lh#ft#option#get()| instead.
+
+                                                *lh#dev#option#call()*
+lh#dev#option#call({name}, {ft} [, parameters])~
+@return `lh#dev#{ft}#{name}({parameters})` if it exists, or
+        `lh#dev#{name}({parameters})` otherwise
+If {name} is a |List|, then the function name used is: `{name}[0]#{ft}#{name}[1]`
+@note filetype inheritance is supported.
+@note This function will try to execute >
+    :runtime autoload/lh/dev/({ft}/)/name.vim
+on all files that match
+
+If a function/mapping is likelly to execute several calls to
+|lh#dev#option#call()| with the same {name} and {ft} parameters, you'd rather
+use |lh#dev#option#pre_load_overrides()| and |lh#dev#option#fast_call()|. They
+would avoid to execute several times |:runtime| on the same files.
+
+                                  *lh#dev#option#pre_load_overrides()*
+lh#dev#option#pre_load_overrides({name}, {ft})~
+This function executes >
+    :runtime autoload/lh/dev/({ft}/)/name.vim
+on all files that match
+If {name} is a |List|, then the file name used is: {name}[0]/{ft}/{name}[1]
+@note filetype inheritance is supported.
+
+If a function/mapping is likelly to execute several calls to
+|lh#dev#option#call()| with the same {name} and {ft} parameters, you'd rather
+use |lh#dev#option#pre_load_overrides()| and |lh#dev#option#fast_call()|. They
+would avoid to execute several times |:runtime| on the same files.
+
+                                                *lh#dev#option#fast_call()*
+lh#dev#option#call({name}, {ft} [, parameters])~
+@return `lh#dev#{ft}#{name}({parameters})` if it exists, or
+        `lh#dev#{name}({parameters})` otherwise
+If {name} is a |List|, then the function name used is: `{name}[0]#{ft}#{name}[1]`
+@note filetype inheritance is supported.
+
+Unlike |lh#dev#option#call()|, this function doesn't try to source the
+autoload plugins where the overrides could be defined. This step is expected
+to have been done earlier with |lh#dev#option#pre_load_overrides()|.
+
+------------------------------------------------------------------------------
+CODING STYLE                            *lhdev-style* {{{1
+
+The aim of |:AddStyle| and of |lh#dev#style#get()| is to define how things
+should get written in source code.
+For instance, some projects will want to have opening curly-brackets on new
+lines (see Allman indenting style), other will prefer to have the opening
+bracket on the same line as the function/constrol-statement/... (see K&R
+indenting style, Java coding style, ...)
+
+This pair doesn't do any replacement by itself. It is expected to used by
+snippet plugins. So far, only |mu-template| exploits this feature.
+
+|:AddStyle| is meant to be used by end users while |lh#dev#style#get()| is
+meant to be used by plugin developpers that want to exploit end-user coding
+style.
+Note: Naming policies are implemented with |lhdev-naming|.
+
+                                                *:AddStyle*
+:AddStyle {key} [-buffer] [-ft[={ft}]] [-prio={prio}] {Replacement}~
+@param {key} is a regex that will get replaced automatically (by plugins
+supporting this API)
+@param {replacement} is what will be inserted in place of {text}
+@param `-buffer` defines this association only for the current buffer. This
+       option is meant to be used with plugins like |local_vimrc|.
+@param `-ft[={ft}]` defines this association only for the specified filetype.
+       When {ft} is not specified, it applies only to the current filetype.
+       This option is meant to be used in .vimrc, in the global zone of
+       |filetype-plugin|s or possibily in |local_vimrc|s (when combined with
+       `-buffer`).
+@param `-prio={prio}` Sets a priority that'll be used to determine which key
+       is matching the text to enhance. By default all style have a priority
+       of 1.  The typical application is to have template expander ignore
+       single curly brackets.
+
+Examples: >
+   " For Java (already defined in autoload/lh/dev/style.vim)
+   AddStyle { -ft --prio=10 \ {\n
+   AddStyle } -ft --prio=10 \n}
+   " When you wish to adopt Allman coding style, in ${project_root}/_vimrc_local.vim
+   AddStyle { -b -ft --prio=10 \n{\n
+   AddStyle } -b -ft --prio=10 \n}\n
+<
+Local configuration (with `-buffer`) have the priority over filetype
+specialized configuration (with `-ft`).
+
+
+                                                *lh#dev#style#get()*
+lh#dev#style#get({filetype})~
+Returns the coding style to use for the specified {filetype}, and for the
+current |buffer|.
+
+Right now, the priority used is the following:
+ 1- same ft && buffer local
+ 2- same ft && global
+ 3- inferior ft (C++ inherits C stuff) && buffer local
+ 4- inferior ft (C++ inherits C stuff) && global
+ ...
+ n-1- for all ft && buffer local
+ n- for all ft && global
+
+It's likelly to change in a future version. Indeed priority n-1 seems much
+better than priority 2, i.e. buffer local settings should be of higher
+priority than settings for the same ft.
+
+
+
+------------------------------------------------------------------------------
+NAMING POLICIES                         *lhdev-naming* {{{1
+
+Functions~
+
+Transforms {id} into a:
+
+- variable name:                         *lh#dev#naming#variable()*
+  Options: *(bg):{ft_}naming_strip_re* ,
+           *(bg):{ft_}naming_strip_subst*
+
+- into a getter name:                    *lh#dev#naming#getter()*
+  Options: *(bg):{ft_}naming_get_re*
+           *(bg):{ft_}naming_get_subst*
+
+- into a setter name:                    *lh#dev#naming#setter()*
+  Options: *(bg):{ft_}naming_set_re*
+           *(bg):{ft_}naming_set_subst*
+
+- into a full access getter name:        *lh#dev#naming#ref_getter()*
+  Options: *(bg):{ft_}naming_ref_re*
+           *(bg):{ft_}naming_ref_subst*
+
+- into a getter (through proxy) name:    *lh#dev#naming#proxy_getter()*
+  Options: *(bg):{ft_}naming_proxy_re*
+           *(bg):{ft_}naming_proxy_subst*
+       and *(bg):{ft_}naming_function*
+
+- into a global variable name:           *lh#dev#naming#global()*
+  Options: *(bg):{ft_}naming_global_re*
+           *(bg):{ft_}naming_global_subst*
+
+- into a local variable name:            *lh#dev#naming#local()*
+  Options: *(bg):{ft_}naming_local_re*
+           *(bg):{ft_}naming_local_subst*
+
+- into a member variable name:           *lh#dev#naming#member()*
+  Options: *(bg):{ft_}naming_member_re*
+           *(bg):{ft_}naming_member_subst*
+
+- into a static variable name:           *lh#dev#naming#static()*
+  Options: *(bg):{ft_}naming_static_re*
+           *(bg):{ft_}naming_static_subst*
+
+- into a constant name:                  *lh#dev#naming#constant()*
+  Options: *(bg):{ft_}naming_constant_re*
+           *(bg){ft_}naming_constant_subst*
+
+- into a parameter name:                 *lh#dev#naming#param()*
+  Options: *(bg):{ft_}naming_param_re*
+           *(bg):{ft_}naming_param_subst*
+
+- into a type:                           *lh#dev#naming#type()*
+  Options: *(bg):{ft_}naming_type_re*
+           *(bg):{ft_}naming_type_subst*
+           *(bg):{ft_}naming_type*
+
+
+*lh#dev#naming#to_lower_camel_case()*
+*lh#dev#naming#to_upper_camel_case()*
+*lh#dev#naming#to_underscore()*
+
+Options~
+Format: (bg):{ft_}naming_{option}
+Examples:
+- `g:vim_naming_param_re`: global specialization used to extract name to build
+  a parameter name, when working on vim-scripts.
+- `b:cpp_naming_global_subst`: project-local specialization used to produced a
+  global variable name from a data name.
+
+
+Commands~
+                                                    *:NameConvert*
+:NameConvert {policy}~
+Applies the selected naming {policy} to the word under the cursor.
+
+                                                    *:ConvertNames*
+:[range]ConvertNames/{pattern}/{policy}/[flags]~
+For each line in [range] replace a match of {pattern} with lh#dev#name#{policy}(match).
+For the {pattern} see |pattern|.
+When [range] is omitted, replace in the current line only.
+Also see |cmdline-ranges|.
+See |:s_flags| for [flags].
+
+
+Mappings~
+
+
+------------------------------------------------------------------------------
+IMPORTING MODULES/INCLUDES              *lhdev-import* {{{1
+
+TBD
+*lh#dev#import#add()*
+*lh#dev#import#add_any()*
+*n_CTRL-X_i*  *<Plug>ImportModule*
+
+
+------------------------------------------------------------------------------
+CODE ANALYSIS                           *lhdev-analysis* {{{1
+
+Function boundaries~
+Function boundaries can be obtained with *lh#dev#find_function_boundaries()*
+The analysis currently relies on ctags and on |matchit|. The code can be
+specialized though (see |lhdev-filetype|).
+
+Two mappings are also provided to select function boundaries, or to apply
+operators on function boundaries.
+- *v_if* in strict visual mode (not in select mode)
+- *o_if* on operators.
+
+For instance:
+- `vif` selects the current function
+- `yif`  |yank|s the current function
+- `dif`  |delete|s the current function
+
+------------------------------------------------------------------------------
+© Luc Hermitte, 2011-2016, http://github.com/LucHermitte/lh-dev }}}1
+ VIM: let b:VS_language = 'american'
+ vim:ts=8:sw=4:tw=80:fo=tcq2:isk=!-~,^*,^\|,^\":ft=help:fdm=marker:
