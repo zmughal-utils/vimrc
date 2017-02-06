@@ -1,0 +1,8 @@
+#!/bin/sh
+
+CURDIR=`dirname "$0"`
+wget -P ~/.vimlocal/spell -c \
+	http://ftp.vim.org/vim/runtime/spell/fr.latin1.spl \
+	http://ftp.vim.org/vim/runtime/spell/fr.latin1.sug \
+	http://ftp.vim.org/vim/runtime/spell/fr.utf-8.spl \
+	http://ftp.vim.org/vim/runtime/spell/fr.utf-8.sug
