@@ -1,5 +1,5 @@
 " Name:    gnupg.vim
-" Last Change: 2016 Dec 14
+" Last Change: 2016 Dec 18
 " Maintainer:  James McCoy <jamessan@jamessan.com>
 " Original Author:  Markus Braun <markus.braun@krawel.de>
 " Summary: Vim plugin for transparent editing of gpg encrypted files.
@@ -246,6 +246,23 @@ function s:shellescape(s, ...)
   return escaped
 endfunction
 
+" Function: s:unencrypted() {{{2
+"
+" Determines if the buffer corresponds to an existing, unencrypted file and,
+" if so, warns the user that GPG functionality has been disabled.
+"
+" Returns: true if current buffer corresponds to an existing, unencrypted file
+function! s:unencrypted()
+  if (exists("b:GPGEncrypted") && b:GPGEncrypted == 0)
+    echohl GPGWarning
+    echom "File is not encrypted, all GPG functions disabled!"
+    echohl None
+    return 1
+  endif
+
+  return 0
+endfunction
+
 " Function: s:GPGInit(bufread) {{{2
 "
 " initialize the plugin
@@ -420,11 +437,8 @@ endfunction
 function s:GPGCleanup()
   call s:GPGDebug(3, ">>>>>>>> Entering s:GPGCleanup()")
 
-  " Ensure we can hide the buffer
-  setlocal bufhidden=hide
-
   " wipe out screen
-  new +only
+  new +only!
   redraw!
 
   call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGCleanup()")
@@ -453,14 +467,13 @@ function s:GPGDecrypt(bufread)
   let b:GPGOptions = []
 
   " file name minus extension
-  let autocmd_filename = fnameescape(expand('<afile>:r'))
+  let autocmd_filename = expand('<afile>:r')
 
   " File doesn't exist yet, so nothing to decrypt
   if !filereadable(filename)
     " Allow the user to define actions for GnuPG buffers
     silent doautocmd User GnuPG
-    " call the autocommand for the file minus .gpg$
-    silent execute ':doautocmd BufNewFile ' . autocmd_filename
+    silent execute ':doautocmd BufNewFile ' . fnameescape(autocmd_filename)
     call s:GPGDebug(2, 'called BufNewFile autocommand for ' . autocmd_filename)
 
     " This is a new file, so force the user to edit the recipient list if
@@ -548,44 +561,46 @@ function s:GPGDecrypt(bufread)
     echohl GPGWarning
     echom "File is not encrypted, all GPG functions disabled!"
     echohl None
-    exe printf('%sr %s', silent, fnameescape(filename))
-    call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGDecrypt()")
-    return
   endif
 
+  let bufname = b:GPGEncrypted ? autocmd_filename : filename
   if a:bufread
-    silent execute ':doautocmd BufReadPre ' . autocmd_filename
-    call s:GPGDebug(2, 'called BufReadPre autocommand for ' . autocmd_filename)
+    silent execute ':doautocmd BufReadPre ' . fnameescape(bufname)
+    call s:GPGDebug(2, 'called BufReadPre autocommand for ' . bufname)
   else
-    silent execute ':doautocmd FileReadPre ' . autocmd_filename
-    call s:GPGDebug(2, 'called FileReadPre autocommand for ' . autocmd_filename)
+    silent execute ':doautocmd FileReadPre ' . fnameescape(bufname)
+    call s:GPGDebug(2, 'called FileReadPre autocommand for ' . bufname)
   endif
 
-  " check if the message is armored
-  if (match(output, "gpg: armor header") >= 0)
-    call s:GPGDebug(1, "this file is armored")
-    let b:GPGOptions += ["armor"]
-  endif
-
-  " finally decrypt the buffer content
-  " since even with the --quiet option passphrase typos will be reported,
-  " we must redirect stderr (using shell temporarily)
-  call s:GPGDebug(1, "decrypting file")
-  let cmd = { 'level': 1, 'ex': silent . 'read ++edit !' }
-  let cmd.args = '--quiet --decrypt ' . s:shellescape(filename, 1)
-  call s:GPGExecute(cmd)
-
-  if (v:shell_error) " message could not be decrypted
-    echohl GPGError
-    let blackhole = input("Message could not be decrypted! (Press ENTER)")
-    echohl None
-    " Only wipeout the buffer if we were creating one to start with.
-    " FileReadCmd just reads the content into the existing buffer
-    if a:bufread
-      silent bwipeout!
+  if b:GPGEncrypted
+    " check if the message is armored
+    if (match(output, "gpg: armor header") >= 0)
+      call s:GPGDebug(1, "this file is armored")
+      let b:GPGOptions += ["armor"]
     endif
-    call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGDecrypt()")
-    return
+
+    " finally decrypt the buffer content
+    " since even with the --quiet option passphrase typos will be reported,
+    " we must redirect stderr (using shell temporarily)
+    call s:GPGDebug(1, "decrypting file")
+    let cmd = { 'level': 1, 'ex': silent . 'read ++edit !' }
+    let cmd.args = '--quiet --decrypt ' . s:shellescape(filename, 1)
+    call s:GPGExecute(cmd)
+
+    if (v:shell_error) " message could not be decrypted
+      echohl GPGError
+      let blackhole = input("Message could not be decrypted! (Press ENTER)")
+      echohl None
+      " Only wipeout the buffer if we were creating one to start with.
+      " FileReadCmd just reads the content into the existing buffer
+      if a:bufread
+        silent bwipeout!
+      endif
+      call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGDecrypt()")
+      return
+    endif
+  else
+    execute silent 'read' fnameescape(filename)
   endif
 
   if a:bufread
@@ -606,20 +621,20 @@ function s:GPGDecrypt(bufread)
     " - 'readonly' is already set (e.g., when using view/vim -R)
     " - permissions don't allow writing
     let &readonly = &readonly || (filereadable(filename) && filewritable(filename) == 0)
-    " call the autocommand for the file minus .gpg$
-    silent execute ':doautocmd BufReadPost ' . autocmd_filename
-    call s:GPGDebug(2, 'called BufReadPost autocommand for ' . autocmd_filename)
+    silent execute ':doautocmd BufReadPost ' . fnameescape(bufname)
+    call s:GPGDebug(2, 'called BufReadPost autocommand for ' . bufname)
   else
-    " call the autocommand for the file minus .gpg$
-    silent execute ':doautocmd FileReadPost ' . autocmd_filename
-    call s:GPGDebug(2, 'called FileReadPost autocommand for ' . autocmd_filename)
+    silent execute ':doautocmd FileReadPost ' . fnameescape(bufname)
+    call s:GPGDebug(2, 'called FileReadPost autocommand for ' . bufname)
   endif
 
-  " Allow the user to define actions for GnuPG buffers
-  silent doautocmd User GnuPG
+  if b:GPGEncrypted
+    " Allow the user to define actions for GnuPG buffers
+    silent doautocmd User GnuPG
 
-  " refresh screen
-  redraw!
+    " refresh screen
+    redraw!
+  endif
 
   call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGDecrypt()")
 endfunction
@@ -642,9 +657,9 @@ function s:GPGEncrypt()
   endif
 
   " file name minus extension
-  let autocmd_filename = fnameescape(expand('<afile>:r'))
+  let autocmd_filename = expand('<afile>:r')
 
-  silent exe ':doautocmd '. auType .'Pre '. autocmd_filename
+  silent exe ':doautocmd '. auType .'Pre '. fnameescape(autocmd_filename)
   call s:GPGDebug(2, 'called '. auType .'Pre autocommand for ' . autocmd_filename)
 
   " guard for unencrypted files
@@ -736,7 +751,7 @@ function s:GPGEncrypt()
     let &readonly = filereadable(filename) && filewritable(filename) == 0
   endif
 
-  silent exe ':doautocmd '. auType .'Post '. autocmd_filename
+  silent exe ':doautocmd '. auType .'Post '. fnameescape(autocmd_filename)
   call s:GPGDebug(2, 'called '. auType .'Post autocommand for ' . autocmd_filename)
 
   call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGEncrypt()")
@@ -792,11 +807,7 @@ endfunction
 function s:GPGEditRecipients()
   call s:GPGDebug(3, ">>>>>>>> Entering s:GPGEditRecipients()")
 
-  " guard for unencrypted files
-  if (exists("b:GPGEncrypted") && b:GPGEncrypted == 0)
-    echohl GPGWarning
-    echom "File is not encrypted, all GPG functions disabled!"
-    echohl None
+  if s:unencrypted()
     call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGEditRecipients()")
     return
   endif
@@ -915,11 +926,7 @@ endfunction
 function s:GPGFinishRecipientsBuffer()
   call s:GPGDebug(3, ">>>>>>>> Entering s:GPGFinishRecipientsBuffer()")
 
-  " guard for unencrypted files
-  if (exists("b:GPGEncrypted") && b:GPGEncrypted == 0)
-    echohl GPGWarning
-    echom "File is not encrypted, all GPG functions disabled!"
-    echohl None
+  if s:unencrypted()
     call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGFinishRecipientsBuffer()")
     return
   endif
@@ -992,11 +999,7 @@ endfunction
 function s:GPGViewOptions()
   call s:GPGDebug(3, ">>>>>>>> Entering s:GPGViewOptions()")
 
-  " guard for unencrypted files
-  if (exists("b:GPGEncrypted") && b:GPGEncrypted == 0)
-    echohl GPGWarning
-    echom "File is not encrypted, all GPG functions disabled!"
-    echohl None
+  if s:unencrypted()
     call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGViewOptions()")
     return
   endif
@@ -1019,11 +1022,7 @@ endfunction
 function s:GPGEditOptions()
   call s:GPGDebug(3, ">>>>>>>> Entering s:GPGEditOptions()")
 
-  " guard for unencrypted files
-  if (exists("b:GPGEncrypted") && b:GPGEncrypted == 0)
-    echohl GPGWarning
-    echom "File is not encrypted, all GPG functions disabled!"
-    echohl None
+  if s:unencrypted()
     call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGEditOptions()")
     return
   endif
@@ -1110,11 +1109,7 @@ endfunction
 function s:GPGFinishOptionsBuffer()
   call s:GPGDebug(3, ">>>>>>>> Entering s:GPGFinishOptionsBuffer()")
 
-  " guard for unencrypted files
-  if (exists("b:GPGEncrypted") && b:GPGEncrypted == 0)
-    echohl GPGWarning
-    echom "File is not encrypted, all GPG functions disabled!"
-    echohl None
+  if s:unencrypted()
     call s:GPGDebug(3, "<<<<<<<< Leaving s:GPGFinishOptionsBuffer()")
     return
   endif
