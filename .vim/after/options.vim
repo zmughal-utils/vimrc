@@ -148,6 +148,10 @@ let g:mwDefaultHighlightingPalette = 'extended'
 let g:solarized_termcolors = 256
 "}}}
 
+let g:mt_templates_paths = [
+		\ expand("~/.vim/after/template")
+		\ ]
+
 set helpheight=8
 set previewheight=4
 set switchbuf+=useopen,usetab	",split
