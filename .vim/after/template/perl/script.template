@@ -1,3 +1,9 @@
+VimL:" Perl script Fill Template
+VimL:" hint: Used for Perl .pl script files
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
 #!/usr/bin/env perl
 # ABSTRACT: <+TODO+>
 

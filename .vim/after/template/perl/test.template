@@ -1,0 +1,17 @@
+VimL:" Perl test Fill Template
+VimL:" hint: Used for Perl .t test files.
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+#!/usr/bin/env perl
+
+use Test::Most tests => <+1+>;
+
+use lib 't/lib';
+
+subtest "<+Testing message+>" => sub {
+	<+... # (TODO change `sub` to `fun` if using `Function::Parameters`)+>
+};
+
+done_testing;

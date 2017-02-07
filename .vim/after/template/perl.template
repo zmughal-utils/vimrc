@@ -1,6 +1,14 @@
+VimL:" Perl top-level Fill Template
+VimL:" hint: decides which template to use based on the file type
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
 VimL: function! s:_PerlTemplateType() abort
 VimL: 	if perlpath#IsFileAModule()
 VimL: 		call s:Include('module', 'perl')
+VimL: 	elseif perlpath#IsFileATestScript()
+VimL: 		call s:Include('test', 'perl')
 VimL: 	else
 VimL: 		call s:Include('script', 'perl')
 VimL: 	endif
