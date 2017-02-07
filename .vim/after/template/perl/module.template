@@ -1,0 +1,6 @@
+package ¡perlpath#GetModuleNameFromPath()¡;
+# ABSTRACT: <+TODO+>
+
+use Moo<+::Role+>;
+
+1;

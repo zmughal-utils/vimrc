@@ -1,3 +1,8 @@
-#!/usr/bin/env perl
-
-use Modern::Perl;
+VimL: function! s:_PerlTemplateType() abort
+VimL: 	if perlpath#IsFileAModule()
+VimL: 		call s:Include('module', 'perl')
+VimL: 	else
+VimL: 		call s:Include('script', 'perl')
+VimL: 	endif
+VimL: endfunction
+VimL: call s:_PerlTemplateType()

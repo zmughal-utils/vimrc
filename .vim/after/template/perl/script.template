@@ -1,0 +1,10 @@
+#!/usr/bin/env perl
+# ABSTRACT: <+TODO+>
+
+use Modern::Perl;
+
+sub main {
+	...
+}
+
+main;
