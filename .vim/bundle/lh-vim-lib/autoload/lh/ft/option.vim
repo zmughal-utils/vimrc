@@ -135,7 +135,7 @@ function! lh#ft#option#inherited_filetypes(fts) abort
   return res
 endfunction
 
-"LetIfUndef g:cpp_inherits 'c'
+LetIfUndef g:cpp_inherits 'c'
 
 " }}}1
 let &cpo=s:cpo_save
