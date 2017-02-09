@@ -26,6 +26,7 @@ imap	<buffer>	<F6>	<Esc><F6>
 command! -nargs=0 PDFTeX	let &l:makeprg= 'pdftex -interaction=nonstopmode'
 command! -nargs=0 PDFLaTeX	let &l:makeprg= 'pdflatex -interaction=nonstopmode'
 command! -nargs=0 LaTeX		let &l:makeprg= 'latex -interaction=nonstopmode'
+command! -nargs=0 LaTeXMkPDF	let &l:makeprg= 'latexmk -pdf'
 
 if &makeprg!='make' && executable("pdflatex")|exe "PDFLaTeX"|endif
 let b:surround_{char2nr("E")} = "\\[\r\\]"
