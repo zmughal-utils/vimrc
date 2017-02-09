@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/SearchInRuntime>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/SearchInRuntime/License.md>
-" Version:	3.0.5
-let s:version = '3.0.5'
+" Version:	3.1.0
+let s:version = '3.1.0'
 " Created:	06th Nov 2007
-" Last Update:	18th Nov 2015
+" Last Update:	03rd Jan 2017
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -24,5 +24,6 @@ License.md
 README.md
 VimFlavor
 addon-info.json
+autoload/lh/sir.vim
 doc/searchInRuntime.txt
 plugin/searchInRuntime.vim
