@@ -152,6 +152,7 @@ let g:mt_templates_paths = [
 		\ expand("~/.vim/after/template")
 		\ ]
 
+set scrolloff=0
 set helpheight=8
 set previewheight=4
 set switchbuf+=useopen,usetab	",split
