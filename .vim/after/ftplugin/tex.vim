@@ -82,3 +82,5 @@ iabbr <buffer> θ \theta
 iabbr <buffer> π \pi
 iabbr <buffer> ε \epsilon
 iabbr <buffer> μ \mu
+
+command! -range -nargs=0 LaTeXCopyToClipboard <line1>,<line2>w !perl -lpE '$_ = "" if /begin.*Figure/../end.*Figure/' | perl -000 -lpE '$_ = join " ", split "\n", $_'  | detex | xclip -i -selection clipboard
