@@ -1,0 +1,2 @@
+CurlyBraceFold
+setl foldtext&
