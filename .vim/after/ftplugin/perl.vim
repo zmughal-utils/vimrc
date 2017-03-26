@@ -2,7 +2,10 @@
 " Language:	Perl
 
 call programming#Programming()
-call programming#CurlyBraces()
+"call programming#CurlyBraces()
+let perl_fold = 1
+let perl_fold_blocks = 1
+let perl_fold_anonymous_subs = 1
 setlocal foldmethod=syntax
 
 " From <http://stackoverflow.com/questions/2182164/is-there-a-vim-plugin-that-makes-moose-attributes-show-up-in-tag-list>
