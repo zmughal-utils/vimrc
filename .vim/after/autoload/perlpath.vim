@@ -1,3 +1,7 @@
+function! perlpath#IsCpanfile()
+	return expand("%:t") == "cpanfile"
+endfunction
+
 function! perlpath#IsFileAModule()
 	return expand("%:e") == "pm"
 endfunction

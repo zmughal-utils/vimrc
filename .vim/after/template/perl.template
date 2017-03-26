@@ -9,6 +9,8 @@ VimL: 	if perlpath#IsFileAModule()
 VimL: 		call s:Include('module', 'perl')
 VimL: 	elseif perlpath#IsFileATestScript()
 VimL: 		call s:Include('test', 'perl')
+VimL: 	elseif perlpath#IsCpanfile()
+VimL: 		call s:Include('cpanfile', 'perl')
 VimL: 	else
 VimL: 		call s:Include('script', 'perl')
 VimL: 	endif
