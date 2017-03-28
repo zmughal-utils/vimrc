@@ -11,7 +11,7 @@ use Test::Most tests => <+1+>;
 use lib 't/lib';
 
 subtest "<+Testing message+>" => sub {
-	<+... # (TODO change `sub` to `fun` if using `Function::Parameters`)+>
+	<+pass('Test name');+>
 };
 
 done_testing;
