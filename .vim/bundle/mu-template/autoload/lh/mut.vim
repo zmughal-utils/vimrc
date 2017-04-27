@@ -7,7 +7,7 @@
 " Version:      4.3.0
 let s:k_version = 430
 " Created:      05th Jan 2011
-" Last Update:  24th Jan 2017
+" Last Update:  14th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       mu-template internal functions
@@ -161,7 +161,7 @@ function! s:Verbose(...)
   endif
 endfunction
 
-function! lh#on#debug(expr) abort
+function! lh#mut#debug(expr) abort
   return eval(a:expr)
 endfunction
 
@@ -318,7 +318,7 @@ endfunction
 function! lh#mut#surround() abort
   try
     " 1- ask which template to execute {{{3
-    let which = INPUT("which snippet?")
+    let which = lh#ui#input("which snippet?")
     let files = lh#mut#dirs#get_short_list_of_TF_matching(which.'*', &ft)
 
     let nbChoices = len(files)
@@ -512,7 +512,7 @@ endfunction
 function! s:ParamOrAsk(name, ...) abort
   let res = s:Param(a:name, lh#option#unset())
   if lh#option#is_set(res) | return res | endif
-  return call('INPUT',a:000)
+  return call('lh#ui#input',a:000)
 endfunction
 
 " Function: s:CmdLineParams(...)     {{{3
