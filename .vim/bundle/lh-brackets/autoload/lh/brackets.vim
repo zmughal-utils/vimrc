@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
 " Version:      3.2.0
 " Created:      28th Feb 2008
-" Last Update:  24th Nov 2016
+" Last Update:  13th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -28,7 +28,8 @@
 "               * Add `lh#brackets#jump_outside()`
 "               * Fix `Brackets -list`
 "               * Add `Brackets -context!=`
-"               : Fix `<BS>` to clear any bracket pair
+"               * Fix `<BS>` to clear any bracket pair
+"               * Fix portability issue (type changes)
 " Version 3.1.3:
 "               * Fix syntax error in `lh#brackets#_string`
 " Version 3.1.0:
@@ -745,7 +746,7 @@ function! s:DecodeDefineOptions(isLocal, a000)
   let visual     = 1
   let normal     = 'default=1'
   let escapable  = 0
-  let context    = ''
+  let context    = {}
   let options    = []
   for p in a:a000
     if     p =~ '-l\%[list]'        | call s:ListMappings(a:isLocal)  | return []
