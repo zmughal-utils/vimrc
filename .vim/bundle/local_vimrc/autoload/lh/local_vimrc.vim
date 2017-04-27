@@ -2,10 +2,10 @@
 " File:         autoload/lh/local_vimrc.vim                       {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/local_vimrc>
-" Version:      2.2.9.
-let s:k_version = 229
+" Version:      2.2.10.
+let s:k_version = 2210
 " Created:      04th Mar 2015
-" Last Update:  07th Nov 2016
+" Last Update:  15th Mar 2017
 " License:      GPLv3
 "------------------------------------------------------------------------
 " Description:
@@ -54,6 +54,7 @@ endfunction
 
 " s:source(file)  {{{3
 function! s:source(file) abort
+  call lh#local_vimrc#_verbose("Sourcing " . a:file)
   exe 'source '.escape(a:file, ' \$')
 endfunction
 
@@ -129,7 +130,7 @@ function! lh#local_vimrc#_handle_file(file, permission) abort
     exe 'sandbox source '.escape(a:file, ' \$,')
     return
   elseif a:permission == 'ask'
-    if CONFIRM('Do you want to source "'.a:file.'"?', "&Yes\n&No", 1) != 1
+    if lh#ui#confirm('Do you want to source "'.a:file.'"?', "&Yes\n&No", 1) != 1
       return
     endif
   endif
@@ -150,6 +151,17 @@ function! lh#local_vimrc#_increment_version_on_save()
   endif
 endfunction
 
+" # Open local_vimrc file                                               {{{2
+" Function: lh#local_vimrc#_open_local_vimrc() {{{3
+function! lh#local_vimrc#_open_local_vimrc() abort
+  let configs = lh#option#get('local_vimrc.configs')
+  if lh#option#is_unset(configs)
+    call lh#common#error_msg('No local_vimrc file associated to current buffer')
+    return
+  endif
+  let lvimrc = lh#path#select_one(configs, 'Which local_vimrc do you wish to open?')
+  call lh#buffer#jump(lvimrc, 'sp')
+endfunction
 " ## Internal functions     {{{1
 " # Misc                                                                {{{2
 " # Prepare Permission lists                                            {{{2
