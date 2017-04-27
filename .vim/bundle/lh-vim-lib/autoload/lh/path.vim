@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 40000
 " Created:      23rd Jan 2007
-" Last Update:  03rd Jan 2017
+" Last Update:  31st Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to the handling of pathnames
@@ -67,7 +67,7 @@ let s:k_version = 40000
 "       sequence. This fixes a bug in Mu-Template: the filetype of
 "       template-files wasn't always correctly working.
 "       v 3.1.12
-"       (*) New function: lh#path#add_if_exists()
+"       (*) New function: lh#path#add_path_if_exists()
 "       v 3.1.14
 "       (*) New functions: lh#path#split() and lh#path#join()
 "       (*) lh#path#common() fixed as matchstr('^\zs\(.*\)\ze.\{-}@@\1.*$')
@@ -107,6 +107,8 @@ let s:k_version = 40000
 "       (*) Add `lh#path#is_distant_or_scratch()`
 "       (*) Add `lh#path#is_up_to_date()`
 "       (*) Improve `lh#path#strip_start()` performances
+"       (*) lh#path#split('/foo') will now return 2 elements
+"       (*) Recognize empty name buffer as scratch/distant
 " TODO:
 "       (*) Fix #simplify('../../bar')
 " }}}1
@@ -237,7 +239,8 @@ endfunction
 " Function: lh#path#split(pathname) {{{3
 " Split pathname parts: "/home/me/foo/bar" -> [ "home", "me", "foo", "bar" ]
 function! lh#path#split(pathname) abort
-  let parts = split(a:pathname, '[/\\]')
+  let parts = (strpart(a:pathname, 0, 1) =~ '[/\\]' ? [''] : [])
+        \ + split(a:pathname, '[/\\]')
   return parts
 endfunction
 
@@ -255,7 +258,7 @@ endfunction
 " Function: lh#path#common({pathnames}) {{{3
 " Find the common leading path between all pathnames
 function! lh#path#common(pathnames) abort
-  " assert(len(pathnames)) > 1
+  call lh#assert#not_empty(a:pathnames)
   let common = a:pathnames[0]
   let lCommon = lh#path#split(common)
   let i = 1
@@ -288,7 +291,7 @@ endfunction
 " Function: lh#path#strip_common({pathnames}) {{{3
 " Find the common leading path between all pathnames, and strip it
 function! lh#path#strip_common(pathnames) abort
-  " assert(len(pathnames)) > 1
+  call lh#assert#not_empty(a:pathnames)
   let common = lh#path#common(a:pathnames)
   let common = lh#path#to_dirname(common)
   let l = strlen(common)
@@ -329,7 +332,7 @@ endfunction
 
 " Function: lh#path#is_distant_or_scratch(path) {{{3
 function! lh#path#is_distant_or_scratch(path) abort
-  return a:path =~ '\v://|^//|^\\\\'
+  return a:path =~ '\v://|^//|^\\\\|^$'
         \ || getbufvar(bufnr(a:path), '&buftype') =~ 'nofile\|quickfix'
 endfunction
 
@@ -425,7 +428,9 @@ function! lh#path#relative_to(from, to) abort
 endfunction
 
 " Function: lh#path#glob_as_list({pathslist}, {expr} [, mustSort=1]) {{{3
-if has("patch-7.4-279")
+if has("patch-7.4.279") || (v:version == 704 && has('patch279'))
+  " Either version >= 7.4.237 and `has('patch-7.4.279')` detects correctly, or
+  " we can fall back to old detection, assuming that we still need to test v 7.4,
   function! s:DoGlobPath(pathslist, expr) abort
     let pathslist = type(a:pathslist) == type([]) ? join(a:pathslist, ',') : a:pathslist
     return globpath(pathslist, a:expr, 1, 1)
@@ -549,10 +554,9 @@ endfunction
 
 " Function: lh#path#vimfiles() {{{3
 function! lh#path#vimfiles() abort
-  let HOME = exists('$LUCHOME') ? $LUCHOME : $HOME
-  let expected_win = HOME . '/vimfiles'
-  let expected_nix = HOME . '/.vim'
-  let what =  lh#path#to_regex(HOME.'/').'\(vimfiles\|.vim\)'
+  let re_HOME = lh#path#to_regex($HOME.'/')
+  let re_LUCHOME = exists('$LUCHOME') ? '\|'.lh#path#to_regex($LUCHOME.'/'): ''
+  let what = '\%('.re_HOME.re_LUCHOME.'\)'.'\(vimfiles\|.vim\|.config[/\\]nvim\)'
   " Comment what
   let z = lh#path#find(&rtp,what)
   return z
@@ -583,7 +587,7 @@ endfunction
 function! lh#path#add_path_if_exists(listname, path) abort
   let path = substitute(a:path, '[/\\]\*\*$', '', '')
   if isdirectory(path)
-    if a:listname =~ '^p:'
+    if type(a:listname) == type('') && a:listname =~ '^p:'
       let var = lh#project#_get(a:listname[2:])
       let var += [a:path]
     else
@@ -597,7 +601,7 @@ function! lh#path#shellslash() abort
   return exists('+shellslash') && !&ssl ? '\' : '/'
 endfunction
 
-" Function: lh#path#find_in_parents(paths, kinds, last_valid_path) {{{3
+" Function: lh#path#find_in_parents(path, path_patterns, kinds, last_valid_path) {{{3
 " @param {last_valid_path} will likelly contain a REGEX pattern aimed at
 " identifying things like $HOME
 let s:indent = 1
@@ -785,7 +789,7 @@ function! s:lists_handle_file(file, permission) dict abort
     call s:Verbose('Path %1 has already been validated for this session.', a:file)
     " TODO: add a way to remove pathnames from validated list
   elseif a:permission == 'asklist'
-    let choice = CONFIRM('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No\n&Always\nNe&ver", 1)
+    let choice = lh#ui#confirm('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No\n&Always\nNe&ver", 1)
     if choice == 3 " Always
       call s:Verbose("Add %1 to current session whitelist", a:file)
       call lh#path#munge(self.valided_paths, a:file)
@@ -833,7 +837,7 @@ function! s:lists_is_file_accepted(file, permission) dict abort
     call s:Verbose('Path %1 has already been validated.')
     " TODO: add a way to remove pathnames from validated list
   elseif a:permission == 'asklist'
-    if CONFIRM('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No", 1) != 1
+    if lh#ui#confirm('Do you want to '. self._action_name. ' "'.a:file.'"?', "&Yes\n&No", 1) != 1
       call lh#path#munge(self.rejected_paths, a:file)
       return 0
     endif

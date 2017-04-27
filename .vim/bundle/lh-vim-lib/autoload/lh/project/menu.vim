@@ -1,16 +1,14 @@
 "=============================================================================
-" File:         autoload/lh/has.vim                               {{{1
+" File:         autoload/lh/project/menu.vim                      {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      4.0.0
-let s:k_version = '400000'
-" Created:      02nd Sep 2016
-" Last Update:  14th Apr 2017
+" Version:      4.0.0.0.
+let s:k_version = '4000'
+" Created:      21st Feb 2017
+" Last Update:  21st Feb 2017
 "------------------------------------------------------------------------
 " Description:
-"       Synthetize compatibility options.
-"       It's meant to avoid searching the patch list again and again when a
-"       feature has appeared in a working version.
+"       Helper functions to create project related menu items
 "
 "------------------------------------------------------------------------
 " History:      «history»
@@ -23,13 +21,13 @@ set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
-function! lh#has#version()
+function! lh#project#menu#version()
   return s:k_version
 endfunction
 
 " # Debug   {{{2
 let s:verbose = get(s:, 'verbose', 0)
-function! lh#has#verbose(...)
+function! lh#project#menu#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
@@ -44,46 +42,37 @@ function! s:Verbose(expr, ...)
   endif
 endfunction
 
-function! lh#has#debug(expr) abort
+function! lh#project#menu#debug(expr) abort
   return eval(a:expr)
 endfunction
 
 
 "------------------------------------------------------------------------
+" ## Globals {{{1
+call lh#let#if_undef('g:lh#project.menu', {'name': '&Project.', 'priority': '50.'})
+
 " ## Exported functions {{{1
-" # Vim features {{{2
-
-" Function: lh#has#patch(vernumber) {{{3
-if (v:version > 704) || (v:version == 704 && has('patch237'))
-  function! lh#has#patch(vernumber) abort
-    return has(a:vernumber)
-  endfunction
-else
-  function! lh#has#patch(vernumber) abort
-    let [all, major, minor, patch; tail] = matchlist(a:vernumber, '\v^patch-(\d+)\.(\d+)[.-](\d+)$')
-    let ver = eval(printf('%d%02d', major, minor))
-    return (v:version > ver) || (v:version == ver && has('patch'.patch))
-  endfunction
-endif
-
-" Function: lh#has#lambda() {{{3
-function! lh#has#lambda() abort
-  return has("lambda")
+" Function: lh#project#menu#make(mode, priority, name, binding, ...) {{{3
+function! lh#project#menu#make(modes, priority, name, binding, ...) abort
+  call call('lh#menu#make',
+        \ [ a:modes
+        \ , g:lh#project.menu.priority . a:priority
+        \ , g:lh#project.menu.name . a:name
+        \ , a:binding
+        \ ] + a:000)
 endfunction
 
-" Function: lh#has#partials() {{{3
-function! lh#has#partials() abort
-  return lh#has#patch("patch-7.4.1558")
+" Function: lh#project#menu#def_toggle_item(Data) {{{3
+function! lh#project#menu#def_toggle_item(Data) abort
+  let data = copy(a:Data)
+  let data.menu.priority = g:lh#project.menu.priority . data.menu.priority
+  let data.menu.name     = g:lh#project.menu.name . data.menu.name
+  return lh#menu#def_toggle_item(data)
 endfunction
 
-" Function: lh#has#jobs() {{{3
-function! lh#has#jobs() abort
-  return exists('*job_start') && lh#has#patch("patch-7.4.1980")
-endfunction
-
-" Function: lh#has#default_in_getbufvar() {{{3
-function! lh#has#default_in_getbufvar() abort
-  return lh#has#patch("patch-7.3.831")
+" Function: lh#project#menu#remove(modes, name) {{{3
+function! lh#project#menu#remove(modes, name) abort
+  call lh#menu#remove(a:modes, g:lh#project.menu.name . a:name)
 endfunction
 
 "------------------------------------------------------------------------

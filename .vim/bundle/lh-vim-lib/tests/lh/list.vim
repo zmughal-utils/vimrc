@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/License.md>
 " Version:      4.0.0
 " Created:	19th Nov 2008
-" Last Update:  09th Feb 2017
+" Last Update:  14th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 " 	Tests for autoload/lh/list.vim
@@ -39,6 +39,15 @@ endfunction
 function! s:Test_Find_If_functor_predicate()
     :let l = [ 1, 5, 48, 25, 5, 28, 6]
     :let i = lh#list#find_if(l, 'v:1_>12  && v:1_<42 && v:1_%2==0')
+    " echo i . '/' . len(l)
+    AssertEquals (i ,  5)
+    AssertEquals (l[i] ,  28)
+    " :echo l[i]
+endfunction
+
+function! s:Test_Find_If_fast_functor_predicate()
+    :let l = [ 1, 5, 48, 25, 5, 28, 6]
+    :let i = lh#list#find_if_fast(l, 'v:val>12  && v:val<42 && v:val%2==0')
     " echo i . '/' . len(l)
     AssertEquals (i ,  5)
     AssertEquals (l[i] ,  28)
@@ -153,6 +162,27 @@ function! s:TestBinarySearches()
   AssertEquals ([len(v1), len(v1)] ,  lh#list#equal_range(v1, 10))
 endfunction
 
+" Function: s:Test_match() {{{3
+function! s:Test_match() abort
+  let list = [ 'abc', 'bcd', 'cde' ]
+  AssertEquals(match(list, '^bc'), 1)
+  AssertEquals(lh#list#match(list, '^bc'), 1)
+endfunction
+
+" Function: s:Test_match_re() {{{3
+function! s:Test_match_re() abort
+  let rx = ['ff', '^bc', 'bc', 'fd']
+  AssertEquals(lh#list#match_re(rx, 'abc'), 2)
+  AssertEquals(lh#list#match_re(rx, 'bca'), 1)
+endfunction
+
+" Function: s:Test_matches() {{{3
+function! s:Test_matches() abort
+  let list = [ 'abc', 'bcd', 'cde' ]
+  AssertEquals(lh#list#matches(list, '^bc'), [1])
+  AssertEquals(lh#list#matches(list, 'bc'), [0, 1])
+endfunction
+
 "------------------------------------------------------------------------
 " accumulate {{{2
 
@@ -217,7 +247,15 @@ function! s:Test_copy_if()
 endfunction
 
 "------------------------------------------------------------------------
-" subset {{{2
+" masks {{{2
+" " Function: s:Test_masks() {{{3
+function! s:Test_masks() abort
+    let l = [ 1, 25, 5, 48, 25, 5, 28, 6]
+    let masks = [ 1, 0, 0, 1, 0, 1, 0, 1]
+    AssertEquals(lh#list#mask(l, masks), [1, 48, 5, 6])
+endfunction
+
+" subset & remove {{{2
 function! s:Test_subset_list()
     :let l = [ 1, 25, 5, 48, 25, 5, 28, 6]
     :let indices = [ 0, 5, 7, 3 ]
@@ -234,6 +272,13 @@ function! s:Test_subset_dict()
     :let s = lh#dict#subset(d, keys)
     " Comment string(s)
     AssertEquals (s ,  expected)
+endfunction
+
+" Function: s:Test_remove() {{{3
+function! s:Test_remove() abort
+  let l = [ 0, 25, 5, 48, 25, 5, 28, 6]
+  let indices = [ 0, 3, 5, 7 ]
+  AssertEquals (lh#list#remove(l, indices), [ 25, 5, 25, 28 ])
 endfunction
 
 "------------------------------------------------------------------------
@@ -455,6 +500,24 @@ function! s:Test_push_if_new() abort
   AssertEquals(lh#list#push_if_new(copy(list), 2), [1,2,3])
 endfunction
 
+" Function: s:Test_push_if_new_entity() {{{3
+function! s:Test_push_if_new_entity() abort
+  let e = [1,2,3]
+  let list = [ [1,2,3], [4,5], [7,8] ]
+
+  Assert ! lh#list#contain_entity(list, e)
+  Assert lh#list#not_contain_entity(list, e)
+  AssertEquals(lh#list#find_entity(list, e), -1)
+
+  AssertEquals(lh#list#push_if_new_entity(list, e), [ [1,2,3], [4,5], [7,8], [1,2,3] ])
+
+  Assert lh#list#contain_entity(list, e)
+  Assert ! lh#list#not_contain_entity(list, e)
+  AssertEquals(lh#list#find_entity(list, e), 3)
+
+  AssertEquals(lh#list#push_if_new_entity(list, e), [ [1,2,3], [4,5], [7,8], [1,2,3] ])
+endfunction
+
 "------------------------------------------------------------------------
 " Function: s:Test_dict_add_new() {{{3
 function! s:Test_dict_add_new() abort
@@ -498,7 +561,7 @@ endfunction
 function! s:Test_zip_lists() abort
   let l1 = ['a', 'b', 'c']
   let l2 = [1, 2, 3]
-  AssertEquals(lh#list#zip(l1, l2), ['a', 1, 'b', 2, 'c', 3])
+  AssertEquals(lh#list#zip(l1, l2), [['a', 1], ['b', 2], ['c', 3]])
   AssertThrows(lh#list#zip([1], [1,2]))
 endfunction
 
@@ -514,6 +577,15 @@ endfunction
 " Function: s:Test_separate() {{{3
 function! s:Test_separate() abort
   let l = [ 1, 5, 48, 25, 5, 28, 6]
+
+  let [min, max] = lh#list#separate(l, 'v:val < 10')
+  AssertEquals(min, [1, 5, 5, 6])
+  AssertEquals(max, [48, 25, 28])
+
+  let [min, max] = lh#list#separate(l, 'v:key % 2')
+  AssertEquals(min, [5, 25, 28])
+  AssertEquals(max, [1, 48, 5, 6])
+
   if has('lambda')
     let [min, max] = lh#list#separate(l, {idx, val -> val <10})
     AssertEquals(min, [1, 5, 5, 6])

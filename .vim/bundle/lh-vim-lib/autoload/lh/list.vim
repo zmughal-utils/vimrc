@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 40000
 " Created:      17th Apr 2007
-" Last Update:  09th Feb 2017
+" Last Update:  31st Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to |Lists|
@@ -22,6 +22,7 @@ let s:k_version = 40000
 "       (*) PERF: Simplify lh#list#uniq()
 "       (*) ENH: Add lh#list#push_if_new_elements()
 "       (*) ENH: Add lh#list#cross()
+"       (*) PERF: Improve #matches() and #match() performances
 "       v3.13.2
 "       (*) PERF: Optimize `lh#list#push_if_new`
 "       v3.10.3
@@ -156,34 +157,23 @@ endfunction
 
 " Function: lh#list#chain_transform(input, actions) {{{3
 function! lh#list#chain_transform(input, actions) abort
-  let input = a:input
-  for transformation in a:actions
-    let input = lh#list#transform(input, [], transformation)
-  endfor
-  return input
+  let res = [a:input]
+  call map(copy(a:actions), 'add(res, lh#list#transform(res[-1], [], v:val))')
+  return res[-1]
 endfunction
 
 " Function: lh#list#transform_if(input, output, action, predicate) {{{3
 function! lh#list#transform_if(input, output, action, predicate) abort
-  for element in a:input
-    if lh#function#execute(a:predicate, element)
-      let res = lh#function#execute(a:action, element)
-      call add(a:output, res)
-    endif
-    unlet element " for heterogeneous lists
-  endfor
-  return a:output
+  let out = filter(copy(a:input), 'lh#function#execute(a:predicate, v:val)')
+  call map(out, 'lh#function#execute(a:action, v:val)')
+  return extend(a:output, out)
 endfunction
 
 " Function: lh#list#copy_if(input, output, predicate) {{{3
 function! lh#list#copy_if(input, output, predicate) abort
-  for element in a:input
-    if lh#function#execute(a:predicate, element)
-      call add(a:output, element)
-    endif
-    unlet element " for heterogeneous lists
-  endfor
-  return a:output
+  " 1% faster
+  let out = filter(copy(a:input), 'lh#function#execute(a:predicate, v:val)')
+  return extend(a:output, out)
 endfunction
 
 " Function: lh#list#accumulate(input, transformation, accumulator) {{{3
@@ -198,6 +188,8 @@ function! lh#list#accumulate(input, transformations, accumulator) abort
 endfunction
 
 " Function: lh#list#accumulate2(input, init, [accumulator = a+b]) {{{3
+" Expects all elements to have the same type.
+" No perf improvements with map(input, add(res, f(res[-1]))
 function! lh#list#accumulate2(input, init, ...) abort
   let accumulator = a:0 == 0 ? 'v:1_ + v:2_' : a:1
   let res = a:init
@@ -210,21 +202,40 @@ endfunction
 " Function: lh#list#flatten(list) {{{3
 function! lh#list#flatten(list) abort
   let res = []
-  for e in a:list
-    if type(e) == type([])
-      let res += lh#list#flatten(e)
-    else
-      let res += [e]
-    endif
-    unlet e
-  endfor
+  call map(copy(a:list), 'type(v:val) == type([]) ? extend(res, lh#list#flatten(v:val)) : add(res, v:val)')
   return res
 endfunction
 
+" Function: lh#list#match(list, to_be_matched [, idx]) {{{3
+if v:version >= 730
+  function! lh#list#match(list, to_be_matched, ...) abort
+    return call('match', [a:list, a:to_be_matched] + a:000)
+  endfunction
+else
+  " I can't remember when |match()| started to support lists
+  function! lh#list#match(list, to_be_matched, ...) abort
+    let idx = (a:0>0) ? a:1 : 0
+    while idx < len(a:list)
+      if match(a:list[idx], a:to_be_matched) != -1
+        return idx
+      endif
+      let idx += 1
+    endwhile
+    return -1
+  endfunction
+endif
+
+function! lh#list#Match(list, to_be_matched, ...) abort
+  let idx = (a:0>0) ? a:1 : 0
+  return lh#list#match(a:list, a:to_be_matched, idx)
+endfunction
+
 " Function: lh#list#match_re(list, to_be_matched [, idx]) {{{3
-" Search first regex that match the parameter
+" @since Version 3.2.4
+" Search first regex that matches the parameter
 function! lh#list#match_re(list, to_be_matched, ...) abort
   let idx = (a:0>0) ? a:1 : 0
+
   while idx < len(a:list)
     if match(a:to_be_matched, a:list[idx]) != -1
       return idx
@@ -232,37 +243,37 @@ function! lh#list#match_re(list, to_be_matched, ...) abort
     let idx += 1
   endwhile
   return -1
-endfunction
 
-" Function: lh#list#match(list, to_be_matched [, idx]) {{{3
-function! lh#list#match(list, to_be_matched, ...) abort
-  let idx = (a:0>0) ? a:1 : 0
-  while idx < len(a:list)
-    if match(a:list[idx], a:to_be_matched) != -1
-      return idx
-    endif
-    let idx += 1
-  endwhile
-  return -1
-endfunction
-function! lh#list#Match(list, to_be_matched, ...) abort
-  let idx = (a:0>0) ? a:1 : 0
-  return lh#list#match(a:list, a:to_be_matched, idx)
+  " The following doesn't improve performances significantly
+  " let res = [-1]
+  " call map(a:list[idx:], 'add(res, res[-1] >= 0 ? res[-1] : (match(a:to_be_matched, v:val)>=0 ? v:key : -1))')
+  " return res[-1]+idx
 endfunction
 
 " Function: lh#list#matches(list, to_be_matched [,idx]) {{{3
 " Return the list of indices that match {to_be_matched}
-function! lh#list#matches(list, to_be_matched, ...) abort
-  let res = []
-  let idx = (a:0>0) ? a:1 : 0
-  while idx < len(a:list)
-    if match(a:list[idx], a:to_be_matched) != -1
-      let res += [idx]
-    endif
-    let idx += 1
-  endwhile
-  return res
-endfunction
+if has('lambda')
+  function! lh#list#matches(list, to_be_matched, ...) abort
+    let start = (a:0>0) ? a:1 : 0
+    " Note: lambdas are not that fast. Still they improve index computations
+    let res = map(a:list[start:], {idx, val -> val =~ a:to_be_matched ? start+idx : -1})
+    " call lh#assert#is_not(res, a:list)
+    call filter(res, 'v:val >= 0')
+    return res
+  endfunction
+else
+  function! lh#list#matches(list, to_be_matched, ...) abort
+    let res = []
+    let idx = (a:0>0) ? a:1 : 0
+    while idx < len(a:list)
+      if match(a:list[idx], a:to_be_matched) != -1
+        let res += [idx]
+      endif
+      let idx += 1
+    endwhile
+    return res
+  endfunction
+endif
 
 " Function: lh#list#Find_if(list, predicate [, predicate-arguments] [, start-pos]) {{{3
 function! lh#list#Find_if(list, predicate, ...) abort
@@ -319,6 +330,13 @@ function! lh#list#find_if(list, predicate, ...) abort
     let idx += 1
   endwhile
   return -1
+endfunction
+
+" Function: lh#list#find_if_fast(list, predicate [, start-pos]) {{{3
+function! lh#list#find_if_fast(list, predicate, ...) abort
+  let start = get(a:, 1, 0)
+  let matches = map(copy(a:list), a:predicate)
+  return index(matches, 1, start)
 endfunction
 
 " Function: lh#list#lower_bound(sorted_list, value  [, first[, last]]) {{{3
@@ -504,6 +522,7 @@ endfunction
 " Works like sort(), optionally taking in a comparator (just like the
 " original), except that duplicate entries will be removed.
 " todo: support another argument that act as an equality predicate
+" Expects elements to be of the same type
 if exists('*uniq')
   function! lh#list#unique_sort(list, ...) abort
     call call('lh#list#sort', [a:list] + a:000)
@@ -547,36 +566,44 @@ else
 endif
 " Function: lh#list#subset(list, indices) {{{3
 function! lh#list#subset(list, indices) abort
-  let result=[]
-  for e in a:indices
-    " call add(result, a:list[e])
-    call add(result, get(a:list, e))
-  endfor
-  return result
+  return map(copy(a:indices), 'get(a:list, v:val)')
 endfunction
 
 " Function: lh#list#mask(list, masks) {{{3
-function! lh#list#mask(list, masks) abort
-  let len = len(a:list)
-  if len != len(a:masks)
-    throw "lh#list#mask() needs as many masks as elements in the list"
-  endif
-  let res = []
-  for i in range(len)
-    if a:masks[i]
-      let res += [a:list[i]]
-    endif
-  endfor
-  return res
-endfunction
+if lh#has#patch('patch-7.2-295')
+  function! lh#list#mask(list, masks) abort
+    let len = len(a:list)
+    call lh#assert#equal(len, len(a:masks),
+          \ "lh#list#mask() needs as many masks as elements in the list")
+    return filter(copy(a:list), 'a:masks[v:key]')
+  endfunction
+elseif  has('lambda')
+  function! lh#list#mask(list, masks) abort
+    let len = len(a:list)
+    call lh#assert#equal(len, len(a:masks),
+          \ "lh#list#mask() needs as many masks as elements in the list")
+    return filter(copy(a:list), {idx, val -> a:masks[idx]})
+  endfunction
+else
+  function! lh#list#mask(list, masks) abort
+    let len = len(a:list)
+    call lh#assert#equal(len, len(a:masks),
+          \ "lh#list#mask() needs as many masks as elements in the list")
+    let res = []
+    for i in range(len)
+      if a:masks[i]
+        let res += [a:list[i]]
+      endif
+    endfor
+    return res
+  endfunction
+endif
 
 " Function: lh#list#remove(list, indices) {{{3
 function! lh#list#remove(list, indices) abort
   " assert(is_sorted(indices))
   let idx = reverse(copy(a:indices))
-  for i in idx
-    call remove(a:list, i)
-  endfor
+  call map(idx, 'remove(a:list, v:val)')
   return a:list
 endfunction
 
@@ -585,12 +612,6 @@ function! lh#list#intersect(list1, list2) abort
   let result = copy(a:list1)
   call filter(result, 'index(a:list2, v:val) >= 0')
   return result
-
-  for e in a:list1
-    if index(a:list2, e) > 0
-      call result(result, e)
-    endif
-  endfor
 endfunction
 
 " Function: lh#list#flat_extend(list, rhs) {{{3
@@ -604,25 +625,47 @@ function! lh#list#flat_extend(list, rhs) abort
 endfunction
 
 " Function: lh#list#separate(list, Cond) {{{3
-function! lh#list#separate(list, Cond) abort
-  if 1 " seems a little bit faster
+function! s:has_add_ternary()
+  let a = []
+  let b = []
+  for i in range(4)
+    call add((i%2 ? a : b), i)
+  endfor
+  return a == [1, 3] && b == [0, 2]
+endfunction
+
+if s:has_add_ternary()
+  function! lh#list#separate(list, Cond) abort
+    let yes = []
+    let no = []
+    if type(a:Cond) == type(function('has'))
+      " call map(copy(a:list), {idx, val -> add(a:Cond(idx,val)?yes:no, val)})
+      call map(copy(a:list), 'add(a:Cond(v:key,v:val)?yes:no, v:val)')
+    else
+      call map(copy(a:list), 'add((('.a:Cond.')?(yes):(no)), v:val)')
+    endif
+    return [yes, no]
+  endfunction
+else
+  let s:k_assoc = { 'v:key' : 'idx', 'v:val': 'e'}
+  function! lh#list#separate(list, Cond) abort
+    " call lh#assert#type(a:Cond).belongs_to('', function('has'))
+    let predicate_is_a_function = type(a:Cond) == type(function('has'))
     let yes = []
     let no = []
     let idx = 0
     for e in a:list
-      if a:Cond(idx, e)
+      if predicate_is_a_function ? a:Cond(idx, e) : eval(substitute(a:Cond, '\vv:val|v:key', '\=s:k_assoc[submatch(0)]', 'g'))
         let yes += [e]
       else
         let no += [e]
       endif
       let idx += 1
     endfor
-  else
-    let yes = filter(copy(a:list), a:Cond)
-    let no = filter(a:list, {idx, val -> !a:Cond(idx, val)})
-  endif
-  return [yes, no]
-endfunction
+    return [yes, no]
+  endfunction
+endif
+
 " Function: lh#list#push_if_new(list, value) {{{3
 function! lh#list#push_if_new(list, value) abort
   if index(a:list, a:value) < 0
@@ -639,22 +682,31 @@ function! lh#list#push_if_new_elements(list, values) abort
   return a:list
 endfunction
 
-" Function: lh#list#find_entity(list, value) {{{3
+" Function: lh#list#contain_entity(list, value) {{{3
 " @since 4.0.0
 function! lh#list#contain_entity(list, value) abort
-  for e in a:list
-    if e is a:value
-      return 1
-    endif
-    unlet e
-  endfor
-  return 0
+  let found = map(copy(a:list), 'v:val is a:value')
+  return index(found, 1) >= 0
+endfunction
+
+" Function: lh#list#not_contain_entity(list, value) {{{3
+" @since 4.0.0
+function! lh#list#not_contain_entity(list, value) abort
+  let found = map(copy(a:list), 'v:val is a:value')
+  return index(found, 1) == -1
+endfunction
+
+" Function: lh#list#find_entity(list, value) {{{3
+" @since 4.0.0
+function! lh#list#find_entity(list, value) abort
+  let found = map(copy(a:list), 'v:val is a:value')
+  return index(found, 1)
 endfunction
 
 " Function: lh#list#push_if_new_entity(list, value) {{{3
 " @version 4.0.0
 function! lh#list#push_if_new_entity(list, value) abort
-  if !lh#list#contain_entity(a:list, a:value)
+  if lh#list#not_contain_entity(a:list, a:value)
     call add(a:list, a:value)
   endif
   return a:list
@@ -666,19 +718,10 @@ function! lh#list#possible_values(list, ...) abort
     return lh#list#unique_sort(a:list)
   elseif a:0 == 1
     let default = a:0 == 2 ? a:2 : lh#option#unset()
-    let dRes = {}
-    for E in a:list
-      if type(E) == type({}) || type(E) == type([])
-        let v = get(E, a:1, default)
-        let dRes[string(v)] = v
-        unlet v
-      endif
-      unlet E
-    endfor
-    " this hack regarding using values and not keys permits to not alter the
-    " type of the elements
-    let res = lh#list#sort(values(dRes))
-    return res
+    " Keeps only list/dict element in the input `a:list`
+    let list_of_lists = filter(copy(a:list), 'type(v:val)==type([])||type(v:val)==type({})')
+    let list = call('lh#list#get', [list_of_lists, a:1, default])
+    return  lh#list#unique_sort(list)
   endif
 endfunction
 
@@ -704,7 +747,10 @@ endfunction
 
 " Function: lh#list#for_each_call(list, action) {{{3
 function! lh#list#for_each_call(list, action) abort
+  let cleanup = lh#on#exit()
+        \.restore('&isk')
   try
+    set isk&vim
     for e in a:list
       let action = substitute(a:action, '\v<v:val>', '\=string(e)', 'g')
       exe 'call '.action
@@ -712,6 +758,8 @@ function! lh#list#for_each_call(list, action) abort
     endfor
   catch /.*/
     throw "lh#list#for_each_call: ".v:exception." in ``".action."''"
+  finally
+    call cleanup.finalize()
   endtry
 endfunction
 
@@ -782,6 +830,26 @@ function! lh#list#cross(rng1, rng2, F) abort
   return res
 endfunction
 
+" Function: lh#list#zip(l1 [, ...]) {{{3
+function! lh#list#zip(l1, ...) abort
+  let lists = [a:l1] + a:000
+  let len_min = min(map(copy(lists), 'len(v:val)'))
+  let len_max = max(map(copy(lists), 'len(v:val)'))
+  call lh#assert#equal(len_min, len_max,
+        \ "Zip operation cannot be performed on lists of different sizes")
+  let func = '[' . join(map(range(len(lists)), '"lists[".v:val."][v:val]"'), ', ') . ']'
+  return map(range(len_min), func)
+endfunction
+
+" Function: lh#list#zip_as_dict(l1, l2) {{{3
+function! lh#list#zip_as_dict(l1, l2) abort
+  call lh#assert#equal(len(a:l1), len(a:l2),
+        \ "Zip operation cannot be performed on lists of different sizes")
+  let res = {}
+  call map(range(len(a:l1)), 'extend(res, {a:l1[v:val]: a:l2[v:val]})')
+  return res
+endfunction
+
 " # Private {{{2
 " Function: lh#list#_regular_cmp(lhs, rhs) {{{3
 " Up to vim version 7.4.411
@@ -828,38 +896,12 @@ function! lh#list#_apply_on(list, index, action) abort
   return a:list
 endfunction
 
-" Function: lh#list#zip(l1, l2) {{{3
-function! lh#list#zip(l1, l2) abort
-  if len(a:l1) != len(a:l2)
-    throw "Zip operation cannot be performed on lists of different sizes"
-  endif
-  let res = []
-  let idx = range(0, len(a:l1)-1)
-  for i in idx
-    let res += [ a:l1[i], a:l2[i] ]
-  endfor
-  return res
-endfunction
-
-" Function: lh#list#zip_as_dict(l1, l2) {{{3
-function! lh#list#zip_as_dict(l1, l2) abort
-  if len(a:l1) != len(a:l2)
-    throw "Zip operation cannot be performed on lists of different sizes"
-  endif
-  let res = {}
-  let idx = range(0, len(a:l1)-1)
-  for i in idx
-    let res[a:l1[i]] = a:l2[i]
-  endfor
-  return res
-endfunction
-
 " Function: lh#list#_id(a) {{{3
 function! lh#list#_id(a) abort
   return a:a
 endfunction
 
-" Fucntion: s:getSNR([func_name]) {{{3
+" Function: s:getSNR([func_name]) {{{3
 function! s:getSNR(...)
   if !exists("s:SNR")
     let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zegetSNR$')

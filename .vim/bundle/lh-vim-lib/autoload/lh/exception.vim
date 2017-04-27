@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = '4000'
 " Created:      18th Nov 2015
-" Last Update:  03rd Feb 2017
+" Last Update:  08th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to VimL Exceptions
@@ -105,7 +105,7 @@ function! lh#exception#callstack(throwpoint) abort
           if !has_key(dScripts, script)
             let dScripts[script] = reverse(readfile(script))
           endif
-          let fstart = len(dScripts[script]) - match(dScripts[script], '^\s*fu\%[nction]!\=\s\+'.fname)
+          let fstart = len(dScripts[script]) - match(dScripts[script], '^\s*fu\%[nction]!\=\s\+'.fname.'\s*(')
           let data = {'script': script, 'fname': fname, 'fstart': fstart, 'offset': offset }
           let data.pos = data.offset + fstart
         else
@@ -121,19 +121,31 @@ function! lh#exception#callstack(throwpoint) abort
   return function_stack
 endfunction
 
-" Function: lh#exception#callstack_as_qf(filter, [msg]) {{{3
-function! lh#exception#callstack_as_qf(filter, ...) abort
+" Function: lh#exception#get_callstack() {{{3
+"Note:  As of vim 8.0-314, the callstack size is always of 1 when called from a
+"script. See Vim issue#1480
+function! lh#exception#get_callstack() abort
   try
     throw "dummy"
   catch /.*/
-    return call(lh#exception#decode().as_qf, [a:filter]+a:000)
+    let stack = lh#exception#decode()
+    " ignore current level => [1:]
+    call stack.__pop()
+    return stack
   endtry
+endfunction
+
+" Function: lh#exception#callstack_as_qf(filter, [msg]) {{{3
+function! lh#exception#callstack_as_qf(filter, ...) abort
+  let stack = lh#exception#get_callstack()
+  return call(stack.as_qf, [a:filter]+a:000, stack)
 endfunction
 
 " Function: lh#exception#decode([throwpoint]) {{{3
 function! s:as_qf(filter, ...) dict abort
   let data = []
-  let idx = lh#list#find_if(self.callstack, 'v:val.fname !~? "\\vlh#exception#'.a:filter.'"', 1)
+  let idx = lh#list#find_if(self.callstack, 'v:val.fname !~? "\\vlh#exception#'.a:filter.'"')
+  " let idx = lh#list#find_if(self.callstack, 'v:val.fname !~? "\\vlh#exception#'.a:filter.'"', 1)
   if idx >= 0
     let data = map(copy(self.callstack)[idx : ], '{"type": "I", "filename": v:val.script, "text": "called from here (".get(v:val,"fname", "n/a").":".get(v:val,"offset", "?").")", "lnum": v:val.pos}')
     " let data[0].text = lh#fmt#printf('function %{1.fname} line %{1.offset}: %2', self.callstack[idx], get(a:, 1, '...'))
@@ -149,11 +161,17 @@ function! s:as_qf(filter, ...) dict abort
   return data
 endfunction
 
+function! s:__pop() dict abort
+  " Don't call lh#assert as assertions rely on lh#exception
+  call remove(self.callstack, 0)
+endfunction
+
 function! lh#exception#decode(...) abort
   let throwpoint = get(a:, 1, v:throwpoint)
   let callstack = lh#exception#callstack(throwpoint)
   let res = lh#object#make_top_type({'callstack': callstack})
   let res.as_qf = function(s:getSNR('as_qf'))
+  let res.__pop = function(s:getSNR('__pop'))
   return res
 endfunction
 
@@ -180,21 +198,30 @@ function! lh#exception#say_what() abort
   let po_out_line = lh#po#context().translate('%s, line %ld')
 
   let messages = reverse(lh#askvim#execute('messages'))
-  let i = match(messages, rx_err_detected)
-  if i < 2
-    throw "No error detected!"
-  endif
-  let throwpoint = matchstr(messages[i], rx_err_detected)
-  let line = matchstr(messages[i-1], rx_in_line)
-  call lh#assert#true(!empty(line))
+  " There may be noise like missing endif, endwhile, etc
+  " => loop
+  let qf = []
 
-  let throwpoint = printf(po_out_line, throwpoint, line)
+  let i = 0
+  while 1
+    let i = match(messages, rx_err_detected, i+1)
+    if i < 2
+      throw "No error detected!"
+    endif
+    let throwpoint = matchstr(messages[i], rx_err_detected)
+    let line = matchstr(messages[i-1], rx_in_line)
+    call lh#assert#not_empty(line)
 
-  let qf = lh#exception#decode(throwpoint).as_qf('')
-  let qf[0].text = substitute(qf[0].text, '^\.\.\.', messages[i-2], '')
-  call lh#assert#true(!empty(qf))
+    let throwpoint = printf(po_out_line, throwpoint, line)
 
-  call setqflist(qf)
+    let e_qf = lh#exception#decode(throwpoint).as_qf('')
+    let e_qf[0].text = substitute(e_qf[0].text, '^\.\.\.', messages[i-2], '')
+    call lh#assert#not_empty(e_qf)
+    call extend(qf, reverse(e_qf))
+    if messages[i-2] !~ '^E171:\|^E170' | break | endif
+  endwhile
+
+  call setqflist(reverse(qf))
   if exists(':Copen')
     Copen
   else

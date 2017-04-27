@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/blob/master/License.md>
-" Version:	4.0.0.0
-let s:version = '4.00.0'
+" Version:	4.0.0
+let s:version = '4.0.0'
 " Created:	06th Nov 2007
-" Last Update:  03rd Feb 2017
+" Last Update:  08th Mar 2017
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -25,6 +25,7 @@ License.md
 addon-info.json
 autoload/airline/extensions/async.vim
 autoload/lh/askvim.vim
+autoload/lh/assert.vim
 autoload/lh/async.vim
 autoload/lh/buffer.vim
 autoload/lh/buffer/dialog.vim
@@ -56,14 +57,22 @@ autoload/lh/path.vim
 autoload/lh/po.vim
 autoload/lh/position.vim
 autoload/lh/project.vim
+autoload/lh/project/cmd.vim
+autoload/lh/project/list.vim
+autoload/lh/project/menu.vim
 autoload/lh/ref.vim
 autoload/lh/stack.vim
 autoload/lh/string.vim
 autoload/lh/syntax.vim
+autoload/lh/type.vim
 autoload/lh/ui.vim
 autoload/lh/vcs.vim
 autoload/lh/visual.vim
 autoload/lh/window.vim
+doc/DbC.md
+doc/Dialog.md
+doc/Log.md
+doc/Project.md
 doc/lh-vim-lib.txt
 mkVba/mk-lh-vim-lib.vim
 plugin/let.vim
