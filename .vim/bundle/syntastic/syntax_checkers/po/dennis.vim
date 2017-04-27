@@ -1,7 +1,7 @@
 "============================================================================
-"File:        nasm.vim
-"Description: Syntax checking plugin for syntastic.vim
-"Maintainer:  Håvard Pettersson <haavard.pettersson at gmail dot com>
+"File:        dennis.vim
+"Description: Syntax checking plugin for syntastic
+"Maintainer:  LCD 47 <lcd047 at gmail dot com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,31 +10,32 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_nasm_nasm_checker')
+if exists('g:loaded_syntastic_po_dennis_checker')
     finish
 endif
-let g:loaded_syntastic_nasm_nasm_checker = 1
+let g:loaded_syntastic_po_dennis_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_nasm_nasm_GetLocList() dict
-    let buf = bufnr('')
+function! SyntaxCheckers_po_dennis_GetLocList() dict
     let makeprg = self.makeprgBuild({
-        \ 'args_after': '-X gnu' .
-        \       ' -I ' . syntastic#util#shescape(fnamemodify(bufname(buf), ':p:h') . syntastic#util#Slash()) .
-        \       ' ' . syntastic#c#NullOutput() })
+        \ 'exe_after': 'lint',
+        \ 'post_args_after': '--reporter line' })
 
-    let errorformat = '%f:%l: %t%*[^:]: %m'
+    let errorformat = '%f:%l:%c:%t%n:%m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
-        \ 'errorformat': errorformat })
+        \ 'errorformat': errorformat,
+        \ 'subtype': 'Style',
+        \ 'returns': [0, 1] })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'nasm',
-    \ 'name': 'nasm'})
+    \ 'filetype': 'po',
+    \ 'name': 'dennis',
+    \ 'exec': 'dennis-cmd' })
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

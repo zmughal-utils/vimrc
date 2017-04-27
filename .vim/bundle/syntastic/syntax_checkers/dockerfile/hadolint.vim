@@ -1,7 +1,8 @@
 "============================================================================
-"File:        nasm.vim
-"Description: Syntax checking plugin for syntastic.vim
-"Maintainer:  Håvard Pettersson <haavard.pettersson at gmail dot com>
+"File:        hadolint.vim
+"Description: Dockerfile linter written in Haskell
+"             (http://hadolint.lukasmartinelli.ch/).
+"Maintainer:  Jesper B. Rosenkilde <jbr at humppa dot dk>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,31 +11,29 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_nasm_nasm_checker')
+if exists('g:loaded_syntastic_dockerfile_hadolint_checker')
     finish
 endif
-let g:loaded_syntastic_nasm_nasm_checker = 1
+let g:loaded_syntastic_dockerfile_hadolint_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_nasm_nasm_GetLocList() dict
-    let buf = bufnr('')
-    let makeprg = self.makeprgBuild({
-        \ 'args_after': '-X gnu' .
-        \       ' -I ' . syntastic#util#shescape(fnamemodify(bufname(buf), ':p:h') . syntastic#util#Slash()) .
-        \       ' ' . syntastic#c#NullOutput() })
+function! SyntaxCheckers_dockerfile_hadolint_GetLocList() dict
+    let makeprg = self.makeprgBuild({})
 
-    let errorformat = '%f:%l: %t%*[^:]: %m'
+    let errorformat = '%W%f:%l %m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
-        \ 'errorformat': errorformat })
+        \ 'errorformat': errorformat,
+        \ 'subtype': 'Style',
+        \ 'returns': [0, 1] })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'nasm',
-    \ 'name': 'nasm'})
+    \ 'filetype': 'dockerfile',
+    \ 'name': 'hadolint'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
