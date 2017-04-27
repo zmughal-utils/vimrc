@@ -7,7 +7,7 @@
 " Version:      2.0.3
 let s:k_version = '2.0.3'
 " Created:      02nd Oct 2008
-" Last Update:  04th Jan 2017
+" Last Update:  13th Mar 2017
 "------------------------------------------------------------------------
 " Description:
 "       Small plugin related to tags files.
@@ -160,7 +160,7 @@ endfunction
 
 function! s:AsynchSystem(cmd_line, txt, FinishedCB, ...) abort
   if s:RunInBackground()
-    call s:Verbose('Register: '.a:cmd_line)
+    call s:Verbose('Register: %1',a:cmd_line)
     let async_output = s:async_output_factory()
     let job =
           \ { 'txt': a:txt
@@ -309,6 +309,7 @@ let s:func_kinds =
       \ , 's' : ['perl']
       \ , '[bsm]' : ['perl6']
       \ , '[fF]' : ['rust']
+      \ , '[f]' : ['vim']
       \ }
 function! s:BuildFuncKinds()
   for [pat, fts] in items(s:func_kinds)
@@ -400,7 +401,7 @@ function! s:GetPlausibleRoot() abort " {{{3
       return ctags_dirname
     endif
   endif
-  let ctags_dirname = INPUT("ctags needs to know the current project root directory.\n-> ", expand('%:p:h'))
+  let ctags_dirname = lh#ui#input("ctags needs to know the current project root directory.\n-> ", expand('%:p:h'))
   if !empty(ctags_dirname)
     call lh#path#munge(s:project_roots, ctags_dirname)
   endif
@@ -408,6 +409,11 @@ function! s:GetPlausibleRoot() abort " {{{3
 endfunction
 
 function! s:FetchCtagsDirname() abort " {{{3
+  let sources_dir = lh#option#get('paths.sources')
+  if lh#option#is_set(sources_dir)
+    return sources_dir
+  endif
+
   " call assert_true(!exists('b:tags_dirname'))
   let project_sources_dir = lh#option#get('project_sources_dir')
   if lh#option#is_set(project_sources_dir)
@@ -436,9 +442,10 @@ endfunction
 
 function! s:CtagsDirname(...) abort " {{{3
   " Will be searched in descending priority in:
-  " - b:tags_dirname
-  " - BTW_project_config._.paths.sources (BTW)
+  " - (bpg):tags_dirname
+  " - (bpg):paths.sources
   " - b:project_source_dir (mu-template)
+  " - BTW_project_config._.paths.sources (BTW)
   " - Where .git/ is found is parent dirs
   " - Where .svn/ is found in parent dirs
   " - confirm box for %:p:h, and remember previous paths
@@ -451,7 +458,7 @@ function! s:CtagsDirname(...) abort " {{{3
 
   let res = lh#path#to_dirname(tags_dirname)
   " TODO: find another way to autodetect tags paths
-  if a:0 == 0 || a:1 == '1'
+  if get(a:, 1, 1)
     call lh#tags#update_tagfiles()
   endif
   return res
@@ -828,6 +835,7 @@ let s:lines = []
 let s:k_tag_name__ = '__jump_tag__'
 let s:k_nb_digits  = 5 " works with ~1 million jumps. Should be enough
 function! lh#tags#jump(tagentry) abort
+  call s:Verbose('Jumping to tag %1', a:tagentry)
   let last = len(s:lines)+1
   " Assert s:tagentry.filename == expand('%:p')
   let filename = expand('%:p')
@@ -941,7 +949,7 @@ function! s:PrepareTagEntry0(tagrawinfo, nr) abort
         \ 'pri'             : '@@@',
         \ 'kind'            : kind,
         \ 'filename'        : a:tagrawinfo.filename,
-        \ 'signature'       : s:GetKey(a:tagrawinfo, ['signature']),
+        \ 'signature'       : get(a:tagrawinfo, 'signature', ''),
         \ 'name'            : lh#tags#tag_name(a:tagrawinfo)
         \ }
   return taginfo
@@ -954,7 +962,7 @@ function! s:PrepareTagEntry(tagrawinfo) abort
         \ 'pri'             : '@@@',
         \ 'kind'            : kind,
         \ 'filename'        : a:tagrawinfo.filename,
-        \ 'signature'       : s:GetKey(a:tagrawinfo, ['signature']),
+        \ 'signature'       : get(a:tagrawinfo, 'signature', ''),
         \ 'name'            : lh#tags#tag_name(a:tagrawinfo)
         \ }
   return taginfo
@@ -970,10 +978,7 @@ let s:tag_header = {
 
 " s:BuildTagsMenu() {{{3
 function! s:BuildTagsMenu(tagsinfo, maxNameLen, fullsignature) abort
-  let tags= []
-  for taginfo in (a:tagsinfo)
-    call add(tags, s:TagEntry(taginfo,a:maxNameLen, a:fullsignature))
-  endfor
+  let tags = map(copy(a:tagsinfo), 's:TagEntry(v:val, a:maxNameLen, a:fullsignature)')
   return tags
 endfunction
 
@@ -1033,7 +1038,7 @@ function! s:ChooseTagEntry(tagrawinfos, tagpattern) abort
           \ "tags://selector(".a:tagpattern.")",
           \ "lh-tags ".g:loaded_lh_tags.": Select a tag to jump to",
           \ '', 0,
-          \ 'LHTags_select', tags)
+          \ 'lh#tags#_select', tags)
     let dialog.maxNameLen    = maxNameLen
     let dialog.fullsignature = fullsignature
     let dialog.filters       = {}
@@ -1073,18 +1078,18 @@ function! s:FilterUI() abort abort
   let fields = keys(b:alltagsinfo[1])
   let fields = filter(fields, 'v:val !~ "\\<\\(cmd\\|nr\\)\\>"')
   " 2- ask which field
-  let field = WHICH('COMBO', "Filter on:", join(map(copy(fields), '"&".v:val'), "\n"))
+  let field = lh#ui#which('lh#ui#combo', "Filter on:", join(map(copy(fields), '"&".v:val'), "\n"))
   " todo: manage exit
   " 3- ask the filter expression
   let filters = b:dialog.filters
   if field == 'kind'
     let kinds = lh#list#possible_values(b:alltagsinfo[1:], 'kind')
     call map(kinds, 'v:val[0]')
-    let which = split(CHECK('Which kinds to display? ', join(map(copy(kinds), '"&".v:val'), "\n")), '\zs\ze')
+    let which = split(lh#ui#check('Which kinds to display? ', join(map(copy(kinds), '"&".v:val'), "\n")), '\zs\ze')
     let filter = match(which, '0')==-1 ? '' : '['.join(lh#list#mask(kinds, which), '').']'
   else
     let filter = get(filters, field, '')
-    let filter = INPUT('Which filter for '.field.'? ', filter)
+    let filter = lh#ui#input('Which filter for '.field.'? ', filter)
   endif
   " Update tile to print the current filter, and do filter!
   let b:tagsinfo[0][field] = substitute(b:tagsinfo[0][field], '<.*', '', '')
@@ -1165,13 +1170,19 @@ endfunction
 function! s:DisplaySignature() abort
 endfunction
 
-" LHTags_select() {{{3
-function! LHTags_select(results, ...) abort
+" lh#tags#_select() {{{3
+function! lh#tags#_select(results, ...) abort
+  call s:Verbose('tags selected: %1', a:results.selection)
   if len(a:results.selection) > 1
     " this is an assert
     throw "lh-tags: We are not supposed to select several tags"
   endif
-  let selection = a:results.selection[0]
+  " There is a header => we need to apply an offset!
+  let selection = a:results.selection[0]-1
+  if selection < 1
+    call lh#common#warning_msg('Invalid selection')
+    return
+  endif
   if a:0 == 0
     let tags_data = b:tags_data
   else
@@ -1269,13 +1280,13 @@ function! lh#tags#_command_complete(ArgLead, CmdLine, CursorPos) abort
   " The argument to expand, but cut where the cursor is
   let ArgLead = strpart(a:ArgLead, 0, fromLast )
   let ArgsLead = strpart(a:CmdLine, 0, a:CursorPos )
-  call s:Verbose( "a:AL = ". a:ArgLead."\nAl  = ".ArgLead
-        \ . "\nAsL = ".ArgsLead
-        \ . "\nx=" . fromLast
-        \ . "\ncut = ".strpart(a:CmdLine, a:CursorPos)
-        \ . "\nCL = ". a:CmdLine."\nCP = ".a:CursorPos
-        \ . "\ntmp = ".tmp."\npos = ".pos
-        )
+  " call s:Verbose( "a:AL = ". a:ArgLead."\nAl  = ".ArgLead
+        " \ . "\nAsL = ".ArgsLead
+        " \ . "\nx=" . fromLast
+        " \ . "\ncut = ".strpart(a:CmdLine, a:CursorPos)
+        " \ . "\nCL = ". a:CmdLine."\nCP = ".a:CursorPos
+        " \ . "\ntmp = ".tmp."\npos = ".pos
+        " )
 
   " Build the pattern for taglist() -> all arguments are joined with '.*'
   " let pattern = ArgsLead
