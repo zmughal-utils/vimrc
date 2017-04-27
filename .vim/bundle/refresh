@@ -103,3 +103,4 @@ refresh_git https://github.com/LucHermitte/lh-brackets lh-brackets
 refresh_git https://github.com/LucHermitte/searchInRuntime searchInRuntime
 refresh_git https://github.com/LucHermitte/mu-template mu-template
 refresh_git https://github.com/tomtom/stakeholders_vim stakeholders_vim
+refresh_git https://github.com/DataWraith/auto_mkdir auto_mkdir
