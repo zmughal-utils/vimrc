@@ -136,7 +136,7 @@ function! g:projectionist_transformations.uppercase(input, o) abort
 endfunction
 
 function! g:projectionist_transformations.camelcase(input, o) abort
-  return substitute(a:input, '\%([_-]\|/\@<=\|^\)\(.\)', '\u\1', 'g')
+  return substitute(a:input, '[_-]\(.\)', '\u\1', 'g')
 endfunction
 
 function! g:projectionist_transformations.capitalize(input, o) abort
@@ -275,7 +275,7 @@ function! projectionist#query(key, ...) abort
 endfunction
 
 function! s:absolute(path, in) abort
-  if a:path =~# '^\%([[:alnum:].-]\+:\)\|^[\/]'
+  if a:path =~# '^\%([[:alnum:].-]\+:\)\|^\.\?[\/]'
     return a:path
   else
     return simplify(a:in . projectionist#slash() . a:path)
