@@ -265,11 +265,9 @@ let tlist_r_settings="R;g:global variable;v:function variable;f:function"
 "}}}
 
 " For <url:~/.vim/bundle-vim-scripts/3223_LanguageTool >{{{
-" Download from <https://www.languagetool.org/>.
-"
-"  wget -c -P ~/Downloads/ https://www.languagetool.org/download/LanguageTool-3.3.zip
-"  unzip -d ~/bin/ ~/Downloads/LanguageTool-3.3.zip
-let g:languagetool_jar='$HOME/bin/LanguageTool-3.3/languagetool-commandline.jar'
+" Download with <url:~/.vim/scripts/install/languagetool>
+" Find the newest version installed
+let g:languagetool_jar=get(sort(glob('~/bin/LanguageTool-*/languagetool-commandline.jar', 1, 1)), -1, '')
 "}}}
 
 " vim:fdm=marker

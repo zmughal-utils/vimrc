@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Find the latest version from <https://languagetool.org/> :
+#
+#     wget -qO- 'https://languagetool.org/' | grep -o 'v[0-9]\+\.[0-9]\+' | sort -u
+CURDIR=`dirname "$0"`
+VERSION="3.7"
+FILE="LanguageTool-${VERSION}.zip"
+URL="https://languagetool.org/download/${FILE}"
+
+DOWNLOAD_PREFIX="/tmp"
+DOWNLOAD_FILE="$DOWNLOAD_PREFIX/$FILE"
+INSTALL_PREFIX="$HOME/bin"
+
+wget -c -P $DOWNLOAD_PREFIX "$URL"
+unzip -d $INSTALL_PREFIX $DOWNLOAD_FILE
