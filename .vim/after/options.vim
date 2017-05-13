@@ -262,6 +262,9 @@ let tlist_coffee_settings = 'coffee;c:class;v:variable;f:function'
 
 let tlist_r_settings="R;g:global variable;v:function variable;f:function"
 
+let tlist_markdown_settings   = 'markdown;h:Headings'
+let tlist_ikiwiki_settings   = 'markdown;h:Headings'
+
 "}}}
 
 " For <url:~/.vim/bundle-vim-scripts/3223_LanguageTool >{{{
