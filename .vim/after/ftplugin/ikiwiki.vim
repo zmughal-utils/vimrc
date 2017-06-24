@@ -1,6 +1,5 @@
 setl sua+=.mdwn
-setl fdm=expr
-setl foldexpr=markdown_fold#MarkdownLevel()
+setl fdm=syntax
 
 " open render in buffer with window width
 nmap <buffer> <F5> :exe "new +r!ikiwiki_render\\ ". fnameescape(expand("%")) ."\|html_to_text\\ --width\\ ".winwidth(0) \| setl buftype=nofile \| normal 1G<CR>
