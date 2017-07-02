@@ -215,6 +215,7 @@ By default the signs are updated as follows:
 | Switch buffer             | To notice change to git index        | `g:gitgutter_eager`    |
 | Switch tab                | To notice change to git index        | `g:gitgutter_eager`    |
 | Focus the GUI             | To notice change to git index        | `g:gitgutter_eager` (not gVim on Windows) |
+| After shell command       | To notice change to git index        | `g:gitgutter_eager`    |
 | Read a file into a buffer | To display initial signs             | [always]               |
 | Save a buffer             | So non-realtime signs are up to date | [always]               |
 | Change a file outside Vim | To notice `git stash`                | [always]               |
@@ -527,6 +528,10 @@ Here are some things you can check:
 * Your Vim supports signs (`:echo has('signs')` should give `1`).
 * Your file is being tracked by git and has unstaged changes.
 * If you have aliased or configured `grep` to use any flags, add `let g:gitgutter_grep_command = 'grep'` to your `~/.vimrc`.
+
+> Why is the whole file marked as added when I edit it?
+
+* If you use zsh, and you set `CDPATH`, make sure `CDPATH` doesn't include the current directory.
 
 
 ### Shameless Plug
