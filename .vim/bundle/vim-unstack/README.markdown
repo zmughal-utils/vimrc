@@ -21,6 +21,8 @@ Visually select part/all of a stacktrace and hit `<leader>s`. If you want to use
 
 You can also copy a stack trace to your system clipboard (from any program) and run `:UnstackFromClipboard`.
 
+Tmux users can copy a stack trace to the tmux paste buffer and call `:UnstackFromTmux`.
+
 If this results in too many vsplits crowding the screen, consider taking a look at the [accordion](https://github.com/mattboehm/vim-accordion) plugin (shameless plug).
 
 Signs
@@ -52,6 +54,7 @@ Currently the following stack traces are supported:
 * Go
 * Node.js
 * Erlang (R15+)
+* Valgrind
 
 Is there another language you'd like supported? Open an issue with some sample stack traces or read on to learn how to add custom languages (pull requests welcome).
 

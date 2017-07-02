@@ -39,6 +39,16 @@ function! unstack#UnstackFromText(text)
   endif
 endfunction
 "}}}
+"unstack#UnstackFromTmuxPasteBuffer() use tmux paste buffer as input for unstack {{{
+function! unstack#UnstackFromTmuxPasteBuffer()
+  if executable('tmux') && $TMUX != ''
+    let text = system('tmux show-buffer')
+    call unstack#UnstackFromText(l:text)
+  else
+    echoerr "No tmux session is running!"
+  endif
+endfunction
+"}}}
 "Extraction:
 "unstack#ExtractFiles(selection_type) extract files and line numbers {{{
 function! unstack#ExtractFiles(selection_type)
@@ -148,15 +158,17 @@ function! unstack#OpenStackTrace(files)
     let &scrolloff = g:unstack_scrolloff
   endif
   for [filepath, lineno] in a:files
-    execute "edit" filepath
-    call unstack#MoveToLine(lineno)
-    if (g:unstack_showsigns)
-      execute "sign place" signId "line=".lineno "name=errline" "buffer=".bufnr('%')
-      "store the signs so they can be removed later
-      call add(s:unstack_signs[t:unstack_tabId], signId)
-      let signId += 1
+    if filereadable(filepath)
+      execute "edit" filepath
+      call unstack#MoveToLine(lineno)
+      if (g:unstack_showsigns)
+        execute "sign place" signId "line=".lineno "name=errline" "buffer=".bufnr('%')
+        "store the signs so they can be removed later
+        call add(s:unstack_signs[t:unstack_tabId], signId)
+        let signId += 1
+      endif
+      call unstack#SplitWindow()
     endif
-    call unstack#SplitWindow()
   endfor
   "after adding the last file, the loop splits again.
   "delete this last empty vertical split
