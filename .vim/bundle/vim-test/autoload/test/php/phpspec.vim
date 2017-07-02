@@ -1,0 +1,37 @@
+if !exists('g:test#php#phpspec#file_pattern')
+  let g:test#php#phpspec#file_pattern = '\v(s|S)pec\.php$'
+endif
+
+function! test#php#phpspec#test_file(file) abort
+  if a:file =~# g:test#php#phpspec#file_pattern
+    return search("PhpSpec") > 0
+  endif
+endfunction
+
+function! test#php#phpspec#build_position(type, position) abort
+  if a:type == 'nearest' || a:type == 'file'
+    return [a:position['file']]
+  else
+    return []
+  endif
+endfunction
+
+function! test#php#phpspec#build_args(args) abort
+  let args = a:args
+
+  if test#base#no_colors()
+    let args = ['--no-ansi'] + args
+  endif
+
+  return ['run'] + args
+endfunction
+
+function! test#php#phpspec#executable() abort
+  if filereadable('./vendor/bin/phpspec')
+    return './vendor/bin/phpspec'
+  elseif filereadable('./bin/phpspec')
+    return './bin/phpspec'
+  else
+    return 'phpspec'
+  endif
+endfunction
