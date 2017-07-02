@@ -441,8 +441,8 @@ function! s:completion_filter(results, query) abort
 endfunction
 
 function! s:file_complete(A) abort
-  return map(split(glob(substitute(a:A, '\(.\@<=[\\/]\|$\)', '*\1', 'g')), "\n"),
-        \ 'isdirectory(v:val) ? v:val . dispatch#slash() : v:val')
+  return map(split(glob(substitute(a:A, '.\@<=\ze[\\/]\|$', '*', 'g')), "\n"),
+        \ 'fnameescape(isdirectory(v:val) ? v:val . dispatch#slash() : v:val)')
 endfunction
 
 function! s:compiler_complete(compiler, A, L, P) abort
@@ -477,12 +477,13 @@ function! s:compiler_complete(compiler, A, L, P) abort
 endfunction
 
 function! dispatch#command_complete(A, L, P) abort
-  let args = matchstr(a:L, '\s\zs.*')
+  let L = strpart(a:L, 0, a:P)
+  let args = matchstr(L, '\s\zs.*')
   let [cmd, opts] = s:extract_opts(args)
-  let P = a:P + len(cmd) - len(a:L)
+  let P = a:P + len(cmd) - len(L)
   let len = matchend(cmd, '\S\+\s')
   if len >= 0 && P >= 0
-    let args = matchstr(a:L, '\s\zs.*')
+    let args = matchstr(L, '\s\zs.*')
     let compiler = get(opts, 'compiler', dispatch#compiler_for_program(cmd))
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
     try
@@ -618,9 +619,13 @@ function! dispatch#compile_command(bang, args, count) abort
     let request.id = len(s:makes)
     let s:files[request.file] = request
 
-    if !s:dispatch(request)
+    call writefile([], request.file)
+
+    if s:dispatch(request) && !get(request, 'background')
+      call s:cgetfile(request)
+    else
       let request.handler = 'sync'
-      let after = 'call dispatch#complete('.request.id.')'
+      let after = 'call DispatchComplete('.request.id.')'
       redraw!
       let sp = dispatch#shellpipe(request.file)
       let dest = request.file . '.complete'
@@ -825,7 +830,7 @@ function! dispatch#complete(file) abort
     endif
     echo label '!'.request.expanded s:postfix(request)
     if !request.background
-      call s:cgetfile(request, 0, status)
+      call s:cwindow(request, 0, status)
       redraw
     endif
   endif
@@ -843,7 +848,7 @@ function! dispatch#copen(bang) abort
   if !dispatch#completed(request) && filereadable(request.file . '.complete')
     let request.completed = 1
   endif
-  call s:cgetfile(request, a:bang, -2)
+  call s:cwindow(request, a:bang, -2)
 endfunction
 
 function! s:is_quickfix(...) abort
@@ -851,7 +856,7 @@ function! s:is_quickfix(...) abort
   return getwinvar(nr, '&buftype') ==# 'quickfix' && empty(getloclist(nr))
 endfunction
 
-function! s:cgetfile(request, all, copen) abort
+function! s:cgetfile(request, ...) abort
   let request = s:request(a:request)
   let efm = &l:efm
   let makeprg = &l:makeprg
@@ -863,7 +868,7 @@ function! s:cgetfile(request, all, copen) abort
     let &modelines = 0
     call s:set_current_compiler(get(request, 'compiler', ''))
     exe cd fnameescape(request.directory)
-    if a:all
+    if a:0 && a:1
       let &l:efm = '%+G%.%#'
     else
       let &l:efm = request.format
@@ -884,6 +889,10 @@ function! s:cgetfile(request, all, copen) abort
     let &l:makeprg = makeprg
     call s:set_current_compiler(compiler)
   endtry
+endfunction
+
+function! s:cwindow(request, all, copen)
+  call s:cgetfile(a:request, a:all)
   let height = get(g:, 'dispatch_quickfix_height', 10)
   let was_qf = s:is_quickfix()
   execute 'botright' (a:copen ? 'copen' : 'cwindow') height
