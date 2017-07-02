@@ -2,16 +2,25 @@
 " Maintainer:   vim-perl <vim-perl@groups.google.com>
 " Installation: Put into after/syntax/perl/function-parameters.vim
 
-syn match perlFunction +\<classmethod\>\_s*+ nextgroup=perlSubName
-syn match perlFunction +\<method\>\_s*+ nextgroup=perlSubName
-syn match perlFunction +\<fun\>\_s*+ nextgroup=perlSubName
+let s:perl_function_parameters_keywords = [
+			\ 'classmethod',
+			\ 'method',
+			\ 'fun',
+			\ 'callback'
+			\ ]
+for kw in s:perl_function_parameters_keywords
+	exe 'syn match perlFunction +\<' . kw  . '\>\_s*+ nextgroup=perlSubName'
+endfor
 
 if get(g:, 'perl_fold', 0)
-    syn region perlSubFold  start="^\z(\s*\)\<classmethod\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
-    syn region perlSubFold  start="^\z(\s*\)\<method\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
-    syn region perlSubFold  start="^\z(\s*\)\<fun\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend
+	for kw in s:perl_function_parameters_keywords
+		exe 'syn region perlSubFold  start="^\z(\s*\)\<' . kw . '\>.*[^};]$" end="^\z1}\s*\%(#.*\)\=$" transparent fold keepend'
+	endfor
 else
-    syn region perlSubFold  start="\<classmethod\>[^;]*{" end="}" transparent fold extend
-    syn region perlSubFold  start="\<method\>[^;]*{" end="}" transparent fold extend
-    syn region perlSubFold  start="\<fun\>[^;]*{" end="}" transparent fold extend
+	for kw in s:perl_function_parameters_keywords
+		exe 'syn region perlSubFold  start="\<' . kw . '\>[^;]*{" end="}" transparent fold extend'
+
+		" Anonymous
+		exe 'syn region perlSubFold     start="\<' . kw . '\>[^\n;]*{" end="}" transparent fold keepend extend'
+	endfor
 endif
