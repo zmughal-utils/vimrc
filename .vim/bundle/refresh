@@ -105,3 +105,6 @@ refresh_git https://github.com/LucHermitte/mu-template mu-template
 refresh_git https://github.com/tomtom/stakeholders_vim stakeholders_vim
 refresh_git https://github.com/DataWraith/auto_mkdir auto_mkdir
 refresh_git https://github.com/aklt/plantuml-syntax plantuml-syntax
+
+refresh_git https://github.com/janko-m/vim-test vim-test
+refresh_git https://github.com/skywind3000/asyncrun.vim asyncrun.vim
