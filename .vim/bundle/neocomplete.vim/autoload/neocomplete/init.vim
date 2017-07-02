@@ -150,21 +150,19 @@ function! neocomplete#init#_variables() abort "{{{
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'ruby,int-irb',
-        \'^=\%(b\%[egin]\|e\%[nd]\)\|\%(@@\|[$@]\)\h\w*\|\h\w*\%(::\w*\)*[!?]\?')
+        \'^=\%(b\%[egin]\|e\%[nd]\)\|\%(@@\|[$@]\)\h\w*\|\h\w*[!?]\?')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'php,int-php',
-        \'</\?\%(\h[[:alnum:]_-]*\s*\)\?\%(/\?>\)\?'.
-        \'\|\$\h\w*\|\h\w*\%(\%(\\\|::\)\w*\)*')
+        \'</\?\%(\h[[:alnum:]_-]*\s*\)\?\%(/\?>\)\?\|\$\h\w*\|\h\w*')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'perl,int-perlsh',
-        \'<\h\w*>\?\|[$@%&*]\h\w*\|\h\w*\%(::\w*\)*')
+        \'<\h\w*>\?\|[$@%&*]\h\w*\|\h\w*')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'perl6,int-perl6',
-        \'<\h\w*>\?\|[$@%&][!.*?]\?\h[[:alnum:]_-]*'.
-        \'\|\h[[:alnum:]_-]*\%(::[[:alnum:]_-]*\)*')
+        \'<\h\w*>\?\|[$@%&][!.*?]\?\h[[:alnum:]_-]*\|\h[[:alnum:]_-]*')
   call neocomplete#util#set_default_dictionary(
         \'g:neocomplete#keyword_patterns',
         \'pir',
@@ -531,7 +529,6 @@ function! neocomplete#init#_source(source) abort "{{{
         \ 'sorters' : ['sorter_rank'],
         \ 'converters' : [
         \      'converter_remove_overlap',
-        \      'converter_delimiter',
         \      'converter_abbr',
         \ ],
         \ 'keyword_patterns' : g:neocomplete#keyword_patterns,
