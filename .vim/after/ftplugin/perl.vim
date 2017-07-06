@@ -26,7 +26,7 @@ function! PerlGetBasePath()
 endfunction
 
 let b:libdir = PerlGetBasePath() . "/lib"
-let $PERL5LIB = $PERL5LIB . ":" . b:libdir
+call perlpath#AddToPerl5Lib(b:libdir)
 exe "set path+=" . b:libdir
 
 compiler perl
