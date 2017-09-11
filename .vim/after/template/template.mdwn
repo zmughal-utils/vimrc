@@ -1,6 +1,0 @@
-[[!meta title="TITLE"]]
-[[!meta author="zaki"]]
-[[!meta description="DESCRIPTION"]]
-
-
-[[!tag draft]]

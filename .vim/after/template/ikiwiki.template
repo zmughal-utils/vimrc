@@ -1,0 +1,13 @@
+VimL:" IkiWiki Template-File
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:reindent     = 1
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+[[!meta title="¡s:Surround(1, '<+TITLE+>')¡"]]
+[[!meta author="zaki"]]
+[[!meta description="¡s:Surround(1, '<+DESCRIPTION+>')¡"]]
+
+<+s:TerminalPlaceHolder()+>
+
+[[!tag draft]]
