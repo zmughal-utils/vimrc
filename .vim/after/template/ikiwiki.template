@@ -4,7 +4,7 @@ VimL: let s:value_end    = '¡'
 VimL: let s:reindent     = 1
 VimL: let s:marker_open  = '<+'
 VimL: let s:marker_close = '+>'
-[[!meta title="¡s:Surround(1, '<+TITLE+>')¡"]]
+[[!meta title="¡ikiwiki#path#GetTitleFromPath()¡"]]
 [[!meta author="zaki"]]
 [[!meta description="¡s:Surround(1, '<+DESCRIPTION+>')¡"]]
 
