@@ -1,7 +1,8 @@
 "============================================================================
-"File:        phpstan.vim
-"Description: Syntax checking plugin for syntastic
-"Maintainer:  Przepompownia przepompownia@users.noreply.github.com
+"File:        pug_lint_vue.vim
+"Description: Syntax checking plugin for syntastic using pug-lint-vue
+"             (https://github.com/sourceboat/pug-lint-vue)
+"Maintainer:  Tim Carry <tim at pixelastic dot com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,38 +11,30 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_php_phpstan_checker')
+if exists('g:loaded_syntastic_vue_pug_lint_vue_checker')
     finish
 endif
-let g:loaded_syntastic_php_phpstan_checker = 1
+let g:loaded_syntastic_vue_pug_lint_vue_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_php_phpstan_IsAvailable() dict
-    if !executable(self.getExec())
-        return 0
-    endif
-    return syntastic#util#versionIsAtLeast(self.getVersion(), [0, 8, 5])
-endfunction
+function! SyntaxCheckers_vue_pug_lint_vue_GetLocList() dict
+    let buf = bufnr('')
+    let makeprg = self.makeprgBuild({ 'fname': syntastic#util#shescape(fnamemodify(bufname(buf), ':p')) })
 
-function! SyntaxCheckers_php_phpstan_GetLocList() dict
-    let makeprg = self.makeprgBuild({
-        \ 'exe_after': 'analyse',
-        \ 'args': '--level=5',
-        \ 'args_after': '--errorFormat raw' })
-
-    let errorformat = '%f:%l:%m'
+    let errorformat = '%\s%#%l:%c %m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
-        \ 'subtype' : 'Style' })
+        \ 'defaults': { 'bufnr': buf, 'type': 'E' } })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'php',
-    \ 'name': 'phpstan'})
+    \ 'filetype': 'vue',
+    \ 'name': 'pug_lint_vue',
+    \ 'exec': 'pug-lint-vue' })
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
