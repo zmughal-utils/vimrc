@@ -1,0 +1,95 @@
+![Bullets.vim](bullets.vim.png)
+
+# Description
+
+Bullets.vim is a Vim plugin for automated bullet lists.
+
+![demo](img/bullets.gif)
+
+![renumber demo](img/renumber.gif)
+
+# Installation
+
+With VimPlug:
+
+```vim
+Plug 'dkarter/bullets.vim'
+```
+
+Then source your bundle file and run `:PlugInstall`.
+
+
+# Usage
+
+In markdown or a text file start a bulleted list using `-` or `*`. Press return
+to go to the next line, a new list item will be created.
+
+# Configuration
+
+You can choose which file types this plugin will work on:
+
+```vim
+" Bullets.vim
+let g:bullets_enabled_file_types = [
+    \ 'markdown',
+    \ 'text',
+    \ 'gitcommit',
+    \ 'scratch'
+    \]
+```
+
+Just add above to your .vimrc
+
+# Documentation
+
+```
+:h bullets
+```
+
+# Testing
+
+The test suite is only known to be working on OS X with MacVim installed. I
+tried running it on Circle CI but had no success.
+
+On your mac run:
+
+```sh
+rspec spec
+```
+
+You should see a Vim window open which will run each test, same general idea as
+Capybara integration testing. ❤️
+
+# TODO
+
+- [x] eliminate trailing bullet on previous line if user pressed <cr> twice
+- [x] allow indenting while in insert mode (C-l: indent right, C-h: indent left)
+- [x] scope the keybindings and functions to markdown and perhaps text
+- [x] allow GFM-style checkbox auto bullet
+- [x] prefix shortcuts and allow disabling them
+- [x] add numbered list
+- [x] reset numbers (user selects numbered bullets 3-5 and copies to middle of document, then reselects and resets them to 1-3)
+- [x] check if plugin initialized and don't load if it did
+- [x] allow <C-cr> for return without creating a bullet (only possible in GuiVim
+  unfortunately)
+- [x] create a text object for bullets
+- [x] create a text object for GFM-style checkboxes
+- [x] check if user is at EOL before appending auto-bullet - they may just want to
+- [ ] add alphabetic list
+- [ ] allow user to define a global var with custom bullets
+- [ ] create a text object for bullet list indentation
+- [ ] detect lists that have multiline bullets (should have no empty lines between
+  lines).
+  break the line at a certain point
+- [ ] support for intelligent alphanumeric indented bullets e.g. 1. \t a. \t 1.
+
+---
+
+### About
+
+[![Hashrocket logo](https://hashrocket.com/hashrocket_logo.svg)](https://hashrocket.com)
+
+Bullets.vim is kindly supported by [Hashrocket, a multidisciplinary design and
+development consultancy](https://hashrocket.com). If you'd like to [work with
+us](https://hashrocket.com/contact-us/hire-us) or [join our
+team](https://hashrocket.com/contact-us/jobs), don't hesitate to get in touch.
