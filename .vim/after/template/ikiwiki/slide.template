@@ -1,0 +1,11 @@
+VimL:"slide Template-File
+VimL: let s:value_start  = '¡'
+VimL: let s:value_end    = '¡'
+VimL: let s:reindent     = 1
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+[[!template id=sidebyside left="""
+¡s:Surround(1, '<+markdown+>')¡
+"""
+right="[[!img ¡s:Surround(2, '<+pdf+>')¡ pagenumber=¡s:Surround(3, '<+page+>')¡ ]]<+s:TerminalPlaceHolder()+>
+]]
