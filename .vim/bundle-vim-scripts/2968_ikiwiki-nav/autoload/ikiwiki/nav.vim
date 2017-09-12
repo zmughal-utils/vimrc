@@ -228,6 +228,9 @@ function! ikiwiki#nav#GenPosLinkLoc(base_path) " {{{1
   while base_path != '/'
     let base_path = fnamemodify(base_path, ':h')
     call add(pos_locs, base_path)
+    if isdirectory(base_path . '/.git' )
+	    break
+    endif
   endwhile
   return pos_locs
 endfunction " }}}1
@@ -330,6 +333,9 @@ function! ikiwiki#nav#GoToWikiPage(create_page, mode) " {{{1
   for _path in dirs_tocheck
     let plinkloc = ikiwiki#nav#BestLink2FName(_path, wl_text)
     call add(exs_dirs, plinkloc[0])
+    if len(plinkloc) >= 2
+      call add(exs_dirs, plinkloc[1]) " prefer using index.mdwn
+    endif
     let stdlinkform = plinkloc[0]
     if len(plinkloc) == 1
       exec focmd .stdlinkform[0]
