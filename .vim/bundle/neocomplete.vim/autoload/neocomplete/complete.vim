@@ -118,10 +118,6 @@ EOF
       continue
     endif
 
-    if source.max_candidates > 0
-      let words = words[: len(source.max_candidates)-1]
-    endif
-
     let words = neocomplete#helper#call_filters(
           \ source.neocomplete__converters, source, {})
 
@@ -129,8 +125,12 @@ EOF
       continue
     endif
 
+    if source.max_candidates > 0
+      let words = words[: source.max_candidates -1]
+    endif
+
     " Set default menu.
-    if get(words[0], 'menu', '') !~ '^\[.*\'
+    if get(words[0], 'menu', '') !~ '^\[.*\]'
       call s:set_default_menu(words, source)
     endif
 
@@ -265,7 +265,11 @@ function! neocomplete#complete#_set_results_words(sources) abort "{{{
         let context.candidates = deepcopy(context.prev_candidates)
       else
         try
-          let context.candidates = source.gather_candidates(context)
+          let winwidth = winwidth(0)
+          let type_string = type('')
+          let context.candidates = filter(source.gather_candidates(context),
+                \ 'len((type(v:val) == type_string) ?
+                \      v:val : v:val.word) < winwidth')
         catch
           call neocomplete#print_error(v:throwpoint)
           call neocomplete#print_error(v:exception)
