@@ -3,11 +3,17 @@ function! test#strategy#vimscript(cmd) abort
 endfunction
 
 function! test#strategy#basic(cmd) abort
-  if s:restorescreen()
-    execute '!'.s:pretty_command(a:cmd)
+  if has('nvim')
+    tabnew
+    call termopen(a:cmd)
+    startinsert
   else
-    execute '!'.a:cmd
-  endif
+    if s:restorescreen()
+      execute '!'.s:pretty_command(a:cmd)
+    else
+      execute '!'.a:cmd
+    endif
+  end
 endfunction
 
 function! test#strategy#make(cmd) abort
@@ -35,17 +41,9 @@ function! test#strategy#vimproc(cmd) abort
 endfunction
 
 function! test#strategy#neovim(cmd) abort
-  let opts = {'suffix': ' # vim-test'}
-  function! opts.close_terminal()
-    if bufnr(self.suffix) != -1
-      execute 'bdelete!' bufnr(self.suffix)
-    end
-  endfunction
-  call opts.close_terminal()
-
   botright new
-  call termopen(a:cmd . opts.suffix, opts)
-  au BufDelete <buffer> wincmd p
+  call termopen(a:cmd)
+  au BufDelete <buffer> wincmd p " switch back to last window
   startinsert
 endfunction
 

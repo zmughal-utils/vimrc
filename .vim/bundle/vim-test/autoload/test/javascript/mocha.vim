@@ -4,7 +4,7 @@ endif
 
 function! test#javascript#mocha#test_file(file) abort
   return a:file =~# g:test#javascript#mocha#file_pattern
-	  \ && (test#javascript#has_package('mocha') || !empty(test#javascript#mocha#executable()))
+    \ && test#javascript#has_package('mocha')
 endfunction
 
 function! test#javascript#mocha#build_position(type, position) abort
@@ -17,7 +17,8 @@ function! test#javascript#mocha#build_position(type, position) abort
   elseif a:type == 'file'
     return [a:position['file']]
   else
-    return []
+    let test_dir = get(filter(['test/', 'tests/'], 'isdirectory(v:val)'), 0)
+    return ['--recursive', test_dir]
   endif
 endfunction
 
@@ -33,10 +34,18 @@ function! test#javascript#mocha#build_args(args) abort
 endfunction
 
 function! test#javascript#mocha#executable() abort
-  if filereadable('node_modules/.bin/mocha')
-    return 'node_modules/.bin/mocha'
+  if test#javascript#has_package('mocha-webpack')
+    if filereadable('node_modules/.bin/mocha-webpack')
+      return 'node_modules/.bin/mocha-webpack'
+    else
+      return 'mocha-webpack'
+    endif
   else
-    return 'mocha'
+    if filereadable('node_modules/.bin/mocha')
+      return 'node_modules/.bin/mocha'
+    else
+      return 'mocha'
+    endif
   endif
 endfunction
 

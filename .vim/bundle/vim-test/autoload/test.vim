@@ -73,10 +73,9 @@ function! test#execute(runner, args, ...) abort
     else
       let strategy = get(g:, 'test#strategy')
     endif
-
-    if empty(strategy)
-      let strategy = 'basic'
-    endif
+  endif
+  if empty(strategy)
+    let strategy = 'basic'
   endif
 
   let args = a:args
