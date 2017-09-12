@@ -1006,7 +1006,9 @@ fu! s:KeyLoop()
 	wh exists('s:init') && s:keyloop
 		try
 			set t_ve=
-			set guicursor=a:NONE
+			if guicursor != ''
+				set guicursor=a:NONE
+			en
 			let nr = getchar()
 		fina
 			let &t_ve = t_ve
@@ -1201,7 +1203,7 @@ fu! s:AcceptSelection(action)
 			let type = exttype == 'dict' ? exttype : 'list'
 		en
 	en
-	let actargs = type == 'dict' ? [{ 'action': md, 'line': line, 'icr': icr }]
+	let actargs = type == 'dict' ? [{ 'action': md, 'line': line, 'icr': icr, 'input': str}]
 		\ : [md, line]
 	cal call(actfunc, actargs)
 endf
@@ -1878,6 +1880,11 @@ fu! s:highlight(pat, grp)
 		en
 
 		cal matchadd('CtrlPLinePre', '^>')
+	elseif !empty(a:pat) && s:regexp &&
+				\ exists('g:ctrlp_regex_always_higlight') &&
+				\ g:ctrlp_regex_always_higlight
+		let pat = substitute(a:pat, '\\\@<!\^', '^> \\zs', 'g')
+		cal matchadd(a:grp, ( s:martcs == '' ? '\c' : '\C').pat)
 	en
 endf
 
@@ -2004,7 +2011,7 @@ fu! s:bufnrfilpath(line)
 		if (a:line =~ '[\/]\?\[\d\+\*No Name\]$')
 			let bufnr = str2nr(matchstr(a:line, '[\/]\?\[\zs\d\+\ze\*No Name\]$'))
 			let filpath = bufnr
-		else
+		els
 			let bufnr = bufnr(a:line)
 			retu [bufnr, a:line]
 		en
@@ -2409,7 +2416,7 @@ fu! s:buildpat(lst)
 			let c = a:lst[item - 1]
 			let pat .= (c == '/' ? '[^/]\{-}' : '[^'.c.'/]\{-}').a:lst[item]
 		endfo
-	else
+	els
 		for item in range(1, len(a:lst) - 1)
 			let pat .= '[^'.a:lst[item - 1].']\{-}'.a:lst[item]
 		endfo
@@ -2499,7 +2506,9 @@ endf
 fu! s:getextvar(key)
 	if s:itemtype >= len(s:coretypes) && len(g:ctrlp_ext_vars) > 0
 		let vars = g:ctrlp_ext_vars[s:itemtype - len(s:coretypes)]
-		retu has_key(vars, a:key) ? vars[a:key] : -1
+		if has_key(vars, a:key)
+			retu vars[a:key]
+		en
 	en
 	retu get(g:, 'ctrlp_' . s:matchtype . '_' . a:key, -1)
 endf
