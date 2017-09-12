@@ -287,7 +287,7 @@ function! dispatch#start_command(bang, command) abort
   if command =~# '^:\S'
     unlet! g:dispatch_last_start
     return s:wrapcd(get(opts, 'directory', getcwd()),
-          \ substitute(command, '\>', get(a:0 ? a:1 : {}, 'background', 0) ? '!' : '', ''))
+          \ substitute(command, '\>', get(opts, 'background', 0) ? '!' : '', ''))
   endif
   call dispatch#start(command, opts)
   return ''
@@ -621,8 +621,10 @@ function! dispatch#compile_command(bang, args, count) abort
 
     call writefile([], request.file)
 
-    if s:dispatch(request) && !get(request, 'background')
-      call s:cgetfile(request)
+    if s:dispatch(request)
+      if !get(request, 'background')
+        call s:cgetfile(request)
+      endif
     else
       let request.handler = 'sync'
       let after = 'call DispatchComplete('.request.id.')'
