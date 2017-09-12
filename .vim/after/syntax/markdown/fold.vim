@@ -9,7 +9,7 @@ syn region mkdHeaderFold
 
 " fold region for lists
 syn region mkdListFold
-    \ start="^\z(\s*\)\*\z(\s*\)"
+    \ start="^\z(\s*\)[\*\-]\z(\s*\)"
     \ skip="^\z1 \z2\s*[^#]"
     \ end="^\(.\)\@="
     \ fold contains=TOP
