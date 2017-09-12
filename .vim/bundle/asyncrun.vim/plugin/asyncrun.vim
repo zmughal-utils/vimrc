@@ -3,7 +3,7 @@
 " Maintainer: skywind3000 (at) gmail.com
 " Homepage: http://www.vim.org/scripts/script.php?script_id=5431
 "
-" Last change: 2017.6.25
+" Last change: 2017/08/06 10:04:49
 "
 " Run shell command in background and output to quickfix:
 "     :AsyncRun[!] [options] {cmd} ...
@@ -51,6 +51,7 @@
 "     -cwd=?       - initial directory, (use current directory if unset)
 "     -save=0/1/2  - non-zero to save current/1 or all/2 modified buffer(s)
 "     -program=?   - set to 'make' to use '&makeprg'
+"     -raw=1       - use raw output (not match with the errorformat)
 "
 "     All options must start with a minus and position **before** `[cmd]`.
 "     Since no shell command starts with a minus. So they can be 
@@ -86,6 +87,9 @@
 "     first by using :copen (see :help copen/cclose). Or use
 "     ':call asyncrun#quickfix_toggle(8)' to open/close it rapidly.
 "
+
+" vim: set et fenc=utf-8 ff=unix sts=4 sw=4 ts=4 :
+
 
 "----------------------------------------------------------------------
 "- Global Settings & Variables
@@ -158,6 +162,9 @@ if !exists('g:asyncrun_ftrun')
 	let g:asyncrun_ftrun = {}
 endif
 
+if !exists('g:asyncrun_silent')
+	let g:asyncrun_silent = 1
+endif
 
 
 "----------------------------------------------------------------------
@@ -180,7 +187,11 @@ endfunc
 " run autocmd
 function! s:AutoCmd(name)
 	if has('autocmd')
-		exec 'silent doautocmd User AsyncRun'.a:name
+		if g:asyncrun_silent
+			exec 'silent doautocmd User AsyncRun'.a:name
+		else
+			exec 'doautocmd User AsyncRun'.a:name
+		endif
 	endif
 endfunc
 
@@ -339,6 +350,9 @@ function! s:AsyncRun_Job_Update(count)
 		let &g:efm = s:async_efm
 	endif
 	let l:raw = (s:async_efm == '')? 1 : 0
+	if s:async_info.raw == 1
+		let l:raw = 1
+	endif
 	while s:async_tail < s:async_head
 		let l:text = s:async_output[s:async_tail]
 		if l:iconv != 0
@@ -384,9 +398,17 @@ function! s:AsyncRun_Job_AutoCmd(mode, auto)
 		return
 	endif
 	if a:mode == 0
-		silent exec 'doautocmd QuickFixCmdPre '. name
+		if g:asyncrun_silent
+			silent exec 'doautocmd QuickFixCmdPre '. name
+		else
+			exec 'doautocmd QuickFixCmdPre '. name
+		endif
 	else
-		silent exec 'doautocmd QuickFixCmdPost '. name
+		if g:asyncrun_silent
+			silent exec 'doautocmd QuickFixCmdPost '. name
+		else
+			exec 'doautocmd QuickFixCmdPost '. name
+		endif
 	endif
 endfunc
 
@@ -512,6 +534,10 @@ function! s:AsyncRun_Job_NeoVim(job_id, data, event)
 		let l:size = len(a:data)
 		while l:index < l:size
 			let s:text = a:data[l:index]
+			if s:text == '' && l:index == l:size - 1
+				let l:index += 1
+				continue
+			endif
 			if s:asyncrun_windows != 0
 				let s:text = substitute(s:text, '\r$', '', 'g')
 			endif
@@ -762,6 +788,7 @@ function! s:ExtractOpt(command)
 	let opts.post = get(opts, 'post', '')
 	let opts.text = get(opts, 'text', '')
 	let opts.auto = get(opts, 'auto', '')
+	let opts.raw = get(opts, 'raw', '')
 	if 0
 		echom 'cwd:'. opts.cwd
 		echom 'mode:'. opts.mode
@@ -908,10 +935,13 @@ function! s:find_root(path, markers)
 endfunc
 
 " get project root
-function! asyncrun#get_root(path)
+function! asyncrun#get_root(path, ...)
 	let markers = ['.project', '.git', '.hg', '.svn', '.root']
 	if exists('g:asyncrun_rootmarks')
 		let markers = g:asyncrun_rootmarks
+	endif
+	if a:0 > 0
+		let markers = a:1
 	endif
 	let l:hr = s:find_root(a:path, markers)
 	if s:asyncrun_windows
@@ -920,15 +950,24 @@ function! asyncrun#get_root(path)
 	return l:hr
 endfunc
 
+function! asyncrun#path_join(home, name)
+	return s:path_join(a:home, a:name)
+endfunc
+
+
 
 "----------------------------------------------------------------------
 " run command
 "----------------------------------------------------------------------
 function! s:run(opts)
 	let l:opts = a:opts
-	let l:mode = a:opts.mode
 	let l:command = a:opts.cmd
 	let l:retval = ''
+	let l:mode = g:asyncrun_mode
+
+	if a:opts.mode != ''
+		let l:mode = a:opts.mode
+	endif
 
 	" process makeprg/grepprg in -program=?
 	let l:program = ""
@@ -969,6 +1008,7 @@ function! s:run(opts)
 		let s:async_info.postsave = opts.post
 		let s:async_info.autosave = opts.auto
 		let s:async_info.text = opts.text
+		let s:async_info.raw = opts.raw
 		if s:AsyncRun_Job_Start(l:command) != 0
 			call s:AutoCmd('Error')
 		endif
@@ -1017,13 +1057,15 @@ function! s:run(opts)
 			py p = subprocess.Popen(**argv)
 			py text = p.stdout.read()
 			py p.stdout.close()
-			py p.wait()
+			py c = p.wait()
 			if has('patch-7.4.145')
 				let l:retval = pyeval('text')
+				let g:asyncrun_shell_error = pyeval('c')
 			else
 				py text = text.replace('\\', '\\\\').replace('"', '\\"')
 				py text = text.replace('\n', '\\n').replace('\r', '\\r')
 				py vim.command('let l:retval = "%s"'%text)
+				py vim.command('let g:asyncrun_shell_error = %d'%c)
 			endif
 		elseif s:asyncrun_windows != 0 && has('python3')
 			let l:script = s:ScriptWrite(l:command, 0)
@@ -1034,16 +1076,19 @@ function! s:run(opts)
 			py3 p = subprocess.Popen(**argv)
 			py3 text = p.stdout.read()
 			py3 p.stdout.close()
-			py3 p.wait()
+			py3 c = p.wait()
 			if has('patch-7.4.145')
 				let l:retval = py3eval('text')
+				let g:asyncrun_shell_error = py3eval('c')
 			else
 				py3 text = text.replace('\\', '\\\\').replace('"', '\\"')
 				py3 text = text.replace('\n', '\\n').replace('\r', '\\r')
 				py3 vim.command('let l:retval = "%s"'%text)
+				py3 vim.command('let g:asyncrun_shell_error = %d'%c)
 			endif
 		else
 			let l:retval = system(l:command)
+			let g:asyncrun_shell_error = v:shell_error
 		endif
 		let g:asyncrun_text = opts.text
 		if opts.post != ''
@@ -1051,14 +1096,16 @@ function! s:run(opts)
 		endif
 	elseif l:mode <= 5
 		if s:asyncrun_windows != 0 && (has('gui_running') || has('nvim'))
-			let l:ccc = shellescape(s:ScriptWrite(l:command, 1))
 			if l:mode == 4
+				let l:ccc = shellescape(s:ScriptWrite(l:command, 1))
 				silent exec '!start cmd /C '. l:ccc
 			else
+				let l:ccc = shellescape(s:ScriptWrite(l:command, 0))
 				silent exec '!start /b cmd /C '. l:ccc
 			endif
 			redraw
 		else
+			let l:ccc = shellescape(s:ScriptWrite(l:command, 0))
 			if l:mode == 4
 				exec '!' . escape(l:command, '%#')
 			else
@@ -1286,7 +1333,45 @@ function! s:execute(mode)
 		else
 			exec '!emake -e ' . l:fname
 		endif
-	else
+	elseif a:mode == 3
+		let l:makeprg = get(g:, 'asyncrun_mp_run', '')
+		let l:fname = shellescape(expand("%"))
+		if l:makeprg == ''
+			if executable('make')
+				let l:makeprg = 'make run -f'
+			elseif executable('mingw32-make')
+				let l:makeprg = 'mingw32-make run -f'
+			elseif executable('mingw64-make')
+				let l:makeprg = 'mingw64-make run -f'
+			else
+				redraw 
+				call s:ErrorMsg('cannot find make/mingw32-make')
+				return
+			endif
+		endif
+		if (has('gui_running') || has('nvim')) && (s:asyncrun_windows != 0)
+			let l:cmdline = l:makeprg. ' '.l:fname 
+			if !has('nvim')
+				silent exec '!start cmd /C '.l:cmdline . ' & pause'
+			else
+				call asyncrun#run('', {'mode':4}, l:cmdline)
+			endif
+		else
+			exec '!'.l:makeprg.' '.l:fname
+		endif
+	elseif a:mode == 4
+		let ext = tolower(expand("%:e"))
+		if index(['c', 'cc', 'cpp', 'h', 'mak', 'em', 'emk', 'm'], ext) >= 0
+			call s:execute(2)
+		elseif index(['mm', 'py', 'pyw', 'cxx', 'java', 'pyx'], ext) >= 0
+			call s:execute(2)
+		elseif index(['c', 'cpp', 'python', 'java', 'go'], &ft) >= 0
+			call s:execute(2)
+		elseif index(['javascript'], &ft) >= 0
+			call s:execute(2)
+		else
+			call s:execute(3)
+		endif
 	endif
 endfunc
 
@@ -1309,18 +1394,26 @@ function! asyncrun#execute(mode, cwd, save)
 	if l:dest != ''
 		silent! exec cd . fnameescape(l:dest)
 	endif
-	if a:mode == '0'
+	if a:mode == '0' || a:mode == 'filename' || a:mode == 'file'
 		call s:execute(0)
-	elseif a:mode == '1'
+	elseif a:mode == '1' || a:mode == 'main' || a:mode == 'exe'
 		call s:execute(1)
-	elseif a:mode == '2'
+	elseif a:mode == '2' || a:mode == 'emake'
 		call s:execute(2)
+	elseif a:mode == '3' || a:mode == 'make'
+		call s:execute(3)
+	elseif a:mode == '4' || a:mode == 'auto' || a:mode == 'automake'
+		call s:execute(4)
 	elseif &ft == 'cpp' || &ft == 'c'
 		call s:execute(1)
 	elseif index(['c', 'cpp', 'cc', 'm', 'mm', 'cxx'], l:ext) >= 0
 		call s:execute(1)
 	elseif index(['h', 'hh', 'hpp'], l:ext) >= 0
 		call s:execute(1)
+	elseif index(['mak', 'emake', 'em', 'emk'], l:ext) >= 0
+		call s:execute(2)
+	elseif l:ext == 'mk'
+		call s:execute(3)
 	elseif &ft == 'vim'
 		exec 'source '. fnameescape(expand('%'))
 	elseif (has('gui_running') || has('nvim')) && s:asyncrun_windows != 0
@@ -1382,6 +1475,7 @@ function! asyncrun#execute(mode, cwd, save)
 		silent! exec cd . fnameescape(savecwd)
 	endif
 endfunc
+
 
 
 

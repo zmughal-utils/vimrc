@@ -13,6 +13,7 @@ If that doesn't excite you, then perhaps this GIF screen capture below will chan
 
 ## News
 
+- 2017/07/12 new option `-raw=1` to use raw output (not match with the errorformat)
 - 2017/06/26 new option `-cwd=<root>` to change working directory to project root, see [here]() 
 - 2016/11/01 `asyncrun.vim` can now cooperate with `errormarker` now.
 - 2016/10/17 Glad to announce that `asyncrun.vim` supports NeoVim now.
@@ -55,6 +56,11 @@ Macro '`%:p:h`' stands for current file dir.
     :noremap <F7> :AsyncRun gcc "%" -o "%<" <cr> 
 
 File name may contain spaces, therefore, it's safe to quote them.
+
+#### Run a python script
+    :AsyncRun -raw python %
+
+New option `-raw` will display the raw output (without matching to errorformat), you need the latest AsyncRun (after 1.3.13) to use this option. 
 
 ## Manual
 
@@ -112,6 +118,7 @@ There can be some options before your `[cmd]`:
     -program=?  - set to `make` to use `&makeprg`, `grep` to use `&grepprg` 
 	-post=?     - vimscript to exec after this job finished, spaces **must** be escaped to '\ '
 	-auto=?     - event name to trigger "QuickFixCmdPre/QuickFixCmdPost [name]" autocmd
+	-raw=1      - use raw output (output will not match with the errorformat) 
 
 All options must start with a minus and position **before** `[cmd]`. Since no shell command  string starts with a minus. So they can be distinguished from shell command easily without any ambiguity. 
 
@@ -208,6 +215,11 @@ See: [Cooperate with famous plugins](https://github.com/skywind3000/asyncrun.vim
 
 ## History
 
+- 1.3.17 (2017-08-06): fixed: process hang when mode is 5.
+- 1.3.16 (2017-08-05): fixed: g:asyncrun_mode issue (Joel Taylor)
+- 1.3.15 (2017-07-30): fixed: remove trailing new line in neovim.
+- 1.3.14 (2017-07-27): improve asyncrun#get_root(), allow user indicate the rootmarkers
+- 1.3.13 (2017-07-12): new option (-raw) to use raw output (not match with the errorformat).
 - 1.3.12 (2017-06-25): new macro `<root>` or $(VIM_ROOT) to indicate project root directory.
 - 1.3.11 (2017-05-19): new option (-save=2) to save all modified files.
 - 1.3.10 (2017-05-04): remove trailing `^M` in NeoVim 2.0 on windows 
