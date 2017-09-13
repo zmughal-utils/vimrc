@@ -108,3 +108,5 @@ refresh_git https://github.com/aklt/plantuml-syntax plantuml-syntax
 
 refresh_git https://github.com/janko-m/vim-test vim-test
 refresh_git https://github.com/skywind3000/asyncrun.vim asyncrun.vim
+
+refresh_git https://github.com/dkarter/bullets.vim bullets.vim
