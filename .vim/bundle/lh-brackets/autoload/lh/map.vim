@@ -4,17 +4,20 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.2.0
-let s:k_version = '320'
+" Version:      3.2.1
+let s:k_version = '321'
 " Created:      03rd Nov 2015
-" Last Update:  10th Nov 2016
+" Last Update:  13th Sep 2017
 "------------------------------------------------------------------------
 " Description:
 "       API plugin: Several mapping-oriented functions
 "
 "------------------------------------------------------------------------
 " History:
+"       v3.2.1 Fix regression with `set et`
 "       v3.2.0 Add `lh#map#4_this_context()`
+"              Fix tw issue, again
+"              Deprecates lh#dev#reinterpret_escaped_char()
 "       v3.1.2 Fix Issue 9 (when g:usemarks is false)
 "       v3.0.8 Fix Indenting issue when surrounding
 "       v3.0.6 Fix Indenting regression
@@ -29,7 +32,7 @@ let s:k_version = '320'
 "       v2.3.0 functions moved from plugin/misc_map.vim
 " TODO:
 " * Simplify the way mappings are defined, hopefully to get rid of
-" lh#dev#reinterpret_escaped_char()
+" lh#mapping#reinterpret_escaped_char()
 " }}}1
 "=============================================================================
 
@@ -125,9 +128,9 @@ function! lh#map#4_this_context(key, rule, sequence, ...) abort
   let syn = synIDattr(synID(line('.'),col('.')-1,1),'name')
   let context = s:new_matcher(a:rule)
   if context.recognizes(syn)
-    return lh#dev#reinterpret_escaped_char(a:sequence)
+    return lh#mapping#reinterpret_escaped_char(a:sequence)
   elseif a:0 > 0
-    return lh#dev#reinterpret_escaped_char(a:1)
+    return lh#mapping#reinterpret_escaped_char(a:1)
   else
     return a:key
   endif
@@ -145,13 +148,13 @@ function! lh#map#4_these_contexts(key, ...) abort
   let i = 1
   while i < a:0
     if (a:{i} =~ '^\(\k\|\\|\)\+$') && (syn =~? a:{i})
-      return lh#dev#reinterpret_escaped_char(a:{i+1})
+      return lh#mapping#reinterpret_escaped_char(a:{i+1})
     endif
     let i += 2
   endwhile
   " Else: default case
   if i == a:0
-    return lh#dev#reinterpret_escaped_char(a:{a:0})
+    return lh#mapping#reinterpret_escaped_char(a:{a:0})
   else
     return a:key
   endif
@@ -192,7 +195,7 @@ function! lh#map#no_context(key, seq) abort
   if syn =~? 'comment\|string\|character\|doxygen'
     return a:key
   else
-    return lh#dev#reinterpret_escaped_char(a:seq)
+    return lh#mapping#reinterpret_escaped_char(a:seq)
   endif
 endfunction
 
@@ -215,7 +218,7 @@ function! lh#map#no_context2(key, sequence) abort
   elseif getline(l)[c-1] =~ '\k'
     return a:key
   else
-    return lh#dev#reinterpret_escaped_char(a:seq)
+    return lh#mapping#reinterpret_escaped_char(a:seq)
   endif
 endfunction
 
@@ -254,7 +257,7 @@ function! lh#map#build_map_seq(seq) abort
       let r .= c
     endif
   endwhile
-  return lh#dev#reinterpret_escaped_char(r)
+  return lh#mapping#reinterpret_escaped_char(r)
 endfunction
 
 " Function: lh#map#smart_insert_seq1(key, expr1, expr2) {{{3
@@ -301,7 +304,7 @@ function! lh#map#insert_seq(key, seq, ...) abort
   " TODO: if no escape nor newline -> use s:k_move_prefix
   let mark = a:seq =~ '!cursorhere!'
   let s:gotomark = ''
-  let seq  = lh#dev#reinterpret_escaped_char(a:seq)
+  let seq  = lh#mapping#reinterpret_escaped_char(a:seq)
   let seq .= (mark ? '!movecursor!' : '')
 
   let cleanup = lh#on#exit()
@@ -510,72 +513,112 @@ endfunction
 " ## Internal functions {{{1
 
 " # Cursor moving {{{2
+" Function: s:find_unused_mark() {{{3
+function! s:find_unused_mark() abort
+  let mark = lh#mark#find_first_unused()
+  if mark == -1
+    " TODO: return the first mark found which is before the cursor
+    let mark = get(g:, 'lh#map#default_mark', "'M")
+  endif
+  return [mark, getpos(mark)]
+endfunction
+
 " Mark where the cursor should be at the end of the insertion
 
 " Function: lh#map#_cursor_here(...) {{{3
 function! lh#map#_cursor_here(...) abort
-  " NB: ``|'' requires virtcol() but cursor() requires col()
-  " let s:gotomark = line('.') . 'normal! '.virtcol('.')."|"
-  " let s:gotomark = 'call cursor ('.line('.').','.col('.').')'
   let s:old_indent = indent(line('.'))
+  let mark = s:find_unused_mark()
+  call setpos(mark[0], getpos('.'))
+  call s:Verbose('Using mark %1', mark)
   if a:0 > 0
-    let s:goto_lin_{a:1} = line('.')
-    let s:goto_col_{a:1} = virtcol('.')
-    call s:Verbose("Record cursor %1 at %2normal! %3|   indent=%4", a:1, s:goto_lin_{a:1}, s:goto_col_{a:1}, s:old_indent)
+    let s:goto_mark_{a:1} = mark
   else
-    let s:goto_lin = line('.')
-    let s:goto_col = virtcol('.')
-    call s:Verbose("Record cursor at %1normal! %2|   indent=%3", s:goto_lin, s:goto_col, s:old_indent)
+    let s:goto_mark = mark
   endif
+  call s:Verbose("Record cursor %1 with mark %2: |   indent=%3", get(a:, 1, ''), mark[0], s:old_indent)
   return ''
 endfunction
 
 " Function: lh#map#_goto_mark([old_behaviour]) {{{3
 function! lh#map#_goto_mark(...) abort
+  " We fetch the updated mark position. This is important in case automated
+  " line breaking occurs (i.e. when cursor column exceeds 'tw'). Indeed, in
+  " that case, the mark is automatically moved, and we need to use it's last
+  " know position.
+  let markpos = getpos(s:goto_mark[0]) + [virtcol(s:goto_mark[0])]
+  let goto_lin = markpos[1]
+  let goto_vcol = markpos[4]
+  call s:Verbose('Returning to mark %1 @ %2', markpos[0][0], markpos[0][1])
   " Bug: if line is empty, indent() value is 0 => expect old_indent to be the One
-  let crt_indent = indent(s:goto_lin)
+  let crt_indent = indent(goto_lin)
   let s:fix_indent = s:old_indent - crt_indent
   call s:Verbose('fix indent <- %1 (old_indent:%2 - crt_indent:%3)', s:fix_indent, s:old_indent, crt_indent)
-  if s:fix_indent != 0
-    let s:goto_col -= s:fix_indent
-    call s:Verbose('goto_col -= %1 (old_indent:%3 - crt_indent:%4) => %2', s:fix_indent, s:goto_col, s:old_indent, crt_indent)
-  endif
-  let new_behaviour = (a:0 > 0) ? (!a:1) : 1
-  if new_behaviour && s:goto_lin == line('.')
-    " Same line -> eligible for moving the cursor
-    " TODO: handle reindentation changes
-    let delta = s:goto_col - virtcol('.')
-    let move = lh#map#_move_cursor_on_the_current_line(delta)
-    return move
-  else
-    " " uses {lig}'normal! {col}|' because of the possible reindent
-    call s:Verbose("Restore cursor to %1normal! %2|", s:goto_lin, s:goto_col)
-    execute s:goto_lin . 'normal! ' . (s:goto_col) . '|'
-    " call cursor(s:goto_lin, s:goto_col)
-    return ''
-  endif
+
+  try
+    if s:fix_indent != 0
+      let goto_vcol -= s:fix_indent
+      call s:Verbose('goto_vcol -= %1 (old_indent:%3 - crt_indent:%4) => %2', s:fix_indent, goto_vcol, s:old_indent, crt_indent)
+    endif
+    let new_behaviour = (a:0 > 0) ? (!a:1) : 1
+    if new_behaviour && goto_lin == line('.')
+      " Same line -> eligible for moving the cursor
+      " TODO: handle reindentation changes
+      let delta = goto_vcol - virtcol('.')
+      let move = lh#map#_move_cursor_on_the_current_line(delta)
+      return move
+    else
+      let goto_col = markpos[2]
+      let goto_col -= s:fix_indent
+      " " uses {lig}'normal! {col}|' because of the possible reindent
+      call s:Verbose("Restore cursor to %1normal! %2|", goto_lin, goto_col)
+      execute goto_lin . 'normal! ' . (goto_col) . '|'
+      " call cursor(goto_lin, goto_col)
+      return ''
+    endif
+  finally
+    " Restore the mark to [0,0,0,0] or to what it was
+    call setpos(s:goto_mark[0], s:goto_mark[1])
+  endtry
 endfunction
 
 " Function: lh#map#_goto_end_mark() {{{3
 function! lh#map#_goto_end_mark() abort
   " Bug: if line is empty, indent() value is 0 => expect old_indent to be the One
-  let crt_indent = indent(s:goto_lin)
-  if crt_indent < s:old_indent
-    let s:fix_indent = s:old_indent - crt_indent
-  else
-    let s:old_indent = crt_indent - s:old_indent
-    let s:fix_indent = 0
-  endif
-  if s:old_indent != 0
-    let s:goto_col += s:old_indent
-  endif
-  if     s:goto_lin != s:goto_lin_2
-    " TODO: !!
-  else
-    let s:goto_col += s:goto_col_2 - s:goto_col_1
-  endif
-  call cursor(s:goto_lin, s:goto_col)
-  return ''
+  let markpos   = getpos(s:goto_mark[0])
+  let markpos_1 = getpos(s:goto_mark_1[0])
+  let markpos_2 = getpos(s:goto_mark_2[0])
+  let goto_lin   = markpos[1]
+  let goto_lin_1 = markpos_1[1]
+  let goto_lin_2 = markpos_2[1]
+  let goto_col   = markpos[2]
+  let goto_col_1 = markpos_1[2]
+  let goto_col_2 = markpos_2[2]
+
+  try
+    let crt_indent = indent(goto_lin)
+    if crt_indent < s:old_indent
+      let s:fix_indent = s:old_indent - crt_indent
+    else
+      let s:old_indent = crt_indent - s:old_indent
+      let s:fix_indent = 0
+    endif
+    if s:old_indent != 0
+      let goto_col += s:old_indent
+    endif
+    if     goto_lin != goto_lin_2
+      " TODO: !!
+    else
+      let goto_col += goto_col_2 - goto_col_1
+    endif
+    call cursor(goto_lin, goto_col)
+    return ''
+  finally
+    " Restore the marks to [0,0,0,0] or to what they were
+    call setpos(s:goto_mark[0], s:goto_mark[1])
+    call setpos(s:goto_mark_1[0], s:goto_mark_1[1])
+    call setpos(s:goto_mark_2[0], s:goto_mark_2[1])
+  endtry
 endfunction
 
 " Function: lh#map#_fix_indent() {{{3

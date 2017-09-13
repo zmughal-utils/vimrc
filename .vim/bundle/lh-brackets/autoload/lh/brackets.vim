@@ -4,9 +4,9 @@
 "               <URL:http://github.com/LucHermitte/lh-brackets>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.2.0
+" Version:      3.2.1
 " Created:      28th Feb 2008
-" Last Update:  13th Mar 2017
+" Last Update:  13th Sep 2017
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -24,6 +24,8 @@
 "
 "------------------------------------------------------------------------
 " History:
+" Version 3.2.1:
+"               * Fix regression with `set et`
 " Version 3.2.0:
 "               * Add `lh#brackets#jump_outside()`
 "               * Fix `Brackets -list`
@@ -459,7 +461,7 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
     let close = a:Close
   endif
 
-  if strlen(a:nl) > 0
+  if ! empty(a:nl)
     " Cannot use the following generic line because &inckey does not always
     " work and !cursorhere! does not provokes a reindentation
     "  :return lh#map#insert_seq(a:trigger, a:Open.a:nl.'!cursorhere!'.a:nl.a:Close.'!mark!')
@@ -467,6 +469,7 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
     return call('lh#map#insert_seq', [a:trigger, open.a:nl.close.'!mark!\<esc\>O']+a:000)
   else
     let c = virtcol('.')
+    let c = col('.')
     " call s:Verbose(c)
     let current = matchstr(line, '.*\%'.(c).'c\S*')
     if 0 && &tw > 0 && lh#encoding#strlen(current.open.close.lh#marker#txt()) > &tw
@@ -711,7 +714,7 @@ function! lh#brackets#_switch_int(trigger, cases) abort
       return eval(c.action)
     endif
   endfor
-  return lh#dev#reinterpret_escaped_char(eval(a:trigger))
+  return lh#mapping#reinterpret_escaped_char(eval(a:trigger))
 endfunction
 
 function! lh#brackets#_switch(trigger, cases) abort
@@ -723,7 +726,7 @@ endfunction
 function! lh#brackets#define_imap(trigger, cases, isLocal, ...) abort
   " - Some keys, like '<bs>', cannot be used to code the default.
   " - Double "string(" because those chars are correctly interpreted with
-  " lh#dev#reinterpret_escaped_char(eval()), which requires nested strings...
+  " lh#mapping#reinterpret_escaped_char(eval()), which requires nested strings...
   let default = (a:0>0) ? (a:1) : (a:trigger)
   let sCases='lh#brackets#_switch('.string(string(default)).', '.string(a:cases).')'
   call s:DefineImap(a:trigger, sCases, a:isLocal)
@@ -733,7 +736,7 @@ endfunction
 function! lh#brackets#enrich_imap(trigger, case, isLocal, ...) abort
   " - Some keys, like '<bs>', cannot be used to code the default.
   " - Double "string(" because those chars are correctly interpreted with
-  " lh#dev#reinterpret_escaped_char(eval()), which requires nested strings...
+  " lh#mapping#reinterpret_escaped_char(eval()), which requires nested strings...
   let default = (a:0>0) ? (a:1) : (a:trigger)
   let sCase='lh#brackets#_switch('.string(string(default)).', '.string([a:case]).')'
   call s:DefineImap(a:trigger, sCase, a:isLocal)
