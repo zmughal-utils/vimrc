@@ -273,4 +273,8 @@ let tlist_ikiwiki_settings   = 'markdown;h:Headings'
 let g:languagetool_jar=get(sort(glob('~/bin/LanguageTool-*/languagetool-commandline.jar', 1, 1)), -1, '')
 "}}}
 
+" For <url:~/.vim/bundle/bullets.vim>{{{
+let g:bullets_enabled_file_types = ['markdown', 'text', 'gitcommit', 'ikiwiki']
+"}}}
+
 " vim:fdm=marker
