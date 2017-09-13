@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      05th Oct 2009
-" Last Update:  04th Jan 2017
+" Last Update:  04th Aug 2017
 "------------------------------------------------------------------------
 " Description:  «description»
 " }}}1
@@ -57,8 +57,9 @@ endfunction
 " @note filetype inheritance is supported.
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
+" @deprecated, used lh#ft#option#get
 function! lh#dev#option#get(name, ft,...) abort
-  " This function has been deprecated
+  call lh#notify#deprecated('lh#dev#option#get', 'lh#ft#option#get')
   return call('lh#ft#option#get', [a:name, a:ft] + a:000)
 endfunction
 
@@ -68,8 +69,9 @@ endfunction
 " @note filetype inheritance is supported.
 " The order of the scopes for the variables checked can be specified through
 " the optional argument {scope}
+" @deprecated, used lh#ft#option#get_postfixed
 function! lh#dev#option#get_postfixed(name, ft,...) abort
-  " This function has been deprecated
+  call lh#notify#deprecated('lh#dev#option#get_postfixed', 'lh#ft#option#get_postfixed')
   return call('lh#ft#option#get_postfixed', [a:name, a:ft] + a:000)
 endfunction
 
@@ -78,29 +80,7 @@ endfunction
 " lh#dev#{name}({parameters}) otherwise
 " If {name} is a |List|, then the function name used is: {name}[0]#{ft}#{name}[1]
 function! lh#dev#option#call(name, ft, ...) abort
-  if type(a:name) == type([])
-    let prefix = a:name[0]
-    let name   = a:name[1]
-  elseif type(a:name) == type('string')
-    let prefix = 'lh#dev'
-    let name   = a:name
-  else
-    throw "Unexpected type (".type(a:name).") for name parameter"
-  endif
-
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
-  call map(fts, 'v:val."#"')
-  let fts += ['']
-  for ft in fts
-    let fname = prefix.'#'.ft.name
-    if !exists('*'.fname)
-      let file = substitute(fname, '#', '/', 'g')
-      let file = substitute(file, '.*\zs/.*', '.vim', '')
-      exe 'runtime autoload/'.file
-    endif
-    if exists('*'.fname) | break | endif
-  endfor
-
+  let fname = call('lh#dev#option#_find_funcname', [a:name, a:ft] + a:000)
   " call s:Verbose('Calling: '.fname.'('.join(map(copy(a:000), 'string(v:val)'), ', ').')')
   call s:Verbose('Calling: %1(%2)', fname, a:000)
   if s:verbose >= 2
@@ -169,7 +149,36 @@ endfunction
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 
-" # Load
+" # Load {{{2
+" Function: lh#dev#option#_find_funcname(name, ft, ...) {{{3
+" Function extracted to ease debugging.
+function! lh#dev#option#_find_funcname(name, ft, ...) abort
+  if type(a:name) == type([])
+    let prefix = a:name[0]
+    let name   = a:name[1]
+  elseif type(a:name) == type('string')
+    let prefix = 'lh#dev'
+    let name   = a:name
+  else
+    throw "Unexpected type (".type(a:name).") for name parameter"
+  endif
+
+  let fts = lh#dev#option#inherited_filetypes(a:ft)
+  call map(fts, 'v:val."#"')
+  let fts += ['']
+  for ft in fts
+    let fname = prefix.'#'.ft.name
+    if !exists('*'.fname)
+      let file = substitute(fname, '#', '/', 'g')
+      let file = substitute(file, '.*\zs/.*', '.vim', '')
+      exe 'runtime autoload/'.file
+    endif
+    if exists('*'.fname) | break | endif
+  endfor
+
+  return fname
+endfunction
+
 
 " # List of inherited properties between languages {{{2
 " Function: lh#dev#option#inherited_filetypes(fts) {{{3

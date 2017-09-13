@@ -7,14 +7,14 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  18th Oct 2016
+" Last Update:  02nd Aug 2017
 "------------------------------------------------------------------------
 " Description:
 "       «description»
 "
 "------------------------------------------------------------------------
 " History:
-"       v2.0.0: ~ deprecating lh#dev#option#get
+"       v2.0.0: ~ deprecating lh#dev#option#get, lh#dev#reinterpret_escaped_char
 "       v1.6.3: ~ Typo in option
 "       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
@@ -75,22 +75,16 @@ let cpp_function_start_pat = '{'
 " we can not define mappings (/abbreviations) that contain "\<{keys}>" into the
 " sequence to insert.
 " Note:	It accepts sequences containing double-quotes.
+" @deprecated: use lh#mapping#reinterpret_escaped_char() instead
 function! lh#dev#reinterpret_escaped_char(seq) abort
-  try
-    let seq = escape(a:seq, '"\')
-    " let seq = (substitute( seq, '\\\\<\(.\{-}\)\\\\>', "\\\\<\\1>", 'g' ))
-    " exe 'return "'.seq.'"'
-    exe 'return "' .
-          \   substitute( seq, '\\\\<\(.\{-}\)\\\\>', '"."\\<\1>"."', 'g' ) .  '"'
-  catch /.*/
-    " let g:rec_error = a:seq
-    throw v:exception
-  endtry
+  call lh#notify#deprecated('lh#dev#reinterpret_escaped_char', 'lh#mapping#reinterpret_escaped_char')
+  return lh#mapping#reinterpret_escaped_char(a:seq)
 endfunction
 
 " Function: lh#dev#find_function_boundaries(line) {{{2
 "# Find the function that starts before {line}, and finish after.
 " @todo: check monoline functions
+" @note depend on tags
 function! lh#dev#find_function_boundaries(line) abort
   try
     let lTags = lh#dev#start_tag_session()
@@ -121,6 +115,7 @@ endfunction
 " Function: lh#dev#get_variables(function_boundaries [, split points ...]) {{{2
 " NB: In C++, ctags does not understand for (int i=0...), and thus it can't
 " extract "i" as a local variable ...
+" @note depend on tags
 if lh#tags#ctags_flavour() == 'utags'
   let c_ctags_understands_local_variables_in_one_pass = 1
   let cpp_ctags_understands_local_variables_in_one_pass = 1
@@ -248,6 +243,7 @@ if !exists('s:temp_tags')
 endif
 
 " # lh#dev#__FindFunctions(line) {{{2
+" @note depend on tags
 function! lh#dev#__FindFunctions(line) abort
   let func_kind = lh#tags#func_kind(&ft)
   try
@@ -279,6 +275,7 @@ function! lh#dev#__FindFunctions(line) abort
 endfunction
 
 " # lh#dev#__FindEndFunc() {{{2
+" @note depend on tags
 function! lh#dev#__FindEndFunc(first_line) abort
   " 2.1- get the hook that find the end of a function ; default hook is based
   " on matchit , we may also want to play with tags kinds
@@ -291,6 +288,7 @@ endfunction
 
 " # lh#dev#__BuildCrtBufferCtags(...) {{{2
 " arg1: [first-line, last-line] => imply get local variables...
+" @note depend on tags
 function! lh#dev#__BuildCrtBufferCtags(...) abort
   " let temp_tags = tempname()
   let ctags_dirname = fnamemodify(s:temp_tags, ':h')
@@ -306,7 +304,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     let source_name = tempname()
     call writefile(getline(s, e), source_name, 'b')
   else
-    " todo: corriger le path car inject? par d?faut...
+    " todo: corriger le path car injecté par défaut...
     let source_name    = expand('%:p')
     " let source_name    = lh#path#relative_to(ctags_dirname, expand('%:p'))
   endif
@@ -469,6 +467,7 @@ function! lh#dev#_line_comment() abort
 endfunction
 
 " Function: lh#dev#_select_current_function() {{{3
+" @note depend on tags
 function! lh#dev#_select_current_function() abort
   let fn = lh#dev#find_function_boundaries(line('.'))
   call lh#dev#_goto_function_begin(fn)
@@ -477,12 +476,14 @@ function! lh#dev#_select_current_function() abort
 endfunction
 
 " Function: lh#dev#_goto_function_begin() {{{3
+" @note depend on tags
 function! lh#dev#_goto_function_begin(...) abort
   let fn = a:0>0 ? a:1 : lh#dev#find_function_boundaries(line('.'))
   exe fn.lines[0]
 endfunction
 
 " Function: lh#dev#_goto_function_end() {{{3
+" @note depend on tags
 function! lh#dev#_goto_function_end(...) abort
   let fn = a:0>0 ? a:1 : lh#dev#find_function_boundaries(line('.'))
   exe fn.lines[1]

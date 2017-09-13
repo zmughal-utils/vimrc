@@ -55,8 +55,6 @@ plugin/dev.vim
 plugin/boundaries.vim
 tests/lh/dev-comments.vim
 tests/lh/dev-naming.vim
-tests/lh/dev-option.vim
 tests/lh/dev-params.vim
-tests/lh/dev-reinterpret_escaped_chars.vim
 tests/lh/dev-style.vim
 VimFlavor
