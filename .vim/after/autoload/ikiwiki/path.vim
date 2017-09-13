@@ -6,5 +6,5 @@ function! ikiwiki#path#GetPageNameFromPath()
 endfunction
 
 function! ikiwiki#path#GetTitleFromPath()
-	return substitute(ikiwiki#path#GetPageNameFromPath(), '_', ' ', 'g')
+	return substitute(ikiwiki#path#GetPageNameFromPath(), '[-_]', ' ', 'g')
 endfunction
