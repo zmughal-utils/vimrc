@@ -6,13 +6,16 @@ _lh-vim-lib_ is a library that defines some common vim functions I use in my var
 
 This library has been conceived as a suite of [|autoload|](http://vimhelp.appspot.com/eval.txt.html#autoload) plugins. As such, it requires Vim 7+.
 
+As I only have access to a version 7.3-429 on travis-ci, let's say this is the
+minimum vim version I'll try to be compatible with.
+
 The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/master/doc/lh-vim-lib.txt) can be browsed.
 
 **Important:**
 
 - Since Version 2.2.0, the naming policy of these autoload functions have been harmonized. Now, most names are in lower cases, with words separated by underscores.
 - Since version 3.2.7, it's no longer hosted on google-code but on github
-- Version 4.0.0 breaks `lh#let#if_undef()` interface, deprecates `CONFIRM()`«»
+- Version 4.0.0 breaks `lh#let#if_undef()` interface, deprecates `CONFIRM()`
 
 ## Functions
 
@@ -77,9 +80,15 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#let#if_undef()`                            | Defines an extended vim variable (with ` :let`) on the condition the variable does not exist yet                                                                         |
 | `lh#let#to()`                                  | Defines an extended vim variable (with ` :let`) -- its previous value will be overridden                                                                                 |
 | `lh#let#unlet()`                               | Undefines an extended vim variable (with ` :unlet`)                                                                                                                      |
+| `lh#mark#is_unused(markname)`                  | Tells whether a mark is already used                                                                                                                                     |
+| `lh#mark#find_first_unused()`                  | Returns the name of the first unused mark found in A..Z and a..z                                                                                                         |
 | `lh#math#abs()`                                | Portable `abs()` function                                                                                                                                                |
 | `lh#mapping#define()`                          | Defines a mapping from its description                                                                                                                                   |
 | `lh#mapping#plug()`                            | Defines a series of default mappings associated to a plug mapping                                                                                                        |
+| `lh#mapping#reinterpret_escaped_char()`        | Transforms sequences into interpreted sequences for mappings                                                                                                             |
+| `lh#notify#once()`                             | Notifies something once                                                                                                                                                  |
+| `lh#notify#deprecated()`                       | Notifies somthing is deprecated once                                                                                                                                     |
+| `lh#notify#clear_notifications()`              | Clear previous notification so that could be notified again                                                                                                              |
 | `lh#on#exit()`                                 | Prepares a finalizer object to be executed in a `:finally` clause in order to restore variables and execute functions                                                    |
 | `lh#object#inject()`                           | Injects a new method in an existing object. Meant to simplify maintenance task.                                                                                          |
 | `lh#object#inject_methods()`                   | Injects several methods in an existing object.                                                                                                                           |
@@ -107,6 +116,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#position#extract(pos1,pos2)`               | Obtains the text between two positions                                                                                                                                   |
 | `lh#position#is_before()`                      | Tells if a position in a buffer is before another one -- boolean result                                                                                                  |
 | `lh#string#matches()`                          | Extracts a list of all matches in a string                                                                                                                               |
+| `lh#string#matchstrpos()`                      | Backport `matchstrpos()` to old vim versions                                                                                                                             |
 | `lh#string#trim()`                             | Trim a string                                                                                                                                                            |
 | `lh#time#bench(F,...)`                         | Times the execution of `F(...)`                                                                                                                                          |
 | `lh#time#bench_n(n, F,...)`                    | Times n executions of `F(...)`                                                                                                                                           |
@@ -219,6 +229,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | Function                                     | Purpose                                                                                                   |
 |:---------------------------------------------|:----------------------------------------------------------------------------------------------------------|
 | `lh#path#add_path_if_exists(listname, path)` | Adds a path is a list iff the path points to an existing node                                             |
+| `lh#path#cd_without_sideeffects()`           | Change the current directory without altering the behaviour regarding window local directories            |
 | `lh#path#common()`                           | Returns the biggest common part between several paths                                                     |
 | `lh#path#depth()`                            | Returns the depth of a path                                                                               |
 | `lh#path#exists()`                           | Returns whether a pathname can be read, or if it's open in a buffer                                       |

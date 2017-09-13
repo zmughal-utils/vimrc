@@ -1,5 +1,5 @@
 *lh-vim-lib.txt*        Vim common libraries (v4.0.0)
-                        For Vim version 7+      Last change: 08th Mar 2017
+                        For Vim version 7+      Last change: 05th Sep 2017
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -20,6 +20,9 @@ PRESENTATION                                  *lhvl-presentation*  {{{1
 various plugins and ftplugins.
 This library has been conceived as a suite of |autoload| plugins, and a few
 |macros| plugins. As such, it requires Vim 7+.
+
+As I only have access to a version 7.3-429 on travis-ci, let's say this is the
+minimum vim version I'll try to be compatible with.
 
 
 ==============================================================================
@@ -56,13 +59,20 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - *lh#has#default_in_getbufvar()* returns whether |getbufvar()| has 3 parameters
 - *lh#has#jobs()*     returns whether |+job|s are correctly implemented
 - *lh#has#partials()* returns whether |Partial|s are implemented
+- *lh#has#vkey()* returns whether |v:key| can be used in |map()| and |filter()|.
 - |lh#has#patch()|
 - |lh#leader#get()|
 - |lh#leader#get_local()|
 - |lh#leader#set_local_if_unset()|
+- |lh#mark#find_first_unused()|
+- |lh#mark#is_unused()|
 - |lh#math#abs()|
 - |lh#mapping#define()|
 - |lh#mapping#plug()|
+- |lh#mapping#reinterpret_escaped_char()|
+- |lh#notify#clear_notifications()|
+- |lh#notify#deprecated()|
+- |lh#notify#once()|
 - |lh#on#exit()|
 - |lh#po#context()|
 - |lh#position#char_at()|
@@ -149,6 +159,7 @@ Stack related functions:                                |lhvl#stack|      {{{2
 String related functions:                               |lhvl#string|     {{{2
 - |lh#string#as()|
 - |lh#string#matches()|
+- |lh#string#matchstrpos()|
 - |lh#string#substitute_unless()|
 - |lh#string#trim()|
 Graph related functions:                                |lhvl#graph|      {{{2
@@ -156,6 +167,7 @@ Graph related functions:                                |lhvl#graph|      {{{2
 - |lh#graph#tsort#breadth()|
 Path related functions:                                 |lhvl#path|       {{{2
 - |lh#path#add_path_if_exists()|
+- |lh#path#cd_without_sideeffects()|
 - |lh#path#common()|
 - |lh#path#depth()|
 - |lh#path#exists()|
@@ -278,7 +290,7 @@ Variable helper functions                               |lhvl#variable|   {{{2
 - |lh#let#if_undef()|
 - |lh#let#to()|
 - |lh#let#undef()|
-Project related defintions                              |lhvl#project|    {{{2
+Project related definitions                             |lhvl#project|    {{{2
 - |p:| |project-variable|
 - |:Project|
 - |lh#project#define()|
@@ -310,6 +322,7 @@ Design by Contract related functions                    |lhvl#DbC|        {{{2
   - |lh#assert#value().is_ge()|
   - |lh#assert#value().is_set()|
   - |lh#assert#value().is_unset()|
+  - |lh#assert#value().get()|
   - |lh#assert#value().has_key()|
   - |lh#assert#value().match()|
   - |lh#assert#value().not()|
@@ -409,6 +422,21 @@ Unlike |printf()|, this function takes positional parameters, i.e. >
   AssertEquals(lh#fmt#printf("foo %{2.toto}-%{1.titi} bar %1", {'a':42, 'titi': 'tutu'}, {'toto': {'foo': 42}}), "foo {'foo': 42}-tutu bar {'a': 42, 'titi': 'tutu'}")
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mark#find_first_unused()*     {{{3
+lh#mark#find_first_unused()~
+@returns The name of the first |mark| found to be _unused_ (as in
+`lh#mark#is_unused()`).
+The mark names are searched in `A`..`Z` and `a`..`z`.
+@version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mark#is_unused()*             {{{3
+lh#mark#is_unused(mark)~
+@returns Whether the given |mark| named {mark} is used. A mark is considered to be unused
+from the moment `getpos(mark)[1:]` equals `[0, 0, 0]`
+@version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#math#abs()*                   {{{3
 lh#math#abs(val)~
 @returns the absolute value of the number {val}.
@@ -445,6 +473,55 @@ For all the mode specified, it's equivalent to: >
     endif
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#mapping#reinterpret_escaped_char()* {{{3
+lh#mapping#reinterpret_escaped_char(seq)~
+This function transforms `'\<cr\>'`, `'\<esc\>'`, ... `'\<{keys}\>'` into the
+interpreted sequences `"\<cr>"`, `"\<esc>"`, ...  `"\<{keys}>"`.
+It is meant to be used by fonctions like |lh#map#no_context()|,
+|lh#map#insert_seq()|, ... as we can not define mappings (/abbreviations) that
+contain `"\<{keys}>"` into the sequence to insert.
+
+Note:	It accepts sequences containing double-quotes.
+
+@version 4.0.0, moved from |lh-dev|' |lh#dev#reinterpret_escaped_char()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#notify#clear_notifications()* {{{3
+lh#notify#clear_notifications()~
+Clears previous notifications. Identical notifications will be issued again.
+@version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#notify#deprecated()*          {{{3
+lh#notify#deprecated(old, new)~
+Notifies once that {old} is deprecated and that we should use {new} instead.
+@version 4.0.0
+>
+  call lh#notify#deprecated(
+       \ 'lh#dev#reinterpret_escaped_char',
+       \ 'lh#mapping#reinterpret_escaped_char')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#notify#once()*                {{{3
+lh#notify#once(id [, message])~
+Issues a notification once.
+@param[in] {id}      Identifier of the notification
+@param[in] {message} displayed.
+                     Its format is the same as the one taken by |lh#fmt#printf()|
+                     When not provided, no message is displayed, the
+                     notification itself is left to the calling code.
+@return whether a notification has/shall be done.
+@version 4.0.0
+>
+  " Usage 1
+  call lh#notify#once('foo', 'Warning: %1 is unexpected %2', what, context)
+
+  " Usage 2
+  if lh#notify#once('shy_dalek')
+      echomsg "Exterminate"
+  endif
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#on#exit()*                    {{{3
 lh#on#exit()~
 This function will register action to be executed at the end on a scope, and
@@ -452,13 +529,18 @@ more precisally in a |:finally| section.
 It permits to do the following things:
 - `restore()`                       restores a |variable| or a vim |option|.
 - `restore_option()`                restores a |lhvl#option.|
-- `register()`                      registers a |command| to execute.
-                                  it takes a second facultative argument
+- `register()`                      registers: a |command| , or a |funcref|,
+                                  or |lhvl#functor| or an object method, to
+                                  execute.
+                                  It takes a second facultative argument
                                   `"priority"` to give the highest priority to
                                   the command.
 - `restore_buffer_mapping()`        restores a |:map-<buffer>|.
 - `restore_mapping_and_clear_now()` restores |:map| and |:map-<buffer>| on
                                   `finalize()` and undefine them right away.
+
+Object methods emulates |Partials| on old vim versions. They are specified
+with: `{'object': dictionary, 'method': function_name_or_ref}`
 
 e.g. >
 
@@ -1211,6 +1293,12 @@ Example: >
    AssertEquals(matches, expected)
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#matchstrpos()*         {{{3
+lh#string#matchstrpos(expr, pattern [, start [, count]])~
+Backports |matchstrpos()| to old versions of vim.
+@since Version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#substitute_unless()*   {{{3
 lh#string#substitute_unless(string, pat, char)~
 @param    {string} |expr-string|
@@ -1766,6 +1854,8 @@ represented as strings. >
     " Assert sorted in place
     AssertIs(l, res)
 
+It can also sort list of lists. This time the sort is done on the first index.
+
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#subset()*                 {{{3
 lh#list#subset({input},{indices})~
@@ -2158,7 +2248,7 @@ These two functions implement a topological sort on the Direct Acyclic Graph.
 PATH RELATED FUNCTIONS                                *lhvl#path*       {{{2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                    *lh#path#add_path_if_exists()*    {{{3
+                                                    *lh#path#add_path_if_exists()*     {{{3
 lh#path#add_path_if_exists(listname, path)~
 @param[in,out] {lisname} |List| of pathnames to complete, or |p:var|iable that
                          designates a |List|.
@@ -2170,7 +2260,26 @@ The {path} may end in `/**` which will be ignored.
 If {path} is a directory, it'll be added to {listname}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                    *lh#path#common()*                {{{3
+                                                    *lh#path#cd_without_sideeffects()* {{{3
+lh#path#cd_without_sideeffects({pathname})~
+According to |haslocaldir()|, this function will perform either a |:cd|, or a
+|:lcd|.
+@param[in] {pathname} that is expected to exist.
+@see also |lh#os#lcd()|
+@since Version 4.0.0
+
+In order to change the current directory, it's important to take the context
+into account. Indeed:
+- unconditional use to |:lcd| will set a local directory to the current
+  window while there was none
+- unconditional use of |:cd| will remove the local directory in all windows
+  with a local directory equal to the one of the current window before the
+  call to |:cd|.
+
+Thanks to this function, no side effect will be observed.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                    *lh#path#common()*                 {{{3
 lh#path#common({pathnames})~
 @param[in] {pathnames} |List| of pathnames to analyse
 @return the common leading path between all {pathnames}
@@ -2181,7 +2290,7 @@ echoes >
  foo/
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                   *lh#path#depth()*                 {{{3
+                                                   *lh#path#depth()*                  {{{3
 lh#path#depth({dirname})~
 Returns the depth of a directory name.
 
@@ -2194,14 +2303,14 @@ Returns the depth of a directory name.
       -1 or 3.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                   *lh#path#exists()*                {{{3
+                                                   *lh#path#exists()*                 {{{3
 lh#path#exists({pathname})~
 @return whether {pathname} can be read (with |filereadable|) or whether a
 buffer exists with that name (see |bufexists()|).
 @since Version 4.0.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                    *lh#path#find()*                  {{{3
+                                                    *lh#path#find()*                   {{{3
 lh#path#find({pathslist}, {regex})~
 @param[in] {pathslist} List of paths which can be received as a |List| or as a
                        string made of coma separated paths.
@@ -2219,7 +2328,7 @@ e.g.: >
  endif
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                    *lh#path#find_in_parents()*       {{{3
+                                                    *lh#path#find_in_parents()*        {{{3
 lh#path#find_in_parents({path}, {path-patterns}, {kinds}, {last-valid-path})~
 Internal recursive function used by |local_vimrc|.
 
@@ -2234,7 +2343,7 @@ Internal recursive function used by |local_vimrc|.
 {path-patterns} up to {last-valid-path}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#fix()*                   {{{3
+                                                *lh#path#fix()*                    {{{3
 lh#path#fix({pathname} [,{shellslash} [,{quote-char}]]~
 Discl.: This function is the old |system-tools|' |FixPathName| moved to lh-vim-lib.
 
@@ -2277,7 +2386,7 @@ Exemples~
 Note: Unlike |fnameescape()|, |lh#path#fix()| will work even under the Windows native flavour of gvim, whichever the |'shellslash'| is, and whichever the |'shell'| is.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#glob_as_list()*          {{{3
+                                                *lh#path#glob_as_list()*           {{{3
                                                 *lh#path#GlobAsList()*
 lh#path#glob_as_list({pathslist}, {expr} [,{must_sort}])~
 lh#path#GlobAsList({pathslist}, {expr})  (*deprecated*)~
@@ -2291,7 +2400,7 @@ In case {expr} is a |List|, |globpath()| is applied on each expression in
 {expr}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#is_absolute_path()*      {{{3
+                                                *lh#path#is_absolute_path()*       {{{3
 lh#path#is_absolute_path({path})~
                                                 *lh#path#IsAbsolutePath()*
 lh#path#IsAbsolutePath({path})  (*deprecated*)~
@@ -2300,7 +2409,7 @@ lh#path#IsAbsolutePath({path})  (*deprecated*)~
 @note Supports Unix absolute paths, Windows absolute paths, and UNC paths
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#is_distant_or_scratch()* {{{3
+                                                *lh#path#is_distant_or_scratch()*  {{{3
 lh#path#is_distant_or_scratch({path})~
 @param[in] {path} Path to test
 @return
@@ -2309,14 +2418,14 @@ lh#path#is_distant_or_scratch({path})~
 - or whether it's an UNC path, i.e. starting with either `"//"` or `"\\"`.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#is_in()*                 {{{3
+                                                *lh#path#is_in()*                  {{{3
 lh#path#is_in({file}, {path})~
 Tells whether a {file} is within a directory tree.
 The function first tries to check whether the names match, then it tries again
 but on resolved pathnames (with |lh#path#readlink()|.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#is_up_to_date()*         {{{3
+                                                *lh#path#is_up_to_date()*          {{{3
 lh#path#is_up_to_date({file1}, {file2})~
 @param[in] {file1} filename
 @param[in] {file2} filename
@@ -2324,7 +2433,7 @@ lh#path#is_up_to_date({file1}, {file2})~
 {file2}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#is_url()*                {{{3
+                                                *lh#path#is_url()*                 {{{3
 lh#path#is_url({path})~
                                                 *lh#path#IsURL()*
 lh#path#IsURL({path})  (*deprecated*)~
@@ -2334,7 +2443,7 @@ lh#path#IsURL({path})  (*deprecated*)~
 rsynch://, scp://
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#join()*                  {{{3
+                                                *lh#path#join()*                   {{{3
 lh#path#join({pathparts} [, {path-separator}])~
 @param[in] {pathparts} Parts to pathanme to join
 @param[in] {path-separator} Joining character to use. Default depends on |'shellslash'|
@@ -2344,7 +2453,7 @@ i.e. >
     AssertEquals(lh#path#join([ "home", "me", "foo", "bar" ]), "home/me/foo/bar")
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#new_permission_lists()*  {{{3
+                                                *lh#path#new_permission_lists()*   {{{3
                                                 *lhvl#permission-list*
 lh#path#new_permission_lists(options)~
 Prepares a permission lists object.
@@ -2366,7 +2475,7 @@ Prepares a permission lists object.
 @see |local_vimrc| documentation for more details.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#readlink()*              {{{3
+                                                *lh#path#readlink()*               {{{3
 lh#path#readlink({pathname})~
 Resolves any symbolic links in pathnames.
 Where the *nix command readlink is available, it returns >
@@ -2375,7 +2484,7 @@ elsewhere it returns {pathname}.
 @param[in] pathslist to resolve
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#relative_to()*           {{{3
+                                                *lh#path#relative_to()*            {{{3
 lh#path#relative_to({from}, {to})~
 Returns the relative directory that indentifies {to} from {from} location.
 @param {from} origin directory
@@ -2384,12 +2493,12 @@ Returns the relative directory that indentifies {to} from {from} location.
         from the {from} directory.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                 *lh#path#remove_dir_mark()*       {{{3
+                                                 *lh#path#remove_dir_mark()*        {{{3
 lh#path#remove_dir_mark({dirname})~
 Remove the trailing 'shellslash' character ('`/`' or a '`\`') from {dirname}.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#select_one()*            {{{3
+                                                *lh#path#select_one()*             {{{3
                                                 *lh#path#SelectOne()*
 lh#path#select_one({pathnames},{prompt})~
 lh#path#SelectOne({pathnames},{prompt})  (*deprecated*)~
@@ -2406,12 +2515,12 @@ The pathnames displayed will be simplified thanks to |lh#path#strip_common()|
 simplified pathname selected.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#shellslash()*            {{{3
+                                                *lh#path#shellslash()*             {{{3
 lh#path#shellslash()~
 @return `'/'` or `'\'` depending on the current OS, or on |'ssl'| state.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#simplify()*              {{{3
+                                                *lh#path#simplify()*               {{{3
                                                 *lh#path#Simplify()*
 lh#path#simplify({pathname} [{make_relative_to_pwd])~
 lh#path#Simplify({pathname})  (*deprecated*)~
@@ -2429,7 +2538,7 @@ containing "`..\`". (It likelly works this way when vim is compiled without
 'shellslash' support)
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#split()*                 {{{3
+                                                *lh#path#split()*                  {{{3
 lh#path#split({path})~
 @param[in] {path} Path to split at `[/\\]`
 Split pathname parts
@@ -2438,7 +2547,7 @@ i.e. >
     AssertEquals(lh#path#split("/home/me/foo/bar"), [ "home", "me", "foo", "bar" ])
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#strip_common()*          {{{3
+                                                *lh#path#strip_common()*           {{{3
                                                 *lh#path#StripCommon()*
 lh#path#strip_common({pathnames})~
 lh#path#StripCommon({pathnames})  (*deprecated*)~
@@ -2454,7 +2563,7 @@ echoes >
  ['bar/file','file', 'foo/file']
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                 *lh#path#strip_start()*           {{{3
+                                                 *lh#path#strip_start()*            {{{3
                                                  *lh#path#StripStart()*
 lh#path#strip_start({pathname}, {pathslist})~
 lh#path#StripStart({pathname}, {pathslist})  (*deprecated*)~
@@ -2472,7 +2581,7 @@ echoes >
  template/bar.template
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                 *lh#path#to_dirname()*            {{{3
+                                                 *lh#path#to_dirname()*             {{{3
 lh#path#to_dirname({dirname})~
 Ensures the returned directory name ends with a '`/`' or a '`\`'.
 
@@ -2480,7 +2589,7 @@ Ensures the returned directory name ends with a '`/`' or a '`\`'.
       character to append.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#to_relative()*           {{{3
+                                                *lh#path#to_relative()*            {{{3
                                                 *lh#path#ToRelative()*
 lh#path#to_relative({pathname})~
 lh#path#ToRelative({pathname})  (*deprecated*)~
@@ -2489,7 +2598,7 @@ lh#path#ToRelative({pathname})  (*deprecated*)~
         from the current directory.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#to_regex()*              {{{3
+                                                *lh#path#to_regex()*               {{{3
 lh#path#to_regex({pathname})~
 Transforms the {pathname} to separate each node-name by the string '`[/\\]`'
 
@@ -2503,7 +2612,7 @@ echoes >
  [/\\]home[/\\]luc[/\\]\(vimfiles\|.vim\)
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#path#vimfiles()*              {{{3
+                                                *lh#path#vimfiles()*               {{{3
 lh#path#vimfiles()~
 Function that I use to find either `$HOME/.vim/` or the equivalent on windows.
 This function got a very internal and personal variation point: if `$LUCHOME`
@@ -3887,6 +3996,11 @@ Being able to toggle an option between several values, when this is a buffer
 local option, quickly becomes a nightmare. This is because we don't have
 `p:roject_options`.
 
+Note, that's it's also possible to specify project settings with
+[|editorconfig|](https://github.com/editorconfig/editorconfig-vim). The syntax
+will be slightly different from the usual. See the related section in
+doc/Project.md.
+
 So? Let's have them then!
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4305,6 +4419,13 @@ lh#assert#value({actual}).is_set([{msg}])                       *lh#assert#value
 lh#assert#value({actual}).is_unset([{msg}])                     *lh#assert#value().is_unset()*
     Relates to |lh#option#is_set()| and |lh#option#is_unset()|
 
+lh#assert#value({actual}).get({index}|{key} [, {msg}])          *lh#assert#value().get()*
+    Asserts first that {actual} is a |List| or a |Dictionary|.
+    Then asserts it has an element at the given {index}|{key}.
+    Finally returns an altered assertion object on which anything could be
+    asserted, e.g.: >
+    call lh#assert#value({'d:': 42}).get('d').eq(42)
+
 lh#assert#value({actual}).verifies({func}, {arglist} [, {msg}]) *lh#assert#value().verifies()*
     Lazily checks anything.
     {func} and {arglist} are the exact same parameters as the ones used by
@@ -4315,8 +4436,11 @@ lh#assert#value({actual}).verifies({func}, {arglist} [, {msg}]) *lh#assert#value
     Unlike |lh#assert#true()|, this flavour doesn't evaluate {func} in
     |dbc-ignore| mode.
 
-lh#assert#type({actual}).is({expected})                *lh#assert#type().is()*
-lh#assert#type({actual}).belongs_to({expected}...)     *lh#assert#type().belongs_to()*
+lh#assert#type({actual})....                           *lh#assert#type()*
+    This time the assertions are done on the type of the expression.
+
+lh#assert#type({actual}).is({expected} [, {msg}])               *lh#assert#type().is()*
+lh#assert#type({actual}).belongs_to({expected}...)              *lh#assert#type().belongs_to()*
     They are very similar to |lh#assert#value()| tests, but on types.
     e.g. >
     call lh#assert#type([1,2]).is([])

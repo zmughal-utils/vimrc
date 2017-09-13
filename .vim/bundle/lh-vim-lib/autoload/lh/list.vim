@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 40000
 " Created:      17th Apr 2007
-" Last Update:  31st Mar 2017
+" Last Update:  22nd Aug 2017
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to |Lists|
@@ -23,6 +23,8 @@ let s:k_version = 40000
 "       (*) ENH: Add lh#list#push_if_new_elements()
 "       (*) ENH: Add lh#list#cross()
 "       (*) PERF: Improve #matches() and #match() performances
+"       (*) ENH: Add support for lh#list#sort(list[lists])
+"           Sorts on first index
 "       v3.13.2
 "       (*) PERF: Optimize `lh#list#push_if_new`
 "       v3.10.3
@@ -135,24 +137,13 @@ function! lh#list#Transform(input, output, action) abort
   let new = map(copy(a:input), a:action)
   let res = extend(a:output,new)
   return res
-
-  for element in a:input
-    let action = substitute(a:action, 'v:val','element', 'g')
-    let res = eval(action)
-    call add(a:output, res)
-    unlet element " for heterogeneous lists
-  endfor
-  return a:output
 endfunction
 
 " Function: lh#list#transform(input, output, action) {{{3
 function! lh#list#transform(input, output, action) abort
-  for element in a:input
-    let res = lh#function#execute(a:action, element)
-    call add(a:output, res)
-    unlet element " for heterogeneous lists
-  endfor
-  return a:output
+  let new = map(copy(a:input), 'lh#function#execute(a:action, v:val)')
+  let res = extend(a:output,new)
+  return res
 endfunction
 
 " Function: lh#list#chain_transform(input, actions) {{{3
@@ -430,40 +421,31 @@ endfunction
 " Function: lh#list#arg_max(list [, transfo]) {{{3
 function! lh#list#arg_max(list, ...) abort
   if empty(a:list) | return -1 | endif
-  let Transfo = a:0 > 0 ? a:1 : function(s:getSNR(id))
-  let m = Transfo(a:list[0])
-  let p = 0
-  let i = 1
-  while i != len(a:list)
-    let e = a:list[i]
-    let v = Transfo(e)
-    if v > m
-      let m = v
-      let p = i
-    endif
-    let i += 1
-  endwhile
-  return p
+  if a:0 > 0
+    let Transfo = a:1
+    let list = map(copy(a:list), '[Transfo(v:val), v:key]')
+  else
+    let list = map(copy(a:list), '[v:val, v:key]')
+  endif
+  let res = [list[0]]
+  call map(list[1:], 'add(res, v:val[0] > res[-1][0] ? v:val : res[-1])')
+  return res[-1][1]
 endfunction
+
 
 " Function: lh#list#arg_min(list [, transfo]) {{{3
 " @since Version 4.0.0
 function! lh#list#arg_min(list, ...) abort
   if empty(a:list) | return -1 | endif
-  let Transfo = a:0 > 0 ? a:1 : function(s:getSNR(id))
-  let m = Transfo(a:list[0])
-  let p = 0
-  let i = 1
-  while i != len(a:list)
-    let e = a:list[i]
-    let v = Transfo(e)
-    if v < m
-      let m = v
-      let p = i
-    endif
-    let i += 1
-  endwhile
-  return p
+  if a:0 > 0
+    let Transfo = a:1
+    let list = map(copy(a:list), '[Transfo(v:val), v:key]')
+  else
+    let list = map(copy(a:list), '[v:val, v:key]')
+  endif
+  let res = [list[0]]
+  call map(list[1:], 'add(res, v:val[0] < res[-1][0] ? v:val : res[-1])')
+  return res[-1][1]
 endfunction
 
 " Function: lh#list#not_found(range) {{{3
@@ -488,24 +470,34 @@ endfunction
 " - 'N' -> number comp, but on strings
 let s:k_has_num_cmp = has("patch-7.4-341")
 let s:k_has_fixed_str_cmp = has("patch-7.4-411")
+let s:k_has_list_num_cmp = 0
 " For testing purposes...
 " let s:k_has_num_cmp = 0
 " let s:k_has_fixed_str_cmp = 0
 function! lh#list#sort(list,...) abort
+  if empty(a:list) | return a:list | endif
   let args = [a:list] + a:000
   if len(args) > 1
-    if args[1] == 'N'
-      let args[0] = map(a:list, 'eval(v:val)')
-      let args[1] = 'n'
-      let was_sorting_numbers_as_strings = 1
-    endif
-    if !s:k_has_num_cmp && args[1]=='n'
-      let args[1] = 'lh#list#_regular_cmp'
-    elseif !s:k_has_fixed_str_cmp && args[1]==''
-      let args[1] = 'lh#list#_str_cmp'
+    if lh#type#is_string(args[1])
+      if args[1] == 'N'
+        let args[0] = map(a:list, 'eval(v:val)')
+        let args[1] = 'n'
+        let was_sorting_numbers_as_strings = 1
+      endif
+      if !s:k_has_list_num_cmp && args[1]=='n' && type(a:list[0])==type([])
+        let args[1] = 'lh#list#_list_regular_cmp'
+      elseif !s:k_has_num_cmp && args[1]=='n'
+        let args[1] = 'lh#list#_regular_cmp'
+      elseif !s:k_has_fixed_str_cmp && args[1]==''
+        let args[1] = 'lh#list#_str_cmp'
+      endif
     endif
   else
-    if !s:k_has_fixed_str_cmp
+    if !s:k_has_list_num_cmp && type(a:list[0])==type([])
+          \ && empty(filter(map(copy(a:list), 'type(v:val)'), 'v:val != type([])'))
+      " The last test handle heterogenous lists
+      let args += ['lh#list#_list_regular_cmp']
+    elseif !s:k_has_fixed_str_cmp
       let args += ['lh#list#_str_cmp']
     endif
   endif
@@ -570,7 +562,7 @@ function! lh#list#subset(list, indices) abort
 endfunction
 
 " Function: lh#list#mask(list, masks) {{{3
-if lh#has#patch('patch-7.2-295')
+if lh#has#vkey()
   function! lh#list#mask(list, masks) abort
     let len = len(a:list)
     call lh#assert#equal(len, len(a:masks),
@@ -639,7 +631,6 @@ if s:has_add_ternary()
     let yes = []
     let no = []
     if type(a:Cond) == type(function('has'))
-      " call map(copy(a:list), {idx, val -> add(a:Cond(idx,val)?yes:no, val)})
       call map(copy(a:list), 'add(a:Cond(v:key,v:val)?yes:no, v:val)')
     else
       call map(copy(a:list), 'add((('.a:Cond.')?(yes):(no)), v:val)')
@@ -751,11 +742,7 @@ function! lh#list#for_each_call(list, action) abort
         \.restore('&isk')
   try
     set isk&vim
-    for e in a:list
-      let action = substitute(a:action, '\v<v:val>', '\=string(e)', 'g')
-      exe 'call '.action
-      unlet e
-    endfor
+    let actions = map(copy(a:list), 'eval(substitute(a:action, "\\v<v:val>", "\\=string(v:val)", "g"))')
   catch /.*/
     throw "lh#list#for_each_call: ".v:exception." in ``".action."''"
   finally
@@ -886,6 +873,15 @@ function! lh#list#_regular_cmp(lhs, rhs) abort
         \ : a:lhs == a:rhs ? 0
         \ :                  1
   return res
+endfunction
+
+" Function: lh#list#_list_regular_cmp(lhs, rhs) {{{3
+" @Version 4.0.0
+function! lh#list#_list_regular_cmp(lhs, rhs) abort
+  if type(a:lhs) != type(a:rhs) | return 0 | endif
+  call lh#assert#type(a:lhs).is([])
+  call lh#assert#type(a:rhs).is([])
+  return lh#list#_regular_cmp(a:lhs[0], a:rhs[0])
 endfunction
 
 " Function: lh#list#_apply_on(list/dict, index/key, action) {{{3

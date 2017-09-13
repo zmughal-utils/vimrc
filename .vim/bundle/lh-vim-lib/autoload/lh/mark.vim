@@ -1,16 +1,14 @@
 "=============================================================================
-" File:         autoload/lh/has.vim                               {{{1
+" File:         autoload/lh/mark.vim                              {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      4.0.0
-let s:k_version = '400000'
-" Created:      02nd Sep 2016
-" Last Update:  23rd Aug 2017
+" Version:      4.0.0.
+let s:k_version = '400'
+" Created:      24th Jul 2017
+" Last Update:  24th Jul 2017
 "------------------------------------------------------------------------
 " Description:
-"       Synthetize compatibility options.
-"       It's meant to avoid searching the patch list again and again when a
-"       feature has appeared in a working version.
+"       Functions related to marks
 "
 "------------------------------------------------------------------------
 " History:      «history»
@@ -23,13 +21,13 @@ set cpo&vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
-function! lh#has#version()
+function! lh#mark#version()
   return s:k_version
 endfunction
 
 " # Debug   {{{2
 let s:verbose = get(s:, 'verbose', 0)
-function! lh#has#verbose(...)
+function! lh#mark#verbose(...)
   if a:0 > 0 | let s:verbose = a:1 | endif
   return s:verbose
 endfunction
@@ -44,52 +42,31 @@ function! s:Verbose(expr, ...)
   endif
 endfunction
 
-function! lh#has#debug(expr) abort
+function! lh#mark#debug(expr) abort
   return eval(a:expr)
 endfunction
 
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
-" # Vim features {{{2
 
-" Function: lh#has#patch(vernumber) {{{3
-if (v:version > 704) || (v:version == 704 && has('patch237'))
-  function! lh#has#patch(vernumber) abort
-    return has(a:vernumber)
-  endfunction
-else
-  function! lh#has#patch(vernumber) abort
-    let [all, major, minor, patch; tail] = matchlist(a:vernumber, '\v^patch-(\d+)\.(\d+)[.-](\d+)$')
-    let ver = eval(printf('%d%02d', major, minor))
-    return (v:version > ver) || (v:version == ver && has('patch'.patch))
-  endfunction
-endif
-
-" Function: lh#has#lambda() {{{3
-function! lh#has#lambda() abort
-  return has("lambda")
+" Function: lh#mark#is_unused(mark) {{{3
+function! lh#mark#is_unused(mark) abort
+  return getpos(a:mark)[1:] == [0,0,0]
 endfunction
 
-" Function: lh#has#partials() {{{3
-function! lh#has#partials() abort
-  return lh#has#patch("patch-7.4.1558")
+" Function: lh#mark#find_first_unused() {{{3
+let s:a_ascii_code = char2nr('a')
+let s:A_ascii_code = char2nr('A')
+let s:quote        = "'"
+let s:k_mark_names
+      \ = map(range(26), 's:quote . nr2char(v:val+s:A_ascii_code)')
+      \ + map(range(26), 's:quote . nr2char(v:val+s:a_ascii_code)')
+function! lh#mark#find_first_unused() abort
+  let idx = lh#list#find_if_fast(s:k_mark_names, 'lh#mark#is_unused(v:val)')
+  return get(s:k_mark_names, idx, -1)
 endfunction
 
-" Function: lh#has#jobs() {{{3
-function! lh#has#jobs() abort
-  return exists('*job_start') && lh#has#patch("patch-7.4.1980")
-endfunction
-
-" Function: lh#has#default_in_getbufvar() {{{3
-function! lh#has#default_in_getbufvar() abort
-  return lh#has#patch("patch-7.3.831")
-endfunction
-
-" Function: lh#has#vkey() {{{3
-function! lh#has#vkey() abort
-  return lh#has#patch('patch-7.2-295')
-endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1

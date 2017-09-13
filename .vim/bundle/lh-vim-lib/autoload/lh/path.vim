@@ -7,7 +7,7 @@
 " Version:      4.0.0
 let s:k_version = 40000
 " Created:      23rd Jan 2007
-" Last Update:  31st Mar 2017
+" Last Update:  23rd Aug 2017
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to the handling of pathnames
@@ -109,6 +109,7 @@ let s:k_version = 40000
 "       (*) Improve `lh#path#strip_start()` performances
 "       (*) lh#path#split('/foo') will now return 2 elements
 "       (*) Recognize empty name buffer as scratch/distant
+"       (*) PERF: Improve performances
 " TODO:
 "       (*) Fix #simplify('../../bar')
 " }}}1
@@ -421,9 +422,9 @@ function! lh#path#relative_to(from, to) abort
   " cannot rely on :cd (as it alters things, and doesn't work with
   " non-existant paths)
   let pwd = getcwd()
-  exe 'cd '.a:to
+  call lh#path#cd_without_sideeffects(a:to)
   let res = lh#path#to_relative(a:from)
-  exe 'cd '.pwd
+  call lh#path#cd_without_sideeffects(pwd)
   return res
 endfunction
 
@@ -461,9 +462,10 @@ function! lh#path#glob_as_list(pathslist, expr, ...) abort
     return s:GlobAsList(a:pathslist, a:expr, mustSort)
   elseif type(a:expr) == type([])
     let res = []
-    for expr in a:expr
-      call extend(res, s:GlobAsList(a:pathslist, expr, mustSort))
-    endfor
+    call map(copy(a:expr), 'extend(res, s:GlobAsList(a:pathslist, v:val, mustSort))')
+    " for expr in a:expr
+      " call extend(res, s:GlobAsList(a:pathslist, expr, mustSort))
+    " endfor
     return res
   else
     throw "Unexpected type for a:expression"
@@ -494,7 +496,7 @@ function! s:prepare_pathlist_for_strip_start(pathslist)
   let pathslist_abs=filter(copy(pathslist), 'v:val =~ "^\\.\\%(/\\|$\\)"')
   let pathslist += pathslist_abs
   " replace path separators by a regex that can match them
-  call map(pathslist, 'substitute(v:val, "[\\\\/]", "[\\\\/]", "g")')
+  call map(pathslist, 'substitute(v:val, "[\\\\/]", "[\\\\/]", "g")."[\\/]\\="')
   " echomsg string(pathslist)
   " escape . and ~
   call map(pathslist, '"^".escape(v:val, ".~")')
@@ -505,30 +507,20 @@ function! s:prepare_pathlist_for_strip_start(pathslist)
 
   return pathslist
 endfunction
+
+function! s:find_best_match(pathname, pathslist) abort
+  let matches = map(copy(a:pathslist), 'substitute(a:pathname, v:val, "", "")')
+  let best_match_idx = lh#list#arg_min(matches, function('len'))
+  return matches[best_match_idx]
+endfunction
+
 function! lh#path#strip_start(pathname, pathslist) abort
   let pathslist = s:prepare_pathlist_for_strip_start(a:pathslist)
-  if 0
-    " build the strip regex
-    let strip_re = join(pathslist, '\|')
-    " echomsg strip_re
-    let best_match = substitute(a:pathname, '\%('.strip_re.'\)[/\\]\=', '', '')
+  if !empty(pathslist)
+    let pathnames = type(a:pathname) == type([]) ? copy(a:pathname) : [a:pathname]
+    let res = map(pathnames, 's:find_best_match(v:val, pathslist)')
   else
-    if !empty(pathslist)
-      let pathnames = type(a:pathname) == type([]) ? a:pathname : [a:pathname]
-      let res = []
-      for pathname in pathnames
-        let best_match = substitute(pathname, '^\%('.pathslist[0].'\)[/\\]\=', '', '')
-        for path in pathslist[1:]
-          let a_match = substitute(pathname, '^\%('.path.'\)[/\\]\=', '', '')
-          if len(a_match) < len(best_match)
-            let best_match = a_match
-          endif
-        endfor " each pathslist
-        let res += [best_match]
-      endfor " each pathnames
-    else
-      let res = a:pathname
-    endif
+    let res = a:pathname
   endif
   return type(a:pathname) == type([]) ? res : res[0]
 endfunction
@@ -684,11 +676,12 @@ function! lh#path#find_in_parents(path, path_patterns, kinds, last_valid_path) a
   return res
 endfunction
 
-" Function: lh#path#munge(pathlist, path) {{{3
-function! lh#path#munge(pathlist, path) abort
+" Function: lh#path#munge(pathlist, path [, sep]) {{{3
+function! lh#path#munge(pathlist, path, ...) abort
   if type(a:pathlist) == type('str')
-    let pathlist = split(a:pathlist, ',')
-    return join(lh#path#munge(pathlist, a:path), ',')
+    let sep = get(a:, 1, ',')
+    let pathlist = split(a:pathlist, sep)
+    return join(lh#path#munge(pathlist, a:path), sep)
   else
     " if filereadable(a:path) || isdirectory(a:path)
     if ! empty(glob(a:path))
@@ -715,6 +708,15 @@ function! lh#path#is_up_to_date(file1, file2) abort
     return d1 <= d2
   endif
   return 0
+endfunction
+
+" Function: lh#path#cd_without_sideeffects(path) {{{3
+" @since Version 4.0.0
+function! lh#path#cd_without_sideeffects(path) abort
+  let cd = exists('*haslocaldir') && haslocaldir()
+        \ ? 'lcd '
+        \ : 'cd '
+  exe cd . a:path
 endfunction
 
 " # Permission lists {{{2
