@@ -9,11 +9,14 @@ function! AddNumPrefixed(str, delta)
 endfunction
 
 function! AddNumPath(path, delta)
-	let incr_filename = substitute(a:path,
-				\ '^\(.\{-}\)\([[:digit:]]\+\)\([^[:digit:]]*\)$',
-				\ '\=submatch(1).AddNumPrefixed(submatch(2), a:delta).submatch(3)',
-				\ "")
-	return incr_filename
+	let regex = '^\(.\{-}\)\([[:digit:]]\+\)\([^[:digit:]]*\)$'
+	let m = matchlist(a:path, regex)
+	let m_d = AddNumPrefixed(m[2], a:delta)
+	while len(m[2]) > len(m_d)
+		let m_d = '0' . m_d
+	endwhile
+
+	return m[1].m_d.m[3]
 endfunction
 
 nmap <C-N> :exe "e ". AddNumPath(expand("%"), 1)<CR>
