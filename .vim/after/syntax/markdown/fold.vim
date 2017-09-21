@@ -2,9 +2,9 @@
 
 " fold region for headings
 syn region mkdHeaderFold
-    \ start="^\s*\z(#\+\)"
-    \ skip="^\s*\z1#\+"
-    \ end="^\(\s*#\)\@="
+    \ start="^\z(#\+\)"
+    \ skip="^\z1#\+"
+    \ end="^\(#\)\@="
     \ fold contains=TOP
 
 " fold region for lists
