@@ -14,4 +14,18 @@ syn region mkdListFold
     \ end="^\(.\)\@="
     \ fold contains=TOP
 
+" fold region for code blocks
+syn region mkdCodeBlockFold
+    \ start="^\(    \|\t\)"
+    \ skip="^\(    \|\t\)"
+    \ end="\ze\_^$"
+    \ transparent fold keepend contains=NONE
+
+" fold region for tables
+syn region mkdTableFold
+    \ start="^|"
+    \ skip="^|"
+    \ end="\ze\_^$"
+    \ transparent fold keepend contains=NONE
+
 syn sync fromstart
