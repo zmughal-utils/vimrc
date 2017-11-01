@@ -189,6 +189,8 @@ set hidden		" Hide buffer when abandoned
 set history=500		" Store commands and searches
 set viewoptions+=unix,slash
 
+set nomore              " Pager is disabled
+
 " set foldlevelstart=99	" No folds open (I do not feel happy about making it '99'
 			" but I do not think that it is very probable it would
 			" have that high a fold level (see: hrair limit))
@@ -276,5 +278,10 @@ let g:languagetool_jar=get(sort(glob('~/bin/LanguageTool-*/languagetool-commandl
 " For <url:~/.vim/bundle/bullets.vim>{{{
 let g:bullets_enabled_file_types = ['markdown', 'text', 'gitcommit', 'ikiwiki']
 "}}}
+
+" For <url:~/.vim/bundle/recover.vim-swap>{{{
+let g:RecoverPlugin_Delete_Unmodified_Swapfile = 1
+"}}}
+
 
 " vim:fdm=marker
