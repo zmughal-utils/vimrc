@@ -4,9 +4,9 @@
 "               <URL:http://github.com/LucHermitte/lh-brackets>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.2.1
+" Version:      3.3.0
 " Created:      28th Feb 2008
-" Last Update:  13th Sep 2017
+" Last Update:  09th Nov 2017
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -24,6 +24,9 @@
 "
 "------------------------------------------------------------------------
 " History:
+" Version 3.3.0:  02nd Oct 2017
+"	        `;` jumps over `]`
+"	        Fix merging of trailling characters in JumpOverAllClose
 " Version 3.2.1:
 "               * Fix regression with `set et`
 " Version 3.2.0:
@@ -538,20 +541,23 @@ endfunction
 "------------------------------------------------------------------------
 " Function: s:JumpOverAllClose(chars) {{{2
 function! s:JumpOverAllClose(chars, ...) abort
+  let chars = escape(a:chars, ']')
   let del_mark = ''
   let p = col('.')
   let ll = getline('.')[p : ] " ignore char under cursor, look after
-  let m = matchstr(ll, '\v^(['.a:chars.']|'.lh#marker#very_magic('.{-}').')+')
-  " echomsg ll.'##'.m.'##'
+  let m = matchstr(ll, '\v^(['.chars.']|'.lh#marker#very_magic('.{-}').')+')
   let len_match = lh#encoding#strlen(m)
+  let nb_bytes_match = strlen(m)
+  call s:Verbose("In ##%1##  %3 characters/%4 bytes match: ##%2##", ll, m, len_match, nb_bytes_match)
   if len_match
     let del_mark = repeat("\<del>", len_match)
-    let del_mark .= substitute(m, '[^'.a:chars.']', '', 'g')
+    let del_mark .= substitute(m, '[^'.chars.']', '', 'g')
   endif
   " Is there an optional terminal mark to check and merge/add (like: «»;«») ?
   if a:0 > 0
-    let remaining = ll[len_match : ]
-    " echomsg "rem: <<".remaining.">>"
+    let nb_bytes_match = strlen(m)
+    let remaining = ll[nb_bytes_match : ]
+    call s:Verbose("rem: ##%1## VS %2", remaining, a:1)
     let match_rem = matchstr(remaining, '^\('.lh#marker#txt('.\{-}').'\)*'.a:1.'\('.lh#marker#txt('.\{-}').'\)*')
     let len_match_rem = lh#encoding#strlen(match_rem)
     if len_match_rem
@@ -559,7 +565,7 @@ function! s:JumpOverAllClose(chars, ...) abort
     endif
     let del_mark .= a:1
   endif
-  " echomsg "-->".strtrans(del_mark)
+  call s:Verbose("-> %1", strtrans(del_mark))
 
   return s:k_move_prefix."\<right>".del_mark
 endfunction
@@ -765,26 +771,26 @@ function! s:DecodeDefineOptions(isLocal, a000)
     elseif p =~ '-b\%[ut]'
       let exceptions= matchstr(p, '-b\%[ut]=\zs.*')
       if exceptions =~ "^function"
-        exe 'let Exceptions='.exceptions
+        exe 'let l:Exceptions='.exceptions
       else
-        let Exceptions = exceptions
+        let l:Exceptions = exceptions
       endif
     elseif p =~ '-o\%[open]'
       let open = matchstr(p, '-o\%[pen]=\zs.*')
       if open =~ "^function"
-        exe 'let Open =' . open
+        exe 'let l:Open =' . open
       else
-        let Open = open
+        let   l:Open = open
       endif
-      " let Open = open =~ "^function" ? {open} : open   ## don't work with function()
+      " let   l:Open = open =~ "^function" ? {open} : open   ## don't work with function()
     elseif p =~ '-clo\%[se]'
       let close = matchstr(p, '-clo\%[se]=\zs.*')
       if close =~ "^function"
-        exe 'let Close =' . close
+        exe 'let l:Close =' . close
       else
-        let Close = close
+        let l:Close = close
       endif
-      " let Close = close =~ "^function" ? {close} : close   ## don't work with function()
+      " let l:Close = close =~ "^function" ? {close} : close   ## don't work with function()
     else
       " <f-args> double backslash characters other than "\ " or "\\" => we
       " need to reinterpret them correctly to what they should have been
@@ -798,12 +804,12 @@ function! s:DecodeDefineOptions(isLocal, a000)
     throw ":Brackets: incorrect number of arguments"
   endif
 
-  if !exists('trigger')    | let trigger    = options[0] | endif
-  if !exists('Open')       | let Open       = options[0] | endif
-  if !exists('Close')      | let Close      = options[1] | endif
-  if !exists('Exceptions') | let Exceptions = ''         | endif
+  if !exists('trigger')      | let trigger    = options[0] | endif
+  if !exists('l:Open')       | let l:Open       = options[0] | endif
+  if !exists('l:Close')      | let l:Close      = options[1] | endif
+  if !exists('l:Exceptions') | let l:Exceptions = ''         | endif
 
-  return [nl, insert, visual, normal, options, trigger, Open, Close, Exceptions, escapable, context]
+  return [nl, insert, visual, normal, options, trigger, l:Open, l:Close, l:Exceptions, escapable, context]
 endfunction
 
 " Function: lh#brackets#define(bang, ...) {{{2
@@ -812,13 +818,13 @@ function! lh#brackets#define(bang, ...) abort
   let isLocal    = a:bang != "!"
   let res = s:DecodeDefineOptions(isLocal, a:000)
   if empty(res) | return | endif
-  let [nl, insert, visual, normal, options, trigger, Open, Close, Exceptions, escapable, context]
+  let [nl, insert, visual, normal, options, trigger, l:Open, l:Close, l:Exceptions, escapable, context]
         \ = res
 
-  if type(Open) != type(function('has')) &&  type(Close) != type(function('has'))
-    call s:AddPair(isLocal, Open, Close)
+  if type(l:Open) != type(function('has')) &&  type(l:Close) != type(function('has'))
+    call s:AddPair(isLocal, l:Open, l:Close)
     if escapable
-      call s:AddPair(isLocal, '\\'.Open, '\\'.Close)
+      call s:AddPair(isLocal, '\\'.l:Open, '\\'.l:Close)
     endif
   endif
 
@@ -828,10 +834,10 @@ function! lh#brackets#define(bang, ...) abort
     let areSameTriggers = options[0] == options[1]
     let map_ctx = empty(context) ? '' : ','.string(context)
     let inserter = 'lh#brackets#opener('.lh#brackets#_string(trigger).','. escapable.',"'.(nl).
-          \'",'. lh#brackets#_string(Open).','.lh#brackets#_string(Close).','.string(areSameTriggers).','.string(Exceptions).map_ctx.')'
+          \'",'. lh#brackets#_string(l:Open).','.lh#brackets#_string(l:Close).','.string(areSameTriggers).','.string(l:Exceptions).map_ctx.')'
     call s:DefineImap(trigger, inserter, isLocal)
     if ! areSameTriggers
-      let inserter = 'lh#brackets#closer('.lh#brackets#_string(options[1]).','.lh#brackets#_string (Close).','.lh#brackets#_string(Exceptions).map_ctx.')'
+      let inserter = 'lh#brackets#closer('.lh#brackets#_string(options[1]).','.lh#brackets#_string (l:Close).','.lh#brackets#_string(l:Exceptions).map_ctx.')'
       call s:DefineImap(options[1], inserter, isLocal)
       if len(options[1])
         " TODO: enrich <bs> & <del> imaps for the close triggers

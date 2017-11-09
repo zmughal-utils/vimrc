@@ -1,4 +1,4 @@
-# lh-brackets [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-brackets.png?branch=master)](http://travis-ci.org/LucHermitte/lh-brackets) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+# lh-brackets [![Last release](https://img.shields.io/github/tag/LucHermitte/lh-brackets.svg)](https://github.com/LucHermitte/lh-brackets/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-brackets.png?branch=master)](http://travis-ci.org/LucHermitte/lh-brackets) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Features
 
@@ -107,7 +107,7 @@ As [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib), map-tools provides a 
 
 
 # Installation
-  * Requirements: Vim 7.+ (7.4-849 in order to support redo), [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v4.0.0+, [lh-dev](http://github.com/LucHermitte/lh-dev) v1.3.4+ for unit testing.
+  * Requirements: Vim 7.+ (7.4-849 in order to support redo), [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v4.0.0+, [lh-style](http://github.com/LucHermitte/lh-style) v1.0.0+ for unit testing.
   * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install lh-brackets (this is the preferred method because of the dependencies)
 ```vim
 ActivateAddons lh-brackets
