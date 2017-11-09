@@ -2,31 +2,31 @@
 
 A Vim wrapper for running tests on different granularities.
 
-![usage overview](/screenshots/granularity.gif)
+<img alt="usage overview" src="https://github.com/janko-m/vim-test/blob/master/screenshots/granularity.gif" width=770 height=503>
 
 Currently the following testing frameworks are supported:
 
-| Language       | Frameworks                                                  | Identifiers                                                               |
-| :------------: | ----------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **C#**         | .NET                                                        | `dotnettest`                                                              |
-| **Clojure**    | Fireplace.vim                                               | `fireplacetest`                                                           |
-| **Crystal**    | Crystal                                                     | `crystalspec`                                                             |
-| **Elixir**     | ESpec, ExUnit                                               | `espec`, `exunit`                                                         |
-| **Elm**        | elm-test                                                    | `elmtest`                                                                 |
-| **Erlang**     | CommonTest                                                  | `commontest`                                                              |
-| **Go**         | Ginkgo, Go                                                  | `ginkgo`, `gotest`                                                        |
-| **Java**       | Maven                                                       | `maventest`                                                               |
-| **JavaScript** | Intern, Jasmine, Jest, Karma, Lab, Mocha, TAP,              | `intern`, `jasmine`, `jest`, `karma`, `lab`, `mocha`, `tap`               |
-| **Lua**        | Busted                                                      | `busted`                                                                  |
-| **PHP**        | Behat, Codeception, Kahlan, Peridot, PHPUnit, PHPSpec, Dusk | `behat`, `codeception`, `kahlan`, `peridot`, `phpunit`, `phpspec`, `dusk` |
-| **Perl**       | Prove                                                       | `prove`                                                                   |
-| **Python**     | Django, Nose, Nose2, PyTest, PyUnit                         | `djangotest`, `djangonose` `nose`, `nose2`, `pytest`, `pyunit`            |
-| **Racket**     | RackUnit                                                    | `rackunit`                                                                |
-| **Ruby**       | Cucumber, [M], [Minitest][minitest], Rails, RSpec           | `cucumber`, `m`, `minitest`, `rails`, `rspec`                             |
-| **Rust**       | Cargo                                                       | `cargotest`                                                               |
-| **Shell**      | Bats                                                        | `bats`                                                                    |
-| **Swift**      | Swift Package Manager                                       | `swiftpm`                                                                 |
-| **VimScript**  | Vader.vim, VSpec                                            | `vader`, `vspec`                                                          |
+| Language       | Frameworks                                                  | Identifiers                                                                |
+| :------------: | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **C#**         | .NET                                                        | `dotnettest`                                                               |
+| **Clojure**    | Fireplace.vim                                               | `fireplacetest`                                                            |
+| **Crystal**    | Crystal                                                     | `crystalspec`                                                              |
+| **Elixir**     | ESpec, ExUnit                                               | `espec`, `exunit`                                                          |
+| **Elm**        | elm-test                                                    | `elmtest`                                                                  |
+| **Erlang**     | CommonTest                                                  | `commontest`                                                               |
+| **Go**         | Ginkgo, Go                                                  | `ginkgo`, `gotest`                                                         |
+| **Java**       | Maven                                                       | `maventest`                                                                |
+| **JavaScript** | Intern, Jasmine, Jest, Karma, Lab, Mocha, TAP, WebdriverIO  | `intern`, `jasmine`, `jest`, `karma`, `lab`, `mocha`, `tap`, `webdriverio` |
+| **Lua**        | Busted                                                      | `busted`                                                                   |
+| **PHP**        | Behat, Codeception, Kahlan, Peridot, PHPUnit, PHPSpec, Dusk | `behat`, `codeception`, `kahlan`, `peridot`, `phpunit`, `phpspec`, `dusk`  |
+| **Perl**       | Prove                                                       | `prove`                                                                    |
+| **Python**     | Django, Nose, Nose2, PyTest, PyUnit                         | `djangotest`, `djangonose` `nose`, `nose2`, `pytest`, `pyunit`             |
+| **Racket**     | RackUnit                                                    | `rackunit`                                                                 |
+| **Ruby**       | Cucumber, [M], [Minitest][minitest], Rails, RSpec           | `cucumber`, `m`, `minitest`, `rails`, `rspec`                              |
+| **Rust**       | Cargo                                                       | `cargotest`                                                                |
+| **Shell**      | Bats                                                        | `bats`                                                                     |
+| **Swift**      | Swift Package Manager                                       | `swiftpm`                                                                  |
+| **VimScript**  | Vader.vim, VSpec                                            | `vader`, `vspec`                                                           |
 
 ## Features
 
@@ -78,23 +78,23 @@ Test.vim can run tests using different execution environments called
 let test#strategy = "dispatch"
 ```
 
-| Strategy                        | Identifier  | Description                                                                      |
-| :-----:                         | :-----:     | :----------                                                                      |
-| **Basic**&nbsp;(default)        | `basic`     | Runs test commands with `:!`, which switches your Vim to the terminal.           |
-| **Make**                        | `make`      | Runs test commands with `:make`.                                                 |
-| **Neovim**                      | `neovim`    | Runs test commands with `:terminal`, which spawns a terminal inside your Neovim. |
-| **[Dispatch]**                  | `dispatch`  | Runs test commands with `:Dispatch`.                                             |
-| **[Vimux]**                     | `vimux`     | Runs test commands in a small tmux pane at the bottom of your terminal.          |
-| **[Tslime]**                    | `tslime`    | Runs test commands in a tmux pane you specify.                                   |
-| **[Neoterm]**                   | `neoterm`   | Runs test commands with `:T`, see neoterm docs for display customization.        |
-| **[Neomake]**                   | `neomake`   | Runs test commands asynchronously with `:NeomakeProject`.                        |
-| **[MakeGreen]**                 | `makegreen` | Runs test commands with `:MakeGreen`.                                            |
-| **[VimShell]**                  | `vimshell`  | Runs test commands in a shell written in VimScript.                              |
-| **[Vim&nbsp;Tmux&nbsp;Runner]** | `vtr`       | Runs test commands in a small tmux pane.                                         |
-| **[VimProc]**                   | `vimproc`   | Runs test commands asynchronously.                                               |
-| **[AsyncRun]**                  | `asyncrun`  | Runs test commands asynchronosuly using new APIs in Vim 8 and NeoVim.            |
-| **Terminal.app**                | `terminal`  | Sends test commands to Terminal (useful in MacVim GUI).                          |
-| **iTerm2.app**                  | `iterm`     | Sends test commands to iTerm2 >= 2.9 (useful in MacVim GUI).                     |
+| Strategy                        | Identifier                       | Description                                                                      |
+| :-----:                         | :-----:                          | :----------                                                                      |
+| **Basic**&nbsp;(default)        | `basic`                          | Runs test commands with `:!` on Vim, and with `:terminal` on Neovim.             |
+| **Make**                        | `make`                           | Runs test commands with `:make`.                                                 |
+| **Neovim**                      | `neovim`                         | Runs test commands with `:terminal` in a split window.                           |
+| **[Dispatch]**                  | `dispatch` `dispatch_background` | Runs test commands with `:Dispatch` or `:Dispatch!`.                             |
+| **[Vimux]**                     | `vimux`                          | Runs test commands in a small tmux pane at the bottom of your terminal.          |
+| **[Tslime]**                    | `tslime`                         | Runs test commands in a tmux pane you specify.                                   |
+| **[Neoterm]**                   | `neoterm`                        | Runs test commands with `:T`, see neoterm docs for display customization.        |
+| **[Neomake]**                   | `neomake`                        | Runs test commands asynchronously with `:NeomakeProject`.                        |
+| **[MakeGreen]**                 | `makegreen`                      | Runs test commands with `:MakeGreen`.                                            |
+| **[VimShell]**                  | `vimshell`                       | Runs test commands in a shell written in VimScript.                              |
+| **[Vim&nbsp;Tmux&nbsp;Runner]** | `vtr`                            | Runs test commands in a small tmux pane.                                         |
+| **[VimProc]**                   | `vimproc`                        | Runs test commands asynchronously.                                               |
+| **[AsyncRun]**                  | `asyncrun`                       | Runs test commands asynchronosuly using new APIs in Vim 8 and NeoVim.            |
+| **Terminal.app**                | `terminal`                       | Sends test commands to Terminal (useful in MacVim GUI).                          |
+| **iTerm2.app**                  | `iterm`                          | Sends test commands to iTerm2 >= 2.9 (useful in MacVim GUI).                     |
 
 You can also set up strategies per granularity:
 
@@ -194,7 +194,7 @@ let g:test#transformation = 'vagrant'
 
 ## Commands
 
-![nearest polyfill](/screenshots/nearest.gif)
+<img alt="nearest polyfill" src="https://github.com/janko-m/vim-test/blob/master/screenshots/nearest.gif" width=770 height=323>
 
 You can execute test.vim commands directly, and pass them CLI options:
 
@@ -332,6 +332,23 @@ let test#ruby#use_binstubs = 0
 #### JavaScript
 
 Test runner detection for JavaScript works by checking which runner is listed in the package.json dependencies. If you have globally installed the runner make sure it's also listed in the dependencies.
+
+## Autocommands
+
+In addition to running tests manually, you can also configure autocommands
+which run tests automatically when files are saved.
+
+The following setup will automatically run tests when a test file or its
+alternate application file is saved:
+
+```vim
+augroup test
+  autocmd!
+  autocmd BufWrite * if test#exists() |
+    \   TestFile
+    \ endif
+augroup END
+```
 
 ## Extending
 

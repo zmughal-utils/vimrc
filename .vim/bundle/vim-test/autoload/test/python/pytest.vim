@@ -1,26 +1,26 @@
 if !exists('g:test#python#pytest#file_pattern')
-  let g:test#python#pytest#file_pattern = '\v(^|[\b_\.-])test.*\.py$'
+  let g:test#python#pytest#file_pattern = '\v(test_[^/]+|[^/]+_test)\.py$'
 endif
 
 function! test#python#pytest#test_file(file) abort
   if fnamemodify(a:file, ':t') =~# g:test#python#pytest#file_pattern
     if exists('g:test#python#runner')
-      return g:test#python#runner == 'pytest'
+      return g:test#python#runner ==# 'pytest'
     else
-      return executable('py.test')
+      return executable("pytest") || executable("py.test")
     endif
   endif
 endfunction
 
 function! test#python#pytest#build_position(type, position) abort
-  if a:type == 'nearest'
+  if a:type ==# 'nearest'
     let name = s:nearest_test(a:position)
     if !empty(name)
       return [a:position['file'].'::'.name]
     else
       return [a:position['file']]
     endif
-  elseif a:type == 'file'
+  elseif a:type ==# 'file'
     return [a:position['file']]
   else
     return []
@@ -38,7 +38,11 @@ function! test#python#pytest#build_args(args) abort
 endfunction
 
 function! test#python#pytest#executable() abort
-  return 'py.test'
+  if executable("py.test") && !executable("pytest")
+    return "py.test"
+  else
+    return "pytest"
+  endif
 endfunction
 
 function! s:nearest_test(position) abort

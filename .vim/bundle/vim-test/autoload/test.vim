@@ -1,20 +1,12 @@
 function! test#run(type, arguments) abort
-  if &autowrite || &autowriteall
-    silent! wall
-  endif
+  call s:before_run()
 
-  if exists('g:test#project_root')
-    execute 'cd' g:test#project_root
-  endif
-
-  if exists('g:projectionist_heuristics')
-    let alternate_file = get(filter(projectionist#query_file('alternate'), 'filereadable(v:val)'), 0)
-  endif
+  let alternate_file = s:alternate_file()
 
   if test#test_file(expand('%'))
     let position = s:get_position(expand('%'))
     let g:test#last_position = position
-  elseif exists('alternate_file') && !empty(alternate_file) && test#test_file(alternate_file)
+  elseif !empty(alternate_file) && test#test_file(alternate_file)
     let position = s:get_position(alternate_file)
   elseif exists('g:test#last_position')
     let position = g:test#last_position
@@ -35,13 +27,13 @@ function! test#run(type, arguments) abort
     call test#execute(runner, args)
   endif
 
-  if exists('g:test#project_root')
-    execute 'cd -'
-  endif
+  call s:after_run()
 endfunction
 
 function! test#run_last(arguments) abort
   if exists('g:test#last_command')
+    call s:before_run()
+
     let strategy = s:extract_strategy_from_command(a:arguments)
 
     if empty(strategy)
@@ -52,9 +44,15 @@ function! test#run_last(arguments) abort
     let cmd = cmd + a:arguments
 
     call test#shell(join(cmd), strategy)
+
+    call s:after_run()
   else
     call s:echo_failure('No tests were run so far')
   endif
+endfunction
+
+function! test#exists() abort
+  return test#test_file(expand('%')) || test#test_file(s:alternate_file())
 endfunction
 
 function! test#visit() abort
@@ -126,6 +124,36 @@ endfunction
 
 function! test#test_file(file) abort
   return !empty(test#determine_runner(a:file))
+endfunction
+
+function! s:alternate_file() abort
+  let alternate_file = ''
+
+  if empty(alternate_file) && exists('g:loaded_projectionist')
+    let alternate_file = get(filter(projectionist#query_file('alternate'), 'filereadable(v:val)'), 0, '')
+  endif
+
+  if empty(alternate_file) && exists('g:loaded_rails') && !empty(rails#app())
+    let alternate_file = rails#buffer().alternate()
+  endif
+
+  return alternate_file
+endfunction
+
+function! s:before_run() abort
+  if &autowrite || &autowriteall
+    silent! wall
+  endif
+
+  if exists('g:test#project_root')
+    execute 'cd' g:test#project_root
+  endif
+endfunction
+
+function! s:after_run() abort
+  if exists('g:test#project_root')
+    execute 'cd -'
+  endif
 endfunction
 
 function! s:get_position(path) abort
