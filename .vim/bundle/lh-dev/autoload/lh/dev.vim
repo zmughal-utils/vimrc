@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  02nd Aug 2017
+" Last Update:  14th Oct 2017
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -15,6 +15,7 @@ let s:k_version = 200
 "------------------------------------------------------------------------
 " History:
 "       v2.0.0: ~ deprecating lh#dev#option#get, lh#dev#reinterpret_escaped_char
+"               + Report ctags execution error
 "       v1.6.3: ~ Typo in option
 "       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
@@ -116,7 +117,7 @@ endfunction
 " NB: In C++, ctags does not understand for (int i=0...), and thus it can't
 " extract "i" as a local variable ...
 " @note depend on tags
-if lh#tags#ctags_flavour() == 'utags'
+if lh#tags#ctags_flavour() =~ 'utags'
   let c_ctags_understands_local_variables_in_one_pass = 1
   let cpp_ctags_understands_local_variables_in_one_pass = 1
 else
@@ -336,7 +337,10 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
     call delete(s:temp_tags)
   endif
   call s:Verbose(cmd_line)
-  call system(cmd_line)
+  let exec = system(cmd_line)
+  if v:shell_error != 0
+    throw "Cannot execute `".cmd_line."`: ".exec
+  endif
 
   try
     let tags_save = &tags
