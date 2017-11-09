@@ -1,5 +1,5 @@
 "============================================================================
-"File:        plutil.vim
+"File:        stylelint.vim
 "Description: Syntax checking plugin for syntastic
 "Maintainer:  LCD 47 <lcd047 at gmail dot com>
 "License:     This program is free software. It comes without any warranty,
@@ -10,33 +10,14 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_xml_plutil_checker')
+if exists('g:loaded_syntastic_less_stylelint_checker')
     finish
 endif
-let g:loaded_syntastic_xml_plutil_checker = 1
-
-let s:save_cpo = &cpo
-set cpo&vim
-
-function! SyntaxCheckers_xml_plutil_GetLocList() dict
-    let makeprg = self.makeprgBuild({
-        \ 'args_before': '-lint -s',
-        \ 'fname_before': '--' })
-
-    let errorformat =
-        \ '%E%f: %m at line %l'
-
-    return SyntasticMake({
-        \ 'makeprg': makeprg,
-        \ 'errorformat': errorformat,
-        \ 'returns': [0, 1] })
-endfunction
+let g:loaded_syntastic_less_stylelint_checker = 1
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'xml',
-    \ 'name': 'plutil'})
-
-let &cpo = s:save_cpo
-unlet s:save_cpo
+    \ 'filetype': 'less',
+    \ 'name': 'stylelint',
+    \ 'redirect': 'css/stylelint'})
 
 " vim: set sw=4 sts=4 et fdm=marker:

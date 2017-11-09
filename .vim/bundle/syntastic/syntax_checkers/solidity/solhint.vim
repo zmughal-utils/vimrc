@@ -1,7 +1,7 @@
 "============================================================================
-"File:        plutil.vim
-"Description: Syntax checking plugin for syntastic
-"Maintainer:  LCD 47 <lcd047 at gmail dot com>
+"File:        solhint.vim
+"Description: Solidity syntax checker - using solhint
+"Maintainer:  Brett Sun <qisheng.brett.sun@gmail.com>
 "License:     This program is free software. It comes without any warranty,
 "             to the extent permitted by applicable law. You can redistribute
 "             it and/or modify it under the terms of the Do What The Fuck You
@@ -10,31 +10,32 @@
 "
 "============================================================================
 
-if exists('g:loaded_syntastic_xml_plutil_checker')
+if exists('g:loaded_syntastic_solidity_solhint_checker')
     finish
 endif
-let g:loaded_syntastic_xml_plutil_checker = 1
+let g:loaded_syntastic_solidity_solhint_checker = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! SyntaxCheckers_xml_plutil_GetLocList() dict
+function! SyntaxCheckers_solidity_solhint_GetLocList() dict
     let makeprg = self.makeprgBuild({
-        \ 'args_before': '-lint -s',
-        \ 'fname_before': '--' })
+        \ 'args_after': '-f compact' })
 
     let errorformat =
-        \ '%E%f: %m at line %l'
+        \ '%E%f: line %l\, col %c\, Error - %m,' .
+        \ '%W%f: line %l\, col %c\, Warning - %m'
 
     return SyntasticMake({
         \ 'makeprg': makeprg,
         \ 'errorformat': errorformat,
+        \ 'subtype': 'Style',
         \ 'returns': [0, 1] })
 endfunction
 
 call g:SyntasticRegistry.CreateAndRegisterChecker({
-    \ 'filetype': 'xml',
-    \ 'name': 'plutil'})
+    \ 'filetype': 'solidity',
+    \ 'name': 'solhint'})
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
