@@ -11,6 +11,9 @@ endfunction
 function! AddNumPath(path, delta)
 	let regex = '^\(.\{-}\)\([[:digit:]]\+\)\([^[:digit:]]*\)$'
 	let m = matchlist(a:path, regex)
+	if len(m) == 0
+		return a:path
+	endif
 	let m_d = AddNumPrefixed(m[2], a:delta)
 	while len(m[2]) > len(m_d)
 		let m_d = '0' . m_d
