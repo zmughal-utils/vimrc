@@ -309,6 +309,8 @@ augroup END "}}}
 if !exists("loaded_zip_extensions") "{{{
 	let loaded_zip_extensions=1
 	au BufReadCmd *.jar,*.xpi call zip#Browse(expand("<amatch>"))
+	" Monticello
+	au BufReadCmd *.mcz call zip#Browse(expand("<amatch>"))
 	au BufReadCmd *.odb call zip#Browse(expand("<amatch>"))
 	au BufReadCmd *.odt call zip#Browse(expand("<amatch>"))
 endif "}}}
