@@ -18,7 +18,7 @@ Currently the following testing frameworks are supported:
 | **Java**       | Maven                                                       | `maventest`                                                                |
 | **JavaScript** | Intern, Jasmine, Jest, Karma, Lab, Mocha, TAP, WebdriverIO  | `intern`, `jasmine`, `jest`, `karma`, `lab`, `mocha`, `tap`, `webdriverio` |
 | **Lua**        | Busted                                                      | `busted`                                                                   |
-| **PHP**        | Behat, Codeception, Kahlan, Peridot, PHPUnit, PHPSpec, Dusk | `behat`, `codeception`, `kahlan`, `peridot`, `phpunit`, `phpspec`, `dusk`  |
+| **PHP**        | Behat, Codeception, Kahlan, Peridot, PHPUnit, PHPSpec, Dusk | `behat`, `codeception`, `dusk`, `kahlan`, `peridot`, `phpunit`, `phpspec`  |
 | **Perl**       | Prove                                                       | `prove`                                                                    |
 | **Python**     | Django, Nose, Nose2, PyTest, PyUnit                         | `djangotest`, `djangonose` `nose`, `nose2`, `pytest`, `pyunit`             |
 | **Racket**     | RackUnit                                                    | `rackunit`                                                                 |
@@ -350,6 +350,12 @@ augroup test
 augroup END
 ```
 
+## Projectionist integration
+
+If [projectionist.vim] is present, you can run a test command from an
+application file, and test.vim will automatically try to run the
+command on the "alternate" test file.
+
 ## Extending
 
 If you wish to extend this plugin with your own test runners, first of all,
@@ -426,3 +432,4 @@ Copyright © Janko Marohnić. Distributed under the same terms as Vim itself. Se
 [AsyncRun]: https://github.com/skywind3000/asyncrun.vim
 [MakeGreen]: https://github.com/reinh/vim-makegreen
 [M]: http://github.com/qrush/m
+[projectionist.vim]: https://github.com/tpope/vim-projectionist
