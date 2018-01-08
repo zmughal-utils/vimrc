@@ -3,7 +3,7 @@
 " Maintainer: skywind3000 (at) gmail.com
 " Homepage: http://www.vim.org/scripts/script.php?script_id=5431
 "
-" Last change: 2017/08/06 10:04:49
+" Last change: 2017/12/13 15:31:05
 "
 " Run shell command in background and output to quickfix:
 "     :AsyncRun[!] [options] {cmd} ...
@@ -166,6 +166,10 @@ if !exists('g:asyncrun_silent')
 	let g:asyncrun_silent = 1
 endif
 
+if !exists('g:asyncrun_skip')
+	let g:asyncrun_skip = 0
+endif
+
 
 "----------------------------------------------------------------------
 "- Internal Functions
@@ -186,7 +190,7 @@ endfunc
 
 " run autocmd
 function! s:AutoCmd(name)
-	if has('autocmd')
+	if has('autocmd') && and(g:asyncrun_skip, 2) == 0
 		if g:asyncrun_silent
 			exec 'silent doautocmd User AsyncRun'.a:name
 		else
@@ -232,17 +236,14 @@ let s:async_start = 0.0
 let s:async_debug = 0
 let s:async_quick = 0
 let s:async_scroll = 0
-let s:async_hold = 0
 let s:async_congest = 0
 let s:async_efm = &errorformat
 
-" check :cbottom available, cursor in quick need to hold ?
+" check :cbottom available ?
 if s:async_nvim == 0
 	let s:async_quick = (v:version >= 800 || has('patch-7.4.1997'))? 1 : 0
-	let s:async_hold = (v:version >= 800 || has('patch-7.4.2100'))? 0 : 1
 else
-	let s:async_quick = 0
-	let s:async_hold = 1
+	let s:async_quick = has('nvim-0.2.0')? 1 : 0
 endif
 
 " check if we have vim 8.0.100
@@ -251,19 +252,9 @@ if s:async_nvim == 0 && v:version >= 800
 	let s:async_congest = 0
 endif
 
-" scroll quickfix down
-function! s:AsyncRun_Job_Scroll()
-	if &buftype == 'quickfix'
-		silent exec 'normal! G'
-	endif
-endfunc
-
 " quickfix window cursor check
 function! s:AsyncRun_Job_Cursor()
 	if &buftype == 'quickfix'
-		if s:async_hold != 0
-			let w:asyncrun_qfview = winsaveview()
-		endif
 		if line('.') != line('$')
 			let s:async_check_last = 0
 		endif
@@ -273,32 +264,11 @@ endfunc
 " find quickfix window and scroll to the bottom then return last window
 function! s:AsyncRun_Job_AutoScroll()
 	if s:async_quick == 0
-		let l:winnr = winnr()			
-		noautocmd windo call s:AsyncRun_Job_Scroll()
-		noautocmd silent exec ''.l:winnr.'wincmd w'
+		if &buftype == 'quickfix'
+			silent exec 'normal! G'
+		endif
 	else
 		cbottom
-	endif
-endfunc
-
-" restore view in old vim/neovim
-function! s:AsyncRun_Job_ViewReset()
-	if &buftype == 'quickfix'
-		if exists('w:asyncrun_qfview')
-			call winrestview(w:asyncrun_qfview)
-			unlet w:asyncrun_qfview
-		endif
-	endif
-endfunc
-
-" it will reset cursor when caddexpr is invoked
-function! s:AsyncRun_Job_QuickReset()
-	if &buftype == 'quickfix'
-		call s:AsyncRun_Job_ViewReset()
-	else
-		let l:winnr = winnr()
-		noautocmd windo call s:AsyncRun_Job_ViewReset()
-		noautocmd silent! exec ''.l:winnr.'wincmd w'
 	endif
 endfunc
 
@@ -306,9 +276,6 @@ endfunc
 function! s:AsyncRun_Job_CheckScroll()
 	if g:asyncrun_last == 0
 		if &buftype == 'quickfix'
-			if s:async_hold != 0
-				let w:asyncrun_qfview = winsaveview()
-			endif
 			return (line('.') == line('$'))
 		else
 			return 1
@@ -316,16 +283,17 @@ function! s:AsyncRun_Job_CheckScroll()
 	elseif g:asyncrun_last == 1
 		let s:async_check_last = 1
 		let l:winnr = winnr()
-		noautocmd windo call s:AsyncRun_Job_Cursor()
-		noautocmd silent! exec ''.l:winnr.'wincmd w'
+		" Execute AsyncRun_Job_Cursor() in quickfix
+		let l:quickfixwinnr = bufwinnr("[Quickfix List]")
+		if l:quickfixwinnr != -1  " -1 mean the buffer has no window or do not exists
+			noautocmd exec '' . l:quickfixwinnr . 'windo call s:AsyncRun_Job_Cursor()'
+		endif
+                noautocmd silent! exec ''.l:winnr.'wincmd w'
 		return s:async_check_last
 	elseif g:asyncrun_last == 2
 		return 1
 	else
 		if &buftype == 'quickfix'
-			if s:async_hold != 0
-				let w:asyncrun_qfview = winsaveview()
-			endif
 			return (line('.') == line('$'))
 		else
 			return (!pumvisible())
@@ -363,7 +331,11 @@ function! s:AsyncRun_Job_Update(count)
 		endif
 		if l:text != ''
 			if l:raw == 0
-				caddexpr l:text
+				if and(g:asyncrun_skip, 1) == 0
+					caddexpr l:text
+				else
+					noautocmd caddexpr l:text
+				endif
 			else
 				call setqflist([{'text':l:text}], 'a')
 			endif
@@ -384,8 +356,6 @@ function! s:AsyncRun_Job_Update(count)
 	endif
 	if s:async_scroll != 0 && l:total > 0 && l:check != 0
 		call s:AsyncRun_Job_AutoScroll()
-	elseif s:async_hold != 0 
-		call s:AsyncRun_Job_QuickReset()
 	endif
 	return l:count
 endfunc
@@ -396,6 +366,9 @@ function! s:AsyncRun_Job_AutoCmd(mode, auto)
 	let name = (a:auto == '')? g:asyncrun_auto : a:auto
 	if name !~ '^\w\+$' || name == 'NONE' || name == '<NONE>'
 		return
+	endif
+	if and(g:asyncrun_skip, 4) != 0
+		return 0
 	endif
 	if a:mode == 0
 		if g:asyncrun_silent
@@ -478,8 +451,6 @@ function! s:AsyncRun_Job_OnFinish()
 	let s:async_state = 0
 	if s:async_scroll != 0 && l:check != 0
 		call s:AsyncRun_Job_AutoScroll()
-	elseif s:async_hold != 0
-		call s:AsyncRun_Job_QuickReset()
 	endif
 	let g:asyncrun_code = s:async_code
 	if g:asyncrun_bell != 0
