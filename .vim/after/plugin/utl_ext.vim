@@ -131,3 +131,6 @@ fu! Utl_AddressScheme_find(url, fragment, dispMode)
     let findUrl = findfile(findId)
     return Utl_AddressScheme_file(findUrl, a:fragment, a:dispMode)
 endfu
+
+" where title.pl is a script that uses <http://p3rl.org/URI::Title>
+nmap <silent> \gt :echo substitute(system(join(["title.pl", shellescape(Utl_getUrlUnderCursor())], " ")), "\n", "", "g")<Return>
