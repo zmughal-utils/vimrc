@@ -12,4 +12,4 @@ if has('unix')
 	let g:test#transformation = 'xvfb'
 endif
 
-let g:test#strategy='asyncrun'
+let g:test#strategy='dispatch'
