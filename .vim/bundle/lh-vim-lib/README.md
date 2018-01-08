@@ -1,4 +1,4 @@
-﻿# lh-vim-lib v4.0.0 [![Version](https://img.shields.io/badge/version-4.0.0RC9-blue.svg)](https://github.com/LucHermitte/lh-vim-lib/releases/tag/4.0.0rc9) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-vim-lib.png?branch=master)](http://travis-ci.org/LucHermitte/lh-vim-lib) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+﻿# lh-vim-lib v4.0.0 [![Last release](https://img.shields.io/github/tag/LucHermitte/lh-vim-lib.svg)](https://github.com/LucHermitte/lh-vim-lib/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-vim-lib.png?branch=master)](http://travis-ci.org/LucHermitte/lh-vim-lib) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Introduction
 
@@ -19,6 +19,8 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 
 ## Functions
 
+  * [Option management](doc/Options.md) -- other web page
+  * [Object Oriented Programming in vim scripts](doc/OO.md) -- other web page
   * [Miscellaneous functions](#miscellaneous-functions)
   * [System related functions](#system-related-functions)
   * [Lists and dictionaries related functions](#lists-and-dictionaries-related-functions)
@@ -90,23 +92,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#notify#deprecated()`                       | Notifies somthing is deprecated once                                                                                                                                     |
 | `lh#notify#clear_notifications()`              | Clear previous notification so that could be notified again                                                                                                              |
 | `lh#on#exit()`                                 | Prepares a finalizer object to be executed in a `:finally` clause in order to restore variables and execute functions                                                    |
-| `lh#object#inject()`                           | Injects a new method in an existing object. Meant to simplify maintenance task.                                                                                          |
-| `lh#object#inject_methods()`                   | Injects several methods in an existing object.                                                                                                                           |
-| `lh#object#is_an_object()`                     | Tells whether the parameter is an object built with `lh#object#make_top_type()`                                                                                          |
-| `lh#object#make_top_type()`                    | Creates a new object                                                                                                                                                     |
-| `lh#object#to_string()`                        | Stringifies a data -- hide objects methods                                                                                                                               |
-| `lh#option#add()`                              | Adds new values to a vim option -- and avoid the values being listed more than once                                                                                      |
-| `lh#option#get(name [,default [, scope]])`     | Fetches the value of a user defined option, that may be _empty_. `default` is returned if the option does not exists. Default value for `default` is `g:lh#option#unset` |
-| `lh#ft#option#get(name, ft [...])`             | Fetches the value of a user defined option that can be specialized on a filetype basis                                                                                   |
-| `lh#ft#option#get_postfixed(name, ft [...])`   | Fetches the value of a user defined option that can be specialized on a filetype basis                                                                                   |
-| `lh#ft#option#get_all(name [, ft...])`         | Fetches the merged values of a dictionnary that can be specialized on a filetype basis                                                                                   |
-| `lh#option#get_non_empty()`                    | Fetches the value of a user defined option, that is not _empty_                                                                                                          |
-| `lh#option#get_from_buf(bufid, name [...])`    | Same as `lh#option#get()` except that it works from bufid context                                                                                                        |
-| `lh#option#getbufvar(buf, varname [,def])`     | Encapsulates `getbufvar(buf, varname, g:lh#option#unset)` when `def` is not passed                                                                                       |
-| `lh#option#getbufglobvar(buf, varname [,def])` | Encapsulates `getbufvar(buf, varname, get(g:, varname, g:lh#option#unset))`                                                                                              |
-| `lh#option#is_set(expr)`                       | Tells whether the expression is set (i.e. different from `g:lh#option#unset`)                                                                                            |
-| `lh#option#is_unset(expr)`                     | Tells whether the expression is not set (i.e. identical to `g:lh#option#unset`)                                                                                          |
-| `lh#ref#bind(varname)`                         | Returns a refererence to another variable. To be evaluated with `lh#option#get()`                                                                                        |
+| `lh#ref#bind(varname)`                         | Returns a reference to another variable. To be evaluated with [`lh#option#get()`](doc/Options.md#lhoptiongetname-default--scope)                                         |
 | `lh#ref#is_bound(var)`                         | Tells whether a variable is bound to another                                                                                                                             |
 | `lh#po#context().translate(msgId)`             | Translates message Id from Portable Object files                                                                                                                         |
 | `lh#position#char_at_mark()`                   | Obtains the character under a mark                                                                                                                                       |
@@ -235,6 +221,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#path#exists()`                           | Returns whether a pathname can be read, or if it's open in a buffer                                       |
 | `lh#path#find(pathlist, regex)`              | Returns the first path in a list that matches a regex                                                     |
 | `lh#path#find_in_parents()`                  | Support function at the root of [local_vimrc](http://github.com/LucHermitte/local_vimrc)                  |
+| `lh#path#find_upward()`                      | Uniform interface to `finddir()` and `filefile()`                                                         |
 | `lh#path#fix()`                              | Fixes a pathname in order for it to be compatible with external commands or vim options                   |
 | `lh#path#glob_as_list()`                     | Returns `globpath()`result as a list                                                                      |
 | `lh#path#is_absolute_path()`                 | Tells whether the parameter is an absolute pathname                                                       |
@@ -396,7 +383,7 @@ Bundle 'LucHermitte/lh-vim-lib'
     Ingo Karkat
   * [maktaba](https://github.com/google/vim-maktaba), by google
   * [tlib](http://www.vim.org/scripts/script.php?script_id=1863), by Tom Link
-  * [vim-misc](https://github.com/xolox/vim-misc), by Peter Odding 
+  * [vim-misc](https://github.com/xolox/vim-misc), by Peter Odding
   * [vital](https://github.com/vim-jp/vital.vim), by the Japanese Vim User
     Group
 
