@@ -54,6 +54,8 @@ function! s:source.hooks.on_init(args, context) abort "{{{
       \ unite#util#input('Target: ', '.', 'file')
   endif
 
+  let target = unite#util#expand(target)
+
   if target ==# ''
     let a:context.source__targets = []
     let a:context.source__input = ''
@@ -251,7 +253,8 @@ function! s:source.complete(args, context, arglead, cmdline, cursorpos) abort "{
 endfunction"}}}
 
 function! unite#sources#grep#parse(line) abort "{{{
-  let ret = matchlist(a:line, '^\(.*\):\(\d\+\)\%(:\(\d\+\)\)\?:\(.*\)$')
+  let ret = matchlist(a:line,
+        \ '^\([a-zA-Z]\?[^:]*\):\(\d\+\)\%(:\(\d\+\)\)\?:\(.*\)$')
   if empty(ret) || ret[1] == '' || ret[4] == ''
     return []
   endif
