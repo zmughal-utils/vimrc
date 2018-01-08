@@ -1,5 +1,14 @@
 " see http://blogs.perl.org/users/ovid/2013/03/discoverable-tests-and-creating-testing-standards.html
 
+function! perltest#GetTestFile()
+    let b:tmpname = expand( '%:p' )
+    if (match(b:tmpname, '.t$') != -1)
+	    return b:tmpname
+    end
+
+    return perltest#GetCorresponding()
+endfunction
+
 function! perltest#GetCorresponding()
     let b:tmpname = expand( '%:p' )
     if (match(b:tmpname, '.pm$') != -1)
