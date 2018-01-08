@@ -6,27 +6,27 @@ A Vim wrapper for running tests on different granularities.
 
 Currently the following testing frameworks are supported:
 
-| Language       | Frameworks                                                  | Identifiers                                                                |
-| :------------: | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
-| **C#**         | .NET                                                        | `dotnettest`                                                               |
-| **Clojure**    | Fireplace.vim                                               | `fireplacetest`                                                            |
-| **Crystal**    | Crystal                                                     | `crystalspec`                                                              |
-| **Elixir**     | ESpec, ExUnit                                               | `espec`, `exunit`                                                          |
-| **Elm**        | elm-test                                                    | `elmtest`                                                                  |
-| **Erlang**     | CommonTest                                                  | `commontest`                                                               |
-| **Go**         | Ginkgo, Go                                                  | `ginkgo`, `gotest`                                                         |
-| **Java**       | Maven                                                       | `maventest`                                                                |
-| **JavaScript** | Intern, Jasmine, Jest, Karma, Lab, Mocha, TAP, WebdriverIO  | `intern`, `jasmine`, `jest`, `karma`, `lab`, `mocha`, `tap`, `webdriverio` |
-| **Lua**        | Busted                                                      | `busted`                                                                   |
-| **PHP**        | Behat, Codeception, Kahlan, Peridot, PHPUnit, PHPSpec, Dusk | `behat`, `codeception`, `dusk`, `kahlan`, `peridot`, `phpunit`, `phpspec`  |
-| **Perl**       | Prove                                                       | `prove`                                                                    |
-| **Python**     | Django, Nose, Nose2, PyTest, PyUnit                         | `djangotest`, `djangonose` `nose`, `nose2`, `pytest`, `pyunit`             |
-| **Racket**     | RackUnit                                                    | `rackunit`                                                                 |
-| **Ruby**       | Cucumber, [M], [Minitest][minitest], Rails, RSpec           | `cucumber`, `m`, `minitest`, `rails`, `rspec`                              |
-| **Rust**       | Cargo                                                       | `cargotest`                                                                |
-| **Shell**      | Bats                                                        | `bats`                                                                     |
-| **Swift**      | Swift Package Manager                                       | `swiftpm`                                                                  |
-| **VimScript**  | Vader.vim, VSpec                                            | `vader`, `vspec`                                                           |
+| Language       | Frameworks                                                       | Identifiers                                                                       |
+| :------------: | ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **C#**         | .NET                                                             | `xunit`, `dotnettest`                                                             |
+| **Clojure**    | Fireplace.vim                                                    | `fireplacetest`                                                                   |
+| **Crystal**    | Crystal                                                          | `crystalspec`                                                                     |
+| **Elixir**     | ESpec, ExUnit                                                    | `espec`, `exunit`                                                                 |
+| **Elm**        | elm-test                                                         | `elmtest`                                                                         |
+| **Erlang**     | CommonTest                                                       | `commontest`                                                                      |
+| **Go**         | Ginkgo, Go                                                       | `ginkgo`, `gotest`                                                                |
+| **Java**       | Maven                                                            | `maventest`                                                                       |
+| **JavaScript** | Ava, Intern, Jasmine, Jest, Karma, Lab, Mocha, TAP, WebdriverIO  | `ava`, `intern`, `jasmine`, `jest`, `karma`, `lab`, `mocha`, `tap`, `webdriverio` |
+| **Lua**        | Busted                                                           | `busted`                                                                          |
+| **PHP**        | Behat, Codeception, Kahlan, Peridot, PHPUnit, PHPSpec, Dusk      | `behat`, `codeception`, `dusk`, `kahlan`, `peridot`, `phpunit`, `phpspec`         |
+| **Perl**       | Prove                                                            | `prove`                                                                           |
+| **Python**     | Django, Nose, Nose2, PyTest, PyUnit                              | `djangotest`, `djangonose` `nose`, `nose2`, `pytest`, `pyunit`                    |
+| **Racket**     | RackUnit                                                         | `rackunit`                                                                        |
+| **Ruby**       | Cucumber, [M], [Minitest][minitest], Rails, RSpec                | `cucumber`, `m`, `minitest`, `rails`, `rspec`                                     |
+| **Rust**       | Cargo                                                            | `cargotest`                                                                       |
+| **Shell**      | Bats                                                             | `bats`                                                                            |
+| **Swift**      | Swift Package Manager                                            | `swiftpm`                                                                         |
+| **VimScript**  | Vader.vim, VSpec                                                 | `vader`, `vspec`                                                                  |
 
 ## Features
 
@@ -53,11 +53,12 @@ to your `.vimrc` file (see vim-plug documentation for where), and run `:PlugInst
 Add your preferred mappings to your `.vimrc` file:
 
 ```vim
-nmap <silent> <leader>t :TestNearest<CR>
-nmap <silent> <leader>T :TestFile<CR>
-nmap <silent> <leader>a :TestSuite<CR>
-nmap <silent> <leader>l :TestLast<CR>
-nmap <silent> <leader>g :TestVisit<CR>
+" these "Ctrl mappings" work well when Caps Lock is mapped to Ctrl
+nmap <silent> t<C-n> :TestNearest<CR> " t Ctrl+n
+nmap <silent> t<C-f> :TestFile<CR>    " t Ctrl+f
+nmap <silent> t<C-s> :TestSuite<CR>   " t Ctrl+s
+nmap <silent> t<C-l> :TestLast<CR>    " t Ctrl+l
+nmap <silent> t<C-g> :TestVisit<CR>   " t Ctrl+g
 ```
 
 | Command          | Description                                                                                                                                                                                                                                                                            |

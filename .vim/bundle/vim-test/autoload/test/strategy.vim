@@ -80,11 +80,13 @@ function! test#strategy#vimshell(cmd) abort
 endfunction
 
 function! test#strategy#terminal(cmd) abort
-  call s:execute_script('osx_terminal', s:pretty_command(a:cmd))
+  let cmd = join(['cd ' . shellescape(getcwd()), s:pretty_command(a:cmd)], '; ')
+  call s:execute_script('osx_terminal', cmd)
 endfunction
 
 function! test#strategy#iterm(cmd) abort
-  call s:execute_script('osx_iterm', s:pretty_command(a:cmd))
+  let cmd = join(['cd ' . shellescape(getcwd()), s:pretty_command(a:cmd)], '; ')
+  call s:execute_script('osx_iterm', cmd)
 endfunction
 
 
@@ -125,22 +127,20 @@ endfunction
 
 function! s:pretty_command(cmd) abort
   let clear = !s:Windows() ? 'clear' : 'cls'
-  let cd = 'cd ' . shellescape(getcwd())
   let echo  = !s:Windows() ? 'echo -e '.shellescape(a:cmd) : 'Echo '.shellescape(a:cmd)
   let separator = !s:Windows() ? '; ' : ' & '
 
   if !get(g:, 'test#preserve_screen')
-    return join([l:clear, l:cd, l:echo, a:cmd], l:separator)
+    return join([l:clear, l:echo, a:cmd], l:separator)
   else
-    return join([l:cd, l:echo, a:cmd], l:separator)
+    return join([l:echo, a:cmd], l:separator)
   endif
 endfunction
 
 function! s:command(cmd) abort
-  let cd = 'cd ' . shellescape(getcwd())
   let separator = !s:Windows() ? '; ' : ' & '
 
-  return join([l:cd, a:cmd], l:separator)
+  return join([a:cmd], l:separator)
 endfunction
 
 function! s:Windows() abort

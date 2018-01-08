@@ -14,7 +14,7 @@ endfunction
 let g:test#runners = get(g:, 'test#runners', {})
 call s:extend(g:test#runners, {
   \ 'Ruby':       ['Rails', 'M', 'Minitest', 'RSpec', 'Cucumber'],
-  \ 'JavaScript': ['Intern', 'TAP', 'Karma', 'Lab', 'Mocha', 'Jasmine', 'Jest', 'WebdriverIO'],
+  \ 'JavaScript': ['Ava', 'Intern', 'TAP', 'Karma', 'Lab', 'Mocha', 'Jasmine', 'Jest', 'WebdriverIO'],
   \ 'Python':     ['DjangoTest', 'PyTest', 'PyUnit', 'Nose', 'Nose2'],
   \ 'Elixir':     ['ExUnit', 'ESpec'],
   \ 'Elm':        ['ElmTest'],
@@ -22,7 +22,7 @@ call s:extend(g:test#runners, {
   \ 'Go':         ['GoTest', 'Ginkgo'],
   \ 'Rust':       ['CargoTest'],
   \ 'Clojure':    ['FireplaceTest'],
-  \ 'CSharp':     ['DotnetTest'],
+  \ 'CSharp':     ['Xunit', 'DotnetTest'],
   \ 'Shell':      ['Bats'],
   \ 'Swift':      ['SwiftPM'],
   \ 'VimL':       ['VSpec', 'Vader'],

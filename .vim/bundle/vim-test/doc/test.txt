@@ -82,6 +82,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:M*
 :M [args]                    Uses the `m` command.
 
+                                                *test-:Ava*
+:Ava [args]                  Uses the `ava` command.
+
                                                 *test-:Intern*
 :Intern [args]               Uses the `intern-client` or `intern-runner` command.
 
@@ -130,11 +133,19 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:CommonTest*
 :CommonTest [args]           Uses the `rebar3` `ct` command.
 
+                                                *test-:Xunit*
+:Xunit [args]                Uses the `dotnet` `xunit` command.
+
+                                                *test-:DotnetTest*
+:DotnetTest [args]           Uses the `dotnet` `test` command.
+
                                                 *test-:GoTest*
 :GoTest [args]               Uses the `go` `test` command.
 
-                                                *test-:CargoTest*
+                                                *test-:Ginkgo*
 :Ginkgo [args]               Uses the `ginkgo` command.
+
+                                                *test-:CargoTest*
 :CargoTest [args]            Uses the `cargo` `test` command.
 
                                                 *test-:FireplaceTest*
