@@ -5,7 +5,8 @@ VimL: let s:value_end   = s:value_start
 VimL: let s:marker_open  = '<+'
 VimL: let s:marker_close = '+>'
 #!/usr/bin/env perl
-# ABSTRACT: <+TODO+>
+# PODNAME: <+name of script+>
+# ABSTRACT: <+description+>
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
