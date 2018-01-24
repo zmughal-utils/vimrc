@@ -572,6 +572,11 @@ digraph !? 8253	" Interrobang
 digraph ?! 8253
 digraph .3 8230 " Ellipsis
 digraph ~= 8773 " Approximately equal to
+digraph -^ 8593 " Up arrow (down arrow is -v, right ->, left <-)
+
+digraph =^ 8657 " Up double arrow (right =>, left <=)
+digraph =v 8659 " Down double arrow
+
 
 " For FuzzyFinder >= v3.0
 nnoremap <Leader>rf	:FufMruFile<CR>
