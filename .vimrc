@@ -275,7 +275,7 @@ augroup MyAutocmds "{{{
 
 	if executable('pdftotext')
 		autocmd BufReadCmd	*.pdf	if filereadable(expand('<afile>'))
-		autocmd BufReadCmd	*.pdf		silent exe 'silent read !pdftotext -layout '.escape(expand('<afile>'),' \&').' -'
+		autocmd BufReadCmd	*.pdf		silent exe 'silent read !pdftotext -layout '.escape(expand('<afile>'),' \&()').' -'
 		"autocmd BufReadCmd	*.pdf		silent let b:winview=winsaveview()
 		autocmd BufReadCmd	*.pdf		silent let b:counter = 1
 		autocmd BufReadCmd	*.pdf		silent exe "keepjumps g//s//\\=repeat('-',66).' [ Page '.b:counter.' ]'.''/ | let b:counter += 1"
