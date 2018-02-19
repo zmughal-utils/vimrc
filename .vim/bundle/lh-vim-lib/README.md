@@ -32,9 +32,10 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [Buffers related functions](#buffers-related-functions)
   * [Syntax related functions](#syntax-related-functions)
   * [UI functions](#ui-functions)
+  * [Project feature](doc/Project.md) -- other web page
   * [Logging framework](doc/Log.md) -- other web page
   * [Design by Contract functions](doc/DbC.md) -- other web page
-  * [Project feature](doc/Project.md) -- other web page
+  * [Call stack decoding](doc/Callstack.md) -- other web page
 
 ### Miscellaneous functions
 
@@ -58,10 +59,6 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#encoding#strlen(mb_string)`                | Executes `strlen()` on a multibytes string                                                                                                                               |
 | `lh#encoding#strpart(mb_string, p, l)`         | Executes `strpart()` on a multibytes string                                                                                                                              |
 | `lh#event#register_for_one_execution_at()`     | Registers a command to be executed once (and only once) when an event is triggered on the current file                                                                   |
-| `lh#exception#callstack()`                     | Parses `v:throwpoint` to extract the functions called                                                                                                                    |
-| `lh#exception#callstack()as_qf`                | Returns the callstack in a format compatible with quickfix functions                                                                                                     |
-| `lh#exception#decode()`                        | Create an object containing a callstack from a throwpoint                                                                                                                |
-| `lh#exception#get_callstack()`                 | Obtain the callstack at the current callsite                                                                                                                             |
 | `lh#file#new_cache().get()`                    | Caches and returns data associated to a file                                                                                                                             |
 | `lh#float#arg_max(list)`                       | Returns the index of the maximum element of a list of floats                                                                                                             |
 | `lh#float#arg_min(list)`                       | Returns the index of the minimum element of a list of floats                                                                                                             |
@@ -298,9 +295,11 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 ### Syntax related functions
 | Function                                                         | Purpose                                                                                                                                |
 |:-----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
-| `lh#syntax#getline_without()`                                    | Extracts a line without the characters matching a given syntax ID pattern                                                              |
+| `lh#syntax#getline_matching()`                                   | Extracts a line with the characters matching a given syntax ID pattern                                                                 |
+| `lh#syntax#getline_not_matching()`                               | Extracts a line without the characters matching a given syntax ID pattern                                                              |
 | `lh#syntax#is_a_comment()`                                       | Tells the syntax kind of the character at the given mark is a comment                                                                  |
 | `lh#syntax#is_a_comment_at()`                                    | Tells the syntax kind of the character at the given position is a comment                                                              |
+| `lh#syntax#line_filter()`                                        | Defines an object that extracts the characters matching a given syntax ID pattern text lines                                           |
 | `lh#syntax#list()`                                               | Like `lh#syntax#list_raw()`, but reinterprets the results (experimental)                                                               |
 | `lh#syntax#list_raw()`                                           | Returns the result of "`syn list {group-name}`" as a string                                                                            |
 | `lh#syntax#match_at()`                                           | Tells whether the syntax kind of the character at the given position matches a pattern                                                 |
