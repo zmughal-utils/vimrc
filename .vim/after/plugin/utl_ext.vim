@@ -1,3 +1,4 @@
+let g:utl_cfg_hdl_mt_application_pdf__pdftotext="e %p"
 let g:utl_cfg_hdl_mt_application_pdf__xpdf="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f')"
 let g:utl_cfg_hdl_mt_application_pdf__xpdf_rv="call Utl_if_hdl_mt_application_pdf_xpdf('%p', '%f', '-rv')"
 let g:utl_cfg_hdl_mt_application_pdf__evince="call Utl_if_hdl_mt_application_pdf_evince('%p', '%f')"
