@@ -4,7 +4,7 @@
 #
 #     wget -qO- 'https://languagetool.org/' | grep -o 'v[0-9]\+\.[0-9]\+' | sort -u
 CURDIR=`dirname "$0"`
-VERSION="3.7"
+VERSION="4.0"
 FILE="LanguageTool-${VERSION}.zip"
 URL="https://languagetool.org/download/${FILE}"
 
