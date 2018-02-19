@@ -126,10 +126,6 @@ let g:ctrlp_user_command = {
 
 "}}}
 
-" LanguageTool {{{
-let g:languagetool_jar='$HOME/bin/build.local/LanguageTool-3.0/languagetool-commandline.jar'
-"}}}
-
 let g:SrcExpl_pluginList = [
 	\ "__Tag_List__",
 	\ "_NERD_tree_",
@@ -269,7 +265,7 @@ let tlist_ikiwiki_settings   = 'markdown;h:Headings'
 
 "}}}
 
-" For <url:~/.vim/bundle-vim-scripts/3223_LanguageTool >{{{
+" For <url:~/.vim/bundle/vim-languagetool> {{{
 " Download with <url:~/.vim/scripts/install/languagetool>
 " Find the newest version installed
 let g:languagetool_jar=get(sort(glob('~/bin/LanguageTool-*/languagetool-commandline.jar', 1, 1)), -1, '')
