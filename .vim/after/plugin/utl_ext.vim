@@ -123,21 +123,17 @@ func! Set_utl_system()
 	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__system
 endfunc
 
-func! Set_utl_system()
-	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__system
-endfunc
-
 func! Set_utl_vim()
 	let g:utl_cfg_hdl_scm_http = g:utl_cfg_hdl_scm_http__wget
 endfunc
 
 " Use system to open
-nmap <Leader>gu	:call Set_utl_system()<bar>Utl<CR>zv
-vmap <Leader>gu	:call Set_utl_system()<bar>Utl o v<CR>zv
+nmap <Leader>gu	:call Set_utl_system()<bar>Utl<CR>zv:redraw!<CR>
+vmap <Leader>gu	:call Set_utl_system()<bar>Utl o v<CR>zv:redraw!<CR>
 
 " Use vim to open
-nmap <Leader>Gu	:call Set_utl_vim()<bar>Utl<CR>zv
-vmap <Leader>Gu	:call Set_utl_vim()<bar>Utl o v<CR>zv
+nmap <Leader>Gu	:call Set_utl_vim()<bar>Utl<CR>zv:redraw!<CR>
+vmap <Leader>Gu	:call Set_utl_vim()<bar>Utl o v<CR>zv:redraw!<CR>
 
 " Split and use vim to open
 nmap <Leader>GU	:call Set_utl_vim()<bar>split<bar>Utl<CR>zv
