@@ -111,7 +111,11 @@ if has("unix")
 		endif
 	endif
 	let g:utl_cfg_hdl_scm_http__system = g:utl_cfg_hdl_scm_http__system_local
-	let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
+	if executable("xpdf")
+		let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__xpdf
+	elseif executable("evince")
+		let g:utl_cfg_hdl_mt_application_pdf = g:utl_cfg_hdl_mt_application_pdf__evince
+	endif
 	let g:utl_cfg_hdl_mt_generic = "silent !see_smarter '%p'"
 endif
 
