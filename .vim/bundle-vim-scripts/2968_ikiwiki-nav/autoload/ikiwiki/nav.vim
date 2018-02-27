@@ -283,6 +283,13 @@ endfunction " }}}1
 " }}}1
 function! s:SelectLink(pos_locations) "{{{1
   let pos_locations = s:SortOptions(a:pos_locations)
+  let preferred = pos_locations[0]
+  for _plink in pos_locations
+	if _plink[2] == 'index.mdwn' && len(_plink[0]) >= len(preferred[0]) && _plink[1] !~ '^index/'
+		let preferred = _plink
+	endif
+  endfor
+  call insert(pos_locations, preferred)
   let opts = ['Choose location of the link:']
   let idx = 1
   " get user selection
