@@ -7,9 +7,15 @@ let g:utl_cfg_hdl_mt_application_pdf__mupdf="call Utl_if_hdl_mt_application_pdf_
 let g:utl_cfg_hdl_mt_application_pdf__foxit="call Utl_if_hdl_mt_application_pdf_foxit('%p', '%f')"
 fu! Utl_if_hdl_mt_application_pdf_parse(path,fragment)
 	let l:path = escape(a:path, '!')
+	let l:relpath = substitute(l:path, expand("%:p:h"). "/", '', '')
 	if !filereadable(l:path)
-		redraw | echom "File '".l:path."' not found"
-		return
+		let l:relpath_list = globpath(&path, l:relpath, 0, 1)
+		if len(l:relpath_list) > 0 && filereadable(l:relpath_list[0])
+			let l:path = l:relpath_list[0]
+		else
+			redraw | echom "File '".l:path."' not found"
+			return
+		endif
 	endif
 	let page = ''
 	if a:fragment != ''
@@ -32,7 +38,7 @@ fu! Utl_if_hdl_mt_application_pdf_parse(path,fragment)
 endfu
 
 fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment, ...)
-	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let l:info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
 	let cmd = ':silent !xpdf -q '
 	if exists("a:1")
 		let cmd .= ' '.a:1.' '
@@ -46,7 +52,7 @@ fu! Utl_if_hdl_mt_application_pdf_xpdf(path,fragment, ...)
 endfu
 
 fu! Utl_if_hdl_mt_application_pdf_evince(path,fragment)
-	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let l:info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
 	let cmd = ':silent !evince '
 	if has_key(info, 'page')
 		let cmd .= ' -p '.info["page"].' '
@@ -66,7 +72,7 @@ fu! Utl_if_hdl_mt_application_pdf_foxit(path,fragment)
 endfu
 
 fu! Utl_if_hdl_mt_application_pdf_mendeley(path,fragment)
-	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let l:info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
 	let cmd = ':silent !mendeleydesktop '
 	let cmd .= '"'.l:info["path"].'"'
 	let cmd .= ' &'
@@ -74,7 +80,7 @@ fu! Utl_if_hdl_mt_application_pdf_mendeley(path,fragment)
 endfu
 
 fu! Utl_if_hdl_mt_application_pdf_mupdf(path,fragment)
-	let info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let l:info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
 	let cmd = ':silent !mupdf '
 	let cmd .= '"'.l:info["path"].'"'
 	if has_key(info, 'page')
