@@ -13,6 +13,11 @@ command! ProjOrgWikiNote  exe "new ".project_wiki#get_org_wiki_dir(project_wiki#
 
 command! ProjNbNote  exe "new ".project_wiki#get_repo_wiki_dir({ "org": "wiki", "repo": "notebook" })."/main.otl"
 
+nmap <Leader>n1 <Esc>:ProjRepoWikiNote<CR>
+nmap <Leader>n2 <Esc>:ProjRepoCodeDir<CR>
+nmap <Leader>n3 <Esc>:ProjOrgWikiNote<CR>
+nmap <Leader>n4 <Esc>:ProjNbNote<CR>
+
 " Commands and Mappings }}}1
 let &cpo=s:cpo_save
 "=============================================================================
