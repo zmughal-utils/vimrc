@@ -485,12 +485,6 @@ command! Wsudo	:w !sudo tee % >/dev/null
 
 let g:surround_{char2nr("o")}="\n\r\n\n"	" open line above and below
 
-function! ReverseLines(line1,line2)
-	let oldp=@/
-	exe string(a:line1).",".string(a:line2)."g/^/m".string(a:line1-1)
-	let @/=oldp
-endfunction
-command! -range=% -nargs=0 ReverseLines	call ReverseLines(<line1>,<line2>)
 command! -nargs=0 Alphabet	call append(line("."),"abcdefghijklmnopqrstuvwxyz")
 command! -range=% -nargs=0 CharCountNoHardReturns <line1>,<line2>w !perl -00 -lpE 's/\n/ /g; s/ +/ /g; $total += length $_; }{ say "Characters: $total" '
 
