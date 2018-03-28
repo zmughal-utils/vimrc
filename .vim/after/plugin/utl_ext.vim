@@ -5,6 +5,7 @@ let g:utl_cfg_hdl_mt_application_pdf__evince="call Utl_if_hdl_mt_application_pdf
 let g:utl_cfg_hdl_mt_application_pdf__mendeley="call Utl_if_hdl_mt_application_pdf_mendeley('%p', '%f')"
 let g:utl_cfg_hdl_mt_application_pdf__mupdf="call Utl_if_hdl_mt_application_pdf_mupdf('%p', '%f')"
 let g:utl_cfg_hdl_mt_application_pdf__foxit="call Utl_if_hdl_mt_application_pdf_foxit('%p', '%f')"
+let g:utl_cfg_hdl_mt_application_pdf__qpdfview="call Utl_if_hdl_mt_application_pdf_qpdfview('%p', '%f')"
 fu! Utl_if_hdl_mt_application_pdf_parse(path,fragment)
 	let l:path = escape(a:path, '!')
 	let l:relpath = substitute(l:path, expand("%:p:h"). "/", '', '')
@@ -67,6 +68,17 @@ fu! Utl_if_hdl_mt_application_pdf_foxit(path,fragment)
 	let cmd = ':silent !FoxitReader '
 	" No support for opening to a specific page on Linux version of Foxit Reader
 	let cmd .= '"'.l:info["path"].'"'
+	let cmd .= ' 2>/dev/null &'
+	exe cmd
+endfu
+
+fu! Utl_if_hdl_mt_application_pdf_qpdfview(path,fragment)
+	let l:info = Utl_if_hdl_mt_application_pdf_parse(a:path,a:fragment)
+	let cmd = ':silent !qpdfview '
+	let cmd .= '"'.l:info["path"].'"'
+	if has_key(info, 'page')
+		let cmd .= '#'.info["page"].' '
+	endif
 	let cmd .= ' 2>/dev/null &'
 	exe cmd
 endfu
