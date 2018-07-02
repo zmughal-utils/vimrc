@@ -114,3 +114,5 @@ refresh_git https://github.com/dkprice/vim-easygrep vim-easygrep
 
 refresh_git https://github.com/scrooloose/nerdtree nerdtree
 refresh_git https://github.com/scrooloose/nerdcommenter nerdcommenter
+
+refresh_git https://github.com/dhruvasagar/vim-zoom vim-zoom
