@@ -43,6 +43,18 @@ function! projectionist#lencmp(i1, i2) abort
   return len(a:i1) - len(a:i2)
 endfunction
 
+function! s:real(file) abort
+  let pre = substitute(matchstr(a:file, '^\a\a\+\ze:'), '^.', '\u&', '')
+  if empty(pre)
+    let path = a:file
+  elseif exists('*' . pre . 'Path')
+    let path = {pre}Path(a:file)
+  else
+    return ''
+  endif
+  return exists('+shellslash') && !&shellslash ? tr(path, '/', '\') : path
+endfunction
+
 function! projectionist#slash() abort
   return exists('+shellslash') && !&shellslash ? '\' : '/'
 endfunction
@@ -68,6 +80,10 @@ function! projectionist#shellescape(arg) abort
   return a:arg =~# "^[[:alnum:]_/.:-]\\+$" ? a:arg : shellescape(a:arg)
 endfunction
 
+function! projectionist#shellpath(arg) abort
+  return projectionist#shellescape(s:real(a:arg))
+endfunction
+
 function! s:join(arg) abort
   if type(a:arg) == type([])
     return join(a:arg, ' ')
@@ -78,24 +94,82 @@ function! s:join(arg) abort
   endif
 endfunction
 
+function! s:parse(mods, args) abort
+  let flags = ''
+  let pres = []
+  let cmd = {'args': []}
+  if a:mods ==# '' || a:mods ==# '<mods>'
+    let cmd.mods = ''
+  else
+    let cmd.mods = a:mods . ' '
+  endif
+  let args = copy(a:args)
+  while !empty(args)
+    if args[0] =~# "^++mods="
+      let cmd.mods .= args[0][8:-1] . ' '
+    elseif args[0] =~# '^++'
+      let flags .= ' ' . args[0]
+    elseif args[0] =~# '^+.'
+      call add(pres, args[0][1:-1])
+    elseif args[0] !=# '+'
+      call add(cmd.args, args[0])
+    endif
+    call remove(args, 0)
+  endwhile
+
+  let cmd.pre = flags . (empty(pres) ? '' : ' +'.escape(join(pres, '|'), '| '))
+  return cmd
+endfunction
+
+function! s:fcall(fn, path, ...) abort
+  let ns = matchstr(a:path, '^\a\a\+\ze:')
+  if len(ns) && exists('*' . ns . '#' . a:fn)
+    return call(ns . '#' . a:fn, [a:path] + a:000)
+  else
+    return call(a:fn, [a:path] + a:000)
+  endif
+endfunction
+
+function! s:mkdir_p(path) abort
+  if a:path !~# '^\a[[:alnum:].+-]\+:' && !isdirectory(a:path)
+    call mkdir(a:path, 'p')
+  endif
+endfunction
+
+function! projectionist#glob(path) abort
+  let ns = matchstr(a:path, '^\a\a\+\ze:')
+  if len(ns) && exists('*' . ns . '#glob')
+    return call(ns . '#glob', [a:path, 0, 1])
+  else
+    return split(glob(a:path), "\n")
+  endif
+endfunction
+
 " Section: Querying
 
-function! s:paths() abort
+function! s:roots() abort
   return reverse(sort(keys(b:projectionist), function('projectionist#lencmp')))
 endfunction
 
 function! projectionist#path(...) abort
-  let path = get(s:paths(), a:0 > 1 ? a:2 - 1 : 0, '')
-  if !empty(path) && a:0
-    return path . projectionist#slash() . a:1
+  if a:0 && a:1 =~# '^/\|^\a\+:'
+    return a:1
+  endif
+  if a:0 > 1 && type(a:2) == type('')
+    let root = a:2
   else
-    return path
+    let root = get(s:roots(), a:0 > 1 ? a:2 - 1 : 0, '')
+  endif
+  if !empty(root) && a:0
+    return root . projectionist#slash() . a:1
+  else
+    return root
   endif
 endfunction
 
 function! s:all() abort
   let all = []
-  for key in s:paths()
+  for key in s:roots()
     for value in b:projectionist[key]
       call add(all, [key, value])
     endfor
@@ -187,20 +261,25 @@ function! g:projectionist_transformations.close(input, o) abort
   return '}'
 endfunction
 
+function! g:projectionist_transformations.nothing(input, o) abort
+  return ''
+endfunction
+
 function! s:expand_placeholder(placeholder, expansions) abort
   let transforms = split(a:placeholder[1:-2], '|')
   if has_key(a:expansions, get(transforms, 0, '}'))
     let value = a:expansions[remove(transforms, 0)]
-  elseif has_key(a:expansions, 'match')
-    let value = a:expansions.match
   else
-    return "\001"
+    let value = get(a:expansions, 'match', "\001")
   endif
   for transform in transforms
     if !has_key(g:projectionist_transformations, transform)
       return "\001"
     endif
     let value = g:projectionist_transformations[transform](value, a:expansions)
+    if value =~# "\001"
+      return "\001"
+    endif
   endfor
   if has_key(a:expansions, 'post_function')
     let value = call(a:expansions.post_function, [value])
@@ -208,12 +287,12 @@ function! s:expand_placeholder(placeholder, expansions) abort
   return value
 endfunction
 
-function! s:expand_placeholders(value, expansions) abort
+function! s:expand_placeholders(value, expansions, ...) abort
   if type(a:value) ==# type([]) || type(a:value) ==# type({})
-    return map(copy(a:value), 's:expand_placeholders(v:val, a:expansions)')
+    return filter(map(copy(a:value), 's:expand_placeholders(v:val, a:expansions, 1)'), 'type(v:val) !=# type("") || v:val !~# "\001"')
   endif
   let value = substitute(a:value, '{[^{}]*}', '\=s:expand_placeholder(submatch(0), a:expansions)', 'g')
-  return value =~# "\001" ? '' : value
+  return !a:0 && value =~# "\001" ? '' : value
 endfunction
 
 let s:valid_key = '^\%([^*{}]*\*\*[^*{}]\{2\}\)\=[^*{}]*\*\=[^*{}]*$'
@@ -278,15 +357,15 @@ function! s:absolute(path, in) abort
   if a:path =~# '^\%([[:alnum:].-]\+:\)\|^\.\?[\/]'
     return a:path
   else
-    return simplify(a:in . projectionist#slash() . a:path)
+    return substitute(a:in, '[\/]$', '', '') . projectionist#slash() . a:path
   endif
 endfunction
 
-function! projectionist#query_file(key) abort
+function! projectionist#query_file(key, ...) abort
   let files = []
   let _ = {}
-  for [root, _.match] in projectionist#query(a:key)
-    call extend(files, map(type(_.match) == type([]) ? copy(_.match) : [_.match], 's:absolute(v:val, root)'))
+  for [root, _.match] in projectionist#query(a:key, a:0 ? a:1 : {})
+    call extend(files, map(filter(type(_.match) == type([]) ? copy(_.match) : [_.match], 'len(v:val)'), 's:absolute(v:val, root)'))
   endfor
   return s:uniq(files)
 endfunction
@@ -296,8 +375,8 @@ function! s:shelljoin(val) abort
 endfunction
 
 function! projectionist#query_exec(key, ...) abort
-  let opts = extend({'post_function': 'projectionist#shellescape'}, a:0 ? a:1 : {})
-  return filter(map(projectionist#query(a:key, opts), '[v:val[0], s:shelljoin(v:val[1])]'), '!empty(v:val[1])')
+  let opts = extend({'post_function': 'projectionist#shellpath'}, a:0 ? a:1 : {})
+  return filter(map(projectionist#query(a:key, opts), '[s:real(v:val[0]), s:shelljoin(v:val[1])]'), '!empty(v:val[0]) && !empty(v:val[1])')
 endfunction
 
 function! projectionist#query_scalar(key) abort
@@ -342,27 +421,38 @@ function! projectionist#define_navigation_command(command, patterns) abort
   for [prefix, excmd] in items(s:prefixes)
     execute 'command! -buffer -bar -bang -nargs=* -complete=customlist,s:projection_complete'
           \ prefix . substitute(a:command, '\A', '', 'g')
-          \ ':execute s:open_projection("<mods> '.excmd.'<bang>",'.string(a:patterns).',<f-args>)'
+          \ ':execute s:open_projection("<mods>", "'.excmd.'<bang>",'.string(a:patterns).',<f-args>)'
   endfor
 endfunction
 
 function! projectionist#activate() abort
   if empty(b:projectionist)
-    finish
+    return
   endif
-  command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
-        \ exe 'cd<bang>'  fnameescape(projectionist#path(<q-args>, <line2>))
-  command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
-        \ exe 'lcd<bang>' fnameescape(projectionist#path(<q-args>, <line2>))
+  if len(s:real(s:roots()[0]))
+    command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Pcd
+          \ exe 'cd' s:real(projectionist#path(<q-args>, <line2>))
+    command! -buffer -bar -bang -nargs=* -range=1 -complete=customlist,s:dir_complete Plcd
+          \ exe (<bang>0 ? 'cd' : 'lcd') s:real(projectionist#path(<q-args>, <line2>))
+    if exists(':Cd') != 2
+      command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
+            \ exe 'cd' s:real(projectionist#path(<q-args>, <line2>))
+    endif
+    if exists(':Lcd') != 2
+      command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
+            \ exe (<bang>0 ? 'cd' : 'lcd') s:real(projectionist#path(<q-args>, <line2>))
+    endif
+    command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo
+          \ exe s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
+  endif
   for [command, patterns] in items(projectionist#navigation_commands())
     call projectionist#define_navigation_command(command, patterns)
   endfor
   for [prefix, excmd] in items(s:prefixes) + [['', 'edit']]
-    execute 'command! -buffer -bar -bang -nargs=* -range=1 -complete=customlist,s:edit_complete'
+    execute 'command! -buffer -bar -bang -nargs=* -range=-1 -complete=customlist,s:edit_complete'
           \ 'A'.prefix
-          \ ':execute s:edit_command("<mods> '.excmd.'<bang>", <line2>, <f-args>)'
+          \ ':execute s:edit_command("<mods>", "'.excmd.'<bang>", <count>, <f-args>)'
   endfor
-  command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo execute s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
 
   for [root, makeprg] in projectionist#query_exec('make')
     unlet! b:current_compiler
@@ -377,43 +467,43 @@ function! projectionist#activate() abort
       setlocal errorformat<
     endif
     let &l:makeprg = makeprg
-    let &l:errorformat .= ',chdir '.escape(root, ',')
-    break
-  endfor
-
-  for [root, command] in projectionist#query_exec('start')
-    let offset = index(s:paths(), root) + 1
-    let b:start = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
-          \ substitute('Start '.command, 'Start :', '', '')
+    let &l:errorformat .= ',%\&chdir '.escape(root, ',')
     break
   endfor
 
   for [root, command] in projectionist#query_exec('console')
-    let offset = index(s:paths(), root) + 1
+    let offset = index(s:roots(), root) + 1
+    let b:start = '-dir=' . fnameescape(root) .
+          \ ' -title=' . escape(fnamemodify(root, ':t'), '\ ') . '\ console ' .
+          \ command
     execute 'command! -bar -bang -buffer -nargs=* Console ' .
-          \ 'ProjectDo ' . (offset == 1 ? '' : offset.' ') .
-          \ (exists(':Start') < 2 ? '!' : 'Start<bang> -title=' .
-          \ escape(fnamemodify(root, ':t'), '\ ') . '\ console ') .
-          \ command . ' <args>'
+          \ (exists(':Start') < 2 ?
+          \ 'ProjectDo ' . (offset == 1 ? '' : offset.' ') . '!' . command :
+          \ 'Start<bang> ' . b:start) . ' <args>'
+    break
+  endfor
+
+  for [root, command] in projectionist#query_exec('start')
+    let offset = index(s:roots(), root) + 1
+    let b:start = '-dir=' . fnameescape(root) . ' ' . command
     break
   endfor
 
   for [root, command] in s:query_exec_with_alternate('dispatch')
-    let offset = index(s:paths(), root) + 1
-    let b:dispatch = ':ProjectDo ' . (offset == 1 ? '' : offset.' ') .
-          \ substitute('Dispatch '.command, 'Dispatch :', '', '')
+    let b:dispatch = '-dir=' . fnameescape(root) . ' ' . command
     break
   endfor
 
   for dir in projectionist#query_file('path')
+    let dir = substitute(dir, '^\a\a\+:', '+&', '')
     if stridx(','.&l:path.',', ','.escape(dir, ', ').',') < 0
       let &l:path = escape(dir, ', ') . ',' . &path
     endif
   endfor
 
-  for root in s:paths()
-    let tags = root . projectionist#slash() . 'tags'
-    if stridx(','.&l:tags.',', ','.escape(tags, ', ').',') < 0
+  for root in s:roots()
+    let tags = s:real(root . projectionist#slash() . 'tags')
+    if len(tags) && stridx(','.&l:tags.',', ','.escape(tags, ', ').',') < 0
       let &l:tags = &tags . ',' . escape(tags, ', ')
     endif
   endfor
@@ -443,7 +533,7 @@ function! projectionist#completion_filter(results, query, sep, ...) abort
   unlet! results
 
   let results = s:uniq(sort(copy(a:results)))
-  call filter(results,'v:val !~# "\\~$"')
+  call filter(results,'v:val !~# "\\~$" && !empty(v:val)')
   let filtered = filter(copy(results),'v:val[0:strlen(a:query)-1] ==# a:query')
   if !empty(filtered) | return filtered | endif
   if !empty(a:sep)
@@ -462,8 +552,8 @@ function! s:dir_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let slash = projectionist#slash()
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = split(glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1)), "\n")
-  call map(matches,'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ]')
+  let matches = projectionist#glob(s:real(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*' . slash, c ? c : 1)))
+  call map(matches,'fnameescape(matchstr(a:lead, "^[\\/]") . v:val[ strlen(s:real(projectionist#path()))+1 : -1 ])')
   return matches
 endfunction
 
@@ -494,20 +584,22 @@ function! projectionist#navigation_commands() abort
   return commands
 endfunction
 
-function! s:open_projection(cmd, variants, ...) abort
+function! s:open_projection(mods, edit, variants, ...) abort
   let formats = []
   for variant in a:variants
     call add(formats, variant[0] . projectionist#slash() . (variant[1] =~# '\*\*'
           \ ? variant[1] : substitute(variant[1], '\*', '**/*', '')))
   endfor
-  if a:0 && a:1 ==# '&'
+  let cmd = s:parse(a:mods, a:000)
+  if get(cmd.args, -1, '') ==# '`=`'
     let s:last_formats = formats
     return ''
   endif
-  if a:0
+  if len(cmd.args)
     call filter(formats, 'v:val =~# "\\*"')
-    let dir = matchstr(a:1, '.*\ze/')
-    let base = matchstr(a:1, '[^\/]*$')
+    let name = join(cmd.args, ' ')
+    let dir = matchstr(name, '.*\ze/')
+    let base = matchstr(name, '[^\/]*$')
     call map(formats, 'substitute(substitute(v:val, "\\*\\*\\([\\/]\\=\\)", empty(dir) ? "" : dir . "\\1", ""), "\\*", base, "")')
   else
     call filter(formats, 'v:val !~# "\\*"')
@@ -517,27 +609,25 @@ function! s:open_projection(cmd, variants, ...) abort
   endif
   let target = formats[0]
   for format in formats
-    if filereadable(format)
+    if s:fcall('filereadable', format)
       let target = format
       break
     endif
   endfor
-  if !isdirectory(fnamemodify(target, ':h'))
-    call mkdir(fnamemodify(target, ':h'), 'p')
-  endif
-  return s:sub(a:cmd, '^%(\<mods\>)? ?', '') . ' ' .
+  call s:mkdir_p(fnamemodify(target, ':h'))
+  return cmd.mods . a:edit . cmd.pre . ' ' .
         \ fnameescape(fnamemodify(target, ':~:.'))
 endfunction
 
 function! s:projection_complete(lead, cmdline, _) abort
-  execute matchstr(a:cmdline, '\a\@<![' . join(keys(s:prefixes), '') . ']\w\+') . ' &'
+  execute matchstr(a:cmdline, '\a\@<![' . join(keys(s:prefixes), '') . ']\w\+') . ' `=`'
   let results = []
   for format in s:last_formats
     if format !~# '\*'
       continue
     endif
     let glob = substitute(format, '[^\/]*\ze\*\*[\/]\*', '', 'g')
-    let results += map(split(glob(glob), "\n"), 's:match(v:val, format)')
+    let results += map(projectionist#glob(glob), 's:match(v:val, format)')
   endfor
   call s:uniq(results)
   return projectionist#completion_filter(results, a:lead, '/')
@@ -560,26 +650,32 @@ function! s:jumpopt(file) abort
   endif
 endfunction
 
-function! s:edit_command(cmd, count, ...) abort
-  if a:0
-    if a:1 =~# '^[@#+]'
+function! s:edit_command(mods, edit, count, ...) abort
+  let cmd = s:parse(a:mods, a:000)
+  let file = join(cmd.args, ' ')
+  if len(file)
+    if file =~# '^[@#+]'
       return 'echoerr ":A: @/#/+ not supported"'
     endif
-    let open = s:jumpopt(projectionist#path(a:1, a:count))
+    let open = s:jumpopt(projectionist#path(file, a:count < 1 ? 1 : a:count))
     if empty(open[0])
       return 'echoerr "Invalid count"'
     endif
-  elseif a:cmd =~# 'read'
+  elseif a:edit =~# 'read'
     call projectionist#apply_template()
     return ''
   else
-    let alternates = projectionist#query_file('alternate')
+    let expansions = {}
+    if a:count > 0
+      let expansions.lnum = a:count
+    endif
+    let alternates = projectionist#query_file('alternate', expansions)
     let warning = get(filter(copy(alternates), 'v:val =~# "replace %.*}"'), 0, '')
     if !empty(warning)
       return 'echoerr '.string(matchstr(warning, 'replace %.*}').' in alternate projection')
     endif
     call map(alternates, 's:jumpopt(v:val)')
-    let open = get(filter(copy(alternates), '!empty(getftype(v:val[0]))'), 0, [])
+    let open = get(filter(copy(alternates), 's:fcall("getftime", v:val[0]) >= 0'), 0, [])
     if empty(alternates)
       return 'echoerr "No alternate file"'
     elseif empty(open)
@@ -599,18 +695,16 @@ function! s:edit_command(cmd, count, ...) abort
     endif
   endif
   let [file, jump] = open
-  if !isdirectory(fnamemodify(file, ':h'))
-    call mkdir(fnamemodify(file, ':h'), 'p')
-  endif
-  return s:sub(a:cmd, '^%(\<mods\>)? ?', '') . ' ' .
+  call s:mkdir_p(fnamemodify(file, ':h'))
+  return cmd.mods . a:edit . cmd.pre . ' ' .
         \ jump . fnameescape(fnamemodify(file, ':~:.'))
 endfunction
 
 function! s:edit_complete(lead, cmdline, _) abort
   let base = substitute(a:lead, '^[\/]', '', '')
   let c = matchstr(a:cmdline, '^\d\+')
-  let matches = split(glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1)), "\n")
-  call map(matches, 'matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ] . (isdirectory(v:val) ? projectionist#slash() : "")')
+  let matches = projectionist#glob(projectionist#path(substitute(base, '[\/]', '*&',  'g') . '*', c ? c : 1))
+  call map(matches, 'fnameescape(matchstr(a:lead, "^[\\/]") . v:val[ strlen(projectionist#path())+1 : -1 ] . (s:fcall("isdirectory", v:val) ? projectionist#slash() : ""))')
   return matches
 endfunction
 
@@ -622,7 +716,7 @@ function! s:do(bang, count, cmd) abort
   let cmd = substitute(a:cmd, '^\d\+ ', '', '')
   let offset = cmd ==# a:cmd ? 1 : matchstr(a:cmd, '^\d\+')
   try
-    execute cd fnameescape(projectionist#path('', offset))
+    execute cd fnameescape(s:real(projectionist#path('', offset)))
     execute (a:count >= 0 ? a:count : '').substitute(cmd, '\>', a:bang, '')
   catch
     return 'echoerr '.string(v:exception)
@@ -635,7 +729,7 @@ endfunction
 " Section: Make
 
 function! s:qf_pre() abort
-  let dir = substitute(matchstr(','.&l:errorformat, ',chdir \zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
+  let dir = substitute(matchstr(','.&l:errorformat, ',\%(%\\&\)\=chdir \zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
   let cwd = getcwd()
   if !empty(dir) && dir !=# cwd
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
@@ -665,6 +759,9 @@ function! projectionist#apply_template() abort
     endif
     %delete_
     call setline(1, split(template, "\n"))
+     if exists('#User#ProjectionistApplyTemplate')
+       doautocmd User ProjectionistApplyTemplate
+     endif
     doautocmd BufReadPost
   endif
   return ''

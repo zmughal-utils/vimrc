@@ -48,6 +48,7 @@ file            absolute path to file
 project         absolute path to project
 open            literal {
 close           literal }
+nothing         empty string
 
 From a globbing perspective, "*" is actually a stand in for "**/*".  For
 advanced cases, you can include both globs explicitly: "test/**/test_*.rb".
@@ -65,7 +66,8 @@ The full list of available properties in a projection is as follows:
 "console" ~
         Command to run to start a REPL or other interactive shell.  Will be
         defined as :Console.  This is useful to set from a "*" projection or
-        on a simple file glob like "*.js".  Experimental.
+        on a simple file glob like "*.js".  Will also be used as a default for
+        "start".  Expansions are shell escaped.
 						*projectionist-dispatch*
 "dispatch" ~
         Default task to use for |:Dispatch| in dispatch.vim.  If not provided,
@@ -146,13 +148,15 @@ are available.
 
 :AD {file}              Like :A, but |:read| the file into the current buffer.
 
+                                                *projectionist-:Pcd*
                                                 *projectionist-:Cd*
-:Cd                     |:cd| to the innermost root.
+:Pcd                     |:cd| to the innermost root.
 
-:Cd {path}              |:cd| to {path} in the innermost root.
+:Pcd {path}              |:cd| to {path} in the innermost root.
 
+                                                *projectionist-:Plcd*
                                                 *projectionist-:Lcd*
-:Lcd [path]             Like :Cd, but use |:lcd|.
+:Plcd [path]             Like :Pcd, but use |:lcd|.
 
                                                 *projectionist-:ProjectDo*
 :ProjectDo {cmd}        Change directory to the project root, execute the
@@ -189,6 +193,6 @@ pattern may prove useful:
 <
 You can also call *projectionist#path()* to get the root of the innermost set
 of projections, which is useful for implementing commands like
-|projectionist-:Cd|.
+|projectionist-:Pcd|.
 
  vim:tw=78:et:ft=help:norl:

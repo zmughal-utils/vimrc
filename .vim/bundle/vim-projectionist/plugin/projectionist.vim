@@ -1,6 +1,6 @@
 " Location:     plugin/projectionist.vim
 " Author:       Tim Pope <http://tpo.pe/>
-" Version:      1.0
+" Version:      1.1
 " GetLatestVimScripts: 4989 1 :AutoInstall: projectionist.vim
 
 if exists("g:loaded_projectionist") || v:version < 700 || &cp
@@ -27,11 +27,15 @@ endfunction
 function! ProjectionistDetect(path) abort
   let b:projectionist = {}
   unlet! b:projectionist_file
-  let file = simplify(fnamemodify(a:path, ':p:s?[\/]$??'))
+  if a:path =~# '^\a[[:alnum:].+-]\+:'
+    let file = substitute(a:path, '[\/]$', '', '')
+  else
+    let file = simplify(fnamemodify(resolve(a:path), ':p:s?[\/]$??'))
+  endif
 
   let root = file
   let previous = ""
-  while root !=# previous
+  while root !=# previous && root !=# '.'
     if s:has(root, '.projections.json')
       try
         let value = projectionist#json_parse(readfile(root.'/.projections.json'))
@@ -51,15 +55,26 @@ function! ProjectionistDetect(path) abort
     let root = fnamemodify(root, ':h')
   endwhile
 
-  let modelines = &modelines
-  try
-    set modelines=0
-    let g:projectionist_file = file
-    silent doautocmd User ProjectionistDetect
-  finally
-    let &modelines = modelines
-    unlet! g:projectionist_file
-  endtry
+  if exists('#User#ProjectionistDetect')
+    if v:version >= 704 || (v:version == 703 && has('patch442'))
+      try
+        let g:projectionist_file = file
+        doautocmd <nomodeline> User ProjectionistDetect
+      finally
+        unlet! g:projectionist_file
+      endtry
+    else
+      let modelines = &modelines
+      try
+        set modelines=0
+        let g:projectionist_file = file
+        doautocmd User ProjectionistDetect
+      finally
+        let &modelines = modelines
+        unlet! g:projectionist_file
+      endtry
+    endif
+  endif
 
   if !empty(b:projectionist)
     let b:projectionist_file = file
@@ -72,12 +87,12 @@ augroup projectionist
   autocmd FileType *
         \ if (&filetype ==# 'netrw' && !exists('b:projectionist')) ||
         \     &buftype !~# 'nofile\|quickfix' |
-        \   call ProjectionistDetect(resolve(expand('%:p'))) |
+        \   call ProjectionistDetect(expand('%:p')) |
         \ endif
-  autocmd BufFilePost * call ProjectionistDetect(resolve(expand('<afile>:p')))
+  autocmd BufFilePost * call ProjectionistDetect(expand('<afile>:p'))
   autocmd BufNewFile,BufReadPost *
         \ if empty(&filetype) |
-        \   call ProjectionistDetect(resolve(expand('<afile>:p'))) |
+        \   call ProjectionistDetect(expand('<afile>:p')) |
         \ endif
   autocmd CmdWinEnter *
         \ if !empty(getbufvar('#', 'projectionist_file')) |
@@ -86,12 +101,12 @@ augroup projectionist
         \   call projectionist#activate() |
         \ endif
   autocmd User NERDTreeInit,NERDTreeNewRoot
-        \ call ProjectionistDetect(b:NERDTreeRoot.path.str())
+        \ call ProjectionistDetect(b:NERDTree.root.path.str())
   autocmd VimEnter *
         \ if empty(expand('<afile>:p')) |
-        \   call ProjectionistDetect(resolve(getcwd())) |
+        \   call ProjectionistDetect(getcwd()) |
         \ endif
-  autocmd BufWritePost .projections.json call ProjectionistDetect(resolve(expand('<afile>:p')))
+  autocmd BufWritePost .projections.json call ProjectionistDetect(expand('<afile>:p'))
   autocmd BufNewFile *
         \ if !empty(get(b:, 'projectionist')) |
         \   call projectionist#apply_template() |
