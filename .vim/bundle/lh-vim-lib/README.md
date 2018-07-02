@@ -1,21 +1,27 @@
-﻿# lh-vim-lib v4.0.0 [![Last release](https://img.shields.io/github/tag/LucHermitte/lh-vim-lib.svg)](https://github.com/LucHermitte/lh-vim-lib/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-vim-lib.png?branch=master)](http://travis-ci.org/LucHermitte/lh-vim-lib) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+﻿# lh-vim-lib [![Last release](https://img.shields.io/github/tag/LucHermitte/lh-vim-lib.svg)](https://github.com/LucHermitte/lh-vim-lib/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/lh-vim-lib.png?branch=master)](http://travis-ci.org/LucHermitte/lh-vim-lib) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Introduction
 
 _lh-vim-lib_ is a library that defines some common vim functions I use in my various plugins and ftplugins.
 
-This library has been conceived as a suite of [|autoload|](http://vimhelp.appspot.com/eval.txt.html#autoload) plugins. As such, it requires Vim 7+.
+This library has been conceived as a suite of [|autoload|](http://vimhelp.appspot.com/eval.txt.html#autoload) plugins. As such, it requires Vim 7+. A few commands are defined.
 
-As I only have access to a version 7.3-429 on travis-ci, let's say this is the
-minimum vim version I'll try to be compatible with.
+As I only have access to a version 7.4-052 on travis-ci, let's say this is the minimum vim version I'll try to be compatible with. Until 2017 (v3.x) I was trying to be compatible with 7.3-429.
 
 The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/master/doc/lh-vim-lib.txt) can be browsed.
 
 **Important:**
 
 - Since Version 2.2.0, the naming policy of these autoload functions have been harmonized. Now, most names are in lower cases, with words separated by underscores.
-- Since version 3.2.7, it's no longer hosted on google-code but on github
-- Version 4.0.0 breaks `lh#let#if_undef()` interface, deprecates `CONFIRM()`
+- Since version 3.2.7, it's no longer hosted on google-code but on github.
+- Version 4.0.0 breaks `lh#let#if_undef()` interface, deprecates `CONFIRM()`, requires vim 7.4-52.
+
+## Table of Content
+
+  * [Functions](#functions)
+  * [Installation](#installation)
+  * [Credits](#credits)
+  * [Some other Vim Scripting libraries](#some-other-vim-scripting-libraries)
 
 ## Functions
 
@@ -29,13 +35,16 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [Paths related functions](#paths-related-functions)
   * [Commands related functions](#commands-related-functions)
   * [Menus related functions](#menus-related-functions)
-  * [Buffers related functions](#buffers-related-functions)
+  * [Buffers and Windows related functions](#buffers-and-windows-related-functions)
+  * [Quickfix related functions](#quickfix-related-functions)
   * [Syntax related functions](#syntax-related-functions)
   * [UI functions](#ui-functions)
   * [Project feature](doc/Project.md) -- other web page
   * [Logging framework](doc/Log.md) -- other web page
   * [Design by Contract functions](doc/DbC.md) -- other web page
   * [Call stack decoding](doc/Callstack.md) -- other web page
+  * [Commands](#commands)
+  * [Python related functions](#python-related-functions)
 
 ### Miscellaneous functions
 
@@ -54,7 +63,9 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#encoding#at(mb_string, i)`                 | Returns the i-th character in a multibytes string                                                                                                                        |
 | `lh#encoding#previous_character()`             | Returns the character before the cursor -- works with multi-byte characters                                                                                              |
 | `lh#encoding#current_character()`              | Returns the character under the cursor -- works with multi-byte characters                                                                                               |
-| `lh#encoding#iconv()`                          | Unlike `iconv()`, this wrapper returns {expr} when we know no conversion can be achieved.                                                                                |
+| `lh#encoding#does_support()`                   | Tries to detect automatically whether a codepoint has an associated glyph in the current font used                                                                       |
+| `lh#encoding#find_best_glyph()`                | Returns the first codepoint of each list that has a glyph in the current font used                                                                                       |
+| `lh#encoding#iconv()`                          | Unlike `iconv()`, this wrapper returns {expr} when we know no conversion can be achieved                                                                                 |
 | `lh#encoding#iconv(expr, from, to)`            | Converts an expression from an encoding to another                                                                                                                       |
 | `lh#encoding#strlen(mb_string)`                | Executes `strlen()` on a multibytes string                                                                                                                               |
 | `lh#encoding#strpart(mb_string, p, l)`         | Executes `strpart()` on a multibytes string                                                                                                                              |
@@ -97,7 +108,11 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#position#char_at()`                        | Obtains the character at a given pair of coordinates                                                                                                                     |
 | `lh#position#compare()`                        | Tells if a position in a buffer is before another one -- result compatible with `sort()`                                                                                                                   |
 | `lh#position#extract(pos1,pos2)`               | Obtains the text between two positions                                                                                                                                   |
+| `lh#position#getcur()`                         | Return [`getcurpos()`](http://vimhelp.appspot.com/eval.txt.html#getcurpos%28%29) when it exists, [`getpos('.')`](http://vimhelp.appspot.com/eval.txt.html#getpos%28%29)  otherwise |
 | `lh#position#is_before()`                      | Tells if a position in a buffer is before another one -- boolean result                                                                                                  |
+| `lh#position#move(dir)`                        | Returns a the string to use to move the cursor in the given direction -- this can be redoable w/ vim > 7.4.849                                                           |
+| `lh#position#move_n(dir, count)`               | Returns a the string to use to move the cursor count times in the given direction -- this can be redoable w/ vim > 7.4.849                                               |
+| `lh#string#count_char()`                       | Counts how many times a character is present in a string                                                                                                                 |
 | `lh#string#matches()`                          | Extracts a list of all matches in a string                                                                                                                               |
 | `lh#string#matchstrpos()`                      | Backport `matchstrpos()` to old vim versions                                                                                                                             |
 | `lh#string#trim()`                             | Trim a string                                                                                                                                                            |
@@ -138,6 +153,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#dict#get_composed()`         | Function symetric to `lh#let#*()` functions                                                                       |
 | `lh#dict#key()`                  | Expects the dictionary to have only one element (throw otherwise) and returns it                                  |
 | `lh#dict#let()`                  | Emulates `:let dict.key.key.key = value`                                                                          |
+| `lh#dict#need_ref_on()`          | Makes sure `:let dict.key.key.key` exists and returns a reference to that element                                 |
 | `lh#dict#subset()`               | Builds a subset dictionary of a dict                                                                              |
 | `lh#list#accumulate()`           | Accumulates the elements from a list                                                                              |
 | `lh#list#accumulate()`           | Accumulates the elements from a list                                                                              |
@@ -273,7 +289,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 See also the documentation of the old functions at http://hermitte.free.fr/vim/general.php#expl_menu_map
 
 
-### Buffers related functions
+### Buffers and Windows related functions
 | Function                         | Purpose                                                                                                                          |
 |:---------------------------------|:---------------------------------------------------------------------------------------------------------------------------------|
 | `lh#buffer#dialog#add_help()`    | see [lh-vim-lib/dialog](doc/Dialog.md)                                                                                           |
@@ -291,6 +307,14 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 | `lh#window#getid()`              | Emulates recent `win_getid()` function                                                                                           |
 | `lh#window#gotoid()`             | Emulates recent `win_gotoid()` function                                                                                          |
 
+
+### Quickfix related functions
+| Function                   | Purpose                                                                                                                      |
+|:---------------------------|:-----------------------------------------------------------------------------------------------------------------------------|
+| `lh#qf#get_title()`        | Returns title of the qf window                                                                                               |
+| `lh#qf#get_winnr()`        | Returns window number of the qf window -- ignore location list windows                                                       |
+| `lh#qf#is_displayed()`     | Tells whether the qf window is visible -- ignore location list windows                                                       |
+| `lh#qf#make_context_map()` | Returns a non intrusive alternative to [`quickfix-context`](http://vimhelp.appspot.com/quickfix.txt.html#quickfix%2dcontext) |
 
 ### Syntax related functions
 | Function                                                         | Purpose                                                                                                                                |
@@ -347,28 +371,59 @@ See separate page: [doc/DbC.md](doc/DbC.md).
 ### Word Tools
 See http://hermitte.free.fr/vim/general.php#expl_words_tools
 
+### Commands
+
+| Command                                   | Purpose                                                                                                                                                                    |
+|:------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`:Toggle`](#menus-related-functions)     | Toggles the state of a cyclic option/variable                                                                                                                              |
+| `:LoadedBufDo`                            | Like [`:h :bufdo`](http://vimhelp.appspot.com/windows.txt.html#%3abufdo), on loaded buffers                                                                                |
+| `:CleanEmptyBuffers`                      | [Wipeout](http://vimhelp.appspot.com/windows.txt.html#%3abw) empty buffers                                                                                                 |
+| [`:LHLog`](doc/Log.md)                    | Helper command to choose where logs shall be dumped to                                                                                                                     |
+| `Jobs`, `:JobUnpause`, `:StopBGExecution` | Helper commands to keep track of async jobs registered with lh-vim-lib API                                                                                                 |
+| `:ConfirmGlobal`                          | Like the [`:g`](http://vimhelp.appspot.com/repeat.txt.html#%3aglobal) command, but with a _confirm_ option as in [`:s`](http://vimhelp.appspot.com/change.txt.html#%3as_c) |
+| `:LetIfUndef`                             | Sets the value of an option, only if not set already -- supports `g.foo.bar = 42`                                                                                          |
+| `:LetTo`                                  | Sets the value of an option, even if it's already set -- unlike [`:h :let`](http://vimhelp.appspot.com/eval.txt.html#%3alet), supports `g:foo.bar = 42`                    |
+| `:Unlet`                                  | [`:unlet`](http://vimhelp.appspot.com/eval.txt.html#%3aunlet) a variable if it doesn't exists -- no side effect unlike `:silent! unlet`                                    |
+| `:PushOptions`, `:PopOptions`             | Pushs/pops values into list variables                                                                                                                                      |
+| [`:Project`](doc/Project.md)              | Central command for the project feature                                                                                                                                    |
+
+## Python related functions
+
+| Command                           | Purpose                                                                                       |
+| :---------------------------------| :---------------------------------------------------------------------------------------------|
+| `lh#python#best_still_avail()`    | Returns the best python flavour we can use without imposing a version, unlike `has('python')` |
+| `lh#python#has()`                 | Returns `has('python_compiled') || has('python3_compiled')`                                   |
+| `lh#python#can_import()`          | Returns whether `:{bestpy} import {modname}` succeeds                                         |
+| `lh#python#external_can_import()` | Returns whether `system('python -c "import {modname}")` succeeds                              |
 
 ## Installation
   * Requirements: Vim 7.4, Vim 8 for `lh#async` feature.
   * Clone from the git repository
-```
-git clone git@github.com:LucHermitte/lh-vim-lib.git
-```
+
+    ```sh
+    git clone git@github.com:LucHermitte/lh-vim-lib.git
+    ```
+
   * [Vim Addon Manager](http://github.com/MarcWeber/vim-addon-manager): (this
     is the preferred method as VAM handles dependencies).
-```vim
-ActivateAddons lh-vim-lib
-```
+
+    ```vim
+    ActivateAddons lh-vim-lib
+    ```
+
   * Note that [vim-flavor](https://github.com/kana/vim-flavor) also handles
     dependencies which will permit to automatically import lh-vim-lib from
     plugins that use it:
-```
-flavor LucHermitte/lh-vim-lib
-```
+
+    ```
+    flavor LucHermitte/lh-vim-lib
+    ```
+
   * Vundle/NeoBundle:
-```vim
-Bundle 'LucHermitte/lh-vim-lib'
-```
+
+    ```vim
+    Bundle 'LucHermitte/lh-vim-lib'
+    ```
 
 ## Credits
   * Luc Hermitte, maintainer
@@ -377,7 +432,7 @@ Bundle 'LucHermitte/lh-vim-lib'
 
 ## Some other Vim Scripting libraries
 
-### The ones that seem to be still activelly maintainded
+### The ones that seem to be still activelly maintained
   * [ingo-library](http://www.vim.org/scripts/script.php?script_id=4433), by
     Ingo Karkat
   * [maktaba](https://github.com/google/vim-maktaba), by google

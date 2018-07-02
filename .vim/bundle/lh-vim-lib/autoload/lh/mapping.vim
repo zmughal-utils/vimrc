@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:	4.0.0
-let s:version = '4.0.0'
+" Version:	4.4.0
+let s:version = '4.4.0'
 " Created:      01st Mar 2013
-" Last Update:  24th Jul 2017
+" Last Update:  16th May 2018
 "------------------------------------------------------------------------
 " Description:
 "       Functions to handle mappings
@@ -47,10 +47,28 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
+" Function: lh#mapping#_build_rhs(mapping_definition) {{{2
+" Transforms the {rhs} part of a mapping definition obtained with
+" maparg(dict=1) into a something than can be used to define another mapping.
+"
+" @param mapping_definition is a dictionary witch the same keys than the ones
+" filled by maparg()
+" @since Version 4.3.0
+function! lh#mapping#_build_rhs(mapping_definition) abort
+  call lh#assert#value(a:mapping_definition)
+        \.has_key('rhs')
+  " For debug purpose
+  let g:lh#mapping#list = get(g:, 'lh#mapping#list', {})
+  let g:lh#mapping#list[a:mapping_definition.lhs] = a:mapping_definition
+  " Inject the right SNR instead of "<sid>"
+  let rhs = substitute(a:mapping_definition.rhs, '\c<SID>', "\<SNR>".get(a:mapping_definition, 'sid', 'SID_EXPECTED').'_', 'g')
+  return rhs
+endfunction
+
 " Function: lh#mapping#_build_command(mapping_definition) {{{2
 " @param mapping_definition is a dictionary witch the same keys than the ones
 " filled by maparg()
-function! lh#mapping#_build_command(mapping_definition)
+function! lh#mapping#_build_command(mapping_definition) abort
   call lh#assert#value(a:mapping_definition)
         \.has_key('mode')
         \.has_key('lhs')
@@ -68,16 +86,49 @@ function! lh#mapping#_build_command(mapping_definition)
     " endif
   " endfor
   let cmd .= ' '.(a:mapping_definition.lhs)
-  let rhs = substitute(a:mapping_definition.rhs, '<SID>', "\<SNR>".get(a:mapping_definition, 'sid', 'SID_EXPECTED').'_', 'g')
+  let rhs = lh#mapping#_build_rhs(a:mapping_definition)
   let cmd .= ' '.rhs
   return cmd
 endfunction
 
 " Function: lh#mapping#define(mapping_definition) {{{2
-function! lh#mapping#define(mapping_definition)
-  let cmd = lh#mapping#_build_command(a:mapping_definition)
-  call s:Verbose("%1", strtrans(cmd))
-  silent exe cmd
+function! lh#mapping#define(md) abort
+  call lh#assert#value(a:md)
+        \.has_key('mode')
+        \.has_key('lhs')
+        \.has_key('rhs')
+  " In case LaTeX-Suite/IMAP is installed
+  if exists('*IMAP') && a:md.mode=='i' && (a:md.lhs !~? '<bs>\|<cr>\|<up>\|<down>\|<left>\|<right>')
+    let rhs = get(a:md, 'expr', 0) ? "\<c-r>=".(a:md.rhs)."\<cr>"
+    call s:Verbose("Using IMAP() to define the mapping %1 -> %2", strtrans(a:md.lhs), strtrans(lhs))
+    if get(a:md, 'buffer', 0)
+      call IMAP(a:md.lhs, rhs, &ft)
+    else
+      call IMAP(a:md.lhs, rhs)
+    endif
+  else
+    let cmd = lh#mapping#_build_command(a:md)
+    call s:Verbose("%1", strtrans(cmd))
+    silent exe cmd
+  endif
+endfunction
+
+" Function: lh#mapping#_switch_int(trigger, cases) {{{2
+" @Since Version 4.3.0, moved from lh-bracket lh#brackets#_switch_int
+function! lh#mapping#_switch_int(trigger, cases) abort
+  for c in a:cases
+    if eval(c.condition)
+      return eval(c.action)
+    endif
+  endfor
+  return lh#mapping#reinterpret_escaped_char(eval(a:trigger))
+endfunction
+
+" Function: lh#mapping#_switch(trigger, cases) {{{2
+" @Since Version 4.3.0, moved from lh-bracket lh#brackets#_switch
+function! lh#mapping#_switch(trigger, cases) abort
+  return lh#mapping#_switch_int(a:trigger, a:cases)
+  " debug return lh#mapping#_switch_int(a:trigger, a:cases)
 endfunction
 
 " Function: lh#mapping#clear() {{{2
@@ -138,7 +189,7 @@ function! lh#mapping#plug(...) abort
   endfor
 endfunction
 
-" Function: lh#mapping#reinterpret_escaped_char(seq) {{{3
+" Function: lh#mapping#reinterpret_escaped_char(seq) {{{2
 " This function transforms '\<cr\>', '\<esc\>', ... '\<{keys}\>' into the
 " interpreted sequences "\<cr>", "\<esc>", ...  "\<{keys}>".
 " It is meant to be used by fonctions like MapNoContext(), InsertSeq(), ... as

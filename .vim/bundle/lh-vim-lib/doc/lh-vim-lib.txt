@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v4.0.0)
-                        For Vim version 7+      Last change: 09th Feb 2018
+*lh-vim-lib.txt*        Vim common libraries (v4.5.1)
+                        For Vim version 7+      Last change: 02nd Jul 2018
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -40,7 +40,10 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#common#error_msg()|
 - |lh#common#rand()|
 - |lh#common#warning_msg()|
+- |lh#encoding#at()|
 - |lh#encoding#current_character()|
+- |lh#encoding#does_support()|
+- |lh#encoding#find_best_glyph()|
 - |lh#encoding#iconv()|
 - |lh#encoding#previous_character()|
 - |lh#encoding#strlen()|
@@ -80,7 +83,10 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#position#char_at_pos()|
 - |lh#position#compare()|
 - |lh#position#extract()|
+- |lh#position#getcur()|
 - |lh#position#is_before()|
+- |lh#position#move()|
+- |lh#position#move_n()|
 - |lh#time#bench()|
 - |lh#time#bench_n()|
 - |lh#time#date()|
@@ -145,6 +151,8 @@ Dict related functions:                                 |lhvl#dict|       {{{2
 - |lh#dict#add_new()|
 - |lh#dict#get_composed()|
 - |lh#dict#key()|
+- |lh#dict#let()|
+- |lh#dict#need_ref_on()|
 - |lh#dict#subset()|
 Stack related functions:                                |lhvl#stack|      {{{2
 - |lh#stack#push()|
@@ -158,6 +166,7 @@ Stack related functions:                                |lhvl#stack|      {{{2
     - |lh#stack-top_or()|
 String related functions:                               |lhvl#string|     {{{2
 - |lh#string#as()|
+- |lh#string#count()|
 - |lh#string#matches()|
 - |lh#string#matchstrpos()|
 - |lh#string#substitute_unless()|
@@ -233,8 +242,15 @@ Buffer related functions:                               |lhvl#buffer|     {{{2
     - |lh#buffer#dialog#update()|
 Window related functions:                               |lhvl#window|     {{{2
 - |lh#window#create_window_with()|
+- |lh#window#getid()|
+- |lh#window#gotoid()|
 - |lh#window#new()|
 - |lh#window#split()|
+Quickfix related functions:                             |lhvl#quickfix|   {{{2
+- |lh#qf#get_title()|
+- |lh#qf#get_winnr()|
+- |lh#qf#is_displayed()|
+- |lh#qf#make_context_map()|
 Syntax related functions:                               |lhvl#syntax|     {{{2
 - |lh#syntax#is_a_comment()|
 - |lh#syntax#is_a_comment_at()|
@@ -263,6 +279,11 @@ OS/System related functions:                            |lhvl#os|         {{{2
 - |lh#os#cpu_number()|
 - |lh#os#cpu_cores_number()|
 - |lh#os#lcd()|
+Python related functions                                |lhvl#python|     {{{2
+- |lh#python#best_still_avail()|
+- |lh#python#has()|
+- |lh#python#can_import()|
+- |lh#python#external_can_import()|
 Completion related functions                            |lhvl#completion| {{{2
 - |lh#icomplete#new()|
 - |lh#icomplete#new_on()|
@@ -543,6 +564,7 @@ It permits to do the following things:
                                   `finalize()` and undefine them right away.
 - *restore_highlight()*             restores highlight definition like
                                   |CursorLine| one.
+- *restore_cursor()*                restores the cursor to its initial position.
 
 
 Object methods emulates |Partials| on old vim versions. They are specified
@@ -774,6 +796,31 @@ lh#position#extract({pos1}, {pos2})~
 @return             The string between the two positions (see |getpos()|).
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#position#getcur()*            {{{3
+lh#position#extract({pos1}, {pos2})~
+@return             |getcurpos()| when it exists, |getpos()| otherwise.
+@since              Version 4.1.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#position#move()*              {{{3
+lh#position#move({direction})~
+@param {direction}  should be either `"\<right>"` or `"\<left>"`.
+@return             a string that can be used to move the cursor in the specified direction
+                    If vim version is >= 7.4.849, the movement can be
+                    repeated/redone (see |redo-register|).
+@since              Version 4.4.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#position#move_n()*            {{{3
+lh#position#move_n({direction}, {count})~
+@param {direction}  should be either `"\<right>"` or `"\<left>"`.
+@param {count}      number of positions the cursor shall be moved
+@return             a string that can be used to move the cursor in the specified direction
+                    If vim version is >= 7.4.849, the movement can be
+                    repeated/redone (see |redo-register|).
+@since              Version 4.4.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#time#bench()*                 {{{3
 lh#time#bench(Function[, args])~
 @return the time spent by the execution of `Function()`.
@@ -813,6 +860,61 @@ lh#visual#cut()~
 @return             The current visual selection
 @post              |registers| are not altered by this function ;
                     selection is deleted.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#does_support()*      {{{3
+lh#encoding#does_support(chars, [, fonts=&guifont])~
+Tries to detect automatically whether a codepoint has an associated glyph in
+the current font used.
+@since Version 4.5.0
+@param[in] {chars}   |List| of characters expressed either as `"\uHEXA"`, or
+                     `"\UHEXA"`, or `'U+HEXA'`.
+@param[in] [{fonts}] Regex that define active fonts. Defaults to |'guifont'|
+                     when `has('gui_running')` is true
+@return              |Dictionary| where the keys are the codepoints, and the
+                     values are 0/1 depending whether the font supports that character.
+
+Examples: >
+    :echo lh#encoding#does_support(["\u274c", "U+1F6C8"])
+
+Requires:
+- |gvim|
+    Unfortunatelly this feature requires a way for Vim to know which is the
+    current font. This is impossible to do so in a portable way from the
+    terminal.  This means, unless you know which font your terminal is using,
+    it'll uses |'guifont'| which is available only from GUI sessions, IOW when
+    we use `gvim`, and not `vim`.
+- Python (external) with `python-fontconfig` module installed (and thus
+  `fontconfig`)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#encoding#find_best_glyph()*   {{{3
+lh#encoding#find_best_glyph(caller, glyphs...)~
+Returns the first codepoint of each list that has a glyph in the current font
+used.
+@since Version 4.5.0
+@param[in] {caller} name the plugin in the need the information for richer
+                    error messages
+@param[in] {glyphs} |list| of |list| of codepoints. The characters can be
+                    expressed either as `"\uHEXA"`, or `"\UHEXA"`, or `'U+HEXA'`.
+@return             |list| of matching codepoints -- taken from the inputs.
+                    When no codepoint is found to have a glyph in a |list|,
+                    then the last value (that can be a string, and not a
+                    codepoint) is returned.
+Same requirements as |lh#encoding#does_support()| upon which this function
+rely.
+
+Examples: >
+    let s_error   = s:opt('signs.error',   ["\u274c", 'XX']           )
+    let s_warning = s:opt('signs.warning', ["\u26a0", "\u26DB", '!!'] )
+    let s_note    = s:opt('signs.note',    ["\u2139", "\U1F6C8", 'ii'])
+    let s_context = s:opt('signs.context', ['>>']                     )
+    let s_info    = s:opt('signs.info',    ["\u27a9", '->']           )
+
+    let [error, warning, note, ctx, here] = lh#encoding#find_best_glyph(
+          \ 'compil-hints',
+          \ s_error, s_warning, s_note, s_context, s_info
+          \ )
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#encoding#iconv()*             {{{3
@@ -1139,7 +1241,7 @@ optional argument {scope}
 lh#ref#bind(varname)~
 lh#ref#bind(dict, key)~
 This function builds a reference to another variable.
-The long term objective is to be able to habe global preferences, and project
+The long term objective is to be able to have global preferences, and project
 specific preferences that either default to the global ones, or that can be
 overriden.
 A bound value shall be obtained with |lh#option#get()| and
@@ -1274,6 +1376,13 @@ The evaluation is meant to be done with |eval()|.
 
 ------------------------------------------------------------------------------
 STRING RELATED FUNCTIONS                              *lhvl#string*     {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#count_char()*          {{{3
+lh#string#count_char({string}, {char} [, {ic}])~
+@return the number of occurences the character {char} in the {string}
+received. The search can be case insensitive if {ic} is true.
+@since Version 4.2.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#as()*                  {{{3
@@ -1870,27 +1979,13 @@ Returns a subset slice of the {input} list.
 @param[in] {input}   Input |List| from which elements will be extracted
 @param[in] {indices} |List| of indices to extract
 @return a |List| of the elements from {input} indexed by the {indices}
+@see also |lh#list#subset()|
 
 Example: >
     :let l = [ 1, 25, 5, 48, 25, 5, 28, 6]
     :let indices = [ 0, 5, 7, 3 ]
     :echo lh#list#subset(l, indices)
     [ 1, 5, 6, 48 ]
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#dict#subset()*                 {{{3
-lh#dict#subset({input},{keys})~
-Returns a subset slice of the {input} dict.
-
-@param[in] {input}  Input |Dict| from which elements will be extracted
-@param[in] {keys}   |List| of keys to extract
-@return a |Dict| of the elements from {input} indexed by the {keys}.
-
-Example: >
-    :let d = {'a':1, 'b':2, 'c':3, 'd':4, 'e':5}
-    :let keys = [ 'a', 'c', 'd']
-    :echo s = lh#dict#subset(d, keys)
-    {'a':1, 'c':3, 'd':4}
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#rotate()*                 {{{3
@@ -1936,48 +2031,6 @@ Examples: >
 
   AssertEquals(lh#list#flat_extend(copy(list), 5), [1,2,3,5])
   AssertEquals(lh#list#flat_extend(copy(list), [5,6]), [1,2,3,5,6])
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#dict#add_new()*                {{{3
-lh#dict#add_new(dict1, dict2)~
-@param[in,out] {dict1} |Dict| to extend
-@param[in]     {dict2}  Element to insert, if new.
-@return        The {dict1}
-Adds an element into a dictionary if not already present
-
-Examples: >
-
-  let d1 = {'k1': 1, 'k2': 2}
-
-  AssertEquals(lh#dict#add_new(copy(d1), {'k3': 'trois', 'k4': 'quatre'}),
-                                       \ {'k1': 1, 'k2': 2, 'k3': 'trois', 'k4': 'quatre'})
-  AssertEquals(lh#dict#add_new(copy(d1), {'k3': 'trois', 'k1': 'un'}),
-                                       \ {'k1': 1, 'k2': 2, 'k3': 'trois'})
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#dict#get_composed()*           {{{3
-lh#dict#get_composed(dict, keys [, default])~
-@param[in] {dict}    |Dict| to poke
-@param[in] {keys}    Composition of keys
-@param[in] {default} Default value return instead of |lh#option#unset()| in
-                     case the variable doesn't exist.
-@return `{dict}[keys]`
-
-Examples: >
-
-  LetTo g:foo.bar.team = 12
-
-  AssertEquals(lh#dict#get_composed(g:, 'foo.bar.team'), 12)
-  AssertEquals(lh#dict#get_composed(g:foo,  'bar.team'), 12)
-  AssertEquals(lh#dict#get_composed(g:foo.bar,  'team'), 12)
-  AssertThrows lh#dict#get_composed(g:foo, 'beer.team')
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                               *lh#dict#key()*                    {{{3
-lh#dict#key(one_key_dict)~
-@param[in]     {one_key_dict} Dictionary to test
-@return        The first element of the dictionary
-@throw         An exception if the dictionary has more than one element.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#list#push_if_new()*            {{{3
@@ -2224,6 +2277,109 @@ Zip two |List|s into a |Dictionary|. >
   let l2 = [1, 2, 3]
   AssertEquals(lh#list#zip_as_dict(l1, l2), {'a': 1, 'b': 2, 'c': 3})
   AssertThrows(lh#list#zip_as_dict([1], [1,2]))
+
+------------------------------------------------------------------------------
+DICT RELATED FUNCTIONS                                *lhvl#dict*       {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#add_new()*                {{{3
+lh#dict#add_new(dict1, dict2)~
+@param[in,out] {dict1} |Dict| to extend
+@param[in]     {dict2} Element to insert, if new.
+@return        The {dict1}
+Adds an element into a dictionary if not already present
+@note This is just a wrapper around |extend()|.
+
+Examples: >
+
+  let d1 = {'k1': 1, 'k2': 2}
+
+  AssertEquals(lh#dict#add_new(copy(d1), {'k3': 'trois', 'k4': 'quatre'}),
+                                       \ {'k1': 1, 'k2': 2, 'k3': 'trois', 'k4': 'quatre'})
+  AssertEquals(lh#dict#add_new(copy(d1), {'k3': 'trois', 'k1': 'un'}),
+                                       \ {'k1': 1, 'k2': 2, 'k3': 'trois'})
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#get_composed()*           {{{3
+lh#dict#get_composed(dict, keys [, default])~
+@param[in] {dict}    |Dict| to poke
+@param[in] {keys}    Composition of keys
+@param[in] {default} Default value return instead of |lh#option#unset()| in
+                     case the variable doesn't exist.
+@return `{dict}[keys]`
+
+Examples: >
+
+  LetTo g:foo.bar.team = 12
+
+  AssertEquals(lh#dict#get_composed(g:, 'foo.bar.team'), 12)
+  AssertEquals(lh#dict#get_composed(g:foo,  'bar.team'), 12)
+  AssertEquals(lh#dict#get_composed(g:foo.bar,  'team'), 12)
+  AssertThrows lh#dict#get_composed(g:foo, 'beer.team')
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#key()*                    {{{3
+lh#dict#key(one_key_dict)~
+@param[in]     {one_key_dict} Dictionary to test
+@return        The first element of the dictionary
+@throw         An exception if the dictionary has more than one element.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#let()*                    {{{3
+lh#dict#let(dict, keys, value)~
+@param[in] {dict}  |Dictionary| that'll be modified
+@param[in] {keys}  |expr-string| of dot separated list of dictionary subkeys.
+                   `{k1}.{k2}....{kn}`
+@param[in] {value} Value to assign at `{dict}[{k1}][{k2}]...[{kn}]`
+@return    `{dict}[{k1}]`
+@throw     None
+@see also |lh#dict#need_ref_on()|
+
+Makes sure `{dict}[{k1}][{k2}]...[{kn}] == {value}`
+
+Important: it may change the type of an already existing value associatiated
+to an intermediairy subkey to |dictionary|, i.e. the following works >
+    let d = {'a': {'b': 1}}
+    call lh#dict#let(d, 'a.b.c.d.e', 42)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#need_ref_on()*            {{{3
+lh#dict#need_ref_on(root, keys [, last_default])~
+@param[in] {root}           Root |dictionary| that'll be modified
+@param[in] {keys}           |expr-string| of dot separated list of dictionary subkeys
+                            `{k1}.{k2}....{kn}`, or |list| of subkeys
+@param[in] [{last_default}] Value to assign at `{dict}[{k1}][{k2}]...[{kn}]`,
+                            use `{}` is not specified.
+@return    `{dict}[{k1}][{k2}]...[{kn}]`
+@throw     None
+@pre       It won't change the type of an already existing value associatiated
+           to an intermediairy subkey to |dictionary|, i.e. the following
+           crashes >
+                let d = {'a': {'b': 1}}
+                call lh#dict#need_ref_on(d, 'a.b.c.d.e', 42)
+@see also |lh#dict#let()|
+@since Version 4.5.0
+@note subkeys are added on the fly
+@note it'll be best for {last_default} to be either a |dictionary| or a |list|
+otherwise, the result won't be a reference
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#subset()*                 {{{3
+lh#dict#subset({input},{keys})~
+Returns a subset slice of the {input} dict.
+
+@param[in] {input}  Input |Dict| from which elements will be extracted
+@param[in] {keys}   |List| of keys to extract
+@return a |Dict| of the elements from {input} indexed by the {keys}.
+@see also |lh#list#subset()|
+
+Example: >
+    :let d = {'a':1, 'b':2, 'c':3, 'd':4, 'e':5}
+    :let keys = [ 'a', 'c', 'd']
+    :echo s = lh#dict#subset(d, keys)
+    {'a':1, 'c':3, 'd':4}
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ------------------------------------------------------------------------------
 GRAPH RELATED FUNCTIONS                               *lhvl#graph*      {{{2
@@ -3244,6 +3400,7 @@ The second tries to execute `:split {options}`
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#window#getid()*               {{{3
 lh#window#getid([{win}])~
+@since version 3.9.0
 Encapsulation over vim recent function |win_getid()|.
 An emulation is provided for older versions of vim.
 This function associates (on-the-fly) a unique window-id to a |window| know from
@@ -3262,6 +3419,7 @@ Function meant to be used along with |lh#window#gotoid()|.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#window#gotoid()*              {{{3
 lh#window#gotoid({id})~
+@since version 3.9.0
 Encapsulation over vim recent function |win_gotoid()|.
 An emulation is provided for older versions of vim.
 This function jumps to the window that has the window id {id}.
@@ -3269,6 +3427,78 @@ This function jumps to the window that has the window id {id}.
 Note: While window numbers may change as windows get reorganized, window ids
 are stable and never change.
 Function meant to be used along with |lh#window#getid()|.
+
+------------------------------------------------------------------------------
+QUICKFIX RELATED FUNCTIONS                            *lhvl#quickfix*   {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#qf#get_title()*               {{{3
+lh#qf#get_title()~
+@since version 4.5.0
+@returns the title of the |quickfix-window|, even on versions of Vim where >
+    getqflist({'title':1})
+isn't supported.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#qf#get_winnr()*               {{{3
+lh#qf#get_winnr()~
+@since version 4.5.0
+@returns Window number of the the |quickfix-window|, or 0 if it isn't opened.
+@note    |location-list-window|s are ignored.
+
+It works even on versions of Vim where >
+    filter(getwininfo(), 'v:val.quickfix && !v:val.loclist')[0].winnr
+isn't supported.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#qf#is_displayed()*            {{{3
+lh#qf#is_displayed()~
+@since version 4.5.0
+@returns whether the |quickfix-window| is opened.
+@note    |location-list-window|s are ignored.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#qf#make_context_map()*        {{{3
+lh#qf#make_context_map(required)~
+@since version 4.5.0
+@param[in] {required} Helps detecting cases when the availability of the
+                      option is critical
+@returns a |lhvl#object| that helps associate context to a |quickfix-list|.
+@pre *lh#has#properties_in_qf()* || not {required} // `has('patch-7.4.2200')`
+
+Creates a |dictionary|-map that'll (externally) associate a context to a
+|quickfix-list|.
+
+Rationale:~
+This feature is somehow redundant to |quickfix-context|. The difference is
+that different plugins may want to use the context for their own purpose.
+Typically plugins that encapsulate compilation or searching may want to store
+the exact command-line, or some other high level information like a
+compilation mode (/Release/, /Debug/...)...
+If another plugin that works on quickfix lists needs to associate un unrelated
+information to each list, then there is a high risk of conflict on their usage
+of the |quickfix-context|.
+That's the rationale behind `lh#qf#make_context_map()`: to be able to
+associate a context without any possible interference from other plugins.
+
+Unfortunatelly, this feature won't be available before the quite recent (at
+this time) Vim 7.4.2200. Hence, the {required} flag. If the version
+requirement cannot be satisfied, and in the feature isn't really important in
+your plugins, thay you can say "this is not required". Thanks to that, all
+methods will return the value 0 -- which by the way is |empty()|.
+
+Methods:~
+*lh#qf#make_context_map().get_id()*
+Returns the |quickfix-ID| of the current quickfix list
+
+*lh#qf#make_context_map().get()* --> `.get(key [, id])`
+Returns the values previously associated to the {key} for the specified (or
+current) |quickfix-ID|.
+
+*lh#qf#make_context_map().set()* --> `.set(key, value [, id])`
+Associates a {value} to the {key} for the specified (or current) |quickfix-ID|.
+The plugin has been developped with the idea the {value} would be a
+|dictionary| or a |list|.
 
 ------------------------------------------------------------------------------
 SYNTAX RELATED FUNCTIONS                              *lhvl#syntax*     {{{2
@@ -3509,6 +3739,45 @@ It will use /proc/cpuinfo when it exists.
 lh#os#lcd(path)~
 Executes `:lcd fnameescape({path})` and log the command along the way.
 See |:lcd|, |fnameescape()|.
+
+------------------------------------------------------------------------------
+PYTHON RELATED FUNCTIONS                              *lhvl#python*     {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#python#best_still_avail()*      {{{3
+lh#python#best_still_avail([preferred order])~
+Without imposing a version of python (which `has('python')` or
+`has('python3')` do), this function returns the best python flavour we can
+still use.
+Note: When vim has (internally) started to use a version on Python, we cannot
+use another one. See |E837|.
+If your version of Vim has been compiled with support of Python2 and Python3,
+compare the results of: >
+
+    $>vim -U NONE -u NONE -c 'echo has("python").has("python3")'
+    $>vim -U NONE -u NONE -c 'echo has("python3").has("python")'
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#python#has()*                   {{{3
+lh#python#has()~
+@returns has('python_compiled') || has('python3_compiled')
+This function tells whether python is available without imposing a version of
+Python. See |lh#python#best_still_avail()|.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#python#can_import()*            {{{3
+lh#python#can_import({modname})~
+@returns whether `:{bestpy} import {modname}` succeeds.
+The {bestpy} python flavour is determined by |lh#python#best_still_avail()|.
+@post a Python version is imposed at the end of this function.
+@see also |lh#python#externa_#can_import()|.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#python#external_can_import()*   {{{3
+lh#python#external_can_import({modname})~
+@returns whether `system('python -c "import {modname}")` succeeds.
+Unlike the |lh#python#can_import()|, the function does not impose a version of
+Python.
+@see also |lh#python#can_import()|.
 
 ------------------------------------------------------------------------------
 COMPLETION RELATED FUNCTIONS                          *lhvl#completion* {{{2
@@ -4520,7 +4789,7 @@ lh#assert#type({actual}).belongs_to({expected}...)              *lh#assert#type(
 
                                                                      }}}1
 ==============================================================================
- (c) Luc Hermitte, 2001-2017 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
+ (c) Luc Hermitte, 2001-2018 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
  VIM: let b:VS_language = 'american'
  vim:ts=8:sw=4:tw=80:fo=tcq2:ft=help:
  vim600:fdm=marker:
