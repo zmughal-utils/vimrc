@@ -13,6 +13,9 @@ If that doesn't excite you, then perhaps this GIF screen capture below will chan
 
 ## News
 
+- 2018/04/17 AsyncRun now supports command range, try: `:%AsyncRun cat`.
+- 2018/04/16 better makeprg/grepprg handling, accepts `%` and `$*` macros now.
+- 2018/03/11 new option [g:asyncrun_open](#quickfix-window) to open quickfix window after job starts.
 - 2017/07/12 new option `-raw=1` to use raw output (not match with the errorformat)
 - 2017/06/26 new option `-cwd=<root>` to change working directory to project root, see [here]() 
 - 2016/11/01 `asyncrun.vim` can now cooperate with `errormarker` now.
@@ -60,7 +63,9 @@ File name may contain spaces, therefore, it's safe to quote them.
 #### Run a python script
     :AsyncRun -raw python %
 
-New option `-raw` will display the raw output (without matching to errorformat), you need the latest AsyncRun (after 1.3.13) to use this option. 
+New option `-raw` will display the raw output (without matching to errorformat), you need the latest AsyncRun (after 1.3.13) to use this option. Remember to put `let $PYTHONUNBUFFERED=1` in your `.vimrc` to disable python stdout buffering, see [here](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ#cant-see-the-realtime-output-when-running-a-python-script).
+
+
 
 ## Manual
 
@@ -141,7 +146,13 @@ stop the running job, when "!" is included, job will be stopped by signal KILL
 - g:asyncrun_encs - set shell encoding if it's different from `&encoding`, see [encoding](https://github.com/skywind3000/asyncrun.vim/wiki/Quickfix-encoding-problem-when-using-Chinese-or-Japanese)
 - g:asyncrun_trim - non-zero to trim the empty lines in the quickfix window.
 - g:asyncrun_auto - event name to trigger QuickFixCmdPre/QuickFixCmdPost, see [FAQ](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ#can-asyncrunvim-trigger-an-autocommand-quickfixcmdpost-to-get-some-plugin-like-errormaker-processing-the-content-in-quickfix-)
+- g:asyncrun_open - above zero to open quickfix window at given height after command starts
+- g:asyncrun_save - non-zero to save current(1) or all(2) modified buffer(s) before executing
 - g:asyncrun_timer - how many messages should be inserted into quickfix every 100ms interval.
+- g:asyncrun_wrapper - enable to setup a command prefix.
+
+For more information of above options, please visit **[option details](https://github.com/skywind3000/asyncrun.vim/wiki/Options)**.
+
 
 #### Variables:
 - g:asyncrun_code - exit code
@@ -174,6 +185,37 @@ The first `make` will run in the vim's current directory (which `:pwd` returns),
 
 The project root is the nearest ancestor directory of the current file which contains one of these directories or files: `.svn`, `.git`, `.hg`, `.root` or `.project`. If none of the parent directories contains these root markers, the directory of the current file is used as the project root. The root markers can also be configurated, see [Project Root](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root).
 
+#### Quickfix window
+AsyncRun displays its output in quickfix window, so if you don't use `:copen {height}` to open quickfix window, you won't see any output. For convenience there is an option `g:asyncrun_open` for you:
+
+    :let g:asyncrun_open = 8
+
+Setting `g:asyncrun_open` to 8 will open quickfix window automatically at 8 lines height after command starts.
+
+#### Range support
+
+AsyncRun can take a range of lines in the current buffer as command's stdin after version `1.3.27`. You can try:
+
+```VimL
+:%AsyncRun cat
+```
+
+the whole buffer will be the input of command `cat`. you will see the content of your current buffer will be output to the quickfix window.
+
+
+```VimL
+:10,20AsyncRun python
+```
+
+text between line 10-20 will be taken as the stdin of python. code in that range will be executed by python and the output will display in the quickfix window.
+
+```VimL
+:'<,'>AsyncRun -raw perl
+```
+
+The visual selection (line-wise) will be taken as stdin.
+
+
 #### Requirements:
 Vim 7.4.1829 is minimal version to support async mode. If you are use older versions, `g:asyncrun_mode` will fall back from `0/async` to `1/sync`. NeoVim 0.1.4 or later is also supported. 
 
@@ -185,6 +227,10 @@ asyncrun.vim can cooperate with `vim-fugitive`, see [here](https://github.com/sk
 
 ![](https://raw.githubusercontent.com/skywind3000/asyncrun.vim/master/doc/cooperate_with_fugitive.gif)
 
+
+## Language Tips
+
+- [Better way for C/C++ developing with AsyncRun](https://github.com/skywind3000/asyncrun.vim/wiki/Better-way-for-C-and-Cpp-development-in-Vim-8)
 
 ## More
 
@@ -215,6 +261,15 @@ See: [Cooperate with famous plugins](https://github.com/skywind3000/asyncrun.vim
 
 ## History
 
+- 2.0.1 (2018-04-29): new option `g:asyncrun_save` to save files.
+- 2.0.0 (2018-04-27): improve neovim compatability, handle `tcd` command in neovim.
+- 1.3.27 (2018-04-17): AsyncRun now supports range, try: `:%AsyncRun cat`
+- 1.3.26 (2018-04-16): new option `g:asyncrun_wrapper` to enable setup a command prefix
+- 1.3.25 (2018-04-16): handle makeprg/grepprg correctly, accept `%` and `$*` macros. close [#96](https://github.com/skywind3000/asyncrun.vim/issues/96) [#84](https://github.com/skywind3000/asyncrun.vim/issues/84) and [#35](https://github.com/skywind3000/asyncrun.vim/issues/35)
+- 1.3.24 (2018-04-13): remove trailing ^M on windows.
+- 1.3.23 (2018-04-03): back compatible to vim 7.3, can fall back to mode 1 in old vim.
+- 1.3.22 (2018-03-11): new option `g:asyncrun_open` to open quickfix window automatically at given height.
+- 1.3.21 (2018-03-02): fixed: float point reltime issues
 - 1.3.20 (2018-02-08): fixed: [Incorrect background job status](https://github.com/skywind3000/asyncrun.vim/issues/25) (@antoinemadec)
 - 1.3.19 (2017-12-13): new option `g:asyncrun_skip` to skip specific autocmd.
 - 1.3.18 (2017-12-12): fixed: windo breaks commands (especially in neovim).
