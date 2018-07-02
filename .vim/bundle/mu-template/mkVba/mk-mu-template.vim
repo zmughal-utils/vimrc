@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/mu-template>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/mu-template/tree/master/License.md>
-" Version:	4.3.0
-let s:version = '4.3.0'
+" Version:	4.3.1
+let s:version = '4.3.1'
 " Created:	06th Nov 2007
-" Last Update:	28th Sep 2017
+" Last Update:	29th Jun 2018
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -91,6 +91,7 @@ after/template/docbk/type.template
 after/template/docbk/varname.template
 after/template/docbk/xref.template
 after/template/doxygen/Doxyfile.template
+after/template/gitcommit/tag.template
 after/template/help.template
 after/template/help/chapter.template
 after/template/help/section.template
@@ -124,6 +125,7 @@ after/template/python/def.template
 after/template/python/docstring.template
 after/template/python/elif.template
 after/template/python/else.template
+after/template/python/for.template
 after/template/python/from.template
 after/template/python/if.template
 after/template/python/ifelse.template
@@ -134,10 +136,11 @@ after/template/python/while.template
 after/template/python/with.template
 after/template/sh.template
 after/template/sh/case.template
-after/template/sh/environmentvariable.template
 after/template/sh/current-dir.template
 after/template/sh/default_value.template
 after/template/sh/does_match.template
+after/template/sh/echo-variable.template
+after/template/sh/environmentvariable.template
 after/template/sh/field.template
 after/template/sh/for.template
 after/template/sh/function.template
