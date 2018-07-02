@@ -7,7 +7,7 @@ A project is defined by a root directory: everything under the root directory
 belongs to the project. No need to register every single file in the project,
 they all belong.
 
-[![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+[![Last release](https://img.shields.io/github/tag/LucHermitte/local_vimrc.svg)](https://github.com/LucHermitte/local_vimrc/releases) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Purpose
 
@@ -43,6 +43,13 @@ in vim-addon-file format.
 ```vim
 ActivateAddons local_vimrc
 ```
+
+Or with [vim-flavor](http://github.com/kana/vim-flavor) which also supports dependencies:
+
+```
+flavor 'LucHermitte/local_vimrc'
+```
+
 
 With Vundle
 
@@ -87,15 +94,18 @@ if you expect to have settings that differ from a project to another. In
 order to support such project-aware setting, `local_vimrc` lets you in charge
 of handling anti-reinclusion guards in project configuration files.
 
-For your project settings prefer buffer-local mappings (`:h :map-<buffer>`),
-abbreviations(`:h :abbreviate-<buffer>`), commands (`:h :command-buffer`),
+For your project settings prefer buffer-local mappings
+([`:h :map-<buffer>`](http://vimhelp.appspot.com/map.txt.html#%3amap%2d%3cbuffer%3e)),
+abbreviations ([`:h :abbreviate-<buffer>`](http://vimhelp.appspot.com/map.txt.html#%3aabbreviate%2d%3cbuffer%3e)),
+commands ([`:h :command-buffer`](http://vimhelp.appspot.com/map.txt.html#%3acommand%2dbuffer)),
 menus (see my fork of
 [buffer-menu](https://github.com/LucHermitte/lh-misc/blob/master/plugin/buffermenu.vim)),
-settings (`:h :setlocal`), and variables (`:h local-variable`).
+settings ([`:h :setlocal`](http://vimhelp.appspot.com/options.txt.html#%3asetlocal)),
+and variables ([`:h local-variable`](http://vimhelp.appspot.com/eval.txt.html#local%2dvariable)).
 
 N.B.: if you are a plugin writer that want to support configuration variables
 that'll dynamically adapt to the current project settings, have a look at my
-[`lh#option#get()` and `lh#ft#option#get()`](http://github.com/LucHermitte/lh-vim-lib)
+[`lh#option#get()` and `lh#ft#option#get()`](https://github.com/LucHermitte/lh-vim-lib/blob/master/doc/Options.md#function-list)
 functions.
 
 You'll find examples of use in my
@@ -106,10 +116,10 @@ You'll find examples of use in my
 The behaviour of this plugin can be tuned with the following options:
 
 - `g:local_vimrc` variable specifies the filenames and filepaths to be searched. The default
-  is `"_vimrc_local.vim"`. It can contain a list (`:h List`) of pathnames, or a simple string.
+  is `"_vimrc_local.vim"`. It can contain a list ([`:h List`](http://vimhelp.appspot.com/eval.txt.html#List)) of pathnames, or a simple string.
   It's meant to contain something that'll be relative to your current project
   root.  
-  This can contain a directory or list of directories. In that case, in order
+  This can contain a directory or a list of directories. In that case, in order
   to find any file named `_vimrc_local.vim` in directories named `.config/` at
   the root of current project directory, set the variable to 
   ```vim
@@ -166,7 +176,7 @@ Depending on the kind of the pattern that is the best match for the current
 - ignored, if it belongs to the _blacklist_,
 - sourced, if it belongs to the _asklist_ and if the end user says _"Yes
   please, source this file!"_,
-- sourced in the sandbox (` :h sandbox`) if it belongs to the _sandboxlist_.
+- sourced in the sandbox ([`:h sandbox`](http://vimhelp.appspot.com/eval.txt.html#sandbox)) if it belongs to the _sandboxlist_.
 - or sourced if it belongs to no list (and if it's a local file, and not a file
   accessed through scp://, http://, ...).
 
@@ -227,7 +237,7 @@ With modelines, a setting needs to be repeated in every file, if there are too m
 * Not every one uses Vim to develop. I don't want to be bothered by other people editor settings, why should I parasite theirs with modelines ?
 
 ### `.exrc`
-Vim natively supports `.exrc` files (`:h .exrc`, § d-) when `'exrc'` is on. This solution is very similar to `local_vimrc`. However `.exrc` files are executed (_sourced_ in Vim jargon) only on buffers (corresponding to files) which are in the exact same directory. Files in subdirectories won't trigger the execution of the project `.exrc` file.
+Vim natively supports `.exrc` files ([`:h .exrc`](http://vimhelp.appspot.com/starting.txt.html#%2eexrc), § d-) when `'exrc'` is on. This solution is very similar to `local_vimrc`. However `.exrc` files are executed (_sourced_ in Vim jargon) only on buffers (corresponding to files) which are in the exact same directory. Files in subdirectories won't trigger the execution of the project `.exrc` file.
 
 ### Autocommands
 It's possible to add autocommands in our `.vimrc`. Autocommands that will detect files under a certain directory to trigger commands (`:set xxxxx`, `:let b:style='alman'`, `:source path/to/project_config.vim`, ...).
@@ -276,6 +286,17 @@ name a few, there is for instance:
 
 ## History
 
+- v2.2.11
+    - BUG: Use `is_eligible` on the right pathname (PR#12) 
+    - ENH: Don't source anything on directories 
+    - ENH: Don't source multiple times in a row with a same buffer
+    - ENH: Improve logs 
+    - DOC: Miscelleanous improvments
+- v2.2.10
+    - ENH: Add 'edit local vimrc' in menu
+    - ENH: Ignore buffer when `! lh#project#is_eligible()`
+    - ENH: Abort of quickfix and fugitive paths
+    - PERF: Improve vim startup time 
 - v2.2.9  ENH: Simplify permission list management
 - v2.2.8  BUG: Fix regression to support Vim7.3
 - v2.2.7  ENH: Listen for BufRead and BufNewFile
@@ -284,9 +305,9 @@ name a few, there is for instance:
 - v2.2.5  BUG: Fix #7 -- support of config in directory
 - v2.2.4  Use new logging framework  
           Fix issue when `g:local_vimrc` is a string.
-- v2.2.3  Merge pull requests:   
-         - Incorrect addon-info extension (txt -> json)  
-         - Fix :SourceLocalVimrc path
+- v2.2.3  Merge pull requests:
+    - Incorrect addon-info extension (txt -> json)  
+    - Fix :SourceLocalVimrc path
 - v2.2.2  Directory lists were incorrectly sorted (bis) + shellslash isssue
 - v2.2.1  Directory lists were incorrectly sorted
 - v2.2.0 Plugins functions moved to autoload.  
