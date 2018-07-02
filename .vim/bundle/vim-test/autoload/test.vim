@@ -112,9 +112,14 @@ function! test#shell(cmd, strategy) abort
 endfunction
 
 function! test#determine_runner(file) abort
-  for [language, runners] in items(g:test#runners)
+  for [language, runners] in items(test#get_runners())
     for runner in runners
       let runner = tolower(language).'#'.tolower(runner)
+      if exists("g:test#enabled_runners")
+        if index(g:test#enabled_runners, runner) < 0
+          continue
+        endif
+      endif
       if test#base#test_file(runner, fnamemodify(a:file, ':.'))
         return runner
       endif
@@ -122,11 +127,24 @@ function! test#determine_runner(file) abort
   endfor
 endfunction
 
+function! test#get_runners() abort
+  if exists('g:test#runners')
+    let custom_runners = g:test#runners
+  elseif exists('g:test#custom_runners')
+    let custom_runners = g:test#custom_runners
+  else
+    let custom_runners = {}
+  endif
+
+  return s:extend(custom_runners, g:test#default_runners)
+endfunction
+
 function! test#test_file(file) abort
   return !empty(test#determine_runner(a:file))
 endfunction
 
 function! s:alternate_file() abort
+  if get(g:, 'test#no_alternate') | return '' | endif
   let alternate_file = ''
 
   if empty(alternate_file) && exists('g:loaded_projectionist')
@@ -179,4 +197,15 @@ function! s:echo_failure(message) abort
   echohl WarningMsg
   echo a:message
   echohl None
+endfunction
+
+function! s:extend(source, dict) abort
+  let result = {}
+  for [key, value] in items(a:source)
+    let result[key] = value
+  endfor
+  for [key, value] in items(a:dict)
+    let result[key] = get(result, key, []) + value
+  endfor
+  return result
 endfunction

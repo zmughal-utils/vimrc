@@ -20,6 +20,10 @@ function! test#strategy#make(cmd) abort
   call s:execute_with_compiler(a:cmd, 'make')
 endfunction
 
+function! test#strategy#make_bang(cmd) abort
+  call s:execute_with_compiler(a:cmd, 'make!')
+endfunction
+
 function! test#strategy#neomake(cmd) abort
   call s:execute_with_compiler(a:cmd, 'NeomakeProject')
 endfunction
@@ -51,8 +55,13 @@ function! test#strategy#neovim(cmd) abort
   startinsert
 endfunction
 
+function! test#strategy#vimterminal(cmd) abort
+  botright new
+  call term_start(['/bin/sh', '-c', a:cmd], {'curwin':1})
+endfunction
+
 function! test#strategy#neoterm(cmd) abort
-  call neoterm#do(a:cmd)
+  call neoterm#do({ 'cmd': a:cmd})
 endfunction
 
 function! test#strategy#vtr(cmd) abort

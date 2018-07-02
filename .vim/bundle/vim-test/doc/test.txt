@@ -69,6 +69,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:Cucumber*
 :Cucumber [args]             Uses the `cucumber` command.
 
+                                                *test-:CucumberJS*
+:CucumberJS [args]           Uses the `cucumber-js` command.
+
                                                 *test-:Minitest*
 :Minitest [args]             Uses the `rake` `test` or `ruby` `-I` `test` command.
                              It properly translates CLI options:
@@ -225,16 +228,18 @@ Runs test commands with `:!`, which switches your Vim to the Terminal.
 <
 Make ~
 
-Runs test commands with `:make`. If Dispatch.vim plugin is available, it will
-be used to automatically find the correct compiler for the command.
+Runs test commands with `:make` or `:make!`. If Dispatch.vim plugin is
+available, it will be used to automatically find the correct compiler for the
+command.
 >
-  let test#strategy = 'make'
+  let test#strategy = 'make' " or 'make_bang'
 <
 Dispatch ~
 
-Runs test commands with `:Dispatch`. Requires the Dispatch.vim plugin.
+Runs test commands with `:Dispatch` or `:Dispatch!`. Requires the Dispatch.vim
+plugin.
 >
-  let test#strategy = 'dispatch'
+  let test#strategy = 'dispatch' " or 'dispatch_background'
 <
 VimProc ~
 
@@ -244,9 +249,15 @@ Runs test commands with `:VimProcBang`. Requires the Vimproc.vim plugin.
 <
 Neovim ~
 
-Runs test commands with `:terminal`, which spawns a terminal inside your Neovim.
+Runs test commands with `:terminal`, which spawns a terminal inside Neovim.
 >
   let test#strategy = 'neovim'
+<
+Vim8 Terminal ~
+
+Runs test commands with `term_start()`, which spawns a terminal inside Vim.
+>
+  let test#strategy = 'vimterminal'
 <
 Neoterm ~
 
@@ -408,6 +419,16 @@ You can instruct test.vim to generate absolute file paths:
   let test#filename_modifier = ':~' " ~/Code/my_project/test/models/user_test.rb
 <
 
+To select which runners to load, set this option:
+
+```vim
+let test#enabled_runners = ["mylanguage#myrunner", "ruby#rspec"]
+```
+
+All other runners will not be loaded.
+
+Note that for your own custom runners, you still need to set `test#custom_runners`.
+
 Test.vim relies on you being cd-ed into the project root. However, sometimes
 you may want to execute tests from a different directory than the current
 working directory. You might have a bigger project with many sub-projects,
@@ -422,6 +443,10 @@ If the |projectionist| plug-in is present, you can run a test command from an
 application file, and test.vim will automatically try to run the
 command on the "alternate" test file.
 
+You can disable this integration by doing
+>
+  let g:test#no_alternate = 1
+<
 ABOUT                                           *test-about*
 
 You can get the latest version, see the changelog, or report a bug on GitHub:
