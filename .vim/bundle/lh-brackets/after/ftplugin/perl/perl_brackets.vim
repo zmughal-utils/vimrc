@@ -4,7 +4,7 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/License.md>
-" Version:	2.2.2
+" Version:	3.5.0
 " Created:	26th May 2004
 "------------------------------------------------------------------------
 " Description:
@@ -12,14 +12,11 @@
 " 	bracketing mappings we want to use.
 "
 "------------------------------------------------------------------------
-" Installation:
-" 	This particular file is meant to be into {rtp}/after/ftplugin/perl/
-" 	In order to overidde these default definitions, copy this file into a
+" Note:
+" 	In order to override these default definitions, copy this file into a
 " 	directory that comes before the {rtp}/after/ftplugin/perl/ you choosed --
 " 	typically $HOME/.vim/ftplugin/perl/ (:h 'rtp').
-" 	Then, replace the calls to :Brackets
-"
-" 	Requires Vim7+, lh-map-tools
+" 	Then, replace the calls to :Brackets, without the `-default` flag
 "
 " History:
 "	v1.0.0	07th Sep 2009
@@ -35,30 +32,25 @@
 if exists('b:loaded_ftplug_perl_brackets') && !exists('g:force_reload_ftplug_perl_brackets')
   finish
 endif
-let b:loaded_ftplug_perl_brackets = 222
+let b:loaded_ftplug_perl_brackets = 350
 
 let s:cpo_save=&cpo
 set cpo&vim
 " }}}1
 "------------------------------------------------------------------------
-" Brackets & all {{{
+" Brackets & all {{{1
 " ------------------------------------------------------------------------
-if !exists(':Brackets')
-  runtime plugin/common_brackets.vim
-endif
+if ! lh#option#get('cb_no_default_brackets', 0)
+  runtime ftplugin/perl_localleader.vim ftplugin/perl/perl_localleader.vim
 
-runtime ftplugin/perl_localleader.vim
-
-if exists(':Brackets')
   let b:cb_jump_on_close = 1
   " Use the default definitions from plugin/common_brackets.vim
-  :Brackets < > -visual=1 -insert=0 -trigger=<localleader><
-  :Brackets { } -visual=1 -insert=0 -nl -trigger=<localleader>{
+  :Brackets < > -default -visual=1 -insert=0 -trigger=<localleader><
+  :Brackets { } -default -visual=1 -insert=0 -nl -trigger=<localleader>{
+  " }
 endif
 
-"=============================================================================
-
-" }}}
+" }}}1
 "=============================================================================
 let &cpo=s:cpo_save
 "=============================================================================

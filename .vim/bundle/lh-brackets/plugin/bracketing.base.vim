@@ -4,12 +4,15 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.2.0
+" Version:      3.5.1
 "
 "       Stephen Riehm's braketing macros for vim
 "       Customizations by Luc Hermitte.
 " ======================================================================
 " History:      {{{1
+"       24th May 2018:  by LH
+"               * Avoid remapping in v_<Plug>MarkersCloseAllAndJumpToLast
+"               * Fix `v_<Plug>MarkersCloseAllAndJumpToLast`
 "       08th Nov 2016:  by LH
 "               * Add <Plug>MarkersJumpOutside
 "       10th Dec 2015:  by LH
@@ -170,7 +173,7 @@ set cpoptions-=c
 if exists("g:loaded_bracketing_base") && !exists('g:force_reload_bracketing_base')
   finish
 endif
-let g:loaded_bracketing_base = 1
+let g:loaded_bracketing_base = 351
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -205,9 +208,9 @@ vnoremap <silent> <Plug>MarkersJumpAndDelB <C-\><C-N>@=Marker_Jump({'direction':
 nnoremap <silent> <Plug>MarkersJumpAndDelB @=Marker_Jump({'direction':0, 'mode':'n', 'delete':1})<cr>
 imap     <silent> <Plug>MarkersJumpAndDelB <ESC><Plug>MarkersJumpFAndDel
 
-nnoremap <silent> <Plug>MarkersCloseAllAndJumpToLast a<c-r>=lh#brackets#close_all_and_jump_to_last_on_line(lh#brackets#closing_chars())<cr>
-vmap     <silent> <Plug>MarkersCloseAllAndJumpToLast <C-\><C-N>`><Plug>MarkersCloseAllAndJumpToLast
-imap     <silent> <Plug>MarkersCloseAllAndJumpToLast <c-r>=lh#brackets#close_all_and_jump_to_last_on_line(lh#brackets#closing_chars())<cr>
+nnoremap <silent> <Plug>MarkersCloseAllAndJumpToLast a<c-r>=lh#brackets#close_all_and_jump_to_last_on_line(lh#brackets#closing_chars(), {})<cr>
+vnoremap <silent> <Plug>MarkersCloseAllAndJumpToLast <C-\><C-N>`<i<c-r>=lh#brackets#close_all_and_jump_to_last_on_line(lh#brackets#closing_chars(), {'mode': 'v'})<cr>
+imap     <silent> <Plug>MarkersCloseAllAndJumpToLast <c-r>=lh#brackets#close_all_and_jump_to_last_on_line(lh#brackets#closing_chars(), {})<cr>
 
 inoremap <silent> <Plug>MarkersJumpOutside <C-R>=lh#brackets#jump_outside({'mode': 'i'})<cr>
 nnoremap <silent> <Plug>MarkersJumpOutside @=lh#brackets#jump_outside({'mode': 'n'})<cr>

@@ -4,8 +4,8 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/License.md>
-" Version:	2.2.2
-let s:k_version = 222
+" Version:	3.5.0
+let s:k_version = 350
 " Created:      13th Mar 2014
 "------------------------------------------------------------------------
 " Description:
@@ -34,24 +34,22 @@ set cpo&vim
 "------------------------------------------------------------------------
 " Brackets & all {{{1
 " ------------------------------------------------------------------------
-if !exists(':Brackets')
-  runtime plugin/common_brackets.vim
-endif
+if ! lh#option#get('cb_no_default_brackets', 0)
+  runtime ftplugin/markdown_localleader.vim ftplugin/markdown/markdown_localleader.vim
 
-if exists(':Brackets')
   let b:cb_jump_on_close = 1
   " Use the default definitions from plugin/common_brackets.vim
 
-  " :Brackets /* */ -visual=0
-  " :Brackets /** */ -visual=0 -trigger=/!
+  " :Brackets /* */ -default -visual=0
+  " :Brackets /** */ -default -visual=0 -trigger=/!
   "
-  :Brackets _ _ -open=function('lh#markdown#brackets#underscore')
-  :Brackets * * -open=function('lh#markdown#brackets#star') -visual=0
-  :Brackets * * -insert=0 -trigger=<localleader>*
-  " :Brackets * * -open=function('lh#markdown#brackets#star') -close=function('lh#markdown#brackets#star')
+  :Brackets _ _ -default -open=function('lh#markdown#brackets#underscore')
+  :Brackets * * -default -open=function('lh#markdown#brackets#star') -visual=0
+  :Brackets * * -default -insert=0 -trigger=<localleader>*
+  " :Brackets * * -default -open=function('lh#markdown#brackets#star') -close=function('lh#markdown#brackets#star')
   :Brackets ` `
-  :Brackets <\del> </del> -trigger=<localleader>~ -insert=0
-  :Brackets ~ ~ -open=function('lh#markdown#brackets#strike') -visual=0
+  :Brackets <\del> </del> -default -trigger=<localleader>~ -insert=0
+  :Brackets ~ ~ -default -open=function('lh#markdown#brackets#strike') -visual=0
   "
   " Todo: add
   " *<space> remove the second '*'
@@ -66,6 +64,8 @@ if exists(':Brackets')
         \ '\<bs\>'
         \ )
 endif
+
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================
