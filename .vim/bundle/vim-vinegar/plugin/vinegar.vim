@@ -1,5 +1,7 @@
-" vinegar.vim - combine with netrw to create a delicious salad dressing
+" Location:     plugin/vinegar.vim
 " Maintainer:   Tim Pope <http://tpo.pe/>
+" Version:      1.0
+" GetLatestVimScripts: 5671 1 :AutoInstall: vinegar.vim
 
 if exists("g:loaded_vinegar") || v:version < 700 || &cp
   finish
@@ -16,7 +18,6 @@ endfunction
 
 let s:dotfiles = '\(^\|\s\s\)\zs\.\S\+'
 
-let g:netrw_sort_sequence = '[\/]$,*,\%(' . join(map(split(&suffixes, ','), 'escape(v:val, ".*$~")'), '\|') . '\)[*@]\=$'
 let s:escape = 'substitute(escape(v:val, ".$~"), "*", ".*", "g")'
 let g:netrw_list_hide =
       \ join(map(split(&wildignore, ','), '"^".' . s:escape . '. "/\\=$"'), ',') . ',^\.\.\=/\=$' .
@@ -24,7 +25,7 @@ let g:netrw_list_hide =
 if !exists("g:netrw_banner")
   let g:netrw_banner = 0
 endif
-let s:netrw_up = ''
+unlet! s:netrw_up
 
 nnoremap <silent> <Plug>VinegarUp :call <SID>opendir('edit')<CR>
 if empty(maparg('-', 'n'))
@@ -40,10 +41,10 @@ function! s:opendir(cmd) abort
   if expand('%:t')[0] ==# '.' && g:netrw_list_hide[-strlen(df):-1] ==# df
     let g:netrw_list_hide = g:netrw_list_hide[0 : -strlen(df)-1]
   endif
-  if &filetype ==# 'netrw'
-    let currdir = fnamemodify(b:netrw_curdir, ':t')
+  if &filetype ==# 'netrw' && len(s:netrw_up)
+    let basename = fnamemodify(b:netrw_curdir, ':t')
     execute s:netrw_up
-    call s:seek(currdir)
+    call s:seek(basename)
   elseif expand('%') =~# '^$\|^term:[\/][\/]'
     execute a:cmd '.'
   else
@@ -92,21 +93,19 @@ endfunction
 
 function! s:escaped(first, last) abort
   let files = s:relatives(a:first, a:last)
-  return join(map(files, 'fnameescape(v:val)'), ' ')
+  return join(map(files, 's:fnameescape(v:val)'), ' ')
 endfunction
 
 function! s:setup_vinegar() abort
-  if empty(s:netrw_up)
-    " save netrw mapping
-    let s:netrw_up = maparg('-', 'n')
-    if s:netrw_up =~? "^<Plug>"
-      let s:netrw_up = "execute \"normal \\".s:netrw_up."\""
+  if !exists('s:netrw_up')
+    let orig = maparg('-', 'n')
+    if orig =~? '^<plug>'
+      let s:netrw_up = 'execute "normal \'.substitute(orig, ' *$', '', '').'"'
+    elseif orig =~# '^:'
+      " :exe "norm! 0"|call netrw#LocalBrowseCheck(<SNR>123_NetrwBrowseChgDir(1,'../'))<CR>
+      let s:netrw_up = substitute(orig, '\c^:\%(<c-u>\)\=\|<cr>$', '', 'g')
     else
-      " saved string is like this:
-      " :exe "norm! 0"|call netrw#LocalBrowseCheck(<SNR>172_NetrwBrowseChgDir(1,'../'))<CR>
-      let s:netrw_up = substitute(s:netrw_up, '\c^:\%(<c-u>\)\=', '', '')
-      " remove <CR> at the end (otherwise raises "E488: Trailing characters")
-      let s:netrw_up = strpart(s:netrw_up, 0, strlen(s:netrw_up)-4)
+      let s:netrw_up = ''
     endif
   endif
   nmap <buffer> - <Plug>VinegarUp
@@ -122,6 +121,7 @@ function! s:setup_vinegar() abort
   endif
   nmap <buffer> ! .!
   xmap <buffer> ! .!
+  let g:netrw_sort_sequence = '[\/]$,*,\%(' . join(map(split(&suffixes, ','), 'escape(v:val, ".*$~")'), '\|') . '\)[*@]\=$'
   exe 'syn match netrwSuffixes =\%(\S\+ \)*\S\+\%('.join(map(split(&suffixes, ','), s:escape), '\|') . '\)[*@]\=\S\@!='
   hi def link netrwSuffixes SpecialKey
 endfunction
