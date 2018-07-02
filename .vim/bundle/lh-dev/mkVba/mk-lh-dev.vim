@@ -4,8 +4,8 @@
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/blob/master/License.md>
-" Version:      1.6.3
-let s:version = '1.6.03'
+" Version:      2.0.0
+let s:version = '2.0.0'
 " Created:      02nd Mar 2012
 "------------------------------------------------------------------------
 " Description:
@@ -39,6 +39,7 @@ autoload/lh/dev/cpp.vim
 autoload/lh/dev/cpp/function.vim
 autoload/lh/dev/cpp/types.vim
 autoload/lh/dev/cs/attribute.vim
+autoload/lh/dev/editorconfig.vim
 autoload/lh/dev/function.vim
 autoload/lh/dev/instruction.vim
 autoload/lh/dev/java/attribute.vim
@@ -46,6 +47,15 @@ autoload/lh/dev/naming.vim
 autoload/lh/dev/option.vim
 autoload/lh/dev/snippet.vim
 autoload/lh/dev/style.vim
+autoload/lh/dev/style/__braces.vim
+autoload/lh/dev/style/breakbeforebraces.vim
+autoload/lh/dev/style/curly_bracket_next_line.vim
+autoload/lh/dev/style/empty_braces.vim
+autoload/lh/dev/style/indent_brace_style.vim
+autoload/lh/dev/style/spaces_around_brackets.vim
+autoload/lh/dev/style/spacesbeforeparens.vim
+autoload/lh/dev/style/spacesinemptyparentheses.vim
+autoload/lh/dev/style/spacesinparentheses.vim
 autoload/lh/dev/tags.vim
 autoload/lh/dev/vim/function.vim
 doc/lh-dev.txt

@@ -1,12 +1,13 @@
 "=============================================================================
-" $Id$
 " File:         autoload/lh/dev/c/types.vim                       {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
-"		<URL:http://code.google.com/p/lh-vim/>
-" Version:      1.1.3.
-let s:k_version = '1.1.3'
+"		<URL:http://github.com/LucHermitte/lh-dev>
+" License:      GPLv3 with exceptions
+"               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
+" Version:	2.0.0
+let s:k_version = '2.0.0'
 " Created:      27th Feb 2015
-" Last Update:  $Date$
+" Last Update:  20th Feb 2018
 "------------------------------------------------------------------------
 " Description:
 "       C specialization of lh#dev#types
@@ -32,9 +33,13 @@ function! lh#dev#c#types#verbose(...)
   return s:verbose
 endfunction
 
-function! s:Verbose(expr)
+function! s:Log(expr, ...)
+  call call('lh#log#this',[a:expr]+a:000)
+endfunction
+
+function! s:Verbose(expr, ...)
   if s:verbose
-    echomsg a:expr
+    call call('s:Log',[a:expr]+a:000)
   endif
 endfunction
 
@@ -50,7 +55,7 @@ endfunction
 " ## Overridden functions {{{1
 
 " Function: lh#dev#c#types#_deduce(expr) {{{3
-function! lh#dev#c#types#_deduce(expr)
+function! lh#dev#c#types#_deduce(expr) abort
   " 1- try with clang
   " 2- try with ctags/hand analyze
   " 3- return default
@@ -59,7 +64,7 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
-
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

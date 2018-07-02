@@ -1,11 +1,10 @@
 "=============================================================================
-" $Id$
 " File:         autoload/lh/dev/attribute.vim                     {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} free {dot} fr>
-"		<URL:http://code.google.com/p/lh-vim/>
+"		<URL:http://github.com/LucHermitte/lh-dev>
 " Version:      001
 " Created:      22nd Aug 2011
-" Last Update:  $Date$
+" Last Update:  16th Oct 2017
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -54,6 +53,7 @@ endfunction
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

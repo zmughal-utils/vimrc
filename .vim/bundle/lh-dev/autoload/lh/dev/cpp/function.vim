@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.5.0.
-let s:k_version = '1.5.0'
+" Version:      2.0.0
+let s:k_version = '2.0.0'
 " Created:      23rd Aug 2011
-" Last Update:  18th Apr 2016
+" Last Update:  20th Feb 2018
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -71,7 +71,7 @@ endfunction
 " [ ] default value
 " [X] new line before (when analysing non ctags-signatures, but real text)
 " [ ] TU
-function! lh#dev#cpp#function#_build_param_decl(param)
+function! lh#dev#cpp#function#_build_param_decl(param) abort "{{{2
   if a:param.dir == 'in'
     let type = lh#dev#cpp#types#ConstCorrectType(a:param.type)
   else " if a:param.dir == 'out'
@@ -80,7 +80,7 @@ function! lh#dev#cpp#function#_build_param_decl(param)
   return type . ' ' . a:param.formal
 endfunction
 
-function! lh#dev#cpp#function#_build_param_call(param)
+function! lh#dev#cpp#function#_build_param_call(param) abort "{{{2
   return a:param.name
 endfunction
 

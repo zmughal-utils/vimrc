@@ -64,7 +64,7 @@ let s:k_views =
 
 " ## Fixtures {{1
 function! s:Setup()
-  call lh#dev#cpp#types#verbose(1)
+  call lh#dev#cpp#types#verbose(0)
 endfunction
 
 function! s:Teardown()

@@ -5,7 +5,7 @@
 " Version:      1.2.0.
 let s:k_version = '120'
 " Created:      21st Apr 2015
-" Last Update:  21st Apr 2015
+" Last Update:  20th Feb 2018
 "------------------------------------------------------------------------
 " Description:
 "       Specialization for lh#dev#import functions
@@ -44,13 +44,13 @@ endfunction
 "------------------------------------------------------------------------
 " ## Overridden functions {{{1
 
-" Function: lh#dev#c#import#_do_clean_filename(filename) {{{3
+" Function: lh#dev#c#import#_do_clean_filename(filename) {{{2
 function! lh#dev#c#import#_do_clean_filename(filename) abort
   let filename0 = substitute(a:filename, '[<"]\(\f\+\)[>"]', '\1', '')
   return filename0
 endfunction
 
-" Function: lh#dev#c#import#_do_build_import_string(filename, options) {{{3
+" Function: lh#dev#c#import#_do_build_import_string(filename, options) {{{2
 " - _('"filename"')                   -> "filename"
 " - _('<filename>')                   -> <filename>
 " - _('filename', {...})              -> "filename"

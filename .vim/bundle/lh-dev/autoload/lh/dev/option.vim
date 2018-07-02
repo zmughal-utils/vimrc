@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      05th Oct 2009
-" Last Update:  04th Aug 2017
+" Last Update:  20th Feb 2018
 "------------------------------------------------------------------------
 " Description:  «description»
 " }}}1
@@ -81,7 +81,6 @@ endfunction
 " If {name} is a |List|, then the function name used is: {name}[0]#{ft}#{name}[1]
 function! lh#dev#option#call(name, ft, ...) abort
   let fname = call('lh#dev#option#_find_funcname', [a:name, a:ft] + a:000)
-  " call s:Verbose('Calling: '.fname.'('.join(map(copy(a:000), 'string(v:val)'), ', ').')')
   call s:Verbose('Calling: %1(%2)', fname, a:000)
   if s:verbose >= 2
     debug return call (function(fname), a:000)
@@ -90,7 +89,7 @@ function! lh#dev#option#call(name, ft, ...) abort
   endif
 endfunction
 
-" Function: lh#dev#option#pre_load_overrides(name, ft) {{{3
+" Function: lh#dev#option#pre_load_overrides(name, ft) {{{2
 " @warning {name} hasn't the same syntax as #call() and #fast_call()
 " @warning This function is expected to be executed from
 " autoload/lh/dev/{name}.vim (or equivalent if the prefix is forced to
@@ -106,7 +105,7 @@ function! lh#dev#option#pre_load_overrides(name, ft) abort
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
   let files = map(copy(fts), 'prefix."/".v:val."/".name.".vim"')
   " let files += [prefix.'/'.name.'.vim'] " Don't load the default again!
   for file in files
@@ -116,7 +115,7 @@ function! lh#dev#option#pre_load_overrides(name, ft) abort
   endfor
 endfunction
 
-" Function: lh#dev#option#fast_call(name, ft, ...) {{{3
+" Function: lh#dev#option#fast_call(name, ft, ...) {{{2
 " @pre lh#option#dev#pre_load_overrides() must have been called before.
 function! lh#dev#option#fast_call(name, ft, ...) abort
   if type(a:name) == type([])
@@ -129,11 +128,11 @@ function! lh#dev#option#fast_call(name, ft, ...) abort
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
   let fnames = map(copy(fts), 'prefix."#".v:val."#".name')
   let fnames += [prefix.'#'.name]
 
-  let idx = lh#list#find_if(fnames, 'exists("*".v:val)')
+  let idx = lh#list#find_if_fast(fnames, 'exists("*".v:val)')
   if idx < 0
     throw 'No override of '.prefix.'(#{ft})#'.name.' is known'
   endif
@@ -155,23 +154,34 @@ endfunction
 function! lh#dev#option#_find_funcname(name, ft, ...) abort
   if type(a:name) == type([])
     let prefix = a:name[0]
+    let fprefix = substitute(prefix, '#', '/', 'g')
     let name   = a:name[1]
+    let fpostfix = []
   elseif type(a:name) == type('string')
     let prefix = 'lh#dev'
+    let fprefix = 'lh/dev'
     let name   = a:name
+    let fpostfix = split(name, '#')[:-2]
   else
     throw "Unexpected type (".type(a:name).") for name parameter"
   endif
 
-  let fts = lh#dev#option#inherited_filetypes(a:ft)
-  call map(fts, 'v:val."#"')
-  let fts += ['']
-  for ft in fts
-    let fname = prefix.'#'.ft.name
+  let fts = lh#ft#option#inherited_filetypes(a:ft)
+
+  call map(fts, '[v:val]')
+  let fts += [[]]
+
+  let fnames =  map(copy(fts), 'join([prefix]+v:val+[name], "#")')
+
+  let files = map(copy(fts), 'join([fprefix]+v:val+fpostfix, "/").".vim"')
+
+  call s:Verbose('function names: %1', fnames)
+  call s:Verbose('searched in %1', files)
+
+  for i in range(len(fnames))
+    let fname = fnames[i]
     if !exists('*'.fname)
-      let file = substitute(fname, '#', '/', 'g')
-      let file = substitute(file, '.*\zs/.*', '.vim', '')
-      exe 'runtime autoload/'.file
+      exe 'runtime autoload/'.files[i]
     endif
     if exists('*'.fname) | break | endif
   endfor
@@ -179,10 +189,11 @@ function! lh#dev#option#_find_funcname(name, ft, ...) abort
   return fname
 endfunction
 
-
 " # List of inherited properties between languages {{{2
 " Function: lh#dev#option#inherited_filetypes(fts) {{{3
+" @deprecated, use lh#ft#option#inherited_filetypes() instead
 function! lh#dev#option#inherited_filetypes(fts) abort
+  call lh#notify#deprecated('lh#dev#option#inherited_filetypes', 'lh#ft#option#inherited_filetypes')
   return lh#ft#option#inherited_filetypes(a:fts)
 endfunction
 

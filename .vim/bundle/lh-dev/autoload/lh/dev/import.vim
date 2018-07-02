@@ -5,7 +5,7 @@
 " Version:      2.0.0
 let s:k_version = '200'
 " Created:      21st Apr 2015
-" Last Update:  15th Dec 2015
+" Last Update:  20th Feb 2018
 "------------------------------------------------------------------------
 " Description:
 "       Generic insertion of import/#include statements
@@ -258,7 +258,7 @@ endfunction
 " }}}1
 " ## Deported function (for mappings) {{{1
 
-" Function: lh#dev#import#_insert_import(...) {{{3
+" Function: lh#dev#import#_insert_import(...) {{{2
 function! lh#dev#import#_insert_import(...) abort
   " If there are several choices, ask which one to use.
   " But first: check the files.
@@ -291,6 +291,7 @@ function! lh#dev#import#_insert_import(...) abort
   endtry
   echo "Use CTRL-O to go back to previous cursor position"
 endfunction
+" }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save
 "=============================================================================

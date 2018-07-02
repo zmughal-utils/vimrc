@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = 200
 " Created:      28th May 2010
-" Last Update:  14th Oct 2017
+" Last Update:  09th Mar 2018
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -16,6 +16,7 @@ let s:k_version = 200
 " History:
 "       v2.0.0: ~ deprecating lh#dev#option#get, lh#dev#reinterpret_escaped_char
 "               + Report ctags execution error
+"               + Fix line field injection for recent uctags version
 "       v1.6.3: ~ Typo in option
 "       v1.6.2: ~ Minor refatoring
 "       v1.6.1: + lh#dev#_goto_function_begin and end
@@ -318,7 +319,7 @@ function! lh#dev#__BuildCrtBufferCtags(...) abort
   else
     let cmd_line .= ' --language-force='.lang
   endif
-  if cmd_line =~ '--fields'
+  if cmd_line =~ '--fields='
     let cmd_line = substitute(cmd_line, '--fields=\S\+', '&n', '') " inject line numbers in fields
   else
     let cmd_line .= ' --fields=n'

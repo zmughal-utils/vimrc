@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = '2.0.0'
 " Created:      28th May 2010
-" Last Update:  17th Oct 2016
+" Last Update:  20th Feb 2018
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on functions
@@ -66,7 +66,7 @@ function! lh#dev#function#get_(fn_tag, key)
   return a:fn_tag[a:key]
 endfunction
 
-" Function: lh#dev#function#parameters_to_signature(lParams) {{{3
+" Function: lh#dev#function#parameters_to_signature(lParams) {{{2
 function! lh#dev#function#parameters_to_signature(lParams)
   let res = lh#dev#option#call('function#_parameters_to_signature', &ft, a:lParams)
   return res
@@ -74,19 +74,19 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
-function! lh#dev#function#_prototype(fn_tag)
+function! lh#dev#function#_prototype(fn_tag) abort " {{{2
   return a:fn_tag.signature
 endfunction
 
 " Function: lh#dev#function#_signature(fn_tag) {{{2
-function! lh#dev#function#_signature(fn_tag)
+function! lh#dev#function#_signature(fn_tag) abort
   let s:fn_tag = a:fn_tag
   throw "ASSERT: This function is not expected to be called"
   " return a:fn_tag.signature
 endfunction
 
 " Function: lh#dev#function#_parameters(fn_tag, [mustCleanSpace]) {{{2
-function! lh#dev#function#_parameters(fn_tag, ...)
+function! lh#dev#function#_parameters(fn_tag, ...) abort
   let mustCleanSpace = a:0 > 0 ? a:1 : 0
   " ctags signature ensure a comments free signature => a comments free list of
   " parameters
@@ -97,7 +97,7 @@ function! lh#dev#function#_parameters(fn_tag, ...)
 endfunction
 
 " Function: lh#dev#function#_signature_to_parameters(signature, " [mustCleanSpace]) {{{2
-function! lh#dev#function#_signature_to_parameters(signature, ...)
+function! lh#dev#function#_signature_to_parameters(signature, ...) abort
   let mustCleanSpace = a:0 > 0 ? a:1 : 0
   " Most languages are free of pointer to function types, or even templates
   " Finding each parameter == spliting the string on commas
@@ -119,26 +119,26 @@ function! lh#dev#function#_signature_to_parameters(signature, ...)
 endfunction
 
 " Function: lh#dev#function#_split_list_of_parameters(sParameters) {{{2
-function! lh#dev#function#_split_list_of_parameters(sParameters)
+function! lh#dev#function#_split_list_of_parameters(sParameters) abort
   let sep = lh#ft#option#get('parameters_separator', &ft, ',')
   let lParameters = split(a:sParameters, '\s*'.sep.'\s*')
   return lParameters
 endfunction
 
 " Function: lh#dev#function#_analyse_parameter( param, mustCleanSpace ) {{{2
-function! lh#dev#function#_analyse_parameter( param, mustCleanSpace )
+function! lh#dev#function#_analyse_parameter( param, mustCleanSpace ) abort
   " default case: implicitly typed languages like viml
   return { 'name': a:param }
 endfunction
 
 " Function: lh#dev#function#_type(variable_tag) {{{2
-function! lh#dev#function#_type(variable_tag)
+function! lh#dev#function#_type(variable_tag) abort
   " many languages don't have explicit types
   return ''
 endfunction
 
 " Function: lh#dev#function#_parameters_to_signature(lParams) {{{2
-function! lh#dev#function#_parameters_to_signature(lParams)
+function! lh#dev#function#_parameters_to_signature(lParams) abort
   let params = []
   for p in a:lParams
     let s = lh#dev#option#call('function#_build_param_decl', &ft, p)
@@ -150,14 +150,14 @@ function! lh#dev#function#_parameters_to_signature(lParams)
 endfunction
 
 " Function: lh#dev#function#_build_param_decl(param) {{{2
-function! lh#dev#function#_build_param_decl(param)
+function! lh#dev#function#_build_param_decl(param) abort
   let res = has_key(a:param, 'type') ? a:param.type . ' ' : ''
   let res .= a:param.formal
   return res
 endfunction
 
 " Function: lh#dev#function#_build_real_params_list(lParams) {{{2
-function! lh#dev#function#_build_real_params_list(lParams)
+function! lh#dev#function#_build_real_params_list(lParams) abort
   let params = []
   for p in a:lParams
     let s = lh#dev#option#call('function#_build_param_call', &ft, p)
@@ -169,13 +169,13 @@ function! lh#dev#function#_build_real_params_list(lParams)
 endfunction
 
 " Function: lh#dev#function#_build_param_call(param) {{{2
-function! lh#dev#function#_build_param_call(param)
+function! lh#dev#function#_build_param_call(param) abort
   return a:param.name
 endfunction
 
 " Function: lh#dev#function#_local_variables(function_boundaries) {{{2
 " Extracts local variables, use ctags data by default.
-function! lh#dev#function#_local_variables(function_boundaries)
+function! lh#dev#function#_local_variables(function_boundaries) abort
   try
     let lTags = lh#dev#start_tag_session()
     if ! lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
@@ -201,7 +201,7 @@ function! lh#dev#function#_local_variables(function_boundaries)
 endfunction
 
 " # s:AddOffset(lTags, function_start) {{{2
-function! s:AddOffset(lTags, function_start)
+function! s:AddOffset(lTags, function_start) abort
   for tt in a:lTags
     let tt.line += a:function_start
   endfor
