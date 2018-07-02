@@ -88,6 +88,12 @@ COMMANDS                                        *dispatch-commands*
 :FocusDispatch          Show the task that would run when calling |:Dispatch|
                         with no arguments.
 
+                                                *dispatch-:AbortDispatch*
+:AbortDispatch          Abort the most recent build.
+
+:AbortDispatch {command}
+                        Abort the most recent build of {command}.
+
                                                 *dispatch-:Start*
 :Start [options] {command}
                         Start a process in a new, focused window.  If
@@ -116,16 +122,49 @@ COMMANDS                                        *dispatch-commands*
                         than focusing an existing one.  The default is always
                         to spawn a new 'shell'.
 
+MAPS                                            *dispatch-maps*
+
+The following convenience maps are provided.
+
+*m<CR>*                   |:Make|<CR>
+*m<Space>*                |:Make|<Space>
+*m!*                      |:Make|!
+*m?*                      Show 'makeprg'
+*`<CR>*                   |:Dispatch|<CR>
+*`<Space>*                |:Dispatch|<Space>
+*`!*                      |:Dispatch|!
+*`?*                      |:FocusDispatch|<CR>
+*'<CR>*                   |:Start|<CR>
+*'<Space>*                |:Start|<Space>
+*'!*                      |:Start|!
+*'?*                      Show |b:start|
+*g'<CR>*                  |:Spawn|<CR>
+*g'<Space>*               |:Spawn|<Space>
+*g'!*                     |:Spawn|!
+*g'?*                     Show 'shell'
+
+Use the g:nremap dictionary to override an individual map or set of maps with
+a common prefix.  For example, the following changes all "m" maps to "q" maps:
+>
+    let g:nremap = {"m": "q"}
+<
+Use an empty string as the dictionary value to disable the map or maps for
+that dictionary key entirely.
+
 STRATEGIES                                      *dispatch-strategies*
 
 Strategies are listed in order of precedence.  The first available one is
 used.  Some strategies only provide for a subset of tasks.
 
+Except for Tmux, which uses |VimResized|, all strategies require either |job|
+support plus a file system with FIFOs (basically everything but Windows) or
+|clientserver| support to do foreground makes.
+
 Tmux ~
 
 Foreground makes open in a small split at the bottom.  The closure of the
 pane triggers a |VimResized| event which loads the results into the quickfix
-list.  (All other strategies use the GUI subsystem to get this to work.)
+list.
 
 The tmux strategy can be used from the GUI as well.  Either start Vim from
 inside of tmux or assign g:tmux_session.  This will use a new window for
@@ -135,7 +174,7 @@ Tmux 1.6 or newer is required.
 
 GNU Screen ~
 
-Not used for foreground |:Make| invocations unless you're in GUI Vim.
+A new window is always used, since splits in GNU Screen are awkward.
 
 Windows ~
 
@@ -146,8 +185,7 @@ stealing.
 iTerm ~
 
 This strategy fires if you're in MacVim with at least one iTerm window open,
-or if Vim is running in iTerm itself.  In the latter case, you can't use it
-for foreground |:Make| invocations.
+or if Vim is running in iTerm itself.
 
 X11 ~
 

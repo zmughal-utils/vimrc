@@ -8,6 +8,14 @@ let g:autoloaded_dispatch = 1
 
 " Utility {{{1
 
+function! dispatch#tempname() abort
+  let temp = tempname()
+  if has('win32')
+    return fnamemodify(fnamemodify(temp, ':h'), ':p').fnamemodify(temp, ':t')
+  endif
+  return temp
+endfunction
+
 function! dispatch#uniq(list) abort
   let i = 0
   let seen = {}
@@ -28,7 +36,7 @@ endfunction
 function! dispatch#shellescape(...) abort
   let args = []
   for arg in a:000
-    if arg =~ '^[A-Za-z0-9_/.-]\+$'
+    if arg =~# '^[A-Za-z0-9_/.-]\+$'
       let args += [arg]
     elseif &shell =~# 'c\@<!sh'
       let args += [substitute(shellescape(arg), '\\\n', '\n', 'g')]
@@ -53,7 +61,7 @@ endfunction
 
 function! s:sandbox_eval(string) abort
   sandbox execute 'let v = '.a:string
-  return v
+  execute 'return v'
 endfunction
 
 function! s:expand_lnum(string, ...) abort
@@ -61,16 +69,46 @@ function! s:expand_lnum(string, ...) abort
   let old = v:lnum
   try
     let v:lnum = a:0 ? a:1 : 0
+    let v = substitute(v, '<\%(lnum\|line1\|line2\)>'.s:flags,
+          \ v:lnum > 0 ? '\=fnamemodify(v:lnum, substitute(submatch(0), "^[^>]*>", "", ""))' : '', 'g')
     let sbeval = '\=escape(s:sandbox_eval(submatch(1)), "!#%")'
     let v = substitute(v, '`=\([^`]*\)`', sbeval, 'g')
     let v = substitute(v, '`-=\([^`]*\)`', v:lnum < 1 ? sbeval : '', 'g')
     let v = substitute(v, '`+=\([^`]*\)`', v:lnum > 0 ? sbeval : '', 'g')
-    let v = substitute(v, '<\%(lnum\|line1\|line2\)>'.s:flags,
-          \ v:lnum > 0 ? '\=fnamemodify(v:lnum, submatch(0)[6:-1])' : '', 'g')
     return substitute(v, '^\s\+\|\s\+$', '', 'g')
   finally
     let v:lnum = old
   endtry
+endfunction
+
+function! s:efm_query(key, efm) abort
+  let matches = []
+  let efm = ',' . a:efm
+  let pattern = '\C,%\\&' . a:key . '=\zs\%(\\.\|[^\,]\)*'
+  let pos = 0
+  while 1
+    let match = matchstr(efm, pattern, pos)
+    let pos = match(efm, pattern, pos)
+    if pos < 0
+      return matches
+    endif
+    call add(matches, substitute(match, '\\\ze[\,]', '', 'g'))
+  endwhile
+endfunction
+
+function! s:efm_literal(key, ...) abort
+  return substitute(get(s:efm_query(a:key, a:0 ? a:1 : &errorformat), 0, ''), '%[%f]', '%', 'g')
+endfunction
+
+function! s:efm_to_regexp(pattern) abort
+  return '\c^\%(' . substitute(a:pattern,
+        \ '\(%\=\)\([%*\\.#^$[~]\)',
+        \ '\=empty(submatch(1)) ? "\\".submatch(2) : submatch(2)==#"#"?"*":submatch(2)',
+        \ 'g') . '\)$'
+endfunction
+
+function! s:efm_regexps(key, ...) abort
+  return map(s:efm_query(a:key, a:0 ? a:1 : &errorformat), 's:efm_to_regexp(v:val)')
 endfunction
 
 function! s:escape_path(path) abort
@@ -134,13 +172,42 @@ function! dispatch#vim_executable() abort
   return s:vim
 endfunction
 
+function! dispatch#has_callback() abort
+  if has('clientserver') && !empty(v:servername)
+    return 1
+  elseif !exists('*job_start') && !exists('*jobstart')
+    return 0
+  endif
+  if !exists('s:has_temp_fifo')
+    let fifo = tempname()
+    call system('mkfifo ' . dispatch#shellescape(fifo))
+    let s:has_temp_fifo = (getftype(fifo) ==# 'fifo')
+    call delete(fifo)
+  endif
+  return s:has_temp_fifo
+endfunction
+
 function! dispatch#callback(request) abort
-  if has('clientserver') && !empty(v:servername) && has_key(s:request(a:request), 'id')
+  let request = s:request(a:request)
+  if !has_key(request, 'id') || !dispatch#has_callback()
+    return ''
+  endif
+  if has('clientserver') && !empty(v:servername)
     return dispatch#shellescape(dispatch#vim_executable()) .
           \ ' --servername ' . dispatch#shellescape(v:servername) .
-          \ ' --remote-expr "' . 'DispatchComplete(' . s:request(a:request).id . ')' . '"'
+          \ ' --remote-expr "' . 'DispatchComplete(' . request.id . ')' . '"'
   endif
-  return ''
+  call system('mkfifo ' . dispatch#shellescape(request.file . '.callback'))
+  let cmd = ['head', '-1', request.file . '.callback']
+  let Cb = { ... -> dispatch#complete(request.id) }
+  if exists('*job_start')
+    call job_start(cmd, {'exit_cb': Cb})
+  elseif exists('*jobstart')
+    call jobstart(cmd, {'on_exit': Cb})
+  else
+    return ''
+  endif
+  return 'echo > ' . request.file . '.callback'
 endfunction
 
 function! dispatch#autowrite() abort
@@ -163,14 +230,14 @@ function! dispatch#prepare_start(request, ...) abort
   let status = dispatch#status_var()
   let exec = 'echo $$ > ' . a:request.file . '.pid; '
   if executable('perl')
-    let exec .= 'perl -e "select(undef,undef,undef,0.1)" 2>/dev/null; '
+    let exec .= 'sync; perl -e "select(undef,undef,undef,0.1)" 2>/dev/null; '
   else
     let exec .= 'sleep 1; '
   endif
   let exec .= a:0 ? a:1 : a:request.expanded
-  let wait = a:0 > 1 ? a:1 : get(a:request, 'wait', 'error')
+  let wait = a:0 > 1 ? a:2 : get(a:request, 'wait', 'error')
   let pause = "(printf '\e[1m--- Press ENTER to continue ---\e[0m\\n'; exec head -1)"
-  if wait == 'always'
+  if wait ==# 'always'
     let exec .= '; ' . pause
   elseif wait !=# 'never' && wait !=# 'make'
     let exec .= "; test ".status." = 0 -o ".status." = 130 || " . pause
@@ -210,7 +277,7 @@ function! dispatch#isolate(request, keep, ...) abort
     endif
   endfor
   let command += a:000
-  let temp = type(a:request) == type({}) ? a:request.file . '.dispatch' : tempname()
+  let temp = type(a:request) == type({}) ? a:request.file . '.dispatch' : dispatch#tempname()
   call writefile(command, temp)
   return 'env -i ' . join(map(copy(keep), 'v:val."=\"$". v:val ."\" "'), '') . &shell . ' ' . temp
 endfunction
@@ -236,10 +303,10 @@ function! s:dispatch(request) abort
   for handler in g:dispatch_handlers
     let response = call('dispatch#'.handler.'#handle', [a:request])
     if !empty(response)
-      redraw
       let a:request.handler = handler
+      redraw
       echo ':!'.a:request.expanded s:postfix(a:request)
-      return 1
+      return response
     endif
   endfor
   return 0
@@ -251,10 +318,10 @@ endfunction
 function! s:extract_opts(command) abort
   let command = a:command
   let opts = {}
-  while command =~# '^-\%(\w\+\)\%([= ]\|$\)'
-    let opt = matchstr(command, '^-\zs\w\+')
-    if command =~ '^-\w\+='
-      let val = matchstr(command, '^-\w\+=\zs\%(\\.\|\S\)*')
+  while command =~# '^\%(-\|++\)\%(\w\+\)\%([= ]\|$\)'
+    let opt = matchstr(command, '\zs\w\+')
+    if command =~# '^\%(-\|++\)\w\+='
+      let val = matchstr(command, '\w\+=\zs\%(\\.\|\S\)*')
     else
       let val = 1
     endif
@@ -263,7 +330,7 @@ function! s:extract_opts(command) abort
     elseif index(['compiler', 'title', 'wait'], opt) >= 0
       let opts[opt] = substitute(val, '\\\(\s\)', '\1', 'g')
     endif
-    let command = substitute(command, '^-\w\+\%(=\%(\\.\|\S\)*\)\=\s*', '', '')
+    let command = substitute(command, '^\%(-\|++\)\w\+\%(=\%(\\.\|\S\)*\)\=\s*', '', '')
   endwhile
   return [command, opts]
 endfunction
@@ -278,7 +345,7 @@ endfunction
 
 function! dispatch#start_command(bang, command) abort
   let command = a:command
-  if empty(command) && type(get(b:, 'start', [])) == type('')
+  if empty(command) && type(get(b:, 'start')) == type('')
     let command = b:start
   endif
   let command = s:expand_lnum(command)
@@ -312,6 +379,9 @@ function! dispatch#spawn(command, ...) abort
         \ 'expanded': dispatch#expand(command),
         \ 'title': '',
         \ }, a:0 ? a:1 : {})
+  if empty(a:command)
+    call extend(request, {'wait': 'never'}, 'keep')
+  endif
   let g:dispatch_last_start = request
   if empty(request.title)
     let request.title = substitute(fnamemodify(matchstr(request.command, '\%(\\.\|\S\)\+'), ':t:r'), '\\\(\s\)', '\1', 'g')
@@ -337,7 +407,7 @@ function! dispatch#spawn(command, ...) abort
     endwhile
   endif
   call dispatch#autowrite()
-  let request.file = tempname()
+  let request.file = dispatch#tempname()
   let s:files[request.file] = request
   let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
   try
@@ -369,22 +439,25 @@ endfunction
 
 let g:dispatch_compilers = get(g:, 'dispatch_compilers', {})
 
-function! dispatch#compiler_for_program(args) abort
+function! s:compiler_split(args) abort
   let remove = keys(filter(copy(g:dispatch_compilers), 'empty(v:val)'))
   let pattern = '\%('.join(map(remove, 'substitute(escape(v:val, ".*^$~[]\\"), "\\w\\zs$", " ", "")'), '\s*\|').'\)'
   let args = substitute(a:args, '\s\+', ' ', 'g')
+  let prefix = matchstr(args, '^\s*'.pattern.'*')
   let args = substitute(args, '^\s*'.pattern.'*', '', '')
+  let rtp = escape(&runtimepath, ' ')
   for [command, plugin] in items(g:dispatch_compilers)
     if strpart(args.' ', 0, len(command)+1) ==# command.' ' && !empty(plugin)
-          \ && !empty(findfile('compiler/'.plugin.'.vim', escape(&rtp, ' ')))
-      return plugin
+          \ && !empty(findfile('compiler/'.plugin.'.vim', rtp))
+      return [plugin, prefix, command, args[len(command) : -1]]
     endif
   endfor
-  let program = fnamemodify(matchstr(args, '\S\+'), ':t')
-  if program ==# 'make'
-    return 'make'
+  let program = matchstr(args, '\S\+')
+  let rest = matchstr(args, '\s.*')
+  if fnamemodify(program, ':t') ==# 'make'
+    return ['make', prefix, program, rest]
   endif
-  let plugins = map(reverse(split(globpath(escape(&rtp, ' '), 'compiler/*.vim'), "\n")), '[fnamemodify(v:val, ":t:r"), readfile(v:val)]')
+  let plugins = map(reverse(split(globpath(rtp, 'compiler/*.vim'), "\n")), '[fnamemodify(v:val, ":t:r"), readfile(v:val)]')
   for [plugin, lines] in plugins
     for line in lines
       let full = substitute(substitute(
@@ -392,18 +465,22 @@ function! dispatch#compiler_for_program(args) abort
             \ '\\\(.\)', '\1', 'g'),
             \ ' \=["'']\=\%(%\|\$\*\|--\w\@!\).*', '', '')
       if !empty(full) && strpart(args.' ', 0, len(full)+1) ==# full.' '
-        return plugin
+        return [plugin, prefix, full, args[len(full) : -1]]
       endif
     endfor
   endfor
   for [plugin, lines] in plugins
     for line in lines
-      if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_.-]\+') ==# program
-        return plugin
+      if matchstr(line, '\<CompilerSet\s\+makeprg=\zs[[:alnum:]_.-]\+') ==# fnamemodify(program, ':t')
+        return [plugin, prefix, program, rest]
       endif
     endfor
   endfor
-  return ''
+  return ['', prefix, program, rest]
+endfunction
+
+function! dispatch#compiler_for_program(args) abort
+  return get(s:compiler_split(a:args), 0, '')
 endfunction
 
 function! dispatch#compiler_options(compiler) abort
@@ -414,9 +491,9 @@ function! dispatch#compiler_options(compiler) abort
   try
     if a:compiler ==# 'make'
       if &makeprg !=# 'make'
-        setlocal efm&
+        setlocal errorformat&
       endif
-      return {'program': 'make', 'format': &efm}
+      return {'program': 'make', 'format': &errorformat}
     endif
     let &l:makeprg = ''
     execute 'compiler '.fnameescape(a:compiler)
@@ -449,7 +526,7 @@ function! s:compiler_complete(compiler, A, L, P) abort
   let compiler = empty(a:compiler) ? 'make' : a:compiler
 
   let fn = ''
-  for file in findfile('compiler/'.compiler.'.vim', escape(&rtp, ' '), -1)
+  for file in findfile('compiler/'.compiler.'.vim', escape(&runtimepath, ' '), -1)
     for line in readfile(file)
       let fn = matchstr(line, '-complete=custom\%(list\)\=,\zs\%(s:\)\@!\S\+')
       if !empty(fn)
@@ -483,7 +560,6 @@ function! dispatch#command_complete(A, L, P) abort
   let P = a:P + len(cmd) - len(L)
   let len = matchend(cmd, '\S\+\s')
   if len >= 0 && P >= 0
-    let args = matchstr(L, '\s\zs.*')
     let compiler = get(opts, 'compiler', dispatch#compiler_for_program(cmd))
     let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
     try
@@ -500,11 +576,18 @@ function! dispatch#command_complete(A, L, P) abort
   elseif a:A =~# '^-dir='
     let results = map(filter(s:file_complete(a:A[5:-1]), 'isdirectory(v:val)'), '"-dir=".v:val')
   elseif a:A =~# '^-compiler='
-    let results = map(reverse(split(globpath(escape(&rtp, ' '), 'compiler/*.vim'), "\n")), '"-compiler=".fnamemodify(v:val, ":t:r")')
+    let results = map(reverse(split(globpath(escape(&runtimepath, ' '), 'compiler/*.vim'), "\n")), '"-compiler=".fnamemodify(v:val, ":t:r")')
   elseif a:A =~# '^-'
     let as = {'dir': 'directory'}
     let results = filter(['-compiler=', '-dir='],
           \ '!has_key(opts, get(as, v:val[1:-2], v:val[1:-2]))')
+  elseif a:A =~# '^:' && exists('*getcompletion')
+    let matches = matchlist(a:A, '^:\([.$]\|\d\+\)\=\(\a.*\)')
+    if len(matches)
+      let results = map(getcompletion(matches[2], 'command'), '":".matches[1].v:val')
+    else
+      let results = []
+    endif
   elseif a:A =~# '^\%(\w:\|\.\)\=[\/]'
     let results = s:file_complete(a:A)
   else
@@ -538,11 +621,20 @@ function! dispatch#compile_command(bang, args, count) abort
     let args = a:args
   else
     let args = '_'
-    for vars in a:count < 0 ? [b:, g:, t:, w:] : [b:]
-      if has_key(vars, 'dispatch') && type(vars.dispatch) == type('')
+    let default_dispatch = 1
+    if type(get(b:, 'dispatch')) == type('')
+      let args = b:dispatch
+    endif
+    for vars in a:count < 0 ? [g:, t:, w:] : []
+      if type(get(vars, 'Dispatch')) == type('')
+        let args = vars.Dispatch
+      elseif type(get(vars, 'dispatch')) == type('')
         let args = vars.dispatch
       endif
     endfor
+    if a:count < 0 && type(get(b:, 'Dispatch')) == type('')
+      let args = b:Dispatch
+    endif
   endif
 
   if args =~# '^!'
@@ -554,8 +646,12 @@ function! dispatch#compile_command(bang, args, count) abort
   let [args, request] = s:extract_opts(args)
 
   if args =~# '^:\S'
+    call dispatch#autowrite()
+    if a:count > 0
+      let args = substitute(args, '^:[%0]\=\ze\a', ':' . a:count, '')
+    endif
     return s:wrapcd(get(request, 'directory', getcwd()),
-          \ (a:count > 0 ? a:count : '').substitute(args[1:-1], '\>', (a:bang ? '!' : ''), ''))
+          \ substitute(args[1:-1], '\>', (a:bang ? '!' : ''), ''))
   endif
 
   let executable = matchstr(args, '\S\+')
@@ -568,6 +664,12 @@ function! dispatch#compile_command(bang, args, count) abort
 
   if executable ==# '_'
     let request.args = matchstr(args, '_\s*\zs.*')
+    if a:count >= 0 || exists('default_dispatch')
+      let request.args = s:expand_lnum(s:efm_literal('buffer'), a:count < 0 ? 0 : a:count) .
+            \ substitute(request.args, '^\ze.', ' ', '')
+    elseif empty(request.args)
+      let request.args = s:expand_lnum(s:efm_literal('default'))
+    endif
     let request.program = &makeprg
     if &makeprg =~# '\$\*'
       let request.command = substitute(&makeprg, '\$\*', request.args, 'g')
@@ -579,13 +681,31 @@ function! dispatch#compile_command(bang, args, count) abort
     let request.format = &errorformat
     let request.compiler = s:current_compiler()
   else
-    let request.compiler = get(request, 'compiler', dispatch#compiler_for_program(args))
+    let [compiler, prefix, program, rest] = s:compiler_split(args)
+    let request.compiler = get(request, 'compiler', compiler)
     if !empty(request.compiler)
       call extend(request,dispatch#compiler_options(request.compiler))
+      if request.compiler ==# compiler
+        let request.program = prefix . program
+        let request.args = rest[1:-1]
+      endif
     endif
     let request.command = args
   endif
   let request.format = substitute(request.format, ',%-G%\.%#\%($\|,\@=\)', '', '')
+
+  for regexp in s:efm_regexps('terminal', request.format)
+    if has_key(request, 'args') && request.args =~# regexp
+      let title = request.compiler
+      if regexp =~# '\\\@<!\\ze'
+        let title .= ' ' . matchstr(request.args, regexp)
+      endif
+      let title = get(request, 'title', title)
+      return 'Start' . (a:bang ? '!' : '') .
+            \ ' -title=' . escape(title, '\ ') .
+            \ ' ' . request.command
+    endif
+  endfor
 
   if empty(request.compiler)
     unlet request.compiler
@@ -594,7 +714,7 @@ function! dispatch#compile_command(bang, args, count) abort
 
   call dispatch#autowrite()
   cclose
-  let request.file = tempname()
+  let request.file = dispatch#tempname()
   let &errorfile = request.file
 
   let efm = &l:efm
@@ -621,9 +741,14 @@ function! dispatch#compile_command(bang, args, count) abort
 
     call writefile([], request.file)
 
-    if s:dispatch(request)
-      if !get(request, 'background')
+    let result = s:dispatch(request)
+    if result
+      if !get(request, 'background') && exists(':chistory')
         call s:cgetfile(request)
+        if result is 2
+          exe 'botright copen' get(g:, 'dispatch_quickfix_height', '')
+          wincmd p
+        endif
       endif
     else
       let request.handler = 'sync'
@@ -658,24 +783,36 @@ endfunction
 
 function! dispatch#focus(...) abort
   let haslnum = a:0 && a:1 >= 0
-  if exists('w:dispatch') && !haslnum
+  if exists('b:Dispatch') && !haslnum
+    let [compiler, why] = [b:Dispatch, 'Buffer local focus']
+  elseif exists('w:Dispatch') && !haslnum
+    let [compiler, why] = [w:Dispatch, 'Window local focus']
+  elseif exists('w:dispatch') && !haslnum
     let [compiler, why] = [w:dispatch, 'Window local focus']
+  elseif exists('t:Dispatch') && !haslnum
+    let [compiler, why] = [t:Dispatch, 'Tab local focus']
   elseif exists('t:dispatch') && !haslnum
     let [compiler, why] = [t:dispatch, 'Tab local focus']
+  elseif exists('g:Dispatch') && !haslnum
+    let [compiler, why] = [g:Dispatch, 'Global focus']
   elseif exists('g:dispatch') && !haslnum
     let [compiler, why] = [g:dispatch, 'Global focus']
   elseif exists('b:dispatch')
     let [compiler, why] = [b:dispatch, 'Buffer default']
-  elseif !empty(&l:makeprg)
-    return [':Make', 'Buffer default']
   else
-    return [':Make', 'Global default']
+    let [compiler, why] = ['_', (len(&l:makeprg) ? 'Buffer' : 'Global') . ' default']
   endif
   if haslnum
+    if compiler ==# '_'
+      let task = s:efm_literal('buffer')
+      if len(task)
+        let compiler .= ' ' . task
+      endif
+    endif
     let compiler = s:expand_lnum(compiler, a:1)
     let [compiler, opts] = s:extract_opts(compiler)
-    if compiler =~# '^:\S' && a:1 > 0
-      let compiler = substitute(compiler, ':\zs', a:1, 'g')
+    if compiler =~# '^:[[:alpha:]]' && a:1 > 0
+      let compiler = substitute(compiler, '^:\zs', a:1, '')
     endif
     if has_key(opts, 'compiler') && opts.compiler != dispatch#compiler_for_program(compiler)
       let compiler = '-compiler=' . opts.compiler . ' ' . compiler
@@ -684,6 +821,14 @@ function! dispatch#focus(...) abort
       let compiler = '-dir=' .
             \ s:escape_path(fnamemodify(opts.directory, ':~:.')) .
             \ ' ' . compiler
+    endif
+  elseif compiler ==# '_'
+    let task = s:efm_literal('buffer')
+    if empty(task)
+      let task = s:efm_literal('default')
+    endif
+    if len(task)
+      let compiler .= ' ' . task
     endif
   endif
   if compiler =~# '^_\>'
@@ -697,6 +842,18 @@ function! dispatch#focus(...) abort
   endif
 endfunction
 
+function! s:translate_focus(args) abort
+  if a:args ==# ':Dispatch'
+    return s:expand_lnum(dispatch#focus()[0], 0)
+  elseif a:args =~# '^:[.$]Dispatch$'
+    return dispatch#focus(line(a:args[1]))[0]
+  elseif a:args =~# '^:\d\+Dispatch$'
+    return dispatch#focus(+matchstr(a:args, '\d\+'))[0]
+  else
+    return a:args
+  endif
+endfunction
+
 function! dispatch#focus_command(bang, args, count) abort
   let [args, opts] = s:extract_opts(a:args)
   let args = escape(dispatch#expand(args), '#%')
@@ -707,19 +864,20 @@ function! dispatch#focus_command(bang, args, count) abort
     let args = dispatch#dir_opt(opts.directory) . args
   endif
   if empty(a:args) && a:bang
-    unlet! w:dispatch t:dispatch g:dispatch
+    unlet! w:Dispatch t:Dispatch g:Dispatch w:dispatch t:dispatch g:dispatch
     let [what, why] = dispatch#focus(a:count)
     echo 'Reverted default to ' . what
   elseif empty(a:args)
     let [what, why] = dispatch#focus(a:count)
     echo a:count < 0 ? printf('%s is %s', why, what) : what
   elseif a:bang
-    let w:dispatch = args
+    let w:Dispatch = s:translate_focus(a:args)
+    unlet! w:dispatch
     let [what, why] = dispatch#focus(a:count)
     echo 'Set window local focus to ' . what
   else
-    unlet! w:dispatch t:dispatch
-    let g:dispatch = args
+    let g:Dispatch = s:translate_focus(a:args)
+    unlet! w:Dispatch t:Dispatch w:dispatch t:dispatch g:dispatch
     let [what, why] = dispatch#focus(a:count)
     echo 'Set global focus to ' . what
   endif
@@ -748,7 +906,7 @@ function! s:request(request) abort
     let i = len(s:makes)
     while i
       let i -= 1
-      if s:makes[i].handler . '/' . dispatch#pid(s:makes[i]) ==# a:request
+      if get(s:makes[i], 'handler') . '/' . dispatch#pid(s:makes[i]) ==# a:request
         return s:makes[i]
       endif
     endwhile
@@ -823,7 +981,9 @@ function! dispatch#complete(file) abort
       let status = -1
       call writefile([-1], request.file . '.complete')
     endtry
-    if status > 0
+    if has_key(request, 'aborted')
+      let label = 'Aborted:'
+    elseif status > 0
       let label = 'Failure:'
     elseif status == 0
       let label = 'Success:'
@@ -831,12 +991,43 @@ function! dispatch#complete(file) abort
       let label = 'Complete:'
     endif
     echo label '!'.request.expanded s:postfix(request)
-    if !request.background
+    if !request.background && !get(request, 'aborted')
       call s:cwindow(request, 0, status)
       redraw
     endif
   endif
   return ''
+endfunction
+
+" }}}1
+" :AbortDispatch {{{1
+
+function! dispatch#abort_command(bang, query) abort
+  let i = len(s:makes) - 1
+  while i >= 0
+    let request = s:makes[i]
+    if strpart(request.command, 0, len(a:query)) ==# a:query &&
+          \ !dispatch#completed(request)
+      break
+    endif
+    let i -= 1
+  endwhile
+  if i < 0
+    return 'echomsg '.string('No running dispatch found')
+  endif
+  let request.aborted = 1
+  let pid = dispatch#pid(request)
+  if !pid
+    return 'echoerr '.string('No pid file')
+  endif
+  if exists('*dispatch#'.get(request, 'handler').'#kill')
+    return dispatch#{request.handler}#kill(pid)
+  elseif has('win32')
+    call system('taskkill /PID '.pid)
+  else
+    call system('kill -HUP '.pid)
+  endif
+  return 'call dispatch#complete('.request.id.')'
 endfunction
 
 " }}}1
@@ -860,6 +1051,9 @@ endfunction
 
 function! s:cgetfile(request, ...) abort
   let request = s:request(a:request)
+  if !has_key(request, 'handler')
+    throw 'Bad request ' . string(request)
+  endif
   let efm = &l:efm
   let makeprg = &l:makeprg
   let compiler = get(b:, 'current_compiler', '')
@@ -876,10 +1070,16 @@ function! s:cgetfile(request, ...) abort
       let &l:efm = request.format
     endif
     let &l:makeprg = request.command
+    let title = ':Dispatch '.escape(request.expanded, '%#') . ' ' . s:postfix(request)
     silent doautocmd QuickFixCmdPre cgetfile
-    execute 'noautocmd cgetfile' fnameescape(request.file)
+    if exists(':chistory') && get(getqflist({'title': 1}), 'title', '') ==# title
+      call setqflist([], 'r')
+      execute 'noautocmd caddfile' fnameescape(request.file)
+    else
+      execute 'noautocmd cgetfile' fnameescape(request.file)
+    endif
     if exists(':chistory')
-      call setqflist([], 'r', {'title': ':Dispatch '.escape(request.expanded, '%#') . ' ' . s:postfix(request)})
+      call setqflist([], 'r', {'title': title})
     endif
     silent doautocmd QuickFixCmdPost cgetfile
   catch '^E40:'
@@ -893,9 +1093,12 @@ function! s:cgetfile(request, ...) abort
   endtry
 endfunction
 
-function! s:cwindow(request, all, copen)
+function! s:cwindow(request, all, copen) abort
   call s:cgetfile(a:request, a:all)
   let height = get(g:, 'dispatch_quickfix_height', 10)
+  if height <= 0
+    return
+  endif
   let was_qf = s:is_quickfix()
   execute 'botright' (a:copen ? 'copen' : 'cwindow') height
   if !was_qf && s:is_quickfix() && a:copen !=# -2

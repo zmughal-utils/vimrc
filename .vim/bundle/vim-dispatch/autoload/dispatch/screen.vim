@@ -10,7 +10,7 @@ function! dispatch#screen#handle(request) abort
     return 0
   endif
   if a:request.action ==# 'make'
-    if !get(a:request, 'background', 0) && empty(v:servername)
+    if !get(a:request, 'background', 0) && !dispatch#has_callback()
       return 0
     endif
     return dispatch#screen#spawn(dispatch#prepare_make(a:request), a:request)
@@ -25,7 +25,7 @@ function! dispatch#screen#spawn(command, request) abort
         \ . shellescape('exec ' . dispatch#isolate(a:request,
         \ ['STY', 'WINDOW'], dispatch#set_title(a:request), a:command))
   silent execute '!' . escape(command, '!#%')
-  if a:request.background || a:request.action !=# 'start' && !has('gui_running')
+  if (a:request.background || a:request.action !=# 'start') && !has('gui_running') && !has('nvim')
     silent !screen -X other
   endif
   return 1

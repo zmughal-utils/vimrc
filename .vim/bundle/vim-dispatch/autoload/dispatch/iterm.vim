@@ -10,7 +10,7 @@ function! dispatch#iterm#handle(request) abort
     return 0
   endif
   if a:request.action ==# 'make'
-    if !get(a:request, 'background', 0) && !has('gui_running')
+    if !get(a:request, 'background', 0) && !dispatch#has_callback()
       return 0
     endif
     let exec = dispatch#prepare_make(a:request)
@@ -94,9 +94,9 @@ endfunction
 
 function! dispatch#iterm#activate(pid) abort
   if dispatch#iterm#is_modern_version()
-    return dispatch#iterm#activate3(pid)
+    return dispatch#iterm#activate3(a:pid)
   else
-    return dispatch#iterm#activate2(pid)
+    return dispatch#iterm#activate2(a:pid)
   endif
 endfunction
 
