@@ -100,6 +100,7 @@ refresh_git https://github.com/jamessan/vim-gnupg vim-gnupg
 refresh_git https://github.com/LucHermitte/lh-tags lh-tags
 refresh_git https://github.com/LucHermitte/lh-dev lh-dev
 refresh_git https://github.com/LucHermitte/lh-brackets lh-brackets
+refresh_git https://github.com/LucHermitte/lh-style lh-style
 refresh_git https://github.com/LucHermitte/searchInRuntime searchInRuntime
 refresh_git https://github.com/LucHermitte/mu-template mu-template
 refresh_git https://github.com/tomtom/stakeholders_vim stakeholders_vim
