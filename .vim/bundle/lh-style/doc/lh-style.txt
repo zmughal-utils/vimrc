@@ -1,0 +1,238 @@
+*lh-style.txt*            Vim Script library providing stylistic related functions (v1.0.0.)
+                        For Vim version 7+.    Last change: 17th Oct 2017
+
+                        By Luc Hermitte
+                        hermitte {at} free {dot} fr
+
+
+------------------------------------------------------------------------------
+CONTENTS                                *lhstyle-contents*      {{{1
+|lhstyle-presentation|    Presentation
+|lhstyle-style|           Coding style
+|lhstyle-naming|          Naming policies
+|add-local-help|          Instructions on installing this file (:helptags %:h)
+
+
+------------------------------------------------------------------------------
+PRESENTATION                            *lhstyle-presentation* {{{1
+|lh-style| is a vim script library that defines vim functions and commands
+that permit to specify stylistic preferences like naming conventions, bracket
+formatting, etc.
+
+The library has been extracted from |lh-dev| v2.x.x. in order to remove
+dependencies to |lh-tags| and other plugins from template/snippet expander
+plugins like |mu-template|.
+It still depends on |lh-vim-lib|, as most my plugin do.
+
+This library has been conceived as a suite of |autoload| plugins. As such, it
+requires Vim 7+.
+
+
+------------------------------------------------------------------------------
+CODING STYLE                            *lhstyle-style* {{{1
+
+The aim of |:UseStyle|, |:AddStyle| and of |lh#style#get()| is to define
+how things should get written in source code. This feature is not about
+reformatting source code (you're better off with applying clang-format when
+working in C or in C++), but about formatting snippets as they are expanded.
+
+For instance, some projects will want to have opening curly-brackets on new
+lines (see Allman indenting style), other will prefer to have the opening
+bracket on the same line as the function/constrol-statement/... (see K&R
+indenting style, Java coding style, ...)
+
+This pair doesn't do any replacement by itself. It is expected to used by
+snippet plugins. So far, only |mu-template| exploits this feature.
+
+|:UseStyle| and |:AddStyle| are meant to be used by end users while
+|lh#style#get()| is meant to be used by plugin developpers that want to
+exploit end-user coding style.
+Note: Naming policies are implemented with |lhstyle-naming|.
+
+                                                *:UseStyle*
+:UseStyle {style-option}={value} [-buffer] [-ft[={ft}]] [-prio={prio}]~
+@param `{style-option}` specifies given a style family what choice has been
+       made.
+       Styles can easilly be added in `{&rtp}/autoload/lh/style/`. If you
+       don't remember them all, don't worry, `:UseStyle` supports command-line
+       completion.
+       Setting the style to `none` unsets the whole family for the related
+       |buffer|s / |filetype|s.
+       Giving a new {value}, overrides the style for the related |buffer|s /
+       |filetype|s.
+
+@param `-buffer` defines this association only for the current buffer. This
+       option is meant to be used with plugins like |local_vimrc|.
+@param `-ft[={ft}]` defines this association only for the specified filetype.
+       When {ft} is not specified, it applies only to the current filetype.
+       This option is meant to be used in .vimrc, in the global zone of
+       |filetype-plugin|s or possibily in |local_vimrc|s (when combined with
+       `-buffer`).
+@param `-prio={prio}` Sets a priority that'll be used to determine which key
+       is matching the text to enhance. By default all style have a priority
+       of 1.  The typical application is to have template expander ignore
+       single curly brackets.
+
+At this time the following styles are implemented.
+EditorConfig styles (https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties):
+   - `curly_bracket_next_line`  = [`yes`, `no`] // `true,` `false,` `0,` `1`.
+   - `indent_brace_style`       = [`0tbs`, `1tbs`, `allman`, `bsd_knf`,
+                                 `gnu`, `horstmann`, `java`, `K&R`,
+                                 `linux_kernel`, `lisp`, `none`, `pico`,
+                                 `ratliff`, `stroustrup`, `whitesmiths]`
+   - `spaces_around_brackets`   = [`inside`, `outside`, `both`, `none`]
+
+Clang-Format styles:
+   - `breakbeforebraces`        = [`allman`, `attach`, `gnu`, `linux`,
+                                 `none`, `stroustrup` ]
+   - `spacesbeforeparens`       = [`none`, `never`, `always`, `control-statements`]
+   -` spacesinemptyparentheses` = [`yes`, `no`] // `true,` `false,` `0,` `1`.
+   -` spacesinparentheses`      = [`yes`, `no`] // `true,` `false,` `0,` `1`.
+
+If you want more precise control, without familly management, you can use
+|:AddStyle| instead.
+
+                                                *:AddStyle*
+:AddStyle {key} [-buffer] [-ft[={ft}]] [-prio={prio}] {Replacement}~
+@param {key} is a regex that will get replaced automatically (by plugins
+supporting this API)
+@param {replacement} is what will be inserted in place of {text}
+@param `-buffer` defines this association only for the current buffer. This
+       option is meant to be used with plugins like |local_vimrc|.
+@param `-ft[={ft}]` defines this association only for the specified filetype.
+       When {ft} is not specified, it applies only to the current filetype.
+       This option is meant to be used in .vimrc, in the global zone of
+       |filetype-plugin|s or possibily in |local_vimrc|s (when combined with
+       `-buffer`).
+@param `-prio={prio}` Sets a priority that'll be used to determine which key
+       is matching the text to enhance. By default all style have a priority
+       of 1.  The typical application is to have template expander ignore
+       single curly brackets.
+
+Examples: >
+   " For Java (already defined in autoload/lh/style.vim)
+   AddStyle { -ft --prio=10 \ {\n
+   AddStyle } -ft --prio=10 \n}
+   " When you wish to adopt Allman coding style, in ${project_root}/_vimrc_local.vim
+   AddStyle { -b -ft --prio=10 \n{\n
+   AddStyle } -b -ft --prio=10 \n}\n
+<
+Local configuration (with `-buffer`) have the priority over filetype
+specialized configuration (with `-ft`).
+
+Note: `:AddStyle`  is the "old" low-level command that defines unrelated
+styles. In order to define related and exclusive styles, use |:UseStyle|.
+
+:AddStyle -list [-buffer] [-ft[={ft}]] [-prio={prio}]~
+Lists the styles active for the option specified.
+`-ft=*` lists global styles.
+`-ft=!` lisst all styles.
+
+
+                                                *lh#style#get()*
+lh#style#get({filetype})~
+Returns the coding style to use for the specified {filetype}, and for the
+current |buffer|.
+
+Right now, the priority used is the following:
+ 1  - same ft && buffer local
+ 2  - inferior ft (C++ inherits C stuff) && buffer local
+ 3  - same ft && global
+ ...
+ k  - for all ft && buffer local
+ k+1- inferior ft (C++ inherits C stuff) && global
+ ...
+ 2*k- for all ft && global
+
+------------------------------------------------------------------------------
+NAMING POLICIES                         *lhstyle-naming* {{{1
+
+Functions~
+
+Transforms {id} into a:
+
+- variable name:                         *lh#naming#variable()*
+  Options: *(bg):{ft_}naming_strip_re* ,
+           *(bg):{ft_}naming_strip_subst*
+
+- into a getter name:                    *lh#naming#getter()*
+  Options: *(bg):{ft_}naming_get_re*
+           *(bg):{ft_}naming_get_subst*
+
+- into a setter name:                    *lh#naming#setter()*
+  Options: *(bg):{ft_}naming_set_re*
+           *(bg):{ft_}naming_set_subst*
+
+- into a full access getter name:        *lh#naming#ref_getter()*
+  Options: *(bg):{ft_}naming_ref_re*
+           *(bg):{ft_}naming_ref_subst*
+
+- into a getter (through proxy) name:    *lh#naming#proxy_getter()*
+  Options: *(bg):{ft_}naming_proxy_re*
+           *(bg):{ft_}naming_proxy_subst*
+       and *(bg):{ft_}naming_function*
+
+- into a global variable name:           *lh#naming#global()*
+  Options: *(bg):{ft_}naming_global_re*
+           *(bg):{ft_}naming_global_subst*
+
+- into a local variable name:            *lh#naming#local()*
+  Options: *(bg):{ft_}naming_local_re*
+           *(bg):{ft_}naming_local_subst*
+
+- into a member variable name:           *lh#naming#member()*
+  Options: *(bg):{ft_}naming_member_re*
+           *(bg):{ft_}naming_member_subst*
+
+- into a static variable name:           *lh#naming#static()*
+  Options: *(bg):{ft_}naming_static_re*
+           *(bg):{ft_}naming_static_subst*
+
+- into a constant name:                  *lh#naming#constant()*
+  Options: *(bg):{ft_}naming_constant_re*
+           *(bg){ft_}naming_constant_subst*
+
+- into a parameter name:                 *lh#naming#param()*
+  Options: *(bg):{ft_}naming_param_re*
+           *(bg):{ft_}naming_param_subst*
+
+- into a type:                           *lh#naming#type()*
+  Options: *(bg):{ft_}naming_type_re*
+           *(bg):{ft_}naming_type_subst*
+           *(bg):{ft_}naming_type*
+
+
+*lh#naming#to_lower_camel_case()*
+*lh#naming#to_upper_camel_case()*
+*lh#naming#to_underscore()*
+
+Options~
+Format: (bg):{ft_}naming_{option}
+Examples:
+- `g:vim_naming_param_re`: global specialization used to extract name to build
+  a parameter name, when working on vim-scripts.
+- `b:cpp_naming_global_subst`: project-local specialization used to produced a
+  global variable name from a data name.
+
+
+Commands~
+                                                    *:NameConvert*
+:NameConvert {policy}~
+Applies the selected naming {policy} to the word under the cursor.
+
+                                                    *:ConvertNames*
+:[range]ConvertNames/{pattern}/{policy}/[flags]~
+For each line in [range] replace a match of {pattern} with `lh#naming#{policy}(match)`.
+For the {pattern} see |pattern|.
+When [range] is omitted, replace in the current line only.
+Also see |cmdline-ranges|.
+See |:s_flags| for [flags].
+
+
+Mappings~
+
+
+------------------------------------------------------------------------------
+© Luc Hermitte, 2011-2017, http://github.com/LucHermitte/lh-style }}}1
+ VIM: let b:VS_language = 'american'
+ vim:ts=8:sw=4:tw=80:fo=tcq2:isk=!-~,^*,^\|,^\":ft=help:fdm=marker:
