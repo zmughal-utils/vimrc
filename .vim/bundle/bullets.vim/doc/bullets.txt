@@ -18,9 +18,9 @@ INTRODUCTION                                *bullets* *bullets-intro*
 
 Bullets.vim is a plugin allowing automated (as in auto completing and auto
 incrementing) bulleted lists in Vim. It is designed to closely emulate the
-experience of working with a familiar word processor which presents the users
-with the next bulleted item, leaving the user focused on what they need to
-write.
+experience of working with a familiar word processor which presents the user
+with the next bulleted item after completing a bullet point and pressing
+the enter key, leaving the user focused on what they need to write.
 
 Out of the box bullets.vim comes with built in support for the following list
 types:
@@ -32,6 +32,9 @@ types:
 2) or this style of numeric lists
 \item latex item lists
 **** Org mode headers
+
+It also provides support for wrapped text in a bullet, allowing you to use the
+`textwidth` feature in Vim seamlessly.
 
 Future versions aim to support the following:
 
@@ -67,6 +70,10 @@ GENERAL COMMANDS                            *bullets-commands*
                        INSERT mode or `o` in normal mode. It adds the next
                        bullet list item based on the one in the current line.
 
+                                            *bullets-:RenumberSelection*
+:RenumberSelection     Renumbers all the arabic/numeric bullets lines in the
+                       visual selection. Right padding is initalized to the
+                       first found bullet.
 
 CONFIGURATION                               *bullets-configuration*
 
@@ -115,13 +122,33 @@ This will set the <space> key as leader to all default mappings.
 
 
 Disabling empty bullet deletion
---------------------------------
+-------------------------------
 By default bullets.vim will delete trailing empty bullets when the return key
 is pressed, just like modern word processors.
 
 If you would like to turn this feature off add the following to your .vimrc
 
   `let g:bullets_delete_last_bullet_if_empty = 0`
+
+
+Maintain right padding on bullets
+---------------------------------
+By default bullets.vim will try to pad bullets with enough spaces to align a
+new bullet's _text_ part with the previous line.
+
+  `let g:bullets_pad_right = 0`
+  1.  two spaces after the bullet
+  2.  same here
+  ...
+  9.  and here
+  10. text stays aligned
+  ...
+  99. and here
+  100. shifts over a column
+
+This tends to be fine even if you don't use it, but it can be disabled with:
+
+  `let g:bullets_pad_right = 0`
 
 
 INSERTING BULLETS                           *bullets-insert-new-bullet*
