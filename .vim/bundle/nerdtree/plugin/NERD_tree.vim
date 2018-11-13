@@ -81,14 +81,13 @@ call s:initVariable("g:NERDTreeCascadeSingleChildDir", 1)
 
 if !exists("g:NERDTreeSortOrder")
     let g:NERDTreeSortOrder = ['\/$', '*', '\.swp$',  '\.bak$', '\~$']
-else
-    "if there isnt a * in the sort sequence then add one
-    if count(g:NERDTreeSortOrder, '*') < 1
-        call add(g:NERDTreeSortOrder, '*')
-    endif
 endif
+let g:NERDTreeOldSortOrder = []
 
 call s:initVariable("g:NERDTreeGlyphReadOnly", "RO")
+
+" ASCII 160: non-breaking space used to delimit items in the tree's nodes.
+call s:initVariable("g:NERDTreeNodeDelimiter", "\u00a0")
 
 if !exists('g:NERDTreeStatusline')
 
@@ -206,8 +205,28 @@ function! NERDTreeFocus()
 endfunction
 
 function! NERDTreeCWD()
+
+    if empty(getcwd())
+        call nerdtree#echoWarning('current directory does not exist')
+        return
+    endif
+
+    try
+        let l:cwdPath = g:NERDTreePath.New(getcwd())
+    catch /^NERDTree.InvalidArgumentsError/
+        call nerdtree#echoWarning('current directory does not exist')
+        return
+    endtry
+
     call NERDTreeFocus()
-    call nerdtree#ui_glue#chRootCwd()
+
+    if b:NERDTree.root.path.equals(l:cwdPath)
+        return
+    endif
+
+    let l:newRoot = g:NERDTreeFileNode.New(l:cwdPath, b:NERDTree)
+    call b:NERDTree.changeRoot(l:newRoot)
+    normal! ^
 endfunction
 
 function! NERDTreeAddPathFilter(callback)
