@@ -4,21 +4,21 @@
 "               <URL:http://github.com/LucHermitte/lh-tags>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-tags/tree/master/License.md>
-" Version:      2.0.5
-let s:k_version = '2.0.5'
+" Version:      3.0.4
+let s:k_version = '3.0.4'
 " Created:      02nd Oct 2008
-" Last Update:  09th Mar 2018
+" Last Update:  31st Oct 2018
 "------------------------------------------------------------------------
 " Description:
 "       Small plugin related to tags files.
 "       (Deported functions)
 "
-" TODO:
-"       Find a way to update update &tags correctly when tags are searched and
-"       not at another moment.
-"
 "------------------------------------------------------------------------
 " History:
+"       v3.0.0:
+"       (*) Major OO refactoring of the plugin
+"       v2.0.6:
+"       (*) Fix `-kind` field to the right language
 "       v2.0.5:
 "       (*) Change C++ property field for recent version of uctags
 "       v2.0.4:
@@ -100,6 +100,9 @@ let s:k_version = '2.0.5'
 "       (*) Have behaviour similar to the one from the quickfix mode
 "       (possibility to close and reopen the search window; prev&next moves)
 "       (*) Show/hide declarations -- merge declaration and definitions
+"       (*) Find a way to update update &tags correctly when tags are searched
+"       and not at another moment.
+"
 " }}}1
 "=============================================================================
 
@@ -142,8 +145,17 @@ function! lh#tags#debug(expr) abort
   return eval(a:expr)
 endfunction
 
-" # s:System {{{2
-function! s:System(cmd_line) abort
+" # SID      {{{2
+" s:function(func_name) {{{3
+function! s:function(func)
+  if !exists("s:SNR")
+    let s:SNR=matchstr(expand('<sfile>'), '<SNR>\d\+_\zefunction$')
+  endif
+  return function(s:SNR . a:func)
+endfunction
+
+" # lh#tags#_System {{{2
+function! lh#tags#_System(cmd_line) abort
   call s:Verbose(a:cmd_line)
   let res = lh#os#system(a:cmd_line)
   if v:shell_error
@@ -152,71 +164,28 @@ function! s:System(cmd_line) abort
   return res
 endfunction
 
-" # s:AsyncSystem {{{2
-function! s:async_output_factory()
-  let res = {'output': []}
-  function! s:callback(channel, msg) dict abort
-    let self.output += [ a:msg ]
-  endfunction
-  let res.callback = function('s:callback')
-  return res
-endfunction
-
-function! s:AsynchSystem(cmd_line, txt, FinishedCB, ...) abort
-  if s:RunInBackground()
-    call s:Verbose('Register: %1',a:cmd_line)
-    let async_output = s:async_output_factory()
-    let job =
-          \ { 'txt': a:txt
-          \ , 'cmd': a:cmd_line
-          \ , 'close_cb': function(a:FinishedCB, [async_output])
-          \ , 'callback': function(async_output.callback)
-          \}
-    if a:0 > 0
-      let job.before_start_cb = a:1
-    endif
-    call lh#async#queue(job)
-    let res = 0
-  else
-    if a:0 > 0
-      let Cb = a:1
-      call Cb()
-    endif
-    call s:Verbose(a:cmd_line)
-    let res = lh#os#system(a:cmd_line)
-    call a:FinishedCB()
-    if v:shell_error " after a job_start, it cannot be used
-      throw "Cannot execute system call (".a:cmd_line."): ".res
-    endif
-  endif
-  return res
-endfunction
-
 " ######################################################################
 " ## Options {{{1
 " ======================================================================
 " # ctags executable {{{2
-" Function: s:CtagsExecutable() {{{3
-function! s:CtagsExecutable() abort
-  let tags_executable = lh#option#get('tags_executable', 'ctags', 'bg')
-  return tags_executable
-endfunction
-
 " Function: lh#tags#ctags_is_installed() {{{3
 function! lh#tags#ctags_is_installed() abort
-  return executable(s:CtagsExecutable())
+  return executable(s:indexer().executable())
 endfunction
 
 " Function: lh#tags#ctags_flavour() {{{3
+" @since version 1.5.0
+" @deprecated from Version 3.0.0
 function! lh#tags#ctags_flavour() abort
-  " @since version 1.5.0
+  call lh#notify#deprecated('lh#tags#ctags_flavour', 'lh-tags API differently')
+
   " call assert_true(lh#tags#ctags_is_installed())
   try
-    let ctags_executable = s:CtagsExecutable()
+    let ctags_executable = s:indexer().executable()
     if !lh#tags#ctags_is_installed()
       return 'echo "No '.ctags_executable.' binary found: "'
     endif
-    let ctags_version = s:System(s:CtagsExecutable(). ' --version')
+    let ctags_version = lh#tags#_System(ctags_executable. ' --version')
     if ctags_version =~ 'Universal Ctags'
       " Here I'm interrested in knowing whether --extras has deprectaed
       " --extra, which was done in commit d76bc95
@@ -236,150 +205,57 @@ function! lh#tags#ctags_flavour() abort
 endfunction
 
 " # The options {{{2
-let s:has_jobs     = lh#has#jobs()
-let s:has_partials = lh#has#partials()
-"
-" Forcing ft -> ctags languages {{{3
-" list {{{4
-let s:force_lang = {
-      \ 'ada' : 'Ada',
-      \ 'ant' : 'Ant',
-      \ 'asm' : 'Asm',
-      \ 'automake' : 'Automake',
-      \ 'awk' : 'Awk',
-      \ 'c' : 'C',
-      \ 'cs' : 'C#',
-      \ 'cpp' : 'C++',
-      \ 'clojure' : 'Clojure',
-      \ 'cobol' : 'Cobol',
-      \ 'css' : 'CSS',
-      \ 'tags' : 'ctags',
-      \ 'd' : 'D',
-      \ 'dosbatch' : 'DosBatch',
-      \ 'dts' : 'DTS',
-      \ 'eiffel' : 'Eiffel',
-      \ 'erlang' : 'Erlang',
-      \ 'falcon' : 'Falcon',
-      \ 'lex' : 'Flex',
-      \ 'fortran' : 'Fortran',
-      \ 'go' : 'Go',
-      \ 'html' : 'HTML',
-      \ 'java' : 'Java',
-      \ 'jproperties' : 'JavaProperties',
-      \ 'javascript' : 'JavaScript',
-      \ 'json' : 'JSON',
-      \ 'lisp' : 'Lisp',
-      \ 'lua' : 'Lua',
-      \ 'make' : 'Make',
-      \ 'matlab' : 'MatLab',
-      \ 'objc' : 'ObjectiveC',
-      \ 'ocaml' : 'OCaml',
-      \ 'pascal' : 'Pascal',
-      \ 'perl' : 'Perl',
-      \ 'perl6' : 'Perl6',
-      \ 'php' : 'PHP',
-      \ 'python' : 'Python',
-      \ 'r' : 'R',
-      \ 'rrst' : 'reStructuredText',
-      \ 'rexx' : 'REXX',
-      \ 'ruby' : 'Ruby',
-      \ 'rust' : 'Rust',
-      \ 'scheme' : 'Scheme',
-      \ 'sh' : 'Sh',
-      \ 'slang' : 'SLang',
-      \ 'sml' : 'SML',
-      \ 'sql' : 'SQL',
-      \ 'svg' : 'SVG',
-      \ 'systemverilog' : 'SystemVerilog',
-      \ 'tcl' : 'Tcl',
-      \ 'tex' : 'Tex',
-      \ 'vera' : 'Vera',
-      \ 'verilog' : 'Verilog',
-      \ 'vhdl' : 'VHDL',
-      \ 'vim' : 'Vim',
-      \ 'xslt' : 'XSLT',
-      \ 'yacc' : 'YACC',
-      \ }
-
-function! s:BuildForceLangOption() abort " {{{4
-  for [ft, lang] in items(s:force_lang)
-    call lh#let#if_undef('g:tags_options.'.ft.'.force', lang)
-  endfor
-endfunction
-call s:BuildForceLangOption()
-
-" function kinds {{{3
-" The ctags kind for function implementation may be f in C, C++, but m in Java,
-" C#, ...
-let s:func_kinds =
-      \ { 'r': ['ada']
-      \ , 'm': ['java', 'cs']
-      \ , '[mf]' : ['javascript', 'objc', 'ocaml']
-      \ , '[pf]' : ['pascal']
-      \ , 's' : ['perl']
-      \ , '[bsm]' : ['perl6']
-      \ , '[fF]' : ['rust']
-      \ , '[f]' : ['vim']
-      \ }
-function! s:BuildFuncKinds()
-  for [pat, fts] in items(s:func_kinds)
-    for ft in fts
-      call lh#let#if_undef('g:tags_options.'.ft.'.func_kind', pat)
-    endfor
-  endfor
-endfunction
-call s:BuildFuncKinds()
-
-" Function: lh#tags#option_force_lang(ft) {{{3
-function! lh#tags#option_force_lang(ft) abort
-  return lh#option#get('tags_options.'.a:ft.'.force')
-endfunction
-
 " Function: lh#tags#func_kind(ft) {{{3
 function! lh#tags#func_kind(ft) abort
-  return lh#option#get('tags_options.'.a:ft.'.func_kind', 'f')
+  let fl = s:indexer().flavour()
+  let lang = fl.get_lang_for(a:ft)
+  return get(fl.get_kind_flags('function'), lang, 'f')
 endfunction
 
 " Fields options {{{3
-" They'll get overriden everytime this file is loaded
 LetIfUndef g:tags_options {}
-if lh#tags#ctags_is_installed()
-  let s:flavour = lh#tags#ctags_flavour()
-  if s:flavour == 'utags'
-    LetTo g:tags_options.__extra = '--extras'
-    LetIfUndef g:tags_options.cpp.flags  = '--c++-kinds=+pf --fields=+imaSft --fields-c++=+{properties} --extras=+q'
-  elseif s:flavour == 'utags-old'
-    LetTo g:tags_options.__extra = '--extra'
-    LetIfUndef g:tags_options.cpp.flags  = '--c++-kinds=+pf --fields=+imaSft &x{c++.properties} --extras=+q'
-  else " etags
-    LetTo g:tags_options.__extra = '--extra'
-    LetIfUndef g:tags_options.cpp.flags  = '--c++-kinds=+pf --fields=+imaSft --extra=+q'
-  endif
-  LetIfUndef g:tags_options.c.flags    = '--c++-kinds=+pf --fields=+imaS '.(g:tags_options.__extra).'=+q'
-  " LetIfUndef g:tags_options.cpp.flags  = '--c++-kinds=+pf --fields=+imaSft '.(g:tags_options.__extra).'=+q --language-force=C++'
-  " LetIfUndef g:tags_options.java.flags = '--c++-kinds=+acefgimp --fields=+imaSft '.(g:tags_options.__extra).'=+q --language-force=Java'
-  LetIfUndef g:tags_options.java.flags = '--c++-kinds=+acefgimp --fields=+imaSft '.(g:tags_options.__extra).'=+q'
-  LetIfUndef g:tags_options.vim.flags  = '--fields=+mS '.(g:tags_options.__extra).'=+q'
-endif
+" -> g:tags_options.__extra
+" -> g:tags_options.{ft}.flags
 
-function! s:CtagsOptions() abort " {{{3
-  " TODO: Need to pick various options (kind, langmap, fields, extra...) in
-  " various places (b:, p:, g:) and assemble back something
-  let ctags_options = ' --tag-relative=yes'
-  let ctags_options .= ' '.lh#option#get('tags_options.'.&ft.'.flags', '')
-  let ctags_options .= ' '.lh#option#get('tags_options.flags', '', 'wbpg')
-  let ctags_options .= ' '.lh#option#get('tags_options.langmap', '', 'wbpg')
-  let fts = lh#option#get('tags_options.indexed_ft')
-  if lh#option#is_set(fts)
-    let langs = map(copy(fts), 'get(s:force_lang, v:val, "")')
-    " TODO: warn about filetypes unknown to ctags
-    call filter(langs, '!empty(v:val)')
-    let ctags_options .= ' --languages='.join(langs, ',')
+function! s:indexer() abort " {{{3
+  let indexer_names = []
+  if !empty(&ft)
+    let indexer_names += ['tags_options.'.&ft.'.__indexer']
   endif
-  return ctags_options
+  let indexer_names += ['tags_options.__indexer']
+  let indexer = lh#option#get(indexer_names)
+  if lh#option#is_unset(indexer)
+    let indexer = lh#tags#set_indexer(function('lh#tags#indexers#ctags#make'))
+  endif
+  return indexer
 endfunction
 
-function! s:is_ft_indexed(ft) abort " {{{3
+" Function: lh#tags#build_indexer(Func) {{{3
+" If {Func} is a string, execute lh#tags#indexers#{Func}#make()
+" If it's a function, just call it, and assert it's of the right type
+function! lh#tags#build_indexer(Func, ...) abort
+  call lh#assert#type(a:Func).belongs_to('', function('has'))
+  if type(a:Func) == type('')
+    let indexer = call('lh#tags#indexers#'.a:Func.'#make', a:000)
+  else
+    let indexer = a:Func()
+  endif
+  call lh#assert#value(indexer).verifies('lh#tags#indexers#interface#is_an_indexer')
+  return indexer
+endfunction
+
+" Function: lh#tags#set_indexer(Func [,scope]) {{{3
+" If {Func} is a string, execute lh#tags#indexers#{Func}#make()
+" If it's a function, just call it, and assert it's of the right type
+function! lh#tags#set_indexer(Func, ...) abort
+  let indexer = lh#tags#build_indexer(a:Func)
+  call lh#assert#value(indexer).verifies('lh#tags#indexers#interface#is_an_indexer')
+  let scope = get(a:, 1, 'p')
+  call lh#let#to(scope.':tags_options.__indexer', indexer)
+  return indexer
+endfunction
+
+function! lh#tags#_is_ft_indexed(ft) abort " {{{3
   " This option needs to be set in each project!
   let indexed_ft = lh#option#get('tags_options.indexed_ft', [])
   return index(indexed_ft, a:ft) >= 0
@@ -391,117 +267,26 @@ function! lh#tags#add_indexed_ft(...) abort
 endfunction
 
 " Function: lh#tags#set_lang_map(lang, exts) {{{3
+let s:k_unset = lh#option#unset()
 function! lh#tags#set_lang_map(ft, exts) abort
-  let lang = get(get(g:tags_options, a:ft, {}), 'force', lh#option#unset())
-  if lh#option#is_unset(lang)
-    throw "No language associated to " .a:ft." filetype for ctags!"
+  let indexer = s:indexer()
+  if !has_key(indexer, 'set_lang_map')
+    throw "tags-error: The current indexer has no ft -> lang map"
   endif
-  " Be sure the option exists
-  call lh#let#if_undef('p:tags_options.'.a:ft.'.langmap', '')
-  " Override it
-  if lh#tags#ctags_flavour() =~ 'utags'
-    call lh#let#to('p:tags_options.'.a:ft.'.langmap', '--map-'.lang.'='.a:exts)
-  else
-    call lh#let#to('p:tags_options.'.a:ft.'.langmap', '--langmap='.lang.':'.a:exts)
-  endif
+  call indexer.set_lang_map(a:ft, a:exts)
 endfunction
 
 let s:project_roots = get(s:, 'project_roots', [])
-function! s:GetPlausibleRoot() abort " {{{3
-  call s:Callstack("Request plausible root")
-  let crt = expand('%:p:h')
-  let compatible_paths = filter(copy(s:project_roots), 'lh#path#is_in(crt, v:val)')
-  if len(compatible_paths) == 1
-    return compatible_paths[0]
-  endif
-  if len(compatible_paths) > 1
-    let ctags_dirname = lh#path#select_one(compatible_paths, "ctags needs to know the current project root directory")
-    if !empty(ctags_dirname)
-      return ctags_dirname
-    endif
-  endif
-  let ctags_dirname = lh#ui#input("ctags needs to know the current project root directory.\n-> ", expand('%:p:h'))
-  if !empty(ctags_dirname)
-    call lh#path#munge(s:project_roots, ctags_dirname)
-  endif
-  return ctags_dirname
-endfunction
-
-function! s:FetchCtagsDirname() abort " {{{3
-  let sources_dir = lh#option#get('paths.sources')
-  if lh#option#is_set(sources_dir)
-    return sources_dir
-  endif
-
-  " call assert_true(!exists('b:tags_dirname'))
-  let project_sources_dir = lh#option#get('project_sources_dir')
-  if lh#option#is_set(project_sources_dir)
-    return project_sources_dir
-  endif
-  let config = lh#option#get('BTW_project_config')
-  if lh#option#is_set(config) && has_key(config, '_')
-    let ctags_dirname = get(get(config._, 'paths', {}), 'sources', '')
-    if !empty(ctags_dirname)
-      return ctags_dirname
-    else
-      call lh#common#warning_msg('BTW_project_config is set, but `BTW_project_config._.paths.sources` is empty')
-    endif
-  endif
-  let ctags_dirname = lh#vcs#get_git_root()
-  if !empty(ctags_dirname)
-    return matchstr(ctags_dirname, '.*\ze\.git$')
-  endif
-  let ctags_dirname = lh#vcs#get_svn_root()
-  if !empty(ctags_dirname)
-    return matchstr(ctags_dirname, '.*\ze\.svn$')
-  endif
-
-  return s:GetPlausibleRoot()
-endfunction
-
-function! s:CtagsDirname(...) abort " {{{3
-  " Will be searched in descending priority in:
-  " - (bpg):tags_dirname
-  " - (bpg):paths.sources
-  " - b:project_source_dir (mu-template)
-  " - BTW_project_config._.paths.sources (BTW)
-  " - Where .git/ is found is parent dirs
-  " - Where .svn/ is found in parent dirs
-  " - confirm box for %:p:h, and remember previous paths
-  let tags_dirname = lh#option#get('tags_dirname')
-  if lh#option#is_unset(tags_dirname)
-    unlet tags_dirname
-    let tags_dirname = s:FetchCtagsDirname()
-    call lh#let#to('p:tags_dirname', tags_dirname)
-  endif
-
-  let res = lh#path#to_dirname(tags_dirname)
-  " TODO: find another way to autodetect tags paths
-  if get(a:, 1, 1)
-    call lh#tags#update_tagfiles()
-  endif
-  return res
-endfunction
-
 " Function: lh#tags#update_tagfiles() {{{3
 function! lh#tags#update_tagfiles() abort
-  call s:CtagsDirname(0)
-  let tags_dirname = lh#option#get('tags_dirname')
-  let fixed_path = lh#path#fix(lh#path#to_dirname(tags_dirname).s:CtagsFilename())
-  if lh#project#is_in_a_project()
-    call lh#let#to('p:&tags', '+='.fixed_path)
-  else
-    exe 'setlocal tags+='.fixed_path
-  endif
-endfunction
-
-function! s:CtagsFilename() abort " {{{3
-  let ctags_filename = lh#option#get('tags_filename', 'tags', 'bpg')
-  return ctags_filename
+  call s:indexer().update_tags_option()
 endfunction
 
 function! lh#tags#cmd_line(ctags_pathname) abort " {{{3
-  let cmd_line = s:CtagsExecutable().' '.s:CtagsOptions().' -f '.a:ctags_pathname
+  call lh#notify#deprecated('lh#tags#cmd_line', 'lh#tags#indexers#ctags#make().cmd_line')
+  let indexer = s:indexer()
+  call indexer.set_db_file(a:ctags_pathname)
+  let cmd_line = indexer.cmd_line()
   return cmd_line
 endfunction
 
@@ -510,27 +295,17 @@ function! s:TagsSelectPolicy() abort " {{{3
   return select_policy
 endfunction
 
-function! s:RecursiveFlagOrAll() abort " {{{3
-  let recurse = lh#option#get('tags_must_go_recursive', 1)
-  let res = recurse ? ' -R' : ' *'
-  return res
-endfunction
-
-function! s:RunInBackground() abort " {{{3
-  return lh#has#jobs() && g:tags_options.run_in_bg
-endfunction
-
 function! s:AreIgnoredWordAutomaticallyGenerated() abort " {{{3
   " Possible values are:
   " "0": no
   " "1": yes
   " "all": only on <Plug>CTagsUpdateAll
-  return lh#option#get('tags_options.auto_spellfile_update', 0)
+  return lh#option#get('tags_options.auto_spellfile_update', 0, 'g')
 endfunction
 
 " ######################################################################
 function! s:ShallWeAutomaticallyHighlightTags() abort " {{{3
-  return lh#option#get('tags_options.auto_highlight', 0)
+  return lh#option#get('tags_options.auto_highlight', 0, 'g')
 endfunction
 
 " ######################################################################
@@ -538,107 +313,9 @@ endfunction
 " ======================================================================
 " # Tags generating functions {{{2
 " ======================================================================
-" Purge all references to {source_name} in the tags file {{{3
-function! s:PurgeFileReferences(ctags_pathname, source_name) abort
-  call s:Verbose('Purge `%1` references from `%2`', a:source_name, a:ctags_pathname)
-  if filereadable(a:ctags_pathname)
-    let pattern = "\t".lh#path#to_regex(a:source_name)."\t"
-    let tags = readfile(a:ctags_pathname)
-    call filter(tags, 'v:val !~ pattern')
-    call writefile(tags, a:ctags_pathname, "b")
-  endif
-endfunction
-
-" ======================================================================
-" generate tags on-the-fly {{{3
-function! s:UpdateTags_for_ModifiedFile(ctags_pathname) abort
-  let ctags_dirname  = s:CtagsDirname()
-  let source_name    = lh#path#relative_to(expand('%:p'), ctags_dirname)
-  let temp_name      = tempname()
-  let temp_tags      = tempname()
-
-  try
-    " 1- purge old references to the source name
-    call s:PurgeFileReferences(a:ctags_pathname, source_name)
-
-    " 2- save the unsaved contents of the current file
-    call writefile(getline(1, '$'), temp_name, 'b')
-
-    " 3- call ctags, and replace references to the temporary source file to the
-    " real source file
-    let cmd_line = lh#tags#cmd_line(a:ctags_pathname).' '.source_name.' --append'
-    " todo: test the redirection on windows
-    let cmd_line .= ' && sed "s#\t'.temp_name.'\t#\t'.source_name.'\t#" > '.temp_tags
-    let cmd_line .= ' && mv -f '.temp_tags.' '.a:ctags_pathname
-    call s:System(cmd_line)
-  finally
-    call delete(temp_name)
-    call delete(temp_tags)
-  endtry
-
-  return ';'
-endfunction
-
-" ======================================================================
-" generate tags for all files {{{3
-function! s:UpdateTags_for_All(ctags_pathname, ...) abort
-  let ctags_dirname = s:CtagsDirname()
-
-  runtime autoload/lh/os.vim
-  if exists('*lh#os#sys_cd')
-    let cmd_line  = lh#os#sys_cd(ctags_dirname)
-  else
-    let cmd_line  = 'cd '.ctags_dirname
-  endif
-
-  let cmd_line .= ' && '.lh#tags#cmd_line(s:CtagsFilename()).s:RecursiveFlagOrAll()
-  let msg = 'ctags '.
-        \ lh#option#get('BTW_project_config._.name', fnamemodify(ctags_dirname, ':p:h:t'))
-  if s:has_partials
-    let FinishedCB = a:1
-    call s:AsynchSystem(
-          \ cmd_line,
-          \ msg,
-          \ function(FinishedCB, ['']),
-          \ function('delete', [a:ctags_pathname]))
-  else
-    call delete(a:ctags_pathname)
-    call s:System(cmd_line)
-    return msg
-  endif
-endfunction
-
-" ======================================================================
-" generate tags for the current saved file {{{3
-function! s:UpdateTags_for_SavedFile(ctags_pathname, ...) abort
-  " Work on the current file -> &ft, expand('%')
-  if ! s:is_ft_indexed(&ft) " redundant check
-    return
-  endif
-  let ctags_dirname  = s:CtagsDirname()
-  let source_name    = lh#path#relative_to(ctags_dirname, expand('%:p'))
-  " lh#path#relative_to() expects to work on dirname => it'll return a dirname
-  let source_name    = substitute(source_name, '[/\\]$', '', '')
-
-  let cmd_line = 'cd '.ctags_dirname
-  let cmd_line .= ' && ' . lh#tags#cmd_line(a:ctags_pathname).' --append '.source_name
-  if s:has_partials
-    let FinishedCB = a:1
-    call s:AsynchSystem(
-          \ cmd_line,
-          \ 'ctags '.expand('%:t'),
-          \ function(FinishedCB, [ ' (triggered by '.source_name.' modification)']),
-          \ function('s:PurgeFileReferences', [a:ctags_pathname, source_name]))
-  else
-    call s:PurgeFileReferences(a:ctags_pathname, source_name)
-    call s:System(cmd_line)
-    return ' (triggered by '.source_name.' modification)'
-  endif
-endfunction
-
-" ======================================================================
 " (private) Conclude tag generation {{{3
-function! s:TagGenerated(ctags_pathname, msg, ...) abort
+function! s:TagGenerated(ctags_pathname, trigger, msg, ...) abort
+  redrawstatus
   if a:0 > 0
     let async_output = a:1
     let channel = a:2
@@ -652,13 +329,18 @@ function! s:TagGenerated(ctags_pathname, msg, ...) abort
       endwhile
       return
     endif
+  else
+    " Force a redraw right before output if we have less than 2 lines to display
+    " messages, so that the common case of updating ctags during a write doesn't
+    " cause a pause that requires the user to press enter.
+    if &cmdheight < 2
+      redraw
+    endif
   endif
+
   echomsg a:ctags_pathname . ' updated'.a:msg.'.'
   let auto_spell = s:AreIgnoredWordAutomaticallyGenerated()
-  if auto_spell == 1 || (auto_spell == 'all' && empty(a:msg))
-    " TODO: Fix the crappy convention
-    " - empty(msg) <=> GenerateAll
-    " - !empty <=> UpdateCurrentFile
+  if auto_spell == 1 || (auto_spell == 'all' && a:trigger == 'complete')
     call lh#tags#update_spellfile(a:ctags_pathname)
   endif
   if s:ShallWeAutomaticallyHighlightTags()
@@ -670,13 +352,16 @@ endfunction
 " See this function as a /template method/.
 function! lh#tags#run(tag_function, force) abort
   try
-    if a:tag_function == 'UpdateTags_for_SavedFile' && !s:is_ft_indexed(&ft)
-    call s:Verbose("Ignoring ctags generation on %1: `%2` is an unsupported filetype", a:tag_function, &ft)
+    if a:tag_function == 'run_update_file' && !lh#tags#_is_ft_indexed(&ft)
+      call s:Verbose("Ignoring ctags generation on %1: `%2` is an unsupported filetype", a:tag_function, &ft)
       return 0
     endif
+    call lh#assert#value(&ft).not().empty()
     call s:Verbose("Run ctags on %1 %2", a:tag_function, a:force ? "(forcing)": "")
-    let ctags_dirname  = s:CtagsDirname()
-    if strlen(ctags_dirname)==1
+    let indexer = s:indexer()
+    " let g:indexer = indexer
+    let src_dirname = indexer.src_dirname()
+    if strlen(src_dirname)==1
       if a:force
         " todo: a:force || not_already_notified_for_this_buffer
         throw "tags-error: empty dirname"
@@ -684,58 +369,33 @@ function! lh#tags#run(tag_function, force) abort
         return 0
       endif
     endif
-    let ctags_filename = s:CtagsFilename()
-    let ctags_pathname = ctags_dirname.ctags_filename
-    if !filewritable(ctags_dirname) && !filewritable(ctags_pathname)
-      throw "tags-error: ".ctags_pathname." cannot be modified"
-    endif
 
-    let Fn = function("s:".a:tag_function)
-    if s:has_partials
-      call Fn(ctags_pathname, function('s:TagGenerated', [(ctags_pathname)]))
-    else
-      " w/o partials, we can't have jobs either
-      let msg = Fn(ctags_pathname)
-      call s:TagGenerated(ctags_pathname, msg)
-    endif
+    let l:Finished_cb = s:function('TagGenerated')
+    let args = lh#option#get('tags_options._', {})
+    " yeah, "ft" can be injected at project level... This is certainly nuts!
+    let args = extend(args, lh#option#get('tags_options.'.get(args, 'ft', &ft).'_', {}), 'force')
+    let msg = indexer[a:tag_function](l:Finished_cb, args)
   catch /tags-error:/
     call lh#common#error_msg(v:exception)
     return 0
   endtry
-
-  " Force a redraw right before output if we have less than 2 lines to display
-  " messages, so that the common case of updating ctags during a write doesn't
-  " cause a pause that requires the user to press enter.
-  if &cmdheight < 2
-    redraw
-  endif
   return 1
-endfunction
-
-function! s:Irun(tag_function, res) abort
-  call lh#tags#run(a:tag_function)
-  return a:res
 endfunction
 
 " ======================================================================
 " Main function for updating all tags {{{3
 function! lh#tags#update_all() abort
-  let done = lh#tags#run('UpdateTags_for_All', 1)
+  let done = lh#tags#run('run_on_all_files', 1)
 endfunction
 
 " Main function for updating the tags from one file {{{3
 " @note the file may be saved or "modified".
 function! lh#tags#update_current() abort
   if &modified
-    let done = lh#tags#run('UpdateTags_for_ModifiedFile', 1)
+    let done = lh#tags#run('run_update_modified_file', 1)
   else
-    let done = lh#tags#run('UpdateTags_for_SavedFile', 1)
+    let done = lh#tags#run('run_update_file', 1)
   endif
-  " if done
-    " call lh#common#error_msg("updated")
-  " else
-    " call lh#common#error_msg("not updated")
-  " endif
 endfunction
 
 " ######################################################################
@@ -745,8 +405,9 @@ highlight default link TagsGroup Special
 
 function! s:ExtractPaths(...) " {{{3
   if a:0 == 0
-    let ctags_dirname  = s:CtagsDirname()
-    if strlen(ctags_dirname)==1
+    let indexer = s:indexer
+    let src_dirname = indexer.src_dirname()
+    if strlen(src_dirname)==1
       if a:force
         " todo: a:force || not_already_notified_for_this_buffer
         throw "tags-error: empty dirname"
@@ -754,18 +415,17 @@ function! s:ExtractPaths(...) " {{{3
         return 0
       endif
     endif
-    let ctags_filename = s:CtagsFilename()
-    let ctags_pathname = ctags_dirname.ctags_filename
+    let ctags_pathname = indexer.db_file()
   else
     let ctags_pathname = a:1
-    let ctags_dirname = fnamemodify(ctags_pathname, ':h').'/'
+    let src_dirname = fnamemodify(ctags_pathname, ':h').'/'
   endif
-  return [ctags_pathname, ctags_dirname]
+  return [ctags_pathname, src_dirname]
 endfunction
 
 " Function: lh#tags#update_highlight(...) {{{3
 function! lh#tags#update_highlight(...) abort
-  let [ctags_pathname, ctags_dirname] = call('s:ExtractPaths', a:000)
+  let [ctags_pathname, src_dirname] = call('s:ExtractPaths', a:000)
 
   " TODO: shall we use every tags, or only the current ones?
   let [lSymbols, t] = lh#time#bench('lh#tags#getnames', ctags_pathname)
@@ -820,8 +480,9 @@ function! lh#tags#update_spellfile(...) abort
     return
   endif
 
-  let [ctags_pathname, ctags_dirname] = call('s:ExtractPaths', a:000)
-  let spellfile = ctags_dirname . spellfilename
+  let [ctags_pathname, src_dirname] = call('s:ExtractPaths', a:000)
+  " TODO: Support different directory for spellfiles
+  let spellfile = src_dirname . spellfilename
   call s:Verbose('Updating spellfile `%1`', spellfile)
   " This is slow as well
   let [lSymbols, t] = lh#time#bench('lh#tags#getnames', ctags_pathname)
@@ -841,38 +502,12 @@ endfunction
 " ## Tag browsing {{{1
 " ======================================================================
 " # Tag push/pop {{{2
-" internal tmp tags file {{{3
-if !exists('s:tags_jump')
-  let s:tags_jump = tempname()
-  let &tags .= ','.s:tags_jump
-  let s:lines = []
-endif
-
-let s:lines = []
+" Feature moved to lh-vim-lib 4.6.0
 
 " lh#tags#jump {{{3
-let s:k_tag_name__ = '__jump_tag__'
-let s:k_nb_digits  = 5 " works with ~1 million jumps. Should be enough
 function! lh#tags#jump(tagentry) abort
-  call s:Verbose('Jumping to tag %1', a:tagentry)
-  let last = len(s:lines)+1
-  " Assert s:tagentry.filename == expand('%:p')
-  let filename = expand('%:p')
-
-  let tag_name = s:k_tag_name__.repeat('0', s:k_nb_digits-strlen(last)).last
-  let l = tag_name
-        \ . "\t" . (filename)
-        \ . "\t" . (a:tagentry.cmd)
-
-
-  " test whether a new digit is used. In that case renumber every tags to have
-  " a lexical order
-  call add(s:lines, l)
-  call writefile(s:lines, s:tags_jump)
-  if exists('&l:tags')
-    exe 'setlocal tags+='.s:tags_jump
-  endif
-  exe 'tag '.tag_name
+  call lh#notify#deprecated('lh#tags#jump()', 'lh#tags#stack#jump() from lh-vim-lib')
+  call lh#tags#stack#jump(a:tagentry)
 endfunction
 
 " # Tag dialog {{{2
@@ -1236,15 +871,7 @@ function! s:JumpToTag(tags_data, taginfo) abort
     endif
   endfor
   " Execute the search
-  call lh#tags#jump(a:taginfo)
-  return
-  try
-    let save_magic=&magic
-    set nomagic
-    exe a:taginfo.cmd
-  finally
-    let &magic=save_magic
-  endtry
+  call lh#tags#stack#jump(a:taginfo)
 endfunction
 
 " s:Find() {{{3
