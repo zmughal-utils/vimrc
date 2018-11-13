@@ -66,8 +66,11 @@ COMMANDS                                        *dispatch-commands*
                         -compiler=... force use of a compiler plugin
                         -dir=...      run command in given directory
 
+:Dispatch[!] [options] -- [arguments]
+                        This is equivalent to |:Make| but accepts options.
+
                                                 *b:dispatch*
-:Dispatch[!]            Invoke |:Dispatch| with the options, program, and
+:Dispatch[!] [options]  Invoke |:Dispatch| with the options, program, and
                         arguments found in b:dispatch.  In the quickfix
                         window, this reruns the shown dispatch.  When no other
                         default is found, equivalent to |:Make|.
@@ -87,6 +90,9 @@ COMMANDS                                        *dispatch-commands*
 
 :FocusDispatch          Show the task that would run when calling |:Dispatch|
                         with no arguments.
+
+:0Dispatch[!] [options] Provide a range to |:Dispatch| skips any focused task
+                        and forces |b:dispatch|.
 
                                                 *dispatch-:AbortDispatch*
 :AbortDispatch          Abort the most recent build.
@@ -112,7 +118,7 @@ COMMANDS                                        *dispatch-commands*
                         previous :Start invocation, do nothing.
 
                                                 *b:start*
-:Start[!]               With no arguments, |:Start| the options and command
+:Start[!] [options]     With no arguments, |:Start| the options and command
                         given by |b:start|.  If not set, falls back to
                         'shell'.
 
@@ -121,6 +127,10 @@ COMMANDS                                        *dispatch-commands*
                         Like |:Start|, but always spawn a new process rather
                         than focusing an existing one.  The default is always
                         to spawn a new 'shell'.
+
+:0Spawn! [options]
+                        Provide a range to |:Spawn| to spawn |b:dispatch|.
+                        Handy for using an interactive debugger.
 
 MAPS                                            *dispatch-maps*
 
@@ -143,14 +153,10 @@ The following convenience maps are provided.
 *g'!*                     |:Spawn|!
 *g'?*                     Show 'shell'
 
-Use the g:nremap dictionary to override an individual map or set of maps with
-a common prefix.  For example, the following changes all "m" maps to "q" maps:
+These can be disabled with
 >
-    let g:nremap = {"m": "q"}
+        let g:dispatch_no_maps = 1
 <
-Use an empty string as the dictionary value to disable the map or maps for
-that dictionary key entirely.
-
 STRATEGIES                                      *dispatch-strategies*
 
 Strategies are listed in order of precedence.  The first available one is

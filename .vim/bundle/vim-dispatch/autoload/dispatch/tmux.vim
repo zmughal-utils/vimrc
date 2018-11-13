@@ -39,7 +39,7 @@ function! dispatch#tmux#handle(request) abort
 endfunction
 
 function! dispatch#tmux#make(request) abort
-  let pipepane = (&shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee')
+  let pipepane = (&shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee') && &shell !~# 'fish'
         \ && a:request.format !~# '%\\[er]'
   let session = get(g:, 'tmux_session', '')
   let script = dispatch#isolate(a:request, ['TMUX', 'TMUX_PANE'],
@@ -47,7 +47,7 @@ function! dispatch#tmux#make(request) abort
         \ (pipepane ? [a:request.expanded . '; echo ' . dispatch#status_var()
         \  . ' > ' . a:request.file . '.complete'] : [])))
 
-  let title = shellescape(get(a:request, 'title', get(a:request, 'compiler', 'make')))
+  let title = shellescape(a:request.title)
   let height = get(g:, 'dispatch_tmux_height', get(g:, 'dispatch_quickfix_height', 10))
   if get(a:request, 'background', 0) || (height <= 0 && dispatch#has_callback())
     let cmd = 'new-window -d -n '.title
