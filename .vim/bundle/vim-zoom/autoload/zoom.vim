@@ -6,10 +6,16 @@ function! s:set_zoomed(...)
   let t:zoomed = a:0 ? a:1 : 0
 endfunction
 
+function! s:clean_session_file()
+  if exists('t:zoom_session_file')
+    call delete(t:zoom_session_file)
+  endif
+endfunction
+
 function! s:zoom_session_file()
   if !exists('t:zoom_session_file')
     let t:zoom_session_file = tempname().'_'.tabpagenr()
-    autocmd TabClosed * call delete(t:zoom_session_file)
+    autocmd TabClosed * call s:clean_session_file()
   endif
   return t:zoom_session_file
 endfunction
@@ -17,11 +23,13 @@ endfunction
 function! zoom#toggle()
   if s:is_zoomed()
     exec 'silent! source' s:zoom_session_file()
+    call setqflist(s:qflist)
     call s:set_zoomed()
   else
     let oldsessionoptions = &sessionoptions
     let oldsession = v:this_session
     set sessionoptions-=tabpages
+    let s:qflist = getqflist()
     exec 'mksession!' s:zoom_session_file()
     wincmd o
     call s:set_zoomed(1)
