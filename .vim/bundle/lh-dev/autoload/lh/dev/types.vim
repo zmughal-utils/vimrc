@@ -58,7 +58,7 @@ function! lh#dev#types#deduce(expr)
 endfunction
 
 " Function: lh#dev#types#of_var(expr) {{{3
-function! lh#dev#types#of_var(expr, ...)
+function! lh#dev#types#of_var(expr, ...) abort
   let res = call('lh#dev#option#call',['types#_of_var', &ft, a:expr]+a:000)
   return res
 endfunction

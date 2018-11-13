@@ -7,7 +7,7 @@
 " Version:	2.0.0
 let s:k_version = '2.0.0'
 " Created:	10th Feb 2009
-" Last Update:	09th Mar 2018
+" Last Update:	31st Aug 2018
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
@@ -17,6 +17,7 @@ let s:k_version = '2.0.0'
 " 	v2.0.0: ~ deprecate lh#dev#option#get()
 " 	        - #_of_var cannot work on parameters
 " 	        + Fix lh#dev#cpp#types#const_correct_type() for vim 7.4.152
+"               ~ Update to lh-tags 3.0 new API
 " 	v1.5.0: - #_of_var
 " 	v1.3.9: - better magic/nomagic neutrality
 " 	        - snake_case enforced
@@ -277,31 +278,36 @@ function! lh#dev#cpp#types#_of_var(name, ...) abort
     if a:name =~ '^\s*$'
       return call('s:NoDecl', [a:name]+a:000)
     endif
-    if searchdecl(a:name) == 0
+    if searchdecl(a:name, 1, 1) == 0
       " First: let Vim find the variable definitions
       let def_line = getline('.')
       call s:Verbose('Definition of %1 found line %2: %3', a:name, line('.'), def_line)
     else
       " Then: search in the tags DB (it may be an attribute from the current
       " class)
-      let cleanup = cleanup
-            \.register('call lh#dev#end_tag_session()')
-      let tags = lh#dev#start_tag_session()
+      " TODO: Ignore the definitions in an incompatible block!
+      let session    = lh#tags#session#get()
+      let tags       = session.tags
       let pat = '.*\<'.a:name.'\>.*'
       " FIXME: get the scopename of the current function as well=> ClassName::foobar()
       " TODO: And move the function into lh-dev!!!
       let classname = lh#cpp#AnalysisLib_Class#CurrentScope(line('.'), 'class')
       let defs = filter(copy(tags), 'v:val.name =~ classname."::".pat || (v:val.name =~ pat && s:GetClassName(v:val) =~ classname)')
       call s:Verbose('Attributes of %1 matching %2: %3', classname, pat, defs)
-      let t_vars  = lh#list#copy_if(defs, [], 'v:1_.kind =~ "[lvx]"')
+      " Use the lang kind for all variables from the crt flavour!
+      " "get_kind_flags('variable')" => regex
+      let [var_kind] = session.indexer.get_kind_flags(&ft, ['variable', 'v', 'l'])
+      call s:Verbose("Filter with variable kind: %1", var_kind)
+      let t_vars  = filter(defs, 'index(var_kind,  v:val.kind)>=0')
       if empty(t_vars)
         return call('s:NoDecl', [a:name]+a:000)
       elseif len(t_vars) == 1
-        let def_line = t_vars[0].cmd
+        let def_line = matchstr(t_vars[0].cmd, '^/^\zs.*\ze$/$')
       else
         throw "Too many matching variables"
       endif
     endif
+    call s:Verbose('def_line: %1', def_line)
     " TODO: In order to correctly extract the declaration, try to exploit `/\%#`
     " Trim trailing chars
     let def_line = substitute(def_line, '\s*;\s*$\|\s*=.*', '', '')
@@ -315,6 +321,9 @@ function! lh#dev#cpp#types#_of_var(name, ...) abort
     return var.type
   finally
     call cleanup.finalize()
+    if exists('session')
+      call session.finalize()
+    endif
   endtry
 endfunction
 

@@ -7,13 +7,14 @@
 " Version:      2.0.0
 let s:k_version = '2.0.0'
 " Created:      28th May 2010
-" Last Update:  20th Feb 2018
+" Last Update:  31st Aug 2018
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on functions
 "
 " History:
-" 	v2.0.0: Deprecate lh#dev#option#get()
+" 	v2.0.0: ~ Deprecate lh#dev#option#get()
+"               ~ Update to lh-tags 3.0 new API
 " 	v0.0.3: default lh#dev#function#_build_param_decl() uses the parameter
 " 	        type if known
 " 	v0.0.2: signature manipulations made overidable
@@ -175,27 +176,32 @@ endfunction
 
 " Function: lh#dev#function#_local_variables(function_boundaries) {{{2
 " Extracts local variables, use ctags data by default.
+" TODO: check whether the functions boundaries shall be reduced by 1
+" line with every langage as it's the case with Vim, or if it's already
+" taken care of by the calling code
 function! lh#dev#function#_local_variables(function_boundaries) abort
   try
-    let lTags = lh#dev#start_tag_session()
-    if ! lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
-      let lTags = copy(lh#dev#__BuildCrtBufferCtags(a:function_boundaries))
-    endif
+    let session    = lh#tags#session#get()
+    let [var_kind] = session.indexer.get_kind_flags(&ft, ['variable', 'v', 'l']) " regex
+    let cond       = 'index(var_kind,  v:val.kind)>=0'
 
-    let var_kind = lh#ft#option#get('variable_kind', &ft, '[vl]')
-
-    let cond = 'v:val.kind =~ '.string(var_kind)
-    if lh#ft#option#get('ctags_understands_local_variables_in_one_pass', &ft, 1)
+    if ! session.indexer.has_kind(&ft, 'local_variables')
+      " ctags does not understand local _variables: => work within the
+      " sub range
+      let bounds = {'firstline': a:function_boundaries[0], 'lastline': a:function_boundaries[1]}
+      let lTags = copy(session.indexer.analyse_buffer(bounds))
+      call s:AddOffset(lTags, a:function_boundaries[0] - 1)
+    else
       let cond .=
             \   ' && v:val.line>='. a:function_boundaries[0]
             \ . ' && v:val.line<='. a:function_boundaries[1]
-    else
-      call s:AddOffset(lTags, a:function_boundaries[0] - 1)
+      let lTags = session.tags
     endif
+
     call s:Verbose(cond)
     let lVariables = filter(copy(lTags), cond)
   finally
-    call lh#dev#end_tag_session()
+    call session.finalize()
   endtry
   return lVariables
 endfunction
