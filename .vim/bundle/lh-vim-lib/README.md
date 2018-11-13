@@ -84,6 +84,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#icomplete#new(startcol, matches, Hook)`    | Prepares a smart insert mode omni-completion menu that'll trigger actions instead of inserting text. _smart_ means characters may be typed to reduce choices.            |
 | `lh#icomplete#new_on(pat, matches, Hook)`      | Same as previous, but this time the startcol is automatically deduced from the word pattern.                                                                             |
 | `lh#icomplete#run(startcol, matches, Hook)`    | Prepares an insert mode completion menu that'll trigger actions instead of inserting text as `complete()` does. **deprecated** prefer `lh#icomplete#new()`               |
+| `lh#lang#set_message_temporarily()`            | Changes `$LANG` to the value passed, and returns a `lh#on#exit()` object to restore the variable value                                                                 |
 | `lh#leader#get()`                              | Returns the current value of `g:mapleader`, or `'\\'` if unset                                                                                                           |
 | `lh#leader#get_local()`                        | Returns the current value of `g:maplocalleader`, or `'\\'` if unset                                                                                                      |
 | `lh#leader#set_local_if_unset()`               | Sets a new value to `g:maplocalleader`, if and only if this variable wasn't already set                                                                                  |
@@ -96,6 +97,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#mapping#define()`                          | Defines a mapping from its description                                                                                                                                   |
 | `lh#mapping#plug()`                            | Defines a series of default mappings associated to a plug mapping                                                                                                        |
 | `lh#mapping#reinterpret_escaped_char()`        | Transforms sequences into interpreted sequences for mappings                                                                                                             |
+| `lh#mapping#who_map(rhs, mode)`                | Returns a list of mappings that are bound to {rhs} in the specified {mode}                                                                                               |
 | `lh#notify#once()`                             | Notifies something once                                                                                                                                                  |
 | `lh#notify#deprecated()`                       | Notifies somthing is deprecated once                                                                                                                                     |
 | `lh#notify#clear_notifications()`              | Clear previous notification so that could be notified again                                                                                                              |
@@ -114,8 +116,10 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#position#move_n(dir, count)`               | Returns a the string to use to move the cursor count times in the given direction -- this can be redoable w/ vim > 7.4.849                                               |
 | `lh#string#count_char()`                       | Counts how many times a character is present in a string                                                                                                                 |
 | `lh#string#matches()`                          | Extracts a list of all matches in a string                                                                                                                               |
-| `lh#string#matchstrpos()`                      | Backport `matchstrpos()` to old vim versions                                                                                                                             |
-| `lh#string#trim()`                             | Trim a string                                                                                                                                                            |
+| `lh#string#matchstrpos()`                      | Backports `matchstrpos()` to old vim versions                                                                                                                            |
+| `lh#string#trim()`                             | Trims a string                                                                                                                                                           |
+| `lh#tags#stack#jump()`                         | Forges a new tag entry in the tag stack, and jump to it                                                                                                                  |
+| `lh#tags#stack#push()`                         | Forges a new tag entry in the tag stack                                                                                                                                  |
 | `lh#time#bench(F,...)`                         | Times the execution of `F(...)`                                                                                                                                          |
 | `lh#time#bench_n(n, F,...)`                    | Times n executions of `F(...)`                                                                                                                                           |
 | `lh#time#date()`                               | return the equivalent of `strftime('%D-th %b %Y)`                                                                                                                        |
@@ -225,38 +229,40 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 
 
 ### Paths related functions
-| Function                                     | Purpose                                                                                                   |
-|:---------------------------------------------|:----------------------------------------------------------------------------------------------------------|
-| `lh#path#add_path_if_exists(listname, path)` | Adds a path is a list iff the path points to an existing node                                             |
-| `lh#path#cd_without_sideeffects()`           | Change the current directory without altering the behaviour regarding window local directories            |
-| `lh#path#common()`                           | Returns the biggest common part between several paths                                                     |
-| `lh#path#depth()`                            | Returns the depth of a path                                                                               |
-| `lh#path#exists()`                           | Returns whether a pathname can be read, or if it's open in a buffer                                       |
-| `lh#path#find(pathlist, regex)`              | Returns the first path in a list that matches a regex                                                     |
-| `lh#path#find_in_parents()`                  | Support function at the root of [local_vimrc](http://github.com/LucHermitte/local_vimrc)                  |
-| `lh#path#find_upward()`                      | Uniform interface to `finddir()` and `filefile()`                                                         |
-| `lh#path#fix()`                              | Fixes a pathname in order for it to be compatible with external commands or vim options                   |
-| `lh#path#glob_as_list()`                     | Returns `globpath()`result as a list                                                                      |
-| `lh#path#is_absolute_path()`                 | Tells whether the parameter is an absolute pathname                                                       |
-| `lh#path#is_distant_or_scratch()`            | Tells whether the parameter is a distant path or a scratch buffer name                                    |
-| `lh#path#is_in(node, path)`                  | Tells whether a node is already present in a path -- `readlink()` is applied on both parameters           |
-| `lh#path#is_url()`                           | Tells whether the parameter is an URL                                                                     |
-| `lh#path#join(pathparts, ...)`               | Joins path parts into a string                                                                            |
-| `lh#path#munge(pathlist, path)`              | Adds a path to a list on the condition the path isn't already present, and that it points to a valid node |
-| `lh#path#new_permission_lists()`             | Prepares a permission lists object to be used to accept/reject pathnames based upon white/black/... lists |
-| `lh#path#readlink(pathname)`                 | Returns `readlink` result on the pathname -- when the command is available on the system                  |
-| `lh#path#relative_to()`                      | Returns the relative offset to reference files in another directory                                       |
-| `lh#path#remove_dir_mark()`                  | Removes the trailing `/` or `\` in the path if any                                                        |
-| `lh#path#select_one()`                       | Asks the end-user to select one pathname                                                                  |
-| `lh#path#shellslash()`                       | Returns the shellslash character                                                                          |
-| `lh#path#simplify()`                         | Like `simplify()`, but also strips the leading `./`                                                       |
-| `lh#path#split(pathname)`                    | Splits a string into path parts                                                                           |
-| `lh#path#strip_common()`                     | In a set of pathnames, strips the leading part they all have in common                                    |
-| `lh#path#strip_start()`                      | Strips the leading part of a pathname if found in the given list of pathnames                             |
-| `lh#path#to_dirname()`                       | Complete the current path with '/' if missing                                                             |
-| `lh#path#to_regex()`                         | Builds a regex that can be used to match pathnames                                                        |
-| `lh#path#to_relative()`                      | Transforms a pathname to a pathname relative to the current directory                                     |
-| `lh#path#vimfiles()`                         | Returns where the current user vimfiles are (`$HOME/.vim` `~/vimfiles`, ...)                              |
+| Function                                     | Purpose                                                                                                                                  |
+|:---------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
+| `lh#path#add_path_if_exists(listname, path)` | Adds a path is a list iff the path points to an existing node                                                                            |
+| `lh#path#cd_without_sideeffects()`           | Change the current directory without altering the behaviour regarding window local directories                                           |
+| `lh#path#common()`                           | Returns the biggest common part between several paths                                                                                    |
+| `lh#path#depth()`                            | Returns the depth of a path                                                                                                              |
+| `lh#path#exe()`                              | Returns the fullpath of an executable (emulate [`exepath()`](http://vimhelp.appspot.com/eval.txt.html#exepath%28%29) on old vim versions |
+| `lh#path#exists()`                           | Returns whether a pathname can be read, or if it's open in a buffer                                                                      |
+| `lh#path#find(pathlist, regex)`              | Returns the first path in a list that matches a regex                                                                                    |
+| `lh#path#find_in_parents()`                  | Support function at the root of [local_vimrc](http://github.com/LucHermitte/local_vimrc)                                                 |
+| `lh#path#find_upward()`                      | Uniform interface to `finddir()` and `filefile()`                                                                                        |
+| `lh#path#fix()`                              | Fixes a pathname in order for it to be compatible with external commands or vim options                                                  |
+| `lh#path#glob_as_list()`                     | Returns `globpath()`result as a list                                                                                                     |
+| `lh#path#is_absolute_path()`                 | Tells whether the parameter is an absolute pathname                                                                                      |
+| `lh#path#is_distant_or_scratch()`            | Tells whether the parameter is a distant path or a scratch buffer name                                                                   |
+| `lh#path#is_in(node, path)`                  | Tells whether a node is already present in a path -- `readlink()` is applied on both parameters                                          |
+| `lh#path#is_url()`                           | Tells whether the parameter is an URL                                                                                                    |
+| `lh#path#join(pathparts, ...)`               | Joins path parts into a string                                                                                                           |
+| `lh#path#munge(pathlist, path)`              | Adds a path to a list on the condition the path isn't already present, and that it points to a valid node                                |
+| `lh#path#new_permission_lists()`             | Prepares a permission lists object to be used to accept/reject pathnames based upon white/black/... lists                                |
+| `lh#path#readlink(pathname)`                 | Returns `readlink` result on the pathname -- when the command is available on the system                                                 |
+| `lh#path#relative_to()`                      | Returns the relative offset to reference files in another directory                                                                      |
+| `lh#path#remove_dir_mark()`                  | Removes the trailing `/` or `\` in the path if any                                                                                       |
+| `lh#path#select_one()`                       | Asks the end-user to select one pathname                                                                                                 |
+| `lh#path#shellslash()`                       | Returns the shellslash character                                                                                                         |
+| `lh#path#simplify()`                         | Like `simplify()`, but also strips the leading `./`                                                                                      |
+| `lh#path#split(pathname)`                    | Splits a string into path parts                                                                                                          |
+| `lh#path#strip_common()`                     | In a set of pathnames, strips the leading part they all have in common                                                                   |
+| `lh#path#strip_start()`                      | Strips the leading part of a pathname if found in the given list of pathnames                                                            |
+| `lh#path#to_dirname()`                       | Complete the current path with '/' if missing                                                                                            |
+| `lh#path#to_regex()`                         | Builds a regex that can be used to match pathnames                                                                                       |
+| `lh#path#to_relative()`                      | Transforms a pathname to a pathname relative to the current directory                                                                    |
+| `lh#path#vimfiles()`                         | Returns where the current user vimfiles are (`$HOME/.vim` `~/vimfiles`, ...)                                                             |
+| `lh#path#writable()`                         | Returns whether we could write into the pathname, even if nothing by that name already exists                                            |
 
 
 ### Commands related functions
@@ -334,11 +340,13 @@ See also the documentation of the old functions at http://hermitte.free.fr/vim/g
 
 
 ### Functors
-| Function                | Purpose                                      |
-|:------------------------|:---------------------------------------------|
-| `lh#function#bind()`    | Builds a functor object.                     |
-| `lh#function#execute()` | Executes a functor object.                   |
-| `lh#function#prepare()` | Prepares a functor object to be `eval`uated. |
+| Function                  | Purpose                                                     |
+| :------------------------ | :-----------------------------------------------------------|
+| `lh#function#bind()`      | Builds a functor object.                                    |
+| `lh#function#execute()`   | Executes a functor object.                                  |
+| `lh#function#prepare()`   | Prepares a functor object to be `eval`uated.                |
+| `lh#partial#make()`       | Prepares a partial (or an emulated partial) to be executed. |
+| `lh#partial#execute()`    | Executes a partial (or an emulated partial) .               |
 
 
 ### UI functions
@@ -346,6 +354,15 @@ All the functions defined in ui-functions.vim are wrappers around Vim
 interactive functions. Depending on a configuration variable
 (`(bpg):ui_type`), they will delegate the interaction to a gvim UI
 function, or a plain text UI function (defined by vim, or emulated)
+
+Possible values for `(bpg):ui_type` are: `gui` (default) or `text`.
+
+In `lh#ui#confirm()` case, the option `(bpg):ui_confirm_type` can be set to
+`'std'` to explicitly use
+[`confirm()`](http://vimhelp.appspot.com/eval.txt.html#confirm%28%29) instead
+of the old emulated version. The default is to use the emulated version of
+`confirm()`, which unlike the standard one permits to navigate between
+propositions with the cursor or `tab`  keys to choose one.
 
 | Function                         | Purpose                                                                                                                                                 |
 |:---------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -416,7 +433,7 @@ See http://hermitte.free.fr/vim/general.php#expl_words_tools
     plugins that use it:
 
     ```
-    flavor LucHermitte/lh-vim-lib
+    flavor 'LucHermitte/lh-vim-lib'
     ```
 
   * Vundle/NeoBundle:

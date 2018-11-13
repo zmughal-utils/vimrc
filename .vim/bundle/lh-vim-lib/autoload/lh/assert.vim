@@ -2,10 +2,10 @@
 " File:         autoload/lh/assert.vim                            {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      4.0.0.
-let s:k_version = '4000'
+" Version:      4.6.0.
+let s:k_version = '40603'
 " Created:      23rd Nov 2016
-" Last Update:  25th Aug 2017
+" Last Update:  10th Sep 2018
 "------------------------------------------------------------------------
 " Description:
 "       Emulates assert_*() functions, but notifies as soon as possible that
@@ -252,7 +252,7 @@ function! s:is_lt(ref, ...) dict abort " {{{4
   return self
 endfunction
 function! s:is_le(ref, ...) dict abort " {{{4
-  if ! self.__eval(self.actual w= a:ref)
+  if ! self.__eval(self.actual <= a:ref)
     let msg = a:0 > 0 ? a:1 : 'Expected '.string(self.actual).' to be lesser or equal to '.string(a:ref)
     call lh#assert#_trace_assert(msg)
   endif
@@ -385,7 +385,7 @@ function! s:pre_build_value() abort
 endfunction
 let [s:value_default, s:value_ignore] = s:pre_build_value()
 
-function! lh#assert#value(actual) abort " {{{4
+function! lh#assert#value(actual) abort " {{{3
   " We use and modify a global object, but this is not a problem
   let res = lh#assert#_shall_ignore() ? s:value_ignore : s:value_default
   let res.actual = a:actual

@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      4.00.0
-let s:k_version = 4000
+" Version:      4.6.4
+let s:k_version = 40604
 " Created:      10th Apr 2012
-" Last Update:  07th Mar 2017
+" Last Update:  29th Oct 2018
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -49,6 +49,36 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
+
+" # Cygwin related functions {{{2
+" Function: lh#os#is_a_cygwin_shell() {{{3
+let s:cached_uname = {}
+function! s:uname_o() abort
+  let shell = exepath(&shell)
+  if !has_key(s:cached_uname, shell)
+    let s:cached_uname[shell] = lh#os#system('uname -o')
+  endif
+  return s:cached_uname[shell]
+endfunction
+
+function! lh#os#is_a_cygwin_shell() abort
+  return lh#os#system_detected() == 'unix' && s:uname_o() ==? 'cygwin'
+endfunction
+
+" Function: lh#os#prog_needs_cygpath_translation() {{{3
+let s:cached_prgs = {}
+function! s:cached_prg(prg) abort
+  " Expects cygwin
+  if !has_key(s:cached_prgs, a:prg)
+    let s:cached_prgs[a:prg] = lh#os#system(a:prg)
+  endif
+  return s:cached_prgs[a:prg]
+endfunction
+function! lh#os#prog_needs_cygpath_translation(prg) abort
+  " TRUE IFF windows flavour of vim + cygwin shell + cygwin version of the program
+  return lh#os#OnDOSWindows() && lh#os#is_a_cygwin_shell()
+        \ && s:cached_prg('ldd $(cygpath -u '.shellescape(exepath(a:prg)).')') =~? 'cygwin'
+endfunction
 
 " # OS kind {{{2
 
@@ -112,18 +142,21 @@ endfunction
 
 " Function: lh#os#make(opt) {{{3
 " Prefer to use BuildToolsWrapper when possible
-function! lh#os#make(opt, bang) abort
+function! lh#os#make(opt, bang, ...) abort
   let bang
         \ = type(a:bang) == type(0) ? (a:bang ? '!' : '')
         \ : a:bang =~ '\v[1!]|bang' ? '!'
         \                           : ''
-  let env = lh#project#_environment()
-  if empty(env)
-    exe 'make'.bang.' '.a:opt
-  else
-    try
-      let cleanup = lh#on#exit()
-            \.restore('&makeprg')
+  try
+    let cleanup = lh#on#exit()
+          \.restore('&makeprg')
+    if a:0 > 0
+      let &l:makeprg = a:1
+    endif
+    let env = lh#project#_environment()
+    if empty(env)
+      exe 'make'.bang.' '.a:opt
+    else
       try
         let scr = lh#os#new_runner_script(&makeprg, env)
         let &l:makeprg = &shell . ' '.scr._script_name
@@ -131,10 +164,10 @@ function! lh#os#make(opt, bang) abort
       finally
         call scr.finalize()
       endtry
-    finally
-      call cleanup.finalize()
-    endtry
-  endif
+    endif
+  finally
+    call cleanup.finalize()
+  endtry
 endfunction
 
 " Function: lh#os#sys_cd(path [, ...]) {{{3
@@ -199,7 +232,7 @@ function! lh#os#new_runner_script(command, env) abort
 endfunction
 
 function! s:run_script() dict abort
-  call s:Verbose(self._lines)
+  call s:Verbose("%1", self._lines)
   let r = system(&shell . ' ' . self._script_name)
   return r
 endfunction

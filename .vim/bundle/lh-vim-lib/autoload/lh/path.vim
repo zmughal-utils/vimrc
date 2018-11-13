@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      4.0.0
-let s:k_version = 40000
+" Version:      4.6.4
+let s:k_version = 40604
 " Created:      23rd Jan 2007
-" Last Update:  18th Dec 2017
+" Last Update:  26th Sep 2018
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to the handling of pathnames
@@ -110,6 +110,12 @@ let s:k_version = 40000
 "       (*) lh#path#split('/foo') will now return 2 elements
 "       (*) Recognize empty name buffer as scratch/distant
 "       (*) PERF: Improve performances
+"       v4.6.1
+"       (*) PORT: Provide `lh#path#exe()`
+"       v4.6.3
+"       (*) PORT: Use `lh#ui#confirm()`
+"       v4.6.4
+"       (*) BUG: Apply `readlink()` to `munge()`
 " TODO:
 "       (*) Fix #simplify('../../bar')
 " }}}1
@@ -343,11 +349,11 @@ function! lh#path#select_one(pathnames, prompt) abort
     let simpl_pathnames = deepcopy(a:pathnames)
     let simpl_pathnames = lh#path#strip_common(simpl_pathnames)
     let simpl_pathnames = [ '&Cancel' ] + map(simpl_pathnames, 'substitute(v:val, "_", "&&", "g")')
-    " Consider guioptions+=c is case of difficulties with the gui
+    " Consider guioptions+=c in case of difficulties with the gui
     try
       let guioptions_save = &guioptions
       set guioptions+=v
-      let selection = confirm(a:prompt, join(simpl_pathnames,"\n"), 1, 'Question')
+      let selection = lh#ui#confirm(a:prompt, join(simpl_pathnames,"\n"), 1, 'Question')
     finally
       let &guioptions = guioptions_save
     endtry
@@ -699,23 +705,50 @@ endfunction
 
 " Function: lh#path#munge(pathlist, path [, sep]) {{{3
 function! lh#path#munge(pathlist, path, ...) abort
+  let path = lh#path#readlink(a:path)
   if type(a:pathlist) == type('str')
     let sep = get(a:, 1, ',')
     let pathlist = split(a:pathlist, sep)
-    return join(lh#path#munge(pathlist, a:path), sep)
+    return join(lh#path#munge(pathlist, path), sep)
   else
-    " if filereadable(a:path) || isdirectory(a:path)
-    if ! empty(glob(a:path))
-      call lh#list#push_if_new(a:pathlist, a:path)
+    " if filereadable(path) || isdirectory(path)
+    if ! empty(glob(path))
+      call lh#list#push_if_new(a:pathlist, path)
     endif
     return a:pathlist
   endif
 endfunction
 
+" Function: lh#path#exe(pathname) {{{3
+" @return the full path of an executable; emulate |exepath()| on old Vim
+" versions
+" @since Version 4.6.1
+if exists('*exepath')
+  function! lh#path#exe(exe) abort
+    return exepath(a:exe)
+  endfunction
+else
+  function! lh#path#exe(exe) abort
+    let PATH = join(split($PATH, has('unix') ? ':' : ';'), ',')
+    return join(filter(split(globpath(PATH, a:exe), "\n"), 'executable(v:val)')[:0], '')
+  endfunction
+endif
+
 " Function: lh#path#exists(pathname) {{{3
 " @return whether the file is readable or a buffer with the same name exists
 function! lh#path#exists(pathname) abort
   return filereadable(a:pathname) || bufexists(a:pathname)
+endfunction
+
+" Function: lh#path#writable(pathname) {{{3
+" @return whether the file exists and is writable, or whether it could be
+" created in the requested directory
+" Unlike |filewritable()|, non existing files aren't rejected.
+" @since Version 4.6.0
+function! lh#path#writable(pathname) abort
+  return isdirectory(a:pathname)
+        \ ? filewritable(a:pathname)
+        \ : filewritable(a:pathname) || 2 == filewritable(fnamemodify(a:pathname, ':h'))
 endfunction
 
 " Function: lh#path#is_up_to_date(file1, file2) {{{3
