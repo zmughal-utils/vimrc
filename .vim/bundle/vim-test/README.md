@@ -37,6 +37,7 @@ runners are supported:
 | **Racket**     | RackUnit                                                                      | `rackunit`                                                                                      |
 | **Ruby**       | Cucumber, [M], [Minitest][minitest], Rails, RSpec                             | `cucumber`, `m`, `minitest`, `rails`, `rspec`                                                   |
 | **Rust**       | Cargo                                                                         | `cargotest`                                                                                     |
+| **Scala**      | SBT                                                                           | `sbttest`                                                                                       |
 | **Shell**      | Bats                                                                          | `bats`                                                                                          |
 | **Swift**      | Swift Package Manager                                                         | `swiftpm`                                                                                       |
 | **VimScript**  | Vader.vim, VSpec, Themis                                                      | `vader`, `vspec`, `themis`                                                                      |
@@ -53,11 +54,11 @@ Add your preferred mappings to your `.vimrc` file:
 
 ```vim
 " these "Ctrl mappings" work well when Caps Lock is mapped to Ctrl
-nmap <silent> t<C-n> :TestNearest<CR> " t Ctrl+n
-nmap <silent> t<C-f> :TestFile<CR>    " t Ctrl+f
-nmap <silent> t<C-s> :TestSuite<CR>   " t Ctrl+s
-nmap <silent> t<C-l> :TestLast<CR>    " t Ctrl+l
-nmap <silent> t<C-g> :TestVisit<CR>   " t Ctrl+g
+nmap <silent> t<C-n> :TestNearest<CR>
+nmap <silent> t<C-f> :TestFile<CR>
+nmap <silent> t<C-s> :TestSuite<CR>
+nmap <silent> t<C-l> :TestLast<CR>
+nmap <silent> t<C-g> :TestVisit<CR>
 ```
 
 | Command          | Description                                                                                                                                                                                                                                                                            |
@@ -120,6 +121,9 @@ disable this:
 let g:test#preserve_screen = 1
 ```
 
+The Vimux strategy will not clear the screen by default, but you can enable it
+by explicitly setting `test#preserve_screen` to `0`.
+
 On Neovim the "basic" and "neovim" strategies will run test commands using
 Neovim's terminal, and leave you in insert mode, so that you can just press
 "Enter" to close the terminal session and go back to editing. If you want to
@@ -130,7 +134,7 @@ which is difficult to press, so I recommend mapping it to `CTRL-o`:
 ```vim
 if has('nvim')
   tmap <C-o> <C-\><C-n>
-end
+endif
 ```
 
 ### Quickfix Strategies
@@ -248,6 +252,20 @@ let test#ruby#rspec#options = {
   \ 'suite':   '--tag ~slow',
 \}
 ```
+
+### Neovim terminal position
+
+The `neovim` strategy will open a split window on the bottom by default, but
+you can configure a different position:
+
+```vim
+let test#neovim#term_position = "topleft"
+" or
+let test#neovim#term_position = "belowright"
+```
+
+For full list of variants, see `:help opening-window`.
+
 ### Executable
 
 You can instruct test.vim to use a custom executable for a test runner.
