@@ -1151,6 +1151,7 @@ fu! ctrlp#acceptfile(...)
 			\ md == 't' || s:splitwin == 1 ? ( useb ? 'tab sb' : 'tabe' ) :
 			\ md == 'h' || s:splitwin == 2 ? ( useb ? 'sb' : 'new' ) :
 			\ md == 'v' || s:splitwin == 3 ? ( useb ? 'vert sb' : 'vne' ) :
+			\ &bt == 'help' ? 'b' :
 			\ call('ctrlp#normcmd', useb ? ['b', 'bo vert sb'] : ['e'])
 		" Reset &switchbuf option
 		let [swb, &swb] = [&swb, '']
@@ -1590,7 +1591,7 @@ fu! s:formatline(str)
 		let bufnr = s:bufnrfilpath(str)[0]
 		let parts = s:bufparts(bufnr)
 		let str = printf('%'.s:bufnr_width.'s', bufnr)
-		if s:has_conceal
+		if s:has_conceal && has('syntax_items')
 			let str .= printf(' %-13s %s%-36s',
 				\ '<bi>'.parts[0].'</bi>',
 				\ '<bn>'.parts[1], '{'.parts[2].'}</bn>')
@@ -2014,7 +2015,7 @@ fu! s:bufnrfilpath(line)
 		let filpath = s:dyncwd.s:lash().a:line
 	en
 	let filpath = fnamemodify(filpath, ':p')
-	let bufnr = bufnr('^'.filpath.'$')
+	let bufnr = bufnr('^'.fnameescape(filpath).'$')
 	if (!filereadable(filpath) && bufnr < 1)
 		if (a:line =~ '[\/]\?\[\d\+\*No Name\]$')
 			let bufnr = str2nr(matchstr(a:line, '[\/]\?\[\zs\d\+\ze\*No Name\]$'))
