@@ -191,6 +191,20 @@ function Test_filename_leading_dash()
 endfunction
 
 
+function Test_filename_umlaut()
+  call system('touch -- fixtüre.txt && git add -- fixtüre.txt')
+  edit fixtüre.txt
+  normal ggo*
+  call s:trigger_gitgutter()
+
+  let expected = [
+        \ 'line=1  id=3000  name=GitGutterLineAdded',
+        \ 'line=2  id=3001  name=GitGutterLineAdded'
+        \ ]
+  call assert_equal(expected, s:signs('fixtüre.txt'))
+endfunction
+
+
 " FIXME: this test fails when it is the first (or only) test to be run
 function Test_follow_symlink()
   let tmp = 'symlink'
@@ -273,6 +287,7 @@ function Test_untracked_file_within_repo()
   call s:trigger_gitgutter()
 
   call assert_equal([], s:signs(tmp))
+  call assert_equal(-2, b:gitgutter.path)
 
   call system('rm '.tmp)
 endfunction
