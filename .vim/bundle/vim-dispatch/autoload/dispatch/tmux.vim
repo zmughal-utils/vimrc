@@ -39,7 +39,7 @@ function! dispatch#tmux#handle(request) abort
 endfunction
 
 function! dispatch#tmux#make(request) abort
-  let pipepane = (&shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee') && &shell !~# 'fish'
+  let pipepane = (&shellpipe ==# '2>&1| tee' || &shellpipe ==# '|& tee')
         \ && a:request.format !~# '%\\[er]'
   let session = get(g:, 'tmux_session', '')
   let script = dispatch#isolate(a:request, ['TMUX', 'TMUX_PANE'],
@@ -68,7 +68,7 @@ function! dispatch#tmux#make(request) abort
   endif
   let filter .= " -e \"s/\r\r*$//\" -e \"s/.*\r//\""
   let filter .= " -e \"s/\e\\[K//g\" "
-  let filter .= " -e \"s/.*\e\\[2K\e\\[0G//g\""
+  let filter .= " -e \"s/.*\e\\[2K\e\\[[01]G//g\""
   let filter .= " -e \"s/.*\e\\[?25h\e\\[0G//g\""
   let filter .= " -e \"s/\e\\[[0-9;]*m//g\""
   let filter .= " -e \"s/\017//g\""
