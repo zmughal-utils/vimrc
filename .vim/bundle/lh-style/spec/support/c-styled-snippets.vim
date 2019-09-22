@@ -1,5 +1,5 @@
 "=============================================================================
-" File:         spec/support/c-snippets.vim                       {{{1
+" File:         spec/support/c-styled-snippets.vim                       {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-style>
 " License:      GPLv3 with exceptions
@@ -7,7 +7,7 @@
 " Version:      1.0.0.
 let s:k_version = '100'
 " Created:      09th Aug 2017
-" Last Update:  17th Oct 2017
+" Last Update:  16th Jan 2019
 "------------------------------------------------------------------------
 " Description:
 "       Support definitions for lh-deb vimrunner tests

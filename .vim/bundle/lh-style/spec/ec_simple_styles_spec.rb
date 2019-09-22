@@ -42,7 +42,7 @@ RSpec.describe "When testing EditorConfig Domain-Specific styles", :style, :doma
       vim.set('sw=2')
       vim.command('silent! unlet g:cpp_explicit_default')
       vim.command('silent! unlet g:cpp_std_flavour')
-      expect(vim.command('runtime! spec/support/c-snippets.vim')).to eq "" # if snippet
+      expect(vim.command('runtime! spec/support/c-styled-snippets.vim')).to eq "" # if snippet
       expect(vim.command('verbose iab if')).to match(/LH_cpp_snippets_def_abbr/)
       expect(vim.echo('lh#style#clear()')).to eq "0"
       expect(vim.echo('lh#style#get("c")')).to eq "{}"

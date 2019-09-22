@@ -7,11 +7,12 @@
 " Version:	1.0.0
 let s:k_version = 100
 " Created:	05th Oct 2009
-" Last Update:	17th Oct 2017
+" Last Update:	26th Jul 2019
 "------------------------------------------------------------------------
 " Description:
 " - Naming policies for programming styles
 " TODO:
+" - Change all regex to use '\v'
 " }}}1
 "=============================================================================
 
@@ -71,7 +72,14 @@ function! lh#naming#to_underscore(identifier)
   "todo: handle constant-like identifiers
   "test with lh#foo#FooBar ...
   let identifier = substitute(a:identifier, '\%(^\|[^A-Za-z0-9]\)\zs\(\u\)', '\l\1', '')
-  let identifier = substitute(identifier, '\l\zs\(\u\)', '_\l\1', 'g')
+  let identifier = substitute(identifier, '\l\zs_*\(\u\)', '_\l\1', 'g')
+  return identifier
+endfunction
+
+" Function:lh#naming#to_shout_underscore(identifier)         {{{3
+function! lh#naming#to_shout_underscore(identifier)
+  let identifier = lh#naming#to_underscore(a:identifier)
+  let identifier = substitute(identifier, '.*', '\U&\E', 'g')
   return identifier
 endfunction
 

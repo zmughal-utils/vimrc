@@ -22,7 +22,7 @@ NB: both commands support command-line auto-completion on naming policy names.
 :samp:`:NameConvert` converts the identifier under the cursor to one of the following naming policies:
 
 
-* naming styles: ``upper_camel_case``, ``lower_camel_case``, ``underscore``/``snake``, ``variable``,
+* naming styles: ``upper_camel_case``/``UpperCamelCase``, ``lower_camel_case``/``lowerCamelCase``, ``underscore``/``snake``, ``UPPER_CASE``/``SCREAMING_SNAKE_CASE``, ``variable``,
 * identifier kinds: ``getter``, ``setter``, ``local``, ``global``, ``member``, ``static``, ``constant``, ``param`` (the exact conversion process can be tuned thanks to the `following options <#options-to-tune-the-naming-policy>`_).
 
 .. |ConvertNames| replace:: :samp:`:ConvertNames`
@@ -52,7 +52,7 @@ Naming conventions can be defined to:
   * getters and setters
   * types
 
-* Control the case policy (``snake_case``, ``UpperCamelCase``, ``lowerCamelCase``) on functions (and thus on setters and
+* Control the case policy (``snake_case``, ``UpperCamelCase``, ``lowerCamelCase``, ``SCREAMING_SNAKE_CASE``) on functions (and thus on setters and
   getters too) and types.
 
 It is done, respectively, with the following options:

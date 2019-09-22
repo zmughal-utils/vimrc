@@ -7,7 +7,7 @@
 " Version:      1.0.0
 let s:k_version = 100
 " Created:      31st May 2010
-" Last Update:  17th Oct 2017
+" Last Update:  26th Jul 2019
 "------------------------------------------------------------------------
 " Description:
 "       Global commands and definitions of lh-style
@@ -15,14 +15,15 @@ let s:k_version = 100
 "=============================================================================
 
 " Avoid global reinclusion {{{1
+let s:cpo_save=&cpo
+set cpo&vim
 if &cp || (exists("g:loaded_lh_style")
       \ && (g:loaded_lh_style >= s:k_version)
       \ && !exists('g:force_reload_lh_style'))
+  let &cpo=s:cpo_save
   finish
 endif
 let g:loaded_lh_style = s:k_version
-let s:cpo_save=&cpo
-set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " ## Commands and Mappings {{{1
@@ -51,21 +52,25 @@ endif
 " like functions that help building a vim-menu for this plugin.
 " Name transformations {{{2
 let s:k_convertions = [
-      \ ['upper_camel_case', 'lh#naming#to_upper_camel_case'],
-      \ ['lower_camel_case', 'lh#naming#to_lower_camel_case'],
-      \ ['underscore',       'lh#naming#to_underscore'],
-      \ ['snake',            'lh#naming#to_underscore'],
-      \ ['variable',         'lh#naming#variable'],
-      \ ['getter',           'lh#naming#getter'],
-      \ ['setter',           'lh#naming#setter'],
-      \ ['global',           'lh#naming#global'],
-      \ ['local',            'lh#naming#local'],
-      \ ['member',           'lh#naming#member'],
-      \ ['static',           'lh#naming#static'],
-      \ ['constant',         'lh#naming#constant'],
-      \ ['param',            'lh#naming#param'],
-      \ ['type',             'lh#naming#type'],
-      \ ['function',         'lh#naming#function']
+      \ ['UpperCamelCase',       'lh#naming#to_upper_camel_case'],
+      \ ['upper_camel_case',     'lh#naming#to_upper_camel_case'],
+      \ ['lowerCamelCase',       'lh#naming#to_lower_camel_case'],
+      \ ['lower_camel_case',     'lh#naming#to_lower_camel_case'],
+      \ ['underscore',           'lh#naming#to_underscore'],
+      \ ['snake',                'lh#naming#to_underscore'],
+      \ ['UPPPER_CASE',          'lh#naming#to_shout_underscore'],
+      \ ['SCREAMING_SNAKE_CASE', 'lh#naming#to_shout_underscore'],
+      \ ['variable',             'lh#naming#variable'],
+      \ ['getter',               'lh#naming#getter'],
+      \ ['setter',               'lh#naming#setter'],
+      \ ['global',               'lh#naming#global'],
+      \ ['local',                'lh#naming#local'],
+      \ ['member',               'lh#naming#member'],
+      \ ['static',               'lh#naming#static'],
+      \ ['constant',             'lh#naming#constant'],
+      \ ['param',                'lh#naming#param'],
+      \ ['type',                 'lh#naming#type'],
+      \ ['function',             'lh#naming#function']
       \ ]
 
 " from plugin/vim-tip-swap-word.vim
@@ -133,7 +138,7 @@ function! s:NameConvert(convertion_type) abort
 
   let new_word = function(s:k_convertions[i][1])(crt_word)
 
-  let s2 = s[:crt_word_start-1]
+  let s2 = (crt_word_start ? s[:crt_word_start-1] : '')
         \ . new_word
         \ . (crt_word_end==-1 ? '' : s[crt_word_end+1 : -1])
   call setline(l, s2)

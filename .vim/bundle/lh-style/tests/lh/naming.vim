@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-style/License.md>
 " Version:	1.0.0
 " Created:	05th Oct 2009
-" Last Update:	17th Oct 2017
+" Last Update:	26th Jul 2019
 "------------------------------------------------------------------------
 " Description:
 "       Unit Test for lh#naming functions
@@ -34,6 +34,23 @@ function! s:Test_2_name()
   AssertEqual('name', lh#naming#variable('setName'))
   AssertEqual('name', lh#naming#variable('g_name'))
   AssertEqual('name', lh#naming#variable('m_name'))
+endfunction
+
+function! s:Test_2_underscore() abort
+  AssertEqual('foobar',      lh#naming#to_underscore('Foobar'))
+  AssertEqual('foobar',      lh#naming#to_underscore('foobar'))
+  AssertEqual('foobar',      lh#naming#to_underscore('Foobar'))
+  AssertEqual('foo_bar',     lh#naming#to_underscore('FooBar'))
+  AssertEqual('foo_bar_bat', lh#naming#to_underscore('FooBar_bat'))
+  AssertEqual('foo_bar_bat', lh#naming#to_underscore('FooBar_Bat'))
+endfunction
+
+function! s:Test_2_shout_underscore() abort
+  AssertEqual('FOOBAR',      lh#naming#to_shout_underscore('foobar'))
+  AssertEqual('FOOBAR',      lh#naming#to_shout_underscore('Foobar'))
+  AssertEqual('FOO_BAR',     lh#naming#to_shout_underscore('FooBar'))
+  AssertEqual('FOO_BAR_BAT', lh#naming#to_shout_underscore('FooBar_bat'))
+  AssertEqual('FOO_BAR_BAT', lh#naming#to_shout_underscore('FooBar_Bat'))
 endfunction
 
 function! s:Test_2_getter()

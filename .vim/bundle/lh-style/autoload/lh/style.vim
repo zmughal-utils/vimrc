@@ -7,7 +7,7 @@
 " Version:      1.0.0
 let s:k_version = 100
 " Created:      12th Feb 2014
-" Last Update:  17th Oct 2017
+" Last Update:  06th Sep 2019
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to help implement coding styles (e.g. Allman or K&R
@@ -247,7 +247,7 @@ endfunction
 " Function: lh#style#ignore(pattern, local_global, ft) {{{3
 function! lh#style#ignore(pattern, local_global, ft) abort
   call lh#assert#value(a:local_global).match('\v^%(l%[ocal]|g%[lobal])$', "lh#style#ignore() expects either 'local' or 'global' as 2nd parameter")
-  let ignore_group = lh#style#define_group('ignored', 'ignored', a:local_global, 'c')
+  let ignore_group = lh#style#get_group('ignored', 'ignored', a:local_global, 'c')
   call ignore_group.add(
         \ a:pattern,
         \ '\=lh#style#just_ignore_this(submatch(0))',
@@ -533,6 +533,34 @@ function! lh#style#_add(...) abort
   return pattern
 endfunction
 
+" Function: lh#style#get_group(kind, name, local_global, ft) {{{3
+function! lh#style#get_group(kind, name, local_global, ft) abort
+  call lh#assert#value(a:local_global).match('\v^%(l%[ocal]|g%[lobal])$', "lh#style#define_group() expects either 'local' or 'global' as 3rd parameter")
+  let previous = get(s:style_groups, a:kind, [])
+  let local = (a:local_global =~ '\v^l%[local]$') ? bufnr('%') : -1
+  " first check whether there is already something before adding anything
+  let groups = filter(copy(previous), 'v:val.local == local && v:val.ft == a:ft')
+
+  "TODO: if the kind contains dots, then we can support families. e.g.
+  "space.brace.ec / space.brace.cf.{before,in_empty,...}
+  "different family => override
+  if !empty(groups)
+    " Unlike lh#style#define_group(), we return what we have found
+    call lh#assert#value(len(groups)).eq(1)
+    let group = groups[0]
+  else
+    " We will define a bunch of new styles
+    let group = lh#object#make_top_type({'local': local, 'ft': a:ft})
+    let s:style_groups[a:kind] = previous + [group]
+    let group.name         = a:name
+    let group._definitions = {}
+    call lh#object#inject_methods(group, s:k_script_name, ['add'])
+  endif
+  call lh#assert#value(group).get('ft').eq(a:ft)
+  call lh#assert#value(group).get('local').eq(local)
+  return group
+endfunction
+
 " Function: lh#style#define_group(kind, name, local_global, ft) {{{3
 function! lh#style#define_group(kind, name, local_global, ft) abort
   call lh#assert#value(a:local_global).match('\v^%(l%[ocal]|g%[lobal])$', "lh#style#define_group() expects either 'local' or 'global' as 3rd parameter")
@@ -545,7 +573,7 @@ function! lh#style#define_group(kind, name, local_global, ft) abort
   "space.brace.ec / space.brace.cf.{before,in_empty,...}
   "different family => override
   if !empty(groups)
-    " We will override all the styles
+    " Unlike lh#style#get_group(), wee override all the styles
     call lh#assert#value(len(groups)).eq(1)
     let group = groups[0]
   else
@@ -648,6 +676,9 @@ call lh#style#use({'empty_braces': 'nl'}, {'ft': 'c', 'prio': 10})
 " In my templates, I write my email address as "luc {dot} ... {at}..."
 " These artefacts shall be left alone.
 call lh#style#ignore('{\w\+}', 'global', 'c')
+
+" # Space before trailing comments in C++ {{{2
+call lh#style#use({'spacesbeforetrailingcomments': '1'}, {'ft': 'cpp', 'prio': 10})
 
 " # Java style {{{2
 " Force Java style in Java

@@ -39,6 +39,7 @@ autoload/lh/style/curly_bracket_next_line.vim
 autoload/lh/style/empty_braces.vim
 autoload/lh/style/indent_brace_style.vim
 autoload/lh/style/spaces_around_brackets.vim
+autoload/lh/style/spacesbeforetrailingcomments.vim
 autoload/lh/style/spacesbeforeparens.vim
 autoload/lh/style/spacesinemptyparentheses.vim
 autoload/lh/style/spacesinparentheses.vim

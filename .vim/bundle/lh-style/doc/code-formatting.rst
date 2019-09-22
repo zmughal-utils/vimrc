@@ -49,10 +49,11 @@ At this time, the following style families are implemented:
 * `Clang-Format styles <https://clangformat.com/>`_:
 
 
-  * ``breakbeforebraces``        = [``allman``, ``attach``, ``gnu``, ``linux``, ``none``, ``stroustrup`` ]
-  * ``spacesbeforeparens``       = [``none``, ``never``, ``always``, ``control-statements``]
-  * ``spacesinemptyparentheses`` = [``yes``, ``no``] // ``true,`` ``false,`` ``0,`` ``1``.
-  * ``spacesinparentheses``      = [``yes``, ``no``] // ``true,`` ``false,`` ``0,`` ``1``.
+  * ``breakbeforebraces``            = [``allman``, ``attach``, ``gnu``, ``linux``, ``none``, ``stroustrup`` ]
+  * ``spacesbeforetrailingcomments`` = [``\n``, positive number of spaces]
+  * ``spacesbeforeparens``           = [``none``, ``never``, ``always``, ``control-statements``]
+  * ``spacesinemptyparentheses``     = [``yes``, ``no``] // ``true,`` ``false,`` ``0,`` ``1``.
+  * ``spacesinparentheses``          = [``yes``, ``no``] // ``true,`` ``false,`` ``0,`` ``1``.
 
 Styles `can easilly be added <#extending-the-families>`_ in ``{&rtp}/autoload/lh/style/``.
 

@@ -1,5 +1,5 @@
 *lh-style.txt*            Vim Script library providing stylistic related functions (v1.0.0.)
-                        For Vim version 7+.    Last change: 17th Oct 2017
+                        For Vim version 7+.    Last change: 06th Sep 2019
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -83,11 +83,12 @@ EditorConfig styles (https://github.com/editorconfig/editorconfig/wiki/EditorCon
    - `spaces_around_brackets`   = [`inside`, `outside`, `both`, `none`]
 
 Clang-Format styles:
-   - `breakbeforebraces`        = [`allman`, `attach`, `gnu`, `linux`,
-                                 `none`, `stroustrup` ]
-   - `spacesbeforeparens`       = [`none`, `never`, `always`, `control-statements`]
-   -` spacesinemptyparentheses` = [`yes`, `no`] // `true,` `false,` `0,` `1`.
-   -` spacesinparentheses`      = [`yes`, `no`] // `true,` `false,` `0,` `1`.
+   - `breakbeforebraces`            = [`allman`, `attach`, `gnu`, `linux`,
+                                     `none`, `stroustrup` ]
+   - `spacesbeforeparens`           = [`none`, `never`, `always`, `control-statements`]
+   - `spacesbeforetrailingcomments` = [`\n`, positive-number]
+   -` spacesinemptyparentheses`     = [`yes`, `no`] // `true,` `false,` `0,` `1`.
+   -` spacesinparentheses`          = [`yes`, `no`] // `true,` `false,` `0,` `1`.
 
 If you want more precise control, without familly management, you can use
 |:AddStyle| instead.
@@ -205,9 +206,10 @@ Transforms {id} into a:
 *lh#naming#to_lower_camel_case()*
 *lh#naming#to_upper_camel_case()*
 *lh#naming#to_underscore()*
+*lh#naming#to_shout_underscore()*
 
 Options~
-Format: (bg):{ft_}naming_{option}
+Format: `(bg):{ft_}naming_{option}`
 Examples:
 - `g:vim_naming_param_re`: global specialization used to extract name to build
   a parameter name, when working on vim-scripts.
@@ -233,6 +235,6 @@ Mappings~
 
 
 ------------------------------------------------------------------------------
-© Luc Hermitte, 2011-2017, http://github.com/LucHermitte/lh-style }}}1
+© Luc Hermitte, 2011-2019, http://github.com/LucHermitte/lh-style }}}1
  VIM: let b:VS_language = 'american'
  vim:ts=8:sw=4:tw=80:fo=tcq2:isk=!-~,^*,^\|,^\":ft=help:fdm=marker:

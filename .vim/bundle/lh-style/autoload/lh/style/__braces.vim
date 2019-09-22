@@ -7,7 +7,7 @@
 " Version:      1.0.0.
 let s:k_version = '100'
 " Created:      29th Aug 2017
-" Last Update:  17th Oct 2017
+" Last Update:  05th Sep 2019
 "------------------------------------------------------------------------
 " Description:
 "       Factorize all styles related to curly-braces.
@@ -152,8 +152,8 @@ function! lh#style#__braces#stroustrup(local_global, ft, prio, ...) abort
   call style.add('}'                                                , '\n}'  , a:prio)
   " extra \n if followed by a semi-colon
   call style.add('};'                                               , '};\n' , a:prio)
-  " extra \n either way
-  call style.add('};\@!'                                            , '}\n', a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}[;/]\@!'                                         , '}\n', a:prio)
   return style
 endfunction
 
@@ -164,9 +164,9 @@ endfunction
 function! lh#style#__braces#allman(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('allman', a:local_global, a:ft)
 
-  call style.add('^\@<!{' , '\n{\n' , a:prio)
-  call style.add('};\@!'  , '\n}\n' , a:prio)
-  call style.add('};'     , '\n};\n', a:prio)
+  call style.add('^\@<!{'  , '\n{\n' , a:prio)
+  call style.add('}[;/]\@!', '\n}\n' , a:prio) " no \n before ; or comment start
+  call style.add('};'      , '\n};\n', a:prio)
   return style
 endfunction
 
@@ -178,9 +178,9 @@ endfunction
 function! lh#style#__braces#gnu(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('gnu', a:local_global, a:ft)
 
-  call style.add('^\@<!{' , '\n{\n' , a:prio)
-  call style.add('};\@!'  , '\n}\n' , a:prio)
-  call style.add('};'     , '\n};\n', a:prio)
+  call style.add('^\@<!{'  , '\n{\n' , a:prio)
+  call style.add('}[;/]\@!', '\n}\n' , a:prio) " no \n before ; or comment start
+  call style.add('};'      , '\n};\n', a:prio)
   return style
 endfunction
 
@@ -200,7 +200,8 @@ function! lh#style#__braces#bsd_knf(local_global, ft, prio, ...) abort
   " break if not behind one of the previous contexts, or at the beginning of
   " the line
   call style.add('\('.s:k_bsd_knf_context_no_break.'\s*\|^\)\@<!{', '\n{\n', a:prio + 1)
-  call style.add('};\@!'                                          , '\n}\n', a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}[;/]\@!'                                       , '\n}\n', a:prio)
   call style.add('};'                                             , '\n};\n', a:prio)
 
   " TODO: should it be registered as a paren_style?
@@ -223,7 +224,8 @@ function! lh#style#__braces#ratliff(local_global, ft, prio, ...) abort
   " break if not behind one of the previous contexts, or at the beginning of
   " the line
   call style.add('\('.s:k_ratliff_context_no_break.'\s*\|^\)\@<!{', '\n{\n', a:prio + 1)
-  call style.add('};\@!'                                          , '\n}\n', a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}[;/]\@!'                                       , '\n}\n', a:prio)
   call style.add('};'                                             , '\n};\n', a:prio)
   return style
 endfunction
@@ -235,10 +237,10 @@ endfunction
 " complicates &sw management...
 function! lh#style#__braces#horstmann(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('horstmann', a:local_global, a:ft)
-  call style.add('^\@<!{', '\n{'.repeat( ' ', &sw-1), a:prio)
-  call style.add('^{'    , '\n{'.repeat( ' ', &sw-1), a:prio)
-  call style.add('};\@!' , '\n}\n'                  , a:prio)
-  call style.add('};'    , '\n};\n'                 , a:prio)
+  call style.add('^\@<!{'   , '\n{'.repeat( ' ', &sw-1), a:prio)
+  call style.add('^{'       , '\n{'.repeat( ' ', &sw-1), a:prio)
+  call style.add('}[;/]\@!' , '\n}\n'                  , a:prio)
+  call style.add('};'       , '\n};\n'                 , a:prio)
   return style
 endfunction
 
@@ -248,11 +250,11 @@ endfunction
 " complicates &sw management...
 function! lh#style#__braces#pico(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('pico', a:local_global, a:ft)
-  call style.add('^\@<!{', '\n{'.repeat( ' ', &sw-1), a:prio)
-  call style.add('^{'    , '{'.repeat( ' ', &sw-1)  , a:prio)
+  call style.add('^\@<!{'   , '\n{'.repeat( ' ', &sw-1), a:prio)
+  call style.add('^{'       , '{'.repeat( ' ', &sw-1)  , a:prio)
   " TODO: Don't add a space in `{}` case.
-  call style.add('};\@!' , ' }\n'                   , a:prio)
-  call style.add('};'    , ' };\n'                  , a:prio)
+  call style.add('}[;/]\@!' , ' }\n'                   , a:prio)
+  call style.add('};'       , ' };\n'                  , a:prio)
   return style
 endfunction
 
