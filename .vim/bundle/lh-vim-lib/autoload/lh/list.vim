@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      4.3.1
-let s:k_version = 40301
+" Version:      4.7.0
+let s:k_version = 40700
 " Created:      17th Apr 2007
-" Last Update:  30th Mar 2018
+" Last Update:  02nd Sep 2019
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to |Lists|
@@ -735,6 +735,9 @@ endfunction
 " Function: lh#list#rotate(list, rot) {{{3
 " {rot} must belong to [-len(list)n +len(list)]
 function! lh#list#rotate(list, rot) abort
+  if a:rot == 0
+    return a:list
+  endif
   let res = a:list[a:rot :] + a:list[: (a:rot-1)]
   return res
 endfunction

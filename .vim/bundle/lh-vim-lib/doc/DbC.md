@@ -1,7 +1,7 @@
 # Design by Contract functions
 
 ## Presentation
-This set of functions introduce DbC helpers. There are here to help plugin
+This set of functions introduces DbC helpers. There are here to help plugin
 developers to detect and eradicate Vim Scripting programming errors.
 
 When an assertion fails, we cannot expect the script to go on correctly. There
@@ -50,7 +50,7 @@ Vim 8.0-287. See [Vim Issue #1352](http://github.com/vim/vim/issues/1352).
 
 | Function                       | Purpose                                                                                                                                           |
 |:-------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lh#assert#mode()`             | Sets the assertion mode (default, `'debug'`, `'ignore'`, `'abort'`) -- can be toggled with `:Toggle PluginAssertmode [{value}]`                   |
+| `lh#assert#mode()`             | Sets the assertion mode (default, `'debug'`, `'ignore'`, `'stop'`) -- can be toggled with `:Toggle PluginAssertmode [{value}]`                    |
 | `lh#assert#clear()`            | Clears the last known contract failures                                                                                                           |
 | `lh#assert#empty()`            | Asserts a value is empty                                                                                                                          |
 | `lh#assert#equal()`            | Asserts a value equals to what is expected                                                                                                        |

@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/blob/master/License.md>
-" Version:	4.6.4
-let s:version = '4.6.4'
+" Version:	4.7.0
+let s:version = '4.7.0'
 " Created:	06th Nov 2007
-" Last Update:  13th Sep 2018
+" Last Update:  05th Jul 2019
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -29,6 +29,7 @@ autoload/lh/assert.vim
 autoload/lh/async.vim
 autoload/lh/buffer.vim
 autoload/lh/buffer/dialog.vim
+autoload/lh/coc.vim
 autoload/lh/command.vim
 autoload/lh/common.vim
 autoload/lh/dict.vim

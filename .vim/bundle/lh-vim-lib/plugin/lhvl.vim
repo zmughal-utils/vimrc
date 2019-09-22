@@ -4,9 +4,10 @@
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/blob/master/License.md>
-" Version:	4.0.0
+" Version:	4.6.4
+let s:k_version = 40604
 " Created:	27th Apr 2010
-" Last Update:	19th Oct 2017
+" Last Update:	24th May 2019
 "------------------------------------------------------------------------
 " Description:
 "       Non-function resources from lh-vim-lib
@@ -25,15 +26,16 @@
 "=============================================================================
 
 " Avoid global reinclusion {{{1
-let s:k_version = 4000
+let s:cpo_save=&cpo
+set cpo&vim
+
 if &cp || (exists("g:loaded_lhvl")
       \ && (g:loaded_lhvl >= s:k_version)
       \ && !exists('g:force_reload_lhvl'))
+  let &cpo=s:cpo_save
   finish
 endif
 let g:loaded_lhvl = s:k_version
-let s:cpo_save=&cpo
-set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " ## Commands and Mappings {{{1
@@ -53,6 +55,10 @@ command! -nargs=1
       \ StopBGExecution call lh#async#stop(<q-args>)
 
 command! -nargs=1 ConfirmGlobal call lh#ui#_confirm_global('<args>')
+
+command! -nargs=+ -complete=file
+      \ SplitIfNotOpen4COC
+      \ call lh#coc#_split_open(<f-args>)
 
 "------------------------------------------------------------------------
 " ## Options {{{1

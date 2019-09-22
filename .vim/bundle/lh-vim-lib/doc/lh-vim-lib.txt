@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v4.6.4)
-                        For Vim version 7+      Last change: 09th Oct 2018
+*lh-vim-lib.txt*        Vim common libraries (v4.7.0)
+                        For Vim version 7+      Last change: 16th Jul 2019
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -48,6 +48,7 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#encoding#previous_character()|
 - |lh#encoding#strlen()|
 - |lh#encoding#strpart()|
+- |lh#env#expand_all()|
 - |lh#event#register_for_one_execution_at()|
 - |lh#exception#callstack()|
 - |lh#exception#callstack_as_qf()|
@@ -175,6 +176,7 @@ String related functions:                               |lhvl#string|     {{{2
 - |lh#string#count()|
 - |lh#string#matches()|
 - |lh#string#matchstrpos()|
+- |lh#string#or()|
 - |lh#string#substitute_unless()|
 - |lh#string#trim()|
 Graph related functions:                                |lhvl#graph|      {{{2
@@ -254,7 +256,9 @@ Window related functions:                               |lhvl#window|     {{{2
 - |lh#window#gotoid()|
 - |lh#window#new()|
 - |lh#window#split()|
+- |lh#window#text_width()|
 Quickfix related functions:                             |lhvl#quickfix|   {{{2
+- |lh#qf#get_metrics()|
 - |lh#qf#get_title()|
 - |lh#qf#get_winnr()|
 - |lh#qf#is_displayed()|
@@ -1007,6 +1011,14 @@ Returns The character under/before the current.
 Works even with multi-byte characters
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#env#expand_all()*             {{{3
+lh#env#expand_all({string})~
+Parses and replaces environment variable occurrences by the values found.
+Some hooks are defined for specific filetypes
+- `cmake` : if |lh-cmake| is installed, uses |lh#cmake#get_variables()| to
+          convert `${varname}` expression.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                  *lh#event#RegisterForOneExecutionAt()*           {{{3
 lh#event#RegisterForOneExecutionAt({event}, {cmd}, {group})  (*deprecated*)~
                                  *lh#event#register_for_one_execution_at()*
@@ -1489,6 +1501,12 @@ Example: >
 lh#string#matchstrpos(expr, pattern [, start [, count]])~
 Backports |matchstrpos()| to old versions of vim.
 @since Version 4.0.0
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#string#or()*                  {{{3
+lh#string#or([strings...])~
+@return the first non empty string
+@since Version 4.6.4
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#string#substitute_unless()*   {{{3
@@ -3521,8 +3539,29 @@ Note: While window numbers may change as windows get reorganized, window ids
 are stable and never change.
 Function meant to be used along with |lh#window#getid()|.
 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#window#text_width()*          {{{3
+lh#window#text_width({winnr})~
+@since version 4.7.0
+Return the actual width available to display text in the current window.
+Indeed |winwidth()| doesn't take the columns used for signs and folding into
+account.
+
+IOW, this function returns: >
+    winwidth() - &foldcolumn - (&signcolumn * 2)
+
 ------------------------------------------------------------------------------
 QUICKFIX RELATED FUNCTIONS                            *lhvl#quickfix*   {{{2
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#qf#get_metrics()*             {{{3
+lh#qf#get_metrics()~
+@since version 4.7.0
+@returns a |Dictionary| that counts the numbers of errors and warnings found
+in the |quickfix| list.
+ - "`all`"      = number of recognized error messages (see |getqflist()| `valid` entry)
+ - "`errors`"   = number of actual error found (`type=='E' || text=~'error||erreur'`)
+ - "`warnings`" = number of actual warning found (`type=='W' || text=~'warning||attention'`)
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#qf#get_title()*               {{{3
@@ -4749,7 +4788,7 @@ new menu entries along with other project related topics.
 ------------------------------------------------------------------------------
 DESIGN BY CONTRACT FUNCTIONS                          *lhvl#DbC*    {{{2
 @since Version 4.0.0
-This set of functions introduce DbC helpers. There are here to help plugin
+This set of functions introduces DbC helpers. There are here to help plugin
 developers to detect and eradicate vim-scripting programming errors.
 When an assertion fails, we cannot expect the script to go on correctly. There
 IS an error in its logic. We cannot expect anything good after that. That's
@@ -4765,9 +4804,9 @@ variable that can be:
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                    *dbc-mode*   *lh#assert#mode()*     {{{3
 lh#assert#mode([mode])~
-As with C++17+ DbC proposal, end-user can select the assertion mode he wants
+As with C++20+ DbC proposal, end-user can select the assertion mode he wants
 to run with. The default behaviour will remind things to Windows users: a
-|confirm| box will ask whether we want to |dbc-ignore|, |dbc-abort|, or enter
+|confirm| box will ask whether we want to |dbc-ignore|, |dbc-stop|, or enter
 in |dcb-debug|.
 
 - *dbc-ignore* -- we'll try to go on. But don't (you, the end-user) expect
@@ -4776,7 +4815,7 @@ in |dcb-debug|.
   Note that unlike C and C++, the tests cannot be avoided with
   |lh#assert#equal()| & co, but it could be short-circuited with
   |lh#assert#value()| and |lh#assert#type()| tests.
-- *dbc-abort* -- we'll |:throw| an exception with as much context as possible.
+- *dbc-stop* -- we'll |:throw| an exception with as much context as possible.
 - *bdc-debug* is a tricky one. This mode is aimed at plugin writers.
   |:debug| mode will be entered. Don't expect to be able to run anything
   useful that isn't |>bt|, |>up|, |>down| or |:echo|.
@@ -4792,10 +4831,10 @@ information about the backtrace. You should not need it.
   execution of |:finally| blocks.)
 - *dbc-stacktrace* -- can be accessed only from the default (empty) mode:
   it'll display the stacktrace associated to the current assertion failure in
-  the quickfix window, and then ask whether we which to `'ignore'`, `'abort'`
+  the quickfix window, and then ask whether we which to `'ignore'`, `'stop'`
   or `'debug'`.
 
-Executing `lh#assert#mode()` with either `'ignore'`, `'abort'` or `'debug'`
+Executing `lh#assert#mode()` with either `'ignore'`, `'stop'` or `'debug'`
 will force the assertion mode globally. To go back to the |confirm| box, call
 the function with an empty string.
 Calling the function with no argument will permit to know which mode is the
@@ -4883,7 +4922,7 @@ lh#assert#type({actual}).belongs_to({expected}...)              *lh#assert#type(
 
                                                                      }}}1
 ==============================================================================
- (c) Luc Hermitte, 2001-2018 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
+ (c) Luc Hermitte, 2001-2019 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
  VIM: let b:VS_language = 'american'
  vim:ts=8:sw=4:tw=80:fo=tcq2:ft=help:
  vim600:fdm=marker:
