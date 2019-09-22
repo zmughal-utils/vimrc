@@ -57,8 +57,13 @@ function! test#strategy#neovim(cmd) abort
 endfunction
 
 function! test#strategy#vimterminal(cmd) abort
-  botright new
-  call term_start(['/bin/sh', '-c', a:cmd], {'curwin':1})
+  let term_position = get(g:, 'test#vim#term_position', 'botright')
+  execute term_position . ' new'
+  call term_start(!s:Windows() ? ['/bin/sh', '-c', a:cmd] : ['cmd.exe', '/c', a:cmd], {'curwin': 1, 'term_name': a:cmd})
+  au BufLeave <buffer> wincmd p
+  nnoremap <buffer> <Enter> :q<CR>
+  redraw
+  echo "Press <Enter> to exit test runner terminal (<Ctrl-C> first if command is still running)"
 endfunction
 
 function! test#strategy#neoterm(cmd) abort
@@ -99,6 +104,10 @@ function! test#strategy#iterm(cmd) abort
   call s:execute_script('osx_iterm', cmd)
 endfunction
 
+function! test#strategy#kitty(cmd) abort
+  let cmd = join(['cd ' . shellescape(getcwd()), s:pretty_command(a:cmd)], '; ')
+  call s:execute_script('kitty_runner', cmd)
+endfunction
 
 function! s:execute_with_compiler(cmd, script) abort
   try

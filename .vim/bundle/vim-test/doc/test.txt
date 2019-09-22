@@ -13,6 +13,7 @@ License: Same terms as Vim itself (see |license|)
 |test-about|                      ABOUT
 |test-credits|                    CREDITS
 
+
 INTRODUCTION                                    *test*
 
 This plugin allows you to:
@@ -33,6 +34,7 @@ Add your preferred mappings to your `.vimrc` file:
   nmap <silent> <leader>l :TestLast<CR>
   nmap <silent> <leader>g :TestVisit<CR>
 <
+
 GENERIC COMMANDS                                *test-generic_commands*
 
 In all commands [args] are forwarded to the underlying test runner.
@@ -58,6 +60,7 @@ In all commands [args] are forwarded to the underlying test runner.
 
                                                 *test-:TestVisit*
 :TestVisit                   Open the last run test in the current buffer.
+
 
 RUNNER COMMANDS                                 *test-runner_commands*
 
@@ -142,6 +145,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:CommonTest*
 :CommonTest [args]           Uses the `rebar3` `ct` command.
 
+                                                *test-:EUnit*
+:EUnit [args]                Uses the `rebar3` `eunit` command.
+
                                                 *test-:Xunit*
 :Xunit [args]                Uses the `dotnet` `xunit` command.
 
@@ -153,6 +159,12 @@ In all commands [args] are forwarded to the underlying test runner.
 
                                                 *test-:Ginkgo*
 :Ginkgo [args]               Uses the `ginkgo` command.
+
+                                                *test-:RichGo*
+:RichGo [args]               Uses the `richgo` `test` command.
+
+                                                *test-:Delve*
+:Delve [args]                Uses the `dlv` `test` command.
 
                                                 *test-:CargoTest*
 :CargoTest [args]            Uses the `cargo` `test` command.
@@ -215,11 +227,15 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:SbtTest*
 :SbtTest [args]            Uses the `sbt` `test/testOnly` command.
 
+                                                *test-:BloopTest*
+:BloopTest [args]            Uses the `bloop` `test/test -o` command.
+
                                                 *test-:CrystalSpec*
 :CrystalSpec [args]          Uses the `crystal` `spec` command.
 
                                                 *test-:SwiftPM*
 :SwiftPM [args]              Uses the `swift test` command.
+
 
 STRATEGIES                                      *test-strategies*
 
@@ -314,7 +330,6 @@ and Tmux
 >
   let test#strategy = 'vtr'
 <
-<
 VimShell ~
 
 Runs test commands in a shell written in VimScript. Requires the VimShell
@@ -332,11 +347,30 @@ isn't that nice).
   " or
   let test#strategy = 'iterm'
 <
+Kitty ~
 
+If you want to run commands in a Kitty terminal window you can use this
+strategy.
+
+Please make sure:
+
+- you start kitty setting up remote control and specifying a socket for kitty
+  to listen to, like this:
+>
+  $ kitty -o allow_remote_control=yes --listen-on unix:/tmp/mykitty
+<
+- you export an environment variable `$KITTY_LISTEN_ON` with the same socket, like:
+>
+  $ export KITTY_LISTEN_ON=/tmp/mykitty
+<
+You can then use this strategy this way:
+>
+  let test#strategy = 'kitty'
+<
 
 QUICKFIX STRATEGIES                               *test-quickfix-strategies*
 
-If you want your test results to appear in the |quickfix| window, use one of the 
+If you want your test results to appear in the |quickfix| window, use one of the
 following strategies:
 
   * Make
@@ -345,17 +379,16 @@ following strategies:
   * Dispatch.vim
 
 Regardless of which you pick, it's recommended you have Dispatch.vim installed as the
-strategies will automatically use it to determine the correct |compiler|, ensuring the 
+strategies will automatically use it to determine the correct |compiler|, ensuring the
 test output is correctly parsed for the quickfix window.
 
-As Dispatch.vim just determines the compiler, you need to make sure the Vim distribution 
-or a plugin has a corresponding compiler for your test runner, or you may need to 
+As Dispatch.vim just determines the compiler, you need to make sure the Vim distribution
+or a plugin has a corresponding compiler for your test runner, or you may need to
 |write-compiler-plugin|.
 
-If the test command prefix doesn't match the compiler's |makeprg| then use the 
-|g:dispatch_compilers| variable. For example if your test command was './vendor/bin/phpunit' 
+If the test command prefix doesn't match the compiler's |makeprg| then use the
+|g:dispatch_compilers| variable. For example if your test command was './vendor/bin/phpunit'
 but you wanted to use the phpunit2 compiler:
-
 >
   let g:dispatch_compilers = {}
   let g:dispatch_compilers['./vendor/bin/'] = ''
@@ -420,6 +453,16 @@ Or, if you prefer more granular approach, you can do
     \ 'suite':   '--tag ~slow',
   \}
 <
+You can also specify a global option for the test runner to work alongside the
+granular options. Here, all rspec tests will run with the --format documentation
+option and any suite granularities will be run with the --tag ~slow option as
+well
+>
+  let g:test#ruby#rspec#options = {
+    \ 'all':   '--format documentation',
+    \ 'suite': '--tag ~slow',
+  \}
+<
 If you want to manually configure a test runner's executable, you can do
 >
   let g:test#ruby#rspec#executable = 'foreman run rspec'
@@ -430,13 +473,10 @@ You can instruct test.vim to generate absolute file paths:
   let test#filename_modifier = ':p' " /User/janko/Code/my_project/test/models/user_test.rb
   let test#filename_modifier = ':~' " ~/Code/my_project/test/models/user_test.rb
 <
-
 To select which runners to load, set this option:
-
-```vim
-let test#enabled_runners = ["mylanguage#myrunner", "ruby#rspec"]
-```
-
+>
+  let test#enabled_runners = ["mylanguage#myrunner", "ruby#rspec"]
+<
 All other runners will not be loaded.
 
 Note that for your own custom runners, you still need to set `test#custom_runners`.
@@ -449,11 +489,17 @@ working directory for running tests:
 >
   let test#project_root = "/path/to/your/project"
 <
-If you're using the neovim strategy, you can easily configure the position of
-the terminal split window (see `:help opening-window`):
+If you're using either the Vim8 Terminal or Neovim strategy, you can easily configure the position of
+the terminal split window (see `:help opening-window`) with:
+>
+  let test#vim#term_position = "topleft"
+<
+for vim and
 >
   let test#neovim#term_position = "topleft"
 <
+for neovim
+
 
 PROJECTIONIST INTEGRATION                       *test-projectionist*
 
@@ -465,11 +511,13 @@ You can disable this integration by doing
 >
   let g:test#no_alternate = 1
 <
+
 ABOUT                                           *test-about*
 
 You can get the latest version, see the changelog, or report a bug on GitHub:
 
 https://github.com/janko-m/vim-test
+
 
 CREDITS                                         *test-credits*
 

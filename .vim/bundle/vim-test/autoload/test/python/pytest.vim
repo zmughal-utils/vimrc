@@ -38,17 +38,37 @@ function! test#python#pytest#build_args(args) abort
 endfunction
 
 function! test#python#pytest#executable() abort
+  let pipenv_prefix = ""
+
+  if filereadable("Pipfile")
+    let pipenv_prefix = "pipenv run "
+  elseif filereadable("poetry.lock")
+    let pipenv_prefix = "poetry run "
+  endif
+
   if executable("py.test") && !executable("pytest")
-    return "py.test"
+    return pipenv_prefix . "py.test"
   else
-    return "pytest"
+    return pipenv_prefix . "pytest"
   endif
 endfunction
 
 function! s:nearest_test(position) abort
   let name = test#base#nearest_test(a:position, g:test#python#patterns)
-  let path = [get(name['namespace'], 0, ''), get(name['test'], 0, '')]
-  call filter(path, '!empty(v:val)')
+  let namespace_str = join(name['namespace'], '::')
+  let test_id = []
 
-  return join(path, '::')
+  if !empty(name['namespace'])
+      let test_id = test_id + name['namespace']
+  endif
+  if !empty(name['test'])
+      let test_id = test_id + name['test']
+  endif
+
+  " ex:
+  "   /path/to/file.py::TestClass
+  "   /path/to/file.py::TestClass::method
+  "   /path/to/file.py::TestClass::NestedClass::method
+  let dtest_str = join(test_id, '::')
+  return dtest_str
 endfunction

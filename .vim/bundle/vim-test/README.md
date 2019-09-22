@@ -2,12 +2,12 @@
 
 A Vim wrapper for running tests on different granularities.
 
-<img alt="usage overview" src="https://github.com/janko-m/vim-test/blob/master/screenshots/granularity.gif" width=770 height=503>
+<img alt="usage overview" src="https://github.com/janko/vim-test/blob/master/screenshots/granularity.gif" width=770 height=503>
 
 ## Features
 
 * Zero dependencies
-* Zero configuration required (it Does the Right Thing™, see [**Philosophy**](https://github.com/janko-m/vim-test/wiki))
+* Zero configuration required (it Does the Right Thing™, see [**Philosophy**](https://github.com/janko/vim-test/wiki))
 * Wide range of test runners which are automagically detected
 * **Polyfills** for nearest tests (by [constructing regexes](#commands))
 * Wide range of execution environments ("[strategies](#strategies)")
@@ -26,8 +26,8 @@ runners are supported:
 | **Crystal**    | Crystal                                                                                     | `crystalspec`                                                                                                   |
 | **Elixir**     | ESpec, ExUnit                                                                               | `espec`, `exunit`                                                                                               |
 | **Elm**        | elm-test                                                                                    | `elmtest`                                                                                                       |
-| **Erlang**     | CommonTest                                                                                  | `commontest`                                                                                                    |
-| **Go**         | Ginkgo, Go                                                                                  | `ginkgo`, `gotest`                                                                                              |
+| **Erlang**     | CommonTest, EUnit                                                                           | `commontest`, `eunit`                                                                                           |
+| **Go**         | Ginkgo, Go, Rich-Go, Delve                                                                  | `ginkgo`, `gotest`, `richgo`, `delve`                                                                           |
 | **Java**       | Maven, Gradle                                                                               | `maventest`, `gradletest`                                                                                       |
 | **JavaScript** | Ava, Cucumber.js, Intern, Jasmine, Jest, ReactScripts, Karma, Lab, Mocha, TAP, WebdriverIO  | `ava`, `cucumberjs`, `intern`, `jasmine`, `jest`, `reactscripts`, `karma`, `lab`, `mocha`, `tap`, `webdriverio` |
 | **Lua**        | Busted                                                                                      | `busted`                                                                                                        |
@@ -37,7 +37,7 @@ runners are supported:
 | **Racket**     | RackUnit                                                                                    | `rackunit`                                                                                                      |
 | **Ruby**       | Cucumber, [M], [Minitest][minitest], Rails, RSpec                                           | `cucumber`, `m`, `minitest`, `rails`, `rspec`                                                                   |
 | **Rust**       | Cargo                                                                                       | `cargotest`                                                                                                     |
-| **Scala**      | SBT                                                                                         | `sbttest`                                                                                                       |
+| **Scala**      | SBT, Bloop                                                                                  | `sbttest`, `blooptest`                                                                                          |
 | **Shell**      | Bats                                                                                        | `bats`                                                                                                          |
 | **Swift**      | Swift Package Manager                                                                       | `swiftpm`                                                                                                       |
 | **VimScript**  | Vader.vim, VSpec, Themis                                                                    | `vader`, `vspec`, `themis`                                                                                      |
@@ -46,7 +46,7 @@ runners are supported:
 
 Using [vim-plug](https://github.com/junegunn/vim-plug), add
 ```vim
-Plug 'janko-m/vim-test'
+Plug 'janko/vim-test'
 ```
 to your `.vimrc` file (see vim-plug documentation for where), and run `:PlugInstall`.
 
@@ -97,6 +97,7 @@ let test#strategy = "dispatch"
 | **[AsyncRun]**                  | `asyncrun`                       | Runs test commands asynchronosuly using new APIs in Vim 8 and NeoVim.            |
 | **Terminal.app**                | `terminal`                       | Sends test commands to Terminal (useful in MacVim GUI).                          |
 | **iTerm2.app**                  | `iterm`                          | Sends test commands to iTerm2 >= 2.9 (useful in MacVim GUI).                     |
+| **[Kitty]**                     | `kitty`                          | Sends test commands to Kitty terminal.                                           |
 
 You can also set up strategies per granularity:
 
@@ -137,9 +138,27 @@ if has('nvim')
 endif
 ```
 
+### Kitty strategy setup
+
+Before you can run tests in a kitty terminal window using the kitty strategy,
+please make sure:
+
+- you start kitty setting up remote control and specifying a socket for kitty
+  to listen to, like this:
+
+  ```
+  $ kitty -o allow_remote_control=yes --listen-on unix:/tmp/mykitty
+  ```
+
+- you export an environment variable `$KITTY_LISTEN_ON` with the same socket, like:
+
+  ```
+  $ export KITTY_LISTEN_ON=/tmp/mykitty
+  ```
+
 ### Quickfix Strategies
 
-If you want your test results to appear in the quickfix window, use one of the 
+If you want your test results to appear in the quickfix window, use one of the
 following strategies:
 
  * Make
@@ -148,15 +167,15 @@ following strategies:
  * Dispatch.vim
 
 Regardless of which you pick, it's recommended you have Dispatch.vim installed as the
-strategies will automatically use it to determine the correct compiler, ensuring the 
+strategies will automatically use it to determine the correct compiler, ensuring the
 test output is correctly parsed for the quickfix window.
 
-As Dispatch.vim just determines the compiler, you need to make sure the Vim distribution 
-or a plugin has a corresponding compiler for your test runner, or you may need to write a 
+As Dispatch.vim just determines the compiler, you need to make sure the Vim distribution
+or a plugin has a corresponding compiler for your test runner, or you may need to write a
 compiler plugin.
 
-If the test command prefix doesn't match the compiler's `makeprg` then use the 
-`g:dispatch_compiler` variable. For example if your test command was `./vendor/bin/phpunit` 
+If the test command prefix doesn't match the compiler's `makeprg` then use the
+`g:dispatch_compiler` variable. For example if your test command was `./vendor/bin/phpunit`
 but you wanted to use the phpunit2 compiler:
 
 ```vim
@@ -199,7 +218,7 @@ let g:test#transformation = 'vagrant'
 
 ## Commands
 
-<img alt="nearest polyfill" src="https://github.com/janko-m/vim-test/blob/master/screenshots/nearest.gif" width=770 height=323>
+<img alt="nearest polyfill" src="https://github.com/janko/vim-test/blob/master/screenshots/nearest.gif" width=770 height=323>
 
 You can execute test.vim commands directly, and pass them CLI options:
 
@@ -253,15 +272,26 @@ let test#ruby#rspec#options = {
 \}
 ```
 
-### Neovim terminal position
+You can also specify a global approach along with the granular options for the
+specified test runner:
 
-The `neovim` strategy will open a split window on the bottom by default, but
+```vim
+let test#ruby#rspec#options = {
+  \ 'all':   '--backtrace',
+  \ 'suite': '--tag ~slow',
+\}
+```
+
+### Vim8 / Neovim terminal position
+
+Both the `neovim` and `Vim8 Terminal` strategy will open a split window on the bottom by default, but
 you can configure a different position:
 
 ```vim
+" for neovim
 let test#neovim#term_position = "topleft"
-" or
-let test#neovim#term_position = "belowright"
+" or for Vim8
+let test#vim#term_position = "belowright"
 ```
 
 For full list of variants, see `:help opening-window`.
@@ -321,6 +351,12 @@ the first available will be chosen, but you can force a specific one:
 let test#python#runner = 'pytest'
 " Runners available are 'pytest', 'nose', 'nose2', 'djangotest', 'djangonose' and Python's built-in 'unittest'
 ```
+
+The pytest runner optionally supports [pipenv](https://github.com/pypa/pipenv).
+If you have a `Pipfile`, it will use `pipenv run pytest` instead of just
+`pytest`. It also supports [poetry](https://github.com/sdispater/poetry)
+and will use `poetry run pytest` if it detects a `poetry.lock`.
+
 #### Java
 
 For the same reason as Python, runner detection works the same for Java. To
@@ -330,6 +366,29 @@ force a specific runner:
 let test#java#runner = 'gradletest'
 ```
 
+#### Scala
+
+For the same reason as Python, runner detection works the same for Scala. To
+force a specific runner:
+
+``` vim
+let test#scala#runner = 'blooptest'
+```
+
+You may have subprojects inside your main sbt projects. Bloop project detection 
+uses your main project to run tests. If you need to run test inside your subproject,
+you can specify custom projects with:
+
+```vim
+let g:test#scala#blooptest#project_name = 'custom-project'
+```
+
+With this configuration, the test runner will run test for `custom-project`:
+
+```sh
+$ bloop test custom-project
+```
+
 #### Go
 
 For the same reason as Python, runner detection works the same for Go. To
@@ -337,8 +396,25 @@ force a specific runner:
 
 ``` vim
 let test#go#runner = 'ginkgo'
-" Runners available are 'gotest', 'ginkgo'
+" Runners available are 'gotest', 'ginkgo', 'richgo', 'delve'
 ```
+
+You can also configure the `delve` runner with a different key mapping
+alongside another:
+
+```vim
+nmap <silent> t<C-n> :TestNearest<CR>
+function! DebugNearest()
+  let g:test#go#runner = 'delve'
+  TestNearest
+  unlet g:test#go#runner
+endfunction
+nmap <silent> t<C-d> :call DebugNearest()<CR>
+```
+
+If `delve` is selected and [vim-delve](https://github.com/sebdah/vim-delve) is
+in use, breakpoints and tracepoints that have been marked with vim-delve will
+be included.
 
 #### Ruby
 
@@ -468,7 +544,7 @@ and Windows support. And also thanks to [vroom.vim].
 Copyright © Janko Marohnić. Distributed under the same terms as Vim itself. See
 `:help license`.
 
-[minitest]: https://github.com/janko-m/vim-test/wiki/Minitest
+[minitest]: https://github.com/janko/vim-test/wiki/Minitest
 [Neoterm]: https://github.com/kassio/neoterm
 [Neomake]: https://github.com/neomake/neomake
 [Dispatch]: https://github.com/tpope/vim-dispatch
@@ -484,3 +560,4 @@ Copyright © Janko Marohnić. Distributed under the same terms as Vim itself. Se
 [MakeGreen]: https://github.com/reinh/vim-makegreen
 [M]: http://github.com/qrush/m
 [projectionist.vim]: https://github.com/tpope/vim-projectionist
+[Kitty]: https://github.com/kovidgoyal/kitty

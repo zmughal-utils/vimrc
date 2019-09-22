@@ -11,8 +11,8 @@ let g:test#default_runners = {
   \ 'Python':     ['DjangoTest', 'PyTest', 'PyUnit', 'Nose', 'Nose2'],
   \ 'Elixir':     ['ExUnit', 'ESpec'],
   \ 'Elm':        ['ElmTest'],
-  \ 'Erlang':     ['CommonTest'],
-  \ 'Go':         ['GoTest', 'Ginkgo'],
+  \ 'Erlang':     ['CommonTest', 'EUnit'],
+  \ 'Go':         ['GoTest', 'Ginkgo', 'RichGo', 'Delve'],
   \ 'Rust':       ['CargoTest'],
   \ 'Clojure':    ['FireplaceTest'],
   \ 'CSharp':     ['Xunit', 'DotnetTest'],
@@ -24,7 +24,7 @@ let g:test#default_runners = {
   \ 'Perl':       ['Prove'],
   \ 'Racket':     ['RackUnit'],
   \ 'Java':       ['MavenTest', 'GradleTest'],
-  \ 'Scala':      ['SbtTest'],
+  \ 'Scala':      ['SbtTest', 'BloopTest'],
   \ 'Crystal':    ['CrystalSpec'],
 \}
 
