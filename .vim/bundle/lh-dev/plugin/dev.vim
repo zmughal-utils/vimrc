@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.3.0
-let s:k_version = 130
+" Version:      2.0.0
+let s:k_version = 200
 " Created:      31st May 2010
-" Last Update:  17th Oct 2017
+" Last Update:  16th Jan 2019
 "------------------------------------------------------------------------
 " Description:
 "       Global commands and definitions of lh-dev
@@ -15,14 +15,15 @@ let s:k_version = 130
 "=============================================================================
 
 " Avoid global reinclusion {{{1
+let s:cpo_save=&cpo
+set cpo&vim
 if &cp || (exists("g:loaded_dev")
       \ && (g:loaded_dev >= s:k_version)
       \ && !exists('g:force_reload_dev'))
+  let &cpo=s:cpo_save
   finish
 endif
 let g:loaded_dev = s:k_version
-let s:cpo_save=&cpo
-set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " ## Commands and Mappings {{{1

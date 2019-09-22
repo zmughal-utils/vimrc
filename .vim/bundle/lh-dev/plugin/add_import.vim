@@ -2,10 +2,10 @@
 " File:         plugin/add_import.vim                             {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-dev>
-" Version:      1.2.2.
-let s:k_version = '122'
+" Version:      2.0.0
+let s:k_version = 200
 " Created:      22nd Apr 2015
-" Last Update:  22nd Apr 2015
+" Last Update:  16th Jan 2019
 "------------------------------------------------------------------------
 " Description:
 "       This plugin defines a mapping to insert missing includes/imports
@@ -23,14 +23,15 @@ let s:k_version = '122'
 "=============================================================================
 
 " Avoid global reinclusion {{{1
+let s:cpo_save=&cpo
+set cpo&vim
 if &cp || (exists("g:loaded_add_import")
       \ && (g:loaded_add_import >= s:k_version)
       \ && !exists('g:force_reload_add_import'))
+  let &cpo=s:cpo_save
   finish
 endif
 let g:loaded_add_import = s:k_version
-let s:cpo_save=&cpo
-set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " Mappings {{{1

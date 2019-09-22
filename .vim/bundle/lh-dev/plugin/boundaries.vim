@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/lh-dev>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/tree/master/License.md>
-" Version:      1.5.0.2.
-let s:k_version = '1502'
+" Version:      2.0.0
+let s:k_version = '2.0.0'
 " Created:      25th May 2016
-" Last Update:  25th May 2016
+" Last Update:  16th Jan 2019
 "------------------------------------------------------------------------
 " Description:
 "       Select function boundaries
@@ -15,14 +15,15 @@ let s:k_version = '1502'
 "=============================================================================
 
 " Avoid global reinclusion {{{1
+let s:cpo_save=&cpo
+set cpo&vim
 if &cp || (exists("g:loaded_boundaries")
       \ && (g:loaded_boundaries >= s:k_version)
       \ && !exists('g:force_reload_boundaries'))
+  let &cpo=s:cpo_save
   finish
 endif
 let g:loaded_boundaries = s:k_version
-let s:cpo_save=&cpo
-set cpo&vim
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " Commands and Mappings {{{1
