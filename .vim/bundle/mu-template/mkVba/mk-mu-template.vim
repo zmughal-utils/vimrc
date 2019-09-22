@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/mu-template>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/mu-template/tree/master/License.md>
-" Version:	4.3.1
-let s:version = '4.3.1'
+" Version:	4.3.2
+let s:version = '4.3.2'
 " Created:	06th Nov 2007
-" Last Update:	07th Nov 2018
+" Last Update:	05th Sep 2019
 "------------------------------------------------------------------------
 cd <sfile>:p:h
 try
@@ -126,6 +126,7 @@ after/template/python/def.template
 after/template/python/docstring.template
 after/template/python/elif.template
 after/template/python/else.template
+after/template/python/finally.template
 after/template/python/for.template
 after/template/python/from.template
 after/template/python/if.template
