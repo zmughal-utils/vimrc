@@ -148,8 +148,9 @@ fu! recover#ConfirmSwapDiff() "{{{1
       "   let wincmd = printf('-c "call feedkeys(\"o\n\e:q!\n\")"')
       " endif
       let t = tempname()
-      let cmd = printf("%s %s -i NONE -u NONE -es -V0%s %s %s",
+      let cmd = printf("%s %s -i NONE -u NONE -es -V0%s %s %s %s",
         \ (s:isWin() ? '' : 'LC_ALL=C'), s:progpath, t,
+        \ (!empty(&directory) ? '--cmd ":set directory="' . shellescape(&directory) : ''),
         \ (s:isWin() ? wincmd : ''), bufname)
       call system(cmd)
       let msgl = readfile(t)
@@ -192,7 +193,8 @@ fu! recover#ConfirmSwapDiff() "{{{1
     let v:swapchoice = 'd'
     return
   endif
-  if !do_modification_check && !not_modified && (empty(pname) || pname =~? 'vim')
+  let prompt_verbose = get(g:, 'RecoverPlugin_Prompt_Verbose', 0)
+  if prompt_verbose || (!do_modification_check && !not_modified && (empty(pname) || pname =~? 'vim'))
     echo msg
   endif
   call delete(tfile)
@@ -206,12 +208,17 @@ fu! recover#ConfirmSwapDiff() "{{{1
   else
     let info = "Swap File '". v:swapname. "' found: "
   endif
-  if not_modified
-    let p = 3
-  else
+  if prompt_verbose || !not_modified
     call inputsave()
+    if has("nvim")
+      " Force the msg to be drawn for Neovim, fixes
+      " https://github.com/chrisbra/Recover.vim/issues/59
+      echo msg
+    endif
     let p = confirm(info, cmd, (delete ? 7 : 1), 'I')
     call inputrestore()
+  elseif not_modified
+    let p = 3
   endif
   let b:swapname=v:swapname
   if p == 1 || p == 3
