@@ -1,9 +1,9 @@
-*zoom.txt*                     Zoom Window in VIM                       *zoom*
+*zoom.txt*                     Zoom Window in VIM                         *zoom*
 ------------------------------------------------------------------------------
 
                            Toggle current window zoom
                              Inspired by tmux zoom
-                                  Version 0.3
+                                  Version 0.3.1
 
 
                  Author: Dhruva Sagar (http://dhruvasagar.com)
@@ -13,10 +13,12 @@
 CONTENTS                                                         *zoom-contents*
 
       1. Usage ......................................... |zoom-usage|
-      2. Mappings ...................................... |zoom-mappings|
-      3. Contributing .................................. |zoom-contributing|
-      4. Report Issues ................................. |zoom-report-issues|
-      4. Credits ....................................... |zoom-credits|
+      2. Options ....................................... |zoom-options|
+      3. Mappings ...................................... |zoom-mappings|
+      4. Statusline .................................... |zoom-statusline|
+      5. Contributing .................................. |zoom-contributing|
+      6. Report Issues ................................. |zoom-report-issues|
+      7. Credits ....................................... |zoom-credits|
 
 ------------------------------------------------------------------------------
 USAGE                                                               *zoom-usage*
@@ -25,10 +27,33 @@ USAGE                                                               *zoom-usage*
       it to zoom in and out on subsequent calls.
 
 ------------------------------------------------------------------------------
+OPTIONS                                                           *zoom-options*
+
+                                                               *zoom-statustext*
+      `g:zoom#statustext`:
+              Sets the value to be returned by `zoom#statusline()` when zoomed
+              in. >
+                  let g:zoom#statustext = 'zoomed'
+<
+
+------------------------------------------------------------------------------
 MAPPINGS                                                         *zoom-mappings*
 
       `<C-W>m`: mapping to toggle zoom of current window
+              To change this mapping remap `<Plug>(zoom-toggle)` to your
+              desired mapping like so : >
+                  nmap <My-Mapping> <Plug>(zoom-toggle)
+<
+------------------------------------------------------------------------------
+STATUSLINE                                                     *zoom-statusline*
 
+      `zoom#statusline()`:
+              If the current window is zoomed within the current tab, it returns
+              value of option `g:zoom#statustext` otherwise it's an empty
+              string.
+              You may add it to your statusline using : >
+                  let statusline+=%{zoom#statusline()}
+<
 ------------------------------------------------------------------------------
 CONTRIBUTING                                                 *zoom-contributing*
 

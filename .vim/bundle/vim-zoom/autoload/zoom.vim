@@ -2,6 +2,10 @@ function! s:is_zoomed()
   return get(t:, 'zoomed', 0)
 endfunction
 
+function! s:is_only_window()
+  return len(tabpagebuflist()) == 1
+endfunction
+
 function! s:set_zoomed(...)
   let t:zoomed = a:0 ? a:1 : 0
 endfunction
@@ -22,12 +26,17 @@ endfunction
 
 function! zoom#toggle()
   if s:is_zoomed()
+    let cursor_pos = getpos('.')
     let l:current_buffer = bufnr('')
     exec 'silent! source' s:zoom_session_file()
     call setqflist(s:qflist)
     silent! exe 'b'.l:current_buffer
     call s:set_zoomed()
+    call setpos('.', cursor_pos)
   else
+    " skip if only window
+    if s:is_only_window() | return | endif
+
     let oldsessionoptions = &sessionoptions
     let oldsession = v:this_session
     set sessionoptions-=tabpages
@@ -38,4 +47,11 @@ function! zoom#toggle()
     let v:this_session = oldsession
     let &sessionoptions = oldsessionoptions
   endif
+endfunction
+
+function! zoom#statusline()
+  if s:is_zoomed()
+    return get(g:, 'zoom#statustext', 'zoomed')
+  endif
+  return ''
 endfunction
