@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-tags>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-tags/tree/master/License.md>
-" Version:      3.0.4
-let s:k_version = '3.0.4'
+" Version:      3.0.5
+let s:k_version = '3.0.5'
 " Created:      02nd Oct 2008
-" Last Update:  31st Oct 2018
+" Last Update:  15th Feb 2019
 "------------------------------------------------------------------------
 " Description:
 "       Small plugin related to tags files.
@@ -270,10 +270,11 @@ endfunction
 let s:k_unset = lh#option#unset()
 function! lh#tags#set_lang_map(ft, exts) abort
   let indexer = s:indexer()
-  if !has_key(indexer, 'set_lang_map')
+  let fl = s:indexer().flavour()
+  if !has_key(fl, 'set_lang_map')
     throw "tags-error: The current indexer has no ft -> lang map"
   endif
-  call indexer.set_lang_map(a:ft, a:exts)
+  call fl.set_lang_map(a:ft, a:exts)
 endfunction
 
 let s:project_roots = get(s:, 'project_roots', [])
@@ -449,14 +450,14 @@ endfunction
 " Function: lh#tags#ignore_spelling([spellfilename]) {{{3
 " Tells lh-tags to use a spell file
 function! lh#tags#ignore_spelling(...) abort
-  let tags_dirname = lh#option#get('tags_dirname')
-  let spelldirname  = lh#path#to_dirname(tags_dirname)
+  let tags_dirname = s:indexer().src_dirname()
+  call lh#assert#value(tags_dirname).is_set()
   let ext = '.'.&enc.'.add'
 
   " 0- If there was a spell file remove it
   let old_spellfilename = lh#option#get('tags_options.spellfile')
   if lh#option#is_set(old_spellfilename)
-    exe 'setlocal spellfile-='.lh#path#fix(spelldirname.old_spellfilename)
+    exe 'setlocal spellfile-='.lh#path#fix(tags_dirname.old_spellfilename)
   endif
 
   " 1- Register the new spell file
@@ -468,9 +469,9 @@ function! lh#tags#ignore_spelling(...) abort
   if empty(&spellfile)
     " Be sure there is a file to hold words to ignore manually registered by
     " the end user
-    exe 'setlocal spellfile+='.lh#path#fix(spelldirname.'ignore'.ext)
+    exe 'setlocal spellfile+='.lh#path#fix(tags_dirname.'ignore'.ext)
   endif
-  exe 'setlocal spellfile+='.lh#path#fix(spelldirname.spellfilename)
+  exe 'setlocal spellfile+='.lh#path#fix(tags_dirname.spellfilename)
 endfunction
 
 " Update the spellfile {{{3
