@@ -101,6 +101,7 @@ Environment variables are set before executing:
     $VIM_FILEDIR   - Full path of current buffer without the file name
     $VIM_FILEEXT   - File extension of current buffer
     $VIM_FILENOEXT - File name of current buffer without path and extension
+    $VIM_PATHNOEXT - Current file name with full path but without extension
     $VIM_CWD       - Current directory
     $VIM_RELDIR    - File path relativize to current directory
     $VIM_RELNAME   - File name relativize to current directory 
@@ -124,6 +125,7 @@ There can be some options before your `[cmd]`:
 	-post=?     - vimscript to exec after this job finished, spaces **must** be escaped to '\ '
 	-auto=?     - event name to trigger "QuickFixCmdPre/QuickFixCmdPost [name]" autocmd
 	-raw=1      - use raw output (output will not match with the errorformat) 
+    -strip      - remove the heading / tailing messages (command and [Finished in ...]).
 
 All options must start with a minus and position **before** `[cmd]`. Since no shell command  string starts with a minus. So they can be distinguished from shell command easily without any ambiguity. 
 
@@ -150,6 +152,7 @@ stop the running job, when "!" is included, job will be stopped by signal KILL
 - g:asyncrun_save - non-zero to save current(1) or all(2) modified buffer(s) before executing
 - g:asyncrun_timer - how many messages should be inserted into quickfix every 100ms interval.
 - g:asyncrun_wrapper - enable to setup a command prefix.
+- g:asyncrun_stdin - non-zero to enable stdin (useful for cmake on windows).
 
 For more information of above options, please visit **[option details](https://github.com/skywind3000/asyncrun.vim/wiki/Options)**.
 
@@ -261,6 +264,13 @@ See: [Cooperate with famous plugins](https://github.com/skywind3000/asyncrun.vim
 
 ## History
 
+- 2.0.8 (2019-04-28): handle `tcd` (introduced in 8.1.1218). use grepformat when `-program=grep`.
+- 2.0.7 (2019-01-27): restore `g:asyncrun_stdin` because rg will break if stdin is pipe.
+- 2.0.6 (2019-01-26): more adaptive to handle stdin and remove 'g:asyncrun_stdin'
+- 2.0.5 (2019-01-14): enable stdin by default on windows (fix cmake stdin warning on windows).
+- 2.0.4 (2019-01-13): new option `g:asyncrun_stdin`, set to 1 to enable stdin .
+- 2.0.3 (2019-01-04): new macro `$VIM_PATHNOEXT` (by @PietroPate)
+- 2.0.2 (2018-12-25): new `-strip` and `-append` option to control quickfix (by @bennyyip)
 - 2.0.1 (2018-04-29): new option `g:asyncrun_save` to save files.
 - 2.0.0 (2018-04-27): improve neovim compatability, handle `tcd` command in neovim.
 - 1.3.27 (2018-04-17): AsyncRun now supports range, try: `:%AsyncRun cat`
