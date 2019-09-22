@@ -234,7 +234,7 @@ function! s:mru.append(path) abort
   endif
 endfunction
 function! s:mru.version_check(ver) abort
-  if str2float(a:ver) < self.version
+  if str2float(string(a:ver)) < str2float(string(self.version))
     call s:print_error('Sorry, the version of MRU file is too old.')
     return 0
   else
@@ -316,7 +316,13 @@ function! neomru#_append() abort
     return
   endif
   call neomru#append(s:expand('%:p'))
-endfun
+endfunction
+function! neomru#_gather_file_candidates() abort
+  return neomru#_get_mrus().file.gather_candidates([], {'is_redraw': 0})
+endfunction
+function! neomru#_gather_directory_candidates() abort
+  return neomru#_get_mrus().directory.gather_candidates([], {'is_redraw': 0})
+endfunction
 
 function! neomru#append(filename) abort
   let path = s:fnamemodify(a:filename, ':p')
@@ -401,7 +407,9 @@ endfunction
 function! s:is_file_exist(path) abort
   let ignore = !empty(g:neomru#file_mru_ignore_pattern)
         \ && a:path =~ g:neomru#file_mru_ignore_pattern
-  return !ignore && (getftype(a:path) ==# 'file' || a:path =~ '^\h\w\+:')
+  return !ignore && (getftype(a:path) ==# 'file' ||
+			  \ getftype(a:path) ==# 'link' ||
+			  \ a:path =~ '^\h\w\+:')
 endfunction
 function! s:is_directory_exist(path) abort
   let ignore = !empty(g:neomru#directory_mru_ignore_pattern)
