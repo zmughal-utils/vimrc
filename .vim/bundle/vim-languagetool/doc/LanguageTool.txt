@@ -2,7 +2,7 @@
 *LanguageTool*
 
 Author:      Dominique Pellé <dominique.pelle@gmail.com>
-Last Change: 03 Mar 2017
+Last Change: 05 Apr 2020
 
 For Vim version 7.0 and above
 
@@ -84,8 +84,8 @@ The zip file contains the following files: >
 
 You have to enable plugins by adding these two lines in your |.vimrc| file: >
 
-  set nocompatible
-  filetype plugin on
+  :set nocompatible
+  :filetype plugin on
 
 Alternatively, if you prefer to use Vundle or Pathogen plugin managers,
 the plugin is available on github at:
@@ -117,18 +117,18 @@ Recent versions of LanguageTool require Java-8.
 4.2.1 Download the stand-alone version of LanguageTool~
 
 Download the stand-alone version of LanguageTool (LanguageTool-*.zip)
-from http://www.languagetool.org/, click on "LanguageTool stand-alone
-for your desktop" to download it. Unzip it: >
+from http://www.languagetool.org/, scroll down and click on
+"Desktop version for offline use" to download it. Unzip it:
 
-  $ unzip LanguageTool-3.6.zip
+  $ unzip LanguageTool-4.9.zip
 
-This should extract the file LanguageTool-3.6/languagetool-commandline.jar
+This should extract the file LanguageTool-4.9/languagetool-commandline.jar
 among several other files.
 
 4.2.2 Build LanguageTool from sources in git~
 
 If you prefer to build LanguageTool yourself from sources, you first need
-to install the pre-requisite packages. On Ubuntu, you need to install the
+to install the prerequisite packages. On Ubuntu, you need to install the
 following packages: >
 
   $ sudo apt-get install openjdk-8-jdk maven git
@@ -141,14 +141,14 @@ LanguageTool can then be downloaded and built with Maven as follows: >
 
 After the build, the command line version of LanguageTool can be found in: >
 
-  ./languagetool-standalone/target/LanguageTool-4.3-SNAPSHOT/LanguageTool-4.3-SNAPSHOT/languagetool-commandline.jar
+  ./languagetool-standalone/target/LanguageTool-5.0-SNAPSHOT/LanguageTool-5.0-SNAPSHOT/languagetool-commandline.jar
 
 4.3 Configuring the location of the jar file~
 
 After installing LanguageTool, you must specify the location of the file
 languagetool-commandline.jar in your $HOME/.vimrc file. Example: >
 
-  let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-4.3-SNAPSHOT/LanguageTool-4.3-SNAPSHOT/languagetool-commandline.jar'
+  :let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-5.0-SNAPSHOT/LanguageTool-5.0-SNAPSHOT/languagetool-commandline.jar'
 
 See section |languagetool-configuration| for more optional settings.
 
@@ -169,21 +169,34 @@ g:languagetool_jar                                       *g:languagetool_jar*
 
   Example: >
 
-  :let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-4.3-SNAPSHOT/LanguageTool-4.3-SNAPSHOT/languagetool-commandline.jar'
+  :let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-5.0-SNAPSHOT/LanguageTool-5.0-SNAPSHOT/languagetool-commandline.jar'
+
+g:languagetool_cmd                                       *g:languagetool_cmd*
+
+  Conversely, you could use this variable to specify by yourself the
+  command call. This variable takes priority over g:languagetool_jar.
+  This is useful for system package management installs like for
+  archlinux.
+
+  Example: >
+
+  :let g:languagetool_cmd='/usr/bin/languagetool'
+  :let g:languagetool_cmd='java -jar $HOME/languagetool/languagetool-standalone/target/LanguageTool-4.3-SNAPSHOT/LanguageTool-4.3-SNAPSHOT/languagetool-commandline.jar'
 
 g:languagetool_lang                                      *g:languagetool_lang*
 
   The language code to use for the language tool checker. If undefined,
   plugin tries to guess the language of the Vim spelling checker
-  'spelllang' or v:lang. If neither works, plugin defaults to
+  'spelllang' or v:lang. If neither work, plugin defaults to
   English US (en-US). Starting with LanguageTool-1.8, regional variants
-  of some languages can be specified. For languages with variants
-  (currently English German and Portuguese), it is necessary to specify the
-  variant in order for LanguageTool to signal spelling errors. In other
-  words, with  :set spelllang=en  LanguageTool only signals grammar
-  mistakes whereas with  :set spellllang=en_us LanguageTool signals
-  spelling mistakes and grammar mistakes. The valid language codes are: >
+  of some languages can be specified. For languages with variants,
+  it is necessary to specify the variant in order for LanguageTool
+  to signal spelling errors. In other words, with  :set spelllang=en
+  LanguageTool only signals grammar mistakes whereas with
+  :set spelllang=en_us LanguageTool signals spelling mistakes and
+  grammar mistakes. The valid language codes are: >
 
+    ar     Arabic
     ast    Asturian
     be     Belarusian
     br     Breton
@@ -206,16 +219,16 @@ g:languagetool_lang                                      *g:languagetool_lang*
     es     Spanish
     fa     Persian
     fr     French
+    ga     Irish
     gl     Galician
     it     Italian
     ja     Japanese
     km     Khmer
-    lt     Lithuanian
-    ml     Malayalam
     nl     Dutch
     pl     Polish
     pt     Portuguese
     pt-BR  Portuguese (Brazil)
+    pt-MZ  Portuguese (Mozambique)
     pt-PT  Portuguese (Portugal)
     ro     Romanian
     ru     Russian
@@ -234,13 +247,24 @@ g:languagetool_lang                                      *g:languagetool_lang*
 
 g:languagetool_disable_rules                   *g:languagetool_disable_rules*
 
-  This variable specifies checker rules which are disabled. Each disabled
-  rule must be comma separated.
+  This variable specifies checker rules to disable. The set of disabled rule
+  mustbe comma separated.
   Default value set by plugin is: WHITESPACE_RULE,EN_QUOTES
+
+  Example: >
+
+  :let g:languagetool_disable_rules='ENGLISH_WORD_REPEAT_BEGINNING_RULE,WHITESPACE_RULE,EN_QUOTES,FRENCH_WHITESPACE,UPPERCASE_SENTENCE_START,APOS'
 
 g:languagetool_enable_rules                     *g:languagetool_enable_rules*
 
-  This variable specifies checker rules which are enabled.
+  Some LanguageTool rules are disabled by default (rules that contain
+  default="off" in grammar.xml) because they might be stylistic, nitpicky
+  or give frequent positive.
+
+  Those rules can be enabled by setting the g:languagetool_enable_rules
+  variable. Example: >
+
+  :let g:languagetool_enable_rules=PASSIVE_VOICE
 
 g:languagetool_disable_categories         *g:languagetool_disable_categories*
 
@@ -269,19 +293,17 @@ You can also customize the following syntax highlighting groups: >
 
 For example, to highlight grammar errors in blue, and spelling errors in
 red, with a curly underline in vim GUIs that support it, add this into your
-colorscheme:
+colorscheme: >
 
-```
-hi LanguageToolGrammarError  guisp=blue gui=undercurl guifg=NONE guibg=NONE ctermfg=white ctermbg=blue term=underline cterm=none
-hi LanguageToolSpellingError guisp=red  gui=undercurl guifg=NONE guibg=NONE ctermfg=white ctermbg=red  term=underline cterm=none
-```
+  :hi LanguageToolGrammarError  guisp=blue gui=undercurl guifg=NONE guibg=NONE ctermfg=white ctermbg=blue term=underline cterm=none
+  :hi LanguageToolSpellingError guisp=red  gui=undercurl guifg=NONE guibg=NONE ctermfg=white ctermbg=red  term=underline cterm=none
 
 ============================================================================
 
 6. Features                                           *languagetool-features*
 
 The LanguageTool plugin defines 2 commands |:LanguageToolCheck| and
-|:LanguageToolClean|.
+|:LanguageToolClear|.
 
 :LanguageToolCheck                                       *:LanguageToolCheck*
 

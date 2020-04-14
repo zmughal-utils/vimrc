@@ -105,21 +105,21 @@ Recent versions of LanguageTool require Java-8.
 ## Download the stand-alone version of LanguageTool
 
 Download the stand-alone version of LanguageTool (LanguageTool-*.zip)
-from http://www.languagetool.org/, click on "LanguageTool stand-alone
-for your desktop" to download it. Unzip it:
+from http://www.languagetool.org/, scroll down and click on
+"Desktop version for offline use" to download it. Unzip it:
 ```
-  $ unzip LanguageTool-3.6.zip
+  $ unzip LanguageTool-4.9.zip
 ```
-This should extract the file LanguageTool-3.6/languagetool-commandline.jar
+This should extract the file LanguageTool-4.9/languagetool-commandline.jar
 among several other files.
 
 ## Build LanguageTool from sources in git
 
 If you prefer to build LanguageTool yourself from sources, you first need
-to install the pre-requisite packages. On Ubuntu, you need to install the
+to install the prerequisite packages. On Ubuntu, you need to install the
 following packages:
 ```
-  $ sudo apt-get install openjdk-8-jdk mvn git
+  $ sudo apt-get install openjdk-8-jdk maven git
 ```
 LanguageTool can then be downloaded and built with Maven as follows:
 ```
@@ -129,7 +129,7 @@ LanguageTool can then be downloaded and built with Maven as follows:
 ```
 After the build, the command line version of LanguageTool can be found in:
 ```
-  ./languagetool-standalone/target/LanguageTool-3.7-SNAPSHOT/LanguageTool-3.7-SNAPSHOT/languagetool-commandline.jar
+  ./languagetool-standalone/target/LanguageTool-5.0-SNAPSHOT/LanguageTool-5.0-SNAPSHOT/languagetool-commandline.jar
 ```
 The version number in the path can vary.
 
@@ -148,18 +148,18 @@ checker program. Default is empty.
 Example:
 
 ```
-:let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-3.7-SNAPSHOT/LanguageTool-3.7-SNAPSHOT/languagetool-commandline.jar'
+:let g:languagetool_jar='$HOME/languagetool/languagetool-standalone/target/LanguageTool-5.0-SNAPSHOT/LanguageTool-5.0-SNAPSHOT/languagetool-commandline.jar'
 ```
 
 ## `g:languagetool_lang`
 
 This variable specifies the language code to use for the language tool checker.
 If undefined, plugin tries to guess the language of the Vim spelling checker
-'spelllang' or v:lang. If neither works, plugin defaults to English US (en-US).
-For languages with variants (currently English German and Portuguese), it is
+'spelllang' or v:lang. If neither work, plugin defaults to English US (en-US).
+For languages with variants (currently English, German and Portuguese), it is
 necessary to specify the variant in order for LanguageTool to signal spelling
 errors. In other words, with  :set spelllang=en  LanguageTool only signals
-grammar mistakes whereas with  :set spellllang=en_us LanguageTool signals
+grammar mistakes whereas with  :set spelllang=en_us LanguageTool signals
 spelling mistakes and grammar mistakes. The valid language codes are:
 
 ```
