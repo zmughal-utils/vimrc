@@ -11,7 +11,7 @@ vimproc uses an external DLL file.
 
 Supported platforms:
 * Windows 32/64bit (Compiled by MinGW or Visual Studio)
-* Mac OS X (10.5 or later)
+* macOS (10.5 or later)
 * Linux
 * Cygwin
 * Solaris
@@ -102,7 +102,9 @@ or want to build manually then read on.
 
     $ make
 
-### Mac OS X
+### macOS
+
+Note: Users of macOS 10.15 (Catalina) cannot directly use this library with the system-provided vi. (SIP prevents binaries in the write-only `/usr/bin` directory from calling `dlopen` on unsigned libraries like `vimproc_mac.so`.) The simplest solution is to build or install another version of vi in a non-SIP protected location. For example, using homebrew, `brew install vim` (or `nvim`) will install an unrestricted executable in `/usr/local/bin`. (Don't forget to set up aliases or `$PATH` so that you don't accidentally invoke the system `vi`.)
 
     $ make
 
@@ -115,6 +117,10 @@ Build for i386 and x86-64:
 ### FreeBSD
 
     $ gmake
+
+If you want to use BSD make, use the platform specific makefile:
+
+    $ make -f make_bsd.mak
 
 ### Solaris
 
@@ -143,26 +149,18 @@ Windows using MinGW (64bit Vim):
 
 Windows using Visual Studio (32bit/64bit Vim):
 
-    $ nmake -f make_msvc.mak nodebug=1
+    $ nmake -f make_msvc.mak
 
-Note: To build with Visual Studio, you must install Windows SDK and run from
-VS command prompt.
-https://github.com/Shougo/vimproc.vim/issues/58
-
-If you use MSVC 11 or later, you need to specify where the Win32.mak file is,
-e.g.:
-
-    $ nmake -f make_msvc.mak nodebug=1 "SDK_INCLUDE_DIR=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include"
-
+You should run this from VS command prompt.
 The architecture will be automatically detected, but you can also specify the
 architecture explicitly. E.g.:
 
-    32bit: nmake -f make_msvc.mak nodebug=1 CPU=i386
-    64bit: nmake -f make_msvc.mak nodebug=1 CPU=AMD64
+    32bit: nmake -f make_msvc.mak CPU=i386
+    64bit: nmake -f make_msvc.mak CPU=AMD64
 
 Cygwin:
 
-    $ make -f make_cygwin.mak
+    $ make
 
 Note: The `vimproc_cygwin.dll` compiled in Cygwin won't work with Windows Vim.
 
