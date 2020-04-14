@@ -5,7 +5,7 @@
 " Version:      2.0.0.
 let s:k_version = '200'
 " Created:      03rd Dec 2015
-" Last Update:  20th Oct 2016
+" Last Update:  19th Dec 2019
 "------------------------------------------------------------------------
 " Description:
 "       Tests to autoload/lh/dev/cpp/types.vim functions
@@ -274,7 +274,7 @@ function! s:Test_remove_reference() abort
     AssertEqual (lh#dev#cpp#types#remove_reference('const std::string'),  'const std::string')
 endfunction
 
-" Function: s:Test_remove_reference() {{{2
+" Function: s:Test_remove_cv() {{{2
 function! s:Test_remove_cv() abort
     AssertEqual (lh#dev#cpp#types#remove_cv('std::string'), 'std::string')
     AssertEqual (lh#dev#cpp#types#remove_cv('std::string const'),  'std::string')
@@ -282,8 +282,86 @@ function! s:Test_remove_cv() abort
     AssertEqual (lh#dev#cpp#types#remove_cv('T const*'), 'T const*')
     AssertEqual (lh#dev#cpp#types#remove_cv('T const* const'), 'T const*')
     AssertEqual (lh#dev#cpp#types#remove_cv('T const* const*'), 'T const* const*')
+
+    " std::remove_cv doesn't do anything on const references, the references
+    " shall be removed first!
+    AssertEqual (lh#dev#cpp#types#remove_cv('T const&'), 'T const&')
+    AssertEqual (lh#dev#cpp#types#remove_cv('const T&'), 'const T&')
 endfunction
 
+" Function: s:Test_add_const() {{{2
+function! s:Test_add_const() abort
+  let cleanup = lh#on#exit()
+        \.restore_option('cpp_place_const_after_type')
+  try
+    " <<< EAST const
+    let b:cpp_place_const_after_type = 1
+    " Already there
+    AssertEqual (lh#dev#cpp#types#add_const('std::string const'),  'std::string const')
+    AssertEqual (lh#dev#cpp#types#add_const('const std::string'),  'const std::string')
+    AssertEqual (lh#dev#cpp#types#add_const('T const* const'), 'T const* const')
+    " References
+    " std::add_const doesn't do anything on const references, the references
+    " shall be removed first!
+    AssertEqual (lh#dev#cpp#types#add_const('T const&'), 'T const&')
+    AssertEqual (lh#dev#cpp#types#add_const('const T&'), 'const T&')
+    AssertEqual (lh#dev#cpp#types#add_const('T&'), 'T&')
+    " Multi-parts => force east const
+    AssertEqual (lh#dev#cpp#types#add_const('T const*'), 'T const* const')
+    AssertEqual (lh#dev#cpp#types#add_const('T const* const*'), 'T const* const* const')
+    " east-const added
+    AssertEqual (lh#dev#cpp#types#add_const('std::string'), 'std::string const')
+
+    " <<< const WEST
+    let b:cpp_place_const_after_type = 0
+    " Already there
+    AssertEqual (lh#dev#cpp#types#add_const('std::string const'),  'std::string const')
+    AssertEqual (lh#dev#cpp#types#add_const('const std::string'),  'const std::string')
+    AssertEqual (lh#dev#cpp#types#add_const('T const* const'), 'T const* const')
+    " References
+    " std::add_const doesn't do anything on const references, the references
+    " shall be removed first!
+    AssertEqual (lh#dev#cpp#types#add_const('T const&'), 'T const&')
+    AssertEqual (lh#dev#cpp#types#add_const('const T&'), 'const T&')
+    AssertEqual (lh#dev#cpp#types#add_const('T&'), 'T&')
+    " Multi-parts => force east const
+    AssertEqual (lh#dev#cpp#types#add_const('T const*'), 'T const* const')
+    AssertEqual (lh#dev#cpp#types#add_const('T const* const*'), 'T const* const* const')
+    " const-west added
+    AssertEqual (lh#dev#cpp#types#add_const('std::string'), 'const std::string')
+  finally
+    call cleanup.finalize()
+  endtry
+endfunction
+
+" Function: s:Test_const() {{{2
+function! s:Test_const() abort
+  Assert lh#dev#cpp#types#is_const('const int')
+  Assert lh#dev#cpp#types#is_const('int const')
+  Assert lh#dev#cpp#types#is_const('const unsigned long int')
+  Assert lh#dev#cpp#types#is_const('unsigned long int const')
+
+  AssertEquals(lh#dev#cpp#types#remove_cv('const int'), 'int')
+  AssertEquals(lh#dev#cpp#types#remove_cv('int const'), 'int')
+  AssertEquals(lh#dev#cpp#types#remove_cv('const unsigned long int'), 'unsigned long int')
+  AssertEquals(lh#dev#cpp#types#remove_cv('unsigned long int const'), 'unsigned long int')
+
+  Assert lh#dev#cpp#types#is_const('unsigned long int* const')
+  Assert ! lh#dev#cpp#types#is_const('const unsigned long int*')
+  Assert ! lh#dev#cpp#types#is_const('unsigned long int const*')
+
+  AssertEquals(lh#dev#cpp#types#remove_cv('unsigned long int* const'), 'unsigned long int*')
+  AssertEquals(lh#dev#cpp#types#remove_cv('const unsigned long int*'), 'const unsigned long int*')
+  AssertEquals(lh#dev#cpp#types#remove_cv('unsigned long int const*'), 'unsigned long int const*')
+
+  Assert ! lh#dev#cpp#types#is_const('unsigned long int* const *')
+  Assert lh#dev#cpp#types#is_const('unsigned long int* const * const')
+  Assert ! lh#dev#cpp#types#is_const('const unsigned long int* const *')
+
+  AssertEquals(lh#dev#cpp#types#remove_cv('unsigned long int* const *'), 'unsigned long int* const *')
+  AssertEquals(lh#dev#cpp#types#remove_cv('unsigned long int* const * const'), 'unsigned long int* const *')
+  AssertEquals(lh#dev#cpp#types#remove_cv('const unsigned long int* const *'), 'const unsigned long int* const *')
+endfunction
 " }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save

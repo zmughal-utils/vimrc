@@ -7,7 +7,7 @@
 " Version:	2.0.0
 let s:k_version = 200
 " Created:      09th Sep 2013
-" Last Update:  05th Dec 2016
+" Last Update:  25th Nov 2019
 "------------------------------------------------------------------------
 " Description:
 "       API functions to obtain symbol declarations
@@ -78,7 +78,7 @@ endfunction
 "------------------------------------------------------------------------
 " Function: lh#dev#tags#fetch(feature) {{{3
 function! lh#dev#tags#fetch(feature) abort
-  let id = eval(s:TagsSelectPolicy())
+  let id = lh#dev#tags#current_id()
 
   let cleanup = lh#on#exit()
         \.restore('&isk')
@@ -115,6 +115,12 @@ function! lh#dev#tags#fetch(feature) abort
 endfunction
 
 " ## Internal functions {{{1
+
+" Function: lh#dev#tags#current_id() {{{3
+function! lh#dev#tags#current_id() abort
+  let id = eval(s:TagsSelectPolicy())
+  return id
+endfunction
 
 function! s:TagsSelectPolicy()
   let select_policy = lh#option#get('tags_select', "expand('<cword>')", 'bg')

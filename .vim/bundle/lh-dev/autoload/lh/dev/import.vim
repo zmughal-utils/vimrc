@@ -5,7 +5,7 @@
 " Version:      2.0.0
 let s:k_version = '200'
 " Created:      21st Apr 2015
-" Last Update:  20th Feb 2018
+" Last Update:  25th Nov 2019
 "------------------------------------------------------------------------
 " Description:
 "       Generic insertion of import/#include statements
@@ -107,6 +107,23 @@ function! lh#dev#import#add_any(filenames, ...) abort
 endfunction
 
 "------------------------------------------------------------------------
+" ## Overriddable functions {{{1
+" # Import standard things
+" Function: lh#dev#import#not_tagged(symbol) {{{3
+function! lh#dev#import#not_tagged(symbol) abort
+  let files = lh#dev#option#call('import#_not_tagged', &ft, a:symbol)
+  if empty(files) | return {'is_known': 0} | endif
+  " strip surrounding <> -> [1:-2]
+  let idx = lh#list#find_if_fast(files, 'lh#dev#import#is_already_imported(v:val[1:-2], {})')
+  return idx < 0
+        \ ? {'is_known': 1, 'is_included': 0, 'filename': files[0]}
+        \ : {'is_known': 1, 'is_included': 1, 'filename': files[idx]}
+endfunction
+
+" Function: lh#dev#import#_not_tagged(symbol) {{{3
+function! lh#dev#import#_not_tagged(symbol) abort
+  return []
+endfunction
 " ## Internal functions {{{1
 
 " # Error messages {{{2
@@ -262,25 +279,40 @@ endfunction
 function! lh#dev#import#_insert_import(...) abort
   " If there are several choices, ask which one to use.
   " But first: check the files.
-  let [id, info] = lh#dev#tags#fetch("insert-include")
+  try
+    let [id, info] = lh#dev#tags#fetch("insert-include")
 
-  let files = {}
-  for t in info
-    if ! has_key(files, t.filename)
-      let files[t.filename] = {}
+    let files = {}
+    for t in info
+      if ! has_key(files, t.filename)
+        let files[t.filename] = {}
+      endif
+      let files[t.filename][t.kind[0]] = ''
+    endfor
+    " NB: there shouldn't be any to prioritize between p and f kinds as the
+    " filtering on include files shall get rid of the f kinds (that exist along
+    " with a prototype)
+    if len(files) > 1
+      call lh#common#error_msg("insert-include: too many acceptable tags for `"
+            \ .id."': ".string(files))
+      return
     endif
-    let files[t.filename][t.kind[0]] = ''
-  endfor
-  " NB: there shouldn't be any to prioritize between p and f kinds as the
-  " filtering on include files shall get rid of the f kinds (that exist along
-  " with a prototype)
-  if len(files) > 1
-    call lh#common#error_msg("insert-include: too many acceptable tags for `"
-          \ .id."': ".string(files))
-    return
-  endif
-  mark '
-  let fullfilename = keys(files)[0]
+    let fullfilename = keys(files)[0]
+    mark '
+  catch /insert-include: no tags for/
+    let id = lh#dev#tags#current_id()
+    mark '
+    let next = lh#dev#import#not_tagged(id)
+    if ! next.is_known
+      throw v:exception
+    elseif next.is_included
+      call lh#common#warning_msg("insert-include: ".(next.filename).", where `"
+            \ .id."' is defined, is already included")
+      echo "Use CTRL-O to go back to previous cursor position"
+      return
+    endif
+    let fullfilename = next.filename
+  endtry
   let filename = fullfilename " this is the full filename
   " echo filename
   try

@@ -7,7 +7,7 @@
 " Version:	2.0.0
 let s:k_version = '2.0.0'
 " Created:	10th Feb 2009
-" Last Update:	31st Aug 2018
+" Last Update:	19th Dec 2019
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
@@ -18,6 +18,9 @@ let s:k_version = '2.0.0'
 " 	        - #_of_var cannot work on parameters
 " 	        + Fix lh#dev#cpp#types#const_correct_type() for vim 7.4.152
 "               ~ Update to lh-tags 3.0 new API
+"               + lh#dev#cpp#types#add_const()
+"               + Fix const related functions to support multi-levels types
+"                 (T**)
 " 	v1.5.0: - #_of_var
 " 	v1.3.9: - better magic/nomagic neutrality
 " 	        - snake_case enforced
@@ -82,10 +85,34 @@ endfunction
 " ## Exported functions {{{1
 
 " # const related functions {{{2
-" Function:	s:ExtractPattern(str, pat)                        : str	{{{3
+" TODO: handle things like C<T&>, C<T const&>...
+" Function:	s:DecomposeType(type)                             : list {{{3
+function! s:DecomposeType(type) abort
+  let parts = split(a:type, '\v\zs\ze[*&]')
+  return parts
+endfunction
+
+" Function:	s:ExtractPattern(str, pat)                        : str  {{{3
 " Note:		Internal, used by is_base_type
 function! s:ExtractPattern(expr, pattern) abort
   return substitute(a:expr, '\v^\s*%('. a:pattern .')\s*', '', 'g')
+endfunction
+
+" Function: lh#dev#cpp#types#add_const(type) {{{3
+" @since Version 2.0.0
+function! lh#dev#cpp#types#add_const(type) abort
+  if lh#dev#cpp#types#is_const(a:type)
+    return a:type
+  elseif a:type =~ '&' " std::add_const<T&> -> T&
+    return a:type
+  elseif a:type =~ '[*]' " multi parts -> east const
+    let fmt = '%s const'
+  elseif lh#ft#option#get('place_const_after_type', 'cpp', 1)
+    let fmt = '%s const'
+  else
+    let fmt = 'const %s'
+  endif
+  return printf(fmt, a:type)
 endfunction
 
 " Function:	lh#dev#cpp#types#is_base_type(typeName)           : bool	{{{3
@@ -162,31 +189,17 @@ endfunction
 
 " Function: lh#dev#cpp#types#is_const(type)                   : bool {{{3
 function! lh#dev#cpp#types#is_const(type) abort
-  return a:type =~ '\v<const>'
+  call lh#assert#value(a:type).not().empty()
+  let parts = s:DecomposeType(a:type)
+  return parts[-1] =~ '\v<const>'
 endfunction
 
 " Function: lh#dev#cpp#types#remove_cv(type)                  : string {{{3
-" FIXME: 'T const * const' -> 'T const*'
 function! lh#dev#cpp#types#remove_cv(type) abort
-  let parts = split(a:type, '\v\s+|\zs\ze[*&]')
-  let b = 0
-  let e = len(parts)-1
-  if e==-1
-    return ''
-  endif
-  if e == 1 && parts[0] =~ '\v<(const|volatile)>'
-    return substitute(a:type, '\v^\s*<(const|volatile)>\s*', '', '')
-  endif
-  return substitute(a:type, '\v\s*<(const|volatile)>\s*$', '', '')
-
-
-  " This way of proceding alters the spaces between tokens
-  if e == 1 && parts[0] =~ '\v<(const|volatile)>'
-    let b += 1
-  elseif parts[e] =~ '\v<(const|volatile)>'
-    let e -= 1
-  endif
-  return join(parts[b : e], ' ')
+  call lh#assert#value(a:type).not().empty()
+  let parts = s:DecomposeType(a:type)
+  let parts[-1] = substitute(parts[-1], '\v\s*<(const|volatile)>\s*', '', '')
+  return join(parts, '')
 endfunction
 
 " # References related functions {{{2
