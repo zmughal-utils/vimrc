@@ -25,8 +25,6 @@ The following mappings apply to all filetypes (unless specified otherwise, or sp
 | **keys**                | expands into ..             | surrounds the selection with ... <sup>2</sup> | surrounds the current ... |
 | `(`                     | `(<cursor>)«»`              | `(<selection>)`                               | word                      |
 | `[`                     | `[<cursor>]«»`              | <sup>1</sup>                                  | <sup>1</sup>              |
-| `[` after a `[`         | `[[<cursor>]]«»`            | n/a                                           | n/a                       |
-| `]` before `]]`         | close all `]]`              | n/a                                           | n/a                       |
 | `<leader>[`             |                             | `[<selection>]`                               | word                      |
 | `{`                     | `{<cursor>}«»`<sup>3</sup>  | `{<selection>}`                               | word                      |
 | `<leader>{`             |                             | `{\n<selection>\n}«»`                         | line                      |
@@ -39,7 +37,7 @@ The following mappings apply to all filetypes (unless specified otherwise, or sp
 #### Notes:
   * <sup>1</sup> Not defined to avoid hijacking default vim key bindings.
   * <sup>2</sup> The visual mode mappings do not surround the current marker/placeholder selected, but trigger the INSERT-mode mappings instead.
-  * <sup>3</sup> The exact behavior of this mapping has changed with release r719 (on Google Code). Now, no newline is inserted by default. However, hitting `<cr>` in the middle of a pair of curly-bracket will expand into `{\n<cursor>\n}`.
+  * <sup>3</sup> No newline is inserted by default. However, hitting `<cr>` in the middle of a pair of curly-brackets will expand into `{\n<cursor>\n}`.
   * <sup>4</sup> This mapping is neutralized for text filetypes -- the list of text-filetypes is defined in [`lh#ft#is_text()`](http://github.com/LucHermitte/lh-vim-lib)
   * `«»` represents a marker/placeholder, it may be expanded with other characters like `<++>` depending on your preferences.
   * These mappings can be disabled from the `.vimrc` by setting `g:cb_no_default_brackets` to 1 (default: 0)
@@ -49,15 +47,21 @@ The following mappings apply to all filetypes (unless specified otherwise, or sp
 See [lh-cpp documentation](https://github.com/LucHermitte/lh-cpp#brackets) for the complete mappings table.
 
 The main differences from the global table are:
- * `<` will result in `<<cursor>>` if it follows `#include`, `template`,
-   `typename` or `_cast`.
- * `{` on the same line of a `struct` or `class` will result in `{<cursor>};`.
+ * `}` jumps to the next non whitespace/newline that is a `}`
  *  In visual mode, `<localleader>{` surrounds the selection with a pair of
     curly brackets (and newlines are introduced).
  * `<tt>` is recognized as an opening bracket (I use it a lot to write Doxygen
    _code_ instead of `\c` when I need to type several things).
  * `;` will try to close parenthesis -- set `(bpg):[{ft}_]semicolon_closes_bracket` to 0 to inhibit this setting.
  * `<bs>` take care of semi-colons after the closing curly-bracket -- set `(bpg):[{ft}_]semicolon_closes_bracket` to 0 to inhibit this setting.
+
+| in mode                                                 | insert            |
+| :---------------------------------------------          | :---------------- |
+| **keys**                                                | expands into ..   |
+| `<` after `#include`, `template`, `typename` or `_cast` | `<<cursor>>;`     |
+| `{` after `struct`, `class`, `enum` or `union`          | `{<cursor>};`     |
+| `[` after a `[`                                         | `[[<cursor>]]«»`  |
+| `]` before `]]`                                         | close all `]]`    |
 
 ### HTML mappings
 

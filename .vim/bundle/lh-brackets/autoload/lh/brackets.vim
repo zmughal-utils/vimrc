@@ -4,9 +4,9 @@
 "               <URL:http://github.com/LucHermitte/lh-brackets>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.5.3
+" Version:      3.5.5
 " Created:      28th Feb 2008
-" Last Update:  21st Jan 2019
+" Last Update:  26th Nov 2019
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -24,6 +24,8 @@
 "
 "------------------------------------------------------------------------
 " History:
+" Version 3.6.0:  26th Nov 2019
+"               * Fix When -close is provided but not -open
 " Version 3.5.3:  21st Jan 2019
 "               * Fix <BS> when cb_no_default_brackets is true
 " Version 3.5.2:  12th Sep 2018
@@ -459,10 +461,14 @@ function! s:thereIsAnException(Ft_exceptions) abort
 endfunction
 
 "------------------------------------------------------------------------
-" Function: lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTriggers,Ft_exception [,context]) {{{2
+" Function: lh#brackets#opener(trigger, escapable, nl, Open, close, areSameTriggers,Ft_exception [,context]) {{{2
 " NB: this function is made public because IMAPs.vim need it to not be private
 " (s:)
-function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTriggers, Ft_exceptions, ...) abort
+" Remarks:
+" - a:Close shall always be a string. Indeed:
+"   - When a:Open is a function, a:Close is ignored
+"   - Otherwise, a:Close is handled as if it was a string.
+function! lh#brackets#opener(trigger, escapable, nl, Open, close, areSameTriggers, Ft_exceptions, ...) abort
   if s:thereIsAnException(a:Ft_exceptions)
     return a:trigger
   endif
@@ -477,22 +483,22 @@ function! lh#brackets#opener(trigger, escapable, nl, Open, Close, areSameTrigger
     let e = (escaped ? '\' : "")
     " todo: support \%(\) with vim
     " let open = '\<c-v\>'.a:Open
-    " let close = e.'\<c-v\>'.a:Close
+    " let close = e.'\<c-v\>'.a:close
     let open = a:Open
-    let close = e.a:Close
+    let close = e.a:close
   elseif escaped
     return a:trigger
   elseif a:areSameTriggers && lh#option#get('cb_jump_on_close',1) && lh#position#char_at_mark('.') == a:trigger
     return s:Jump()
   else
     let open = a:Open
-    let close = a:Close
+    let close = a:close
   endif
 
   if ! empty(a:nl)
     " Cannot use the following generic line because &inckey does not always
     " work and !cursorhere! does not provokes a reindentation
-    "  :return lh#map#insert_seq(a:trigger, a:Open.a:nl.'!cursorhere!'.a:nl.a:Close.'!mark!')
+    "  :return lh#map#insert_seq(a:trigger, a:Open.a:nl.'!cursorhere!'.a:nl.a:close.'!mark!')
     " hence the following solution
     return call('lh#map#insert_seq', [a:trigger, open.a:nl.close.'!mark!\<esc\>O']+a:000)
   else
@@ -924,7 +930,7 @@ function! lh#brackets#define(bang, ...) abort
     let areSameTriggers = options[0] == options[1]
     let map_ctx = empty(context) ? '' : ','.string(context)
     let inserter = 'lh#brackets#opener('.lh#brackets#_string(trigger).','. escapable.',"'.(nl).
-          \'",'. lh#brackets#_string(l:Open).','.lh#brackets#_string(l:Close).','.string(areSameTriggers).','.string(l:Exceptions).map_ctx.')'
+          \'",'. lh#brackets#_string(l:Open).','.lh#brackets#_string(options[1]).','.string(areSameTriggers).','.string(l:Exceptions).map_ctx.')'
     call s:DefineImap(trigger, inserter, isLocal)
     if ! areSameTriggers
       let inserter = 'lh#brackets#closer('.lh#brackets#_string(options[1]).','.lh#brackets#_string (l:Close).','.lh#brackets#_string(l:Exceptions).map_ctx.')'
