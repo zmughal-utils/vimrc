@@ -7,8 +7,8 @@ let g:test#plugin_path = expand('<sfile>:p:h:h')
 
 let g:test#default_runners = {
   \ 'Ruby':       ['Rails', 'M', 'Minitest', 'RSpec', 'Cucumber'],
-  \ 'JavaScript': ['Ava', 'CucumberJS', 'Intern', 'TAP', 'Karma', 'Lab', 'Mocha', 'Jasmine', 'Jest', 'ReactScripts', 'WebdriverIO'],
-  \ 'Python':     ['DjangoTest', 'PyTest', 'PyUnit', 'Nose', 'Nose2'],
+  \ 'JavaScript': ['Ava', 'CucumberJS', 'Intern', 'TAP', 'Karma', 'Lab', 'Mocha', 'Jasmine', 'Jest', 'ReactScripts', 'WebdriverIO', 'Cypress'],
+  \ 'Python':     ['DjangoTest', 'PyTest', 'PyUnit', 'Nose', 'Nose2', 'Mamba'],
   \ 'Elixir':     ['ExUnit', 'ESpec'],
   \ 'Elm':        ['ElmTest'],
   \ 'Erlang':     ['CommonTest', 'EUnit'],
@@ -18,13 +18,14 @@ let g:test#default_runners = {
   \ 'CSharp':     ['Xunit', 'DotnetTest'],
   \ 'Shell':      ['Bats'],
   \ 'Swift':      ['SwiftPM'],
-  \ 'VimL':       ['Themis', 'VSpec', 'Vader'],
+  \ 'VimL':       ['Themis', 'VSpec', 'Vader', 'Testify', 'Vroom'],
   \ 'Lua':        ['Busted'],
   \ 'PHP':        ['Codeception', 'Dusk', 'PHPUnit', 'Behat', 'PHPSpec', 'Kahlan', 'Peridot'],
   \ 'Perl':       ['Prove'],
   \ 'Racket':     ['RackUnit'],
   \ 'Java':       ['MavenTest', 'GradleTest'],
   \ 'Scala':      ['SbtTest', 'BloopTest'],
+  \ 'Haskell':    ['StackTest'],
   \ 'Crystal':    ['CrystalSpec'],
 \}
 
@@ -33,7 +34,8 @@ let g:test#custom_transformations = get(g:, 'test#custom_transformations', {})
 let g:test#runner_commands = get(g:, 'test#runner_commands', [])
 
 command! -nargs=* -bar TestNearest call test#run('nearest', split(<q-args>))
-command! -nargs=* -bar TestFile    call test#run('file', split(<q-args>))
+command! -nargs=* -bar -complete=file
+      \                TestFile    call test#run('file', split(<q-args>))
 command! -nargs=* -bar TestSuite   call test#run('suite', split(<q-args>))
 command! -nargs=* -bar TestLast    call test#run_last(split(<q-args>))
 command!          -bar TestVisit   call test#visit()

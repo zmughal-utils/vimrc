@@ -106,6 +106,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:ReactScripts*
 :ReactScripts [args]         Uses the `react-scripts test` command.
 
+                                                *test-:Cypress*
+:Cypress [args]              Uses the `cypress` command.
+
                                                 *test-:Mocha*
 :Mocha [args]                Uses the `mocha` command.
 
@@ -132,6 +135,9 @@ In all commands [args] are forwarded to the underlying test runner.
 
                                                 *test-:PyUnit*
 :PyUnit [args]               Uses the `unittest` `test` command.
+
+                                                *test-:Mamba*
+:Mamba [args]                Uses the `mamba` `test` command.
 
                                                 *test-:ElmTest*
 :ElmTest [args]              Uses the `elm-test` command.
@@ -191,6 +197,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:Themis*
 :Themis [args]               Uses the `themis` command.
 
+                                                *test-:Vroom*
+:Vroom [args]                Uses the `vroom` command.
+
                                                 *test-:Busted*
 :Busted [args]               Uses the `busted` command.
 
@@ -236,6 +245,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:SwiftPM*
 :SwiftPM [args]              Uses the `swift test` command.
 
+                                                *test-:StackTest*
+:StackTest [args]            Uses the `stack test` command.
+
 
 STRATEGIES                                      *test-strategies*
 
@@ -246,7 +258,7 @@ AsyncRun ~
 Runs test commands asynchronously using new APIs in Vim 8 and NeoVim.
 Requires AsyncRun plugin.
 >
-  let test#strategy = 'asyncrun'
+  let test#strategy = 'asyncrun' or 'asyncrun_background'
 <
 Basic (default) ~
 
@@ -316,12 +328,26 @@ Requires the Vimux plugin and Tmux.
 >
   let test#strategy = 'vimux'
 <
+Tmuxify ~
+
+Runs test commands in a small Tmux pane at the bottom of your Terminal.
+Requires the Tmuxify plugin and Tmux.
+>
+  let test#strategy = 'tmuxify'
+<
 Tslime ~
 
 Runs test commands in a Tmux pane you specify. Requires the Tslime.vim plugin
 and Tmux.
 >
   let test#strategy = 'tslime'
+<
+Slimux ~
+
+Runs test commands in a Tmux pane you specify. Requires the slimux plugin and
+Tmux.
+>
+  let test#strategy = 'slimux'
 <
 Vim Tmux Runner ~
 
@@ -368,6 +394,35 @@ You can then use this strategy this way:
   let test#strategy = 'kitty'
 <
 
+Shtuff ~
+
+This strategy lets you run commands in a remote terminal without needing tools
+like tmux or special terminals such as Kitty.
+
+Before you can run tests using this strategy, you will need to have a terminal
+setup as a receiver, and also you'll need to set `g:shtuff_receiver` in your
+vimrc file.
+
+In your terminal of choice:
+
+>
+$ shtuff as devrunner
+<
+
+And in your vimrc:
+
+>
+let g:shtuff_receiver = 'devrunner'
+<
+
+asyncrun_background | asyncrun_background_term ~
+
+These are hardcoded solutions and will not be affected by your global `AsyncRun`
+settings. If you want to switch between them then change `test#strategy`.
+
+Note: that the base `asyncrun` strategy will be affected by your global asyncrun
+settings.
+
 QUICKFIX STRATEGIES                               *test-quickfix-strategies*
 
 If you want your test results to appear in the |quickfix| window, use one of the
@@ -377,6 +432,7 @@ following strategies:
   * Neomake
   * MakeGreen
   * Dispatch.vim
+  * asyncrun_background
 
 Regardless of which you pick, it's recommended you have Dispatch.vim installed as the
 strategies will automatically use it to determine the correct |compiler|, ensuring the
@@ -489,16 +545,20 @@ working directory for running tests:
 >
   let test#project_root = "/path/to/your/project"
 <
-If you're using either the Vim8 Terminal or Neovim strategy, you can easily configure the position of
-the terminal split window (see `:help opening-window`) with:
->
-  let test#vim#term_position = "topleft"
-<
-for vim and
+Both the `neovim` and `Vim8 Terminal` strategy will open a split window on the
+bottom by default, but you can configure a different position or orientation.
+Whatever you put here is passed to `new` - so, you may also specify size (see
+`:help opening-window` or `:help new` for more info):
 >
   let test#neovim#term_position = "topleft"
+  let test#neovim#term_position = "vert"
+  let test#neovim#term_position = "vert botright 30"
 <
-for neovim
+for neovim and
+>
+  let test#vim#term_position = "belowright"
+<
+for vim
 
 
 PROJECTIONIST INTEGRATION                       *test-projectionist*
