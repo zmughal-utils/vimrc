@@ -3,6 +3,11 @@
 
 highlight ColorColumn ctermfg=208 ctermbg=blue
 
+let g:MarkMargin_enabled = 1
+
+command  MarkMarginEnable  let g:MarkMargin_enabled = 1
+command  MarkMarginDisable let g:MarkMargin_enabled = 0
+
 function! MarkMargin (on)
     if exists('b:MarkMargin')
         try
@@ -11,7 +16,7 @@ function! MarkMargin (on)
         endtry
         unlet b:MarkMargin
     endif
-    if a:on
+    if a:on && g:MarkMargin_enabled
         let b:MarkMargin = matchadd('ColorColumn', '\%81v\s*\S', 100)
     endif
 endfunction
