@@ -4,7 +4,7 @@ scriptencoding utf-8
 " Maintainer:   Anders Thøgersen <first name at bladre dot dk>
 " License:      VIM LICENSE
 if exists('b:current_syntax')
-  finish
+  " finish
 endif
 
 if v:version < 600
@@ -18,26 +18,36 @@ let b:current_syntax = 'plantuml'
 
 syntax sync minlines=100
 
-syntax match plantumlPreProc /\%(\%(^@start\|^@end\)\%(dot\|mindmap\|uml\|salt\|wbs\)\)\|!\%(define\|definelong\|else\|enddefinelong\|endif\|exit\|if\|ifdef\|ifndef\|include\|pragma\|undef\)\s*.*/ contains=plantumlDir
+syntax match plantumlPreProc /\%(\%(^@start\|^@end\)\%(dot\|mindmap\|uml\|salt\|wbs\|gantt\)\)\|!\%(define\|definelong\|else\|enddefinelong\|endif\|exit\|if\|ifdef\|ifndef\|include\|pragma\|undef\|gantt\)\s*.*/ contains=plantumlDir
 syntax region plantumlDir start=/\s\+/ms=s+1 end=/$/ contained
 
 " type
+" From 'java - jar plantuml.jar - language' results {{{
 syntax keyword plantumlTypeKeyword abstract actor agent archimate artifact boundary card cloud component control
-syntax keyword plantumlTypeKeyword database diamond entity enum file folder frame node object package participant
-syntax keyword plantumlTypeKeyword queue rectangle stack state storage usecase
+syntax keyword plantumlTypeKeyword database detach diamond entity enum file folder frame node object package
+syntax keyword plantumlTypeKeyword participant queue rectangle stack state storage usecase
 " class and interface are defined as plantumlClassKeyword
 syntax keyword plantumlClassKeyword class interface
+"}}}
+" Not in 'java - jar plantuml.jar - language' results
+syntax keyword plantumlTypeKeyword concise robust
 
 " keyword
-" Exclude 'top to bottom direction'
+" From 'java - jar plantuml.jar - language' results {{{
+" Since "syntax keyword" can handle only words, "top to bottom direction" is excluded.
 syntax keyword plantumlKeyword accross activate again allow_mixing allowmixing also alt as autonumber bottom
 syntax keyword plantumlKeyword box break caption center create critical deactivate destroy down else elseif end
 syntax keyword plantumlKeyword endif endwhile footbox footer fork group header hide hnote if is kill left
 syntax keyword plantumlKeyword legend link loop mainframe namespace newpage note of on opt order over package
 syntax keyword plantumlKeyword page par partition ref repeat return right rnote rotate show skin skinparam
-syntax keyword plantumlKeyword start stop title top up while
-" Not in 'java - jar plantuml.jar - language' output
-syntax keyword plantumlKeyword then detach split sprite
+syntax keyword plantumlKeyword split start stereotype stop title top up while
+"}}}
+" Not in 'java - jar plantuml.jar - language' results
+syntax keyword plantumlKeyword endlegend sprite then
+" gantt
+syntax keyword plantumlTypeKeyword project monday tuesday wednesday thursday friday saturday sunday
+syntax keyword plantumlKeyword starts ends start end closed day after colored lasts happens in at are to the and
+
 
 syntax keyword plantumlCommentTODO XXX TODO FIXME NOTE contained
 syntax match plantumlColor /#[0-9A-Fa-f]\{6\}\>/
@@ -78,9 +88,9 @@ syntax region plantumlText oneline start=/\[/ms=s+1 end=/\]/me=s-1 contained
 
 syntax match plantumlArrowDirectedLine /\([-.]\)\%(l\%[eft]\|r\%[ight]\|up\?\|d\%[own]\)\1/ contained
 
-" Note
-syntax region plantumlNoteMultiLine start=/\%(^\s*[rh]\?note\)\@<=\s\%([^:"]\+$\)\@=/ end=/^\%(\s*end \?[rh]\?note$\)\@=/ contains=plantumlSpecialString,plantumlNoteMultiLineStart,plantumlTag
-syntax match plantumlNoteMultiLineStart /\%(^\s*[rh]\?note\)\@<=\s\%([^:]\+$\)/ contained contains=plantumlKeyword,plantumlColor,plantumlString,plantumlTag
+" Note and legend
+syntax region plantumlNoteMultiLine start=/\%(^\s*[rh]\?\%(note\|legend\)\)\@<=\s\%([^:"]\+$\)\@=/ end=/^\%(\s*end\s*[rh]\?\%(note\|legend\)$\)\|endlegend\@=/ contains=plantumlSpecialString,plantumlNoteMultiLineStart,plantumlTag
+syntax match plantumlNoteMultiLineStart /\%(^\s*[rh]\?\%(note\|legend\)\)\@<=\s\%([^:]\+$\)/ contained contains=plantumlKeyword,plantumlColor,plantumlString,plantumlTag
 
 " Class
 syntax region plantumlClass
@@ -134,6 +144,7 @@ syntax region plantumlText oneline matchgroup=plantumlSequenceDelay start=/^\.\{
 " Usecase diagram
 syntax match plantumlUsecaseActor /:.\{-1,}:/ contains=plantumlSpecialString
 
+
 " Mindmap diagram
 let s:mindmapHilightLinks = [
       \ 'WarningMsg', 'Directory', 'Special', 'MoreMsg', 'Statement', 'Title',
@@ -141,18 +152,20 @@ let s:mindmapHilightLinks = [
       \ 'Function', 'Todo'
       \  ]
 
-syntax match plantumlMindmap1 /^[-+*][_<>]\?/ contained
-
 let i = 1
 let contained = []
 while i < len(s:mindmapHilightLinks)
-  execute "syntax match plantumlMindmap" . i . " /^\\%(\\s\\|[-+*]\\)\\{" . (i - 1) . "}[-+*][_<>]\\?/ contained"
-  execute "highlight default link plantumlMindmap" . i . " " . s:mindmapHilightLinks[i - 1]
-  call add(contained, "plantumlMindmap" . i)
+  execute 'syntax match plantumlMindmap' . i . ' /^\([-+*]\)\1\{' . (i - 1) . '}_\?\s\+/ contained'
+  execute 'syntax match plantumlMindmap' . i . ' /^\s\{' . (i - 1) . '}\*_\?\s\+/ contained'
+  execute 'highlight default link plantumlMindmap' . i . ' ' . s:mindmapHilightLinks[i - 1]
+  call add(contained, 'plantumlMindmap' . i)
   let i = i + 1
 endwhile
 
-execute "syntax region plantumlMindmap oneline start=/^\\s*[-+*]_\\?/ end=/$/ contains=" . join(contained, ',')
+execute 'syntax region plantumlMindmap oneline start=/^\([-+*]\)\1*_\?\s/ end=/$/ contains=' . join(contained, ',')
+" Markdown syntax
+execute 'syntax region plantumlMindmap oneline start=/^\s*\*_\?\s/ end=/$/ contains=' . join(contained, ',')
+
 
 " Skinparam keywords
 syntax case ignore
@@ -263,7 +276,7 @@ syntax keyword plantumlSkinparamKeyword ParticipantStereotypeFontName Participan
 syntax keyword plantumlSkinparamKeyword ParticipantStereotypeFontStyle PartitionBackgroundColor PartitionBorderColor
 syntax keyword plantumlSkinparamKeyword PartitionBorderThickness PartitionFontColor PartitionFontName PartitionFontSize
 syntax keyword plantumlSkinparamKeyword PartitionFontStyle PathHoverColor QueueBackgroundColor QueueBorderColor
-syntax keyword plantumlSkinparamKeyword QueueFontColor QueueFontName QueueFontSize QueueFontStyle
+syntax keyword plantumlSkinparamKeyword QueueBorderThickness QueueFontColor QueueFontName QueueFontSize QueueFontStyle
 syntax keyword plantumlSkinparamKeyword QueueStereotypeFontColor QueueStereotypeFontName QueueStereotypeFontSize
 syntax keyword plantumlSkinparamKeyword QueueStereotypeFontStyle Ranksep RectangleBackgroundColor RectangleBorderColor
 syntax keyword plantumlSkinparamKeyword RectangleBorderThickness RectangleFontColor RectangleFontName RectangleFontSize
@@ -295,9 +308,8 @@ syntax keyword plantumlSkinparamKeyword SequenceReferenceBorderThickness Sequenc
 syntax keyword plantumlSkinparamKeyword SequenceReferenceFontName SequenceReferenceFontSize SequenceReferenceFontStyle
 syntax keyword plantumlSkinparamKeyword SequenceReferenceHeaderBackgroundColor SequenceStereotypeFontColor
 syntax keyword plantumlSkinparamKeyword SequenceStereotypeFontName SequenceStereotypeFontSize
-syntax keyword plantumlSkinparamKeyword SequenceStereotypeFontStyle SequenceTitleFontColor SequenceTitleFontName
-syntax keyword plantumlSkinparamKeyword SequenceTitleFontSize SequenceTitleFontStyle Shadowing StackBackgroundColor
-syntax keyword plantumlSkinparamKeyword StackBorderColor StackFontColor StackFontName StackFontSize StackFontStyle
+syntax keyword plantumlSkinparamKeyword SequenceStereotypeFontStyle Shadowing StackBackgroundColor StackBorderColor
+syntax keyword plantumlSkinparamKeyword StackFontColor StackFontName StackFontSize StackFontStyle
 syntax keyword plantumlSkinparamKeyword StackStereotypeFontColor StackStereotypeFontName StackStereotypeFontSize
 syntax keyword plantumlSkinparamKeyword StackStereotypeFontStyle StateAttributeFontColor StateAttributeFontName
 syntax keyword plantumlSkinparamKeyword StateAttributeFontSize StateAttributeFontStyle StateBackgroundColor
