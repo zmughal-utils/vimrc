@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-tags>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-tags/tree/master/License.md>
-" Version:      3.0.5
-let s:k_version = '3.0.5'
+" Version:      3.0.6
+let s:k_version = '3.0.6'
 " Created:      02nd Oct 2008
-" Last Update:  15th Feb 2019
+" Last Update:  15th Jan 2020
 "------------------------------------------------------------------------
 " Description:
 "       Small plugin related to tags files.
@@ -15,6 +15,8 @@ let s:k_version = '3.0.5'
 "
 "------------------------------------------------------------------------
 " History:
+"       v3.0.6:
+"       (*) Update to lh-vim-lib gui/dialog simplified API
 "       v3.0.0:
 "       (*) Major OO refactoring of the plugin
 "       v2.0.6:
@@ -790,7 +792,7 @@ function! s:Postinit(tagsinfo) abort
   nnoremap <silent> <buffer> F :call <sid>Sort('filename')<cr>
   nnoremap <silent> <buffer> s :call <sid>ToggleSignature()<cr>
   nnoremap <silent> <buffer> f :call <sid>FilterUI()<cr>
-  exe "nnoremap <silent> <buffer> o :call lh#buffer#dialog#select(line('.'), ".b:dialog.id.", 'sp')<cr>"
+  nnoremap <silent> <buffer> o :call lh#buffer#dialog#select(line('.'), 'sp')<cr>
 
   call lh#buffer#dialog#add_help(b:dialog, '@| o                       : Split (O)pen in a new buffer if not yet opened', 'long')
   call lh#buffer#dialog#add_help(b:dialog, '@| K, N, or F              : Sort by (K)ind, (N)ame, or (F)ilename', 'long')
@@ -832,8 +834,8 @@ function! lh#tags#_select(results, ...) abort
     " this is an assert
     throw "lh-tags: We are not supposed to select several tags"
   endif
-  " There is a header => we need to apply an offset!
-  let selection = a:results.selection[0]-1
+
+  let selection = a:results.selection[0]
   if selection < 1
     call lh#common#warning_msg('Invalid selection')
     return
@@ -848,7 +850,6 @@ function! lh#tags#_select(results, ...) abort
   echomsg '-> '.choices[selection]
   " echomsg '-> '.info[selection-1].filename . ": ".info[selection-1].cmd
   if exists('s:quit') | :quit | endif
-  " call s:JumpToTag(cmd, info[selection-1])
   call s:JumpToTag(tags_data, b:tagsinfo[selection])
 endfunction
 
