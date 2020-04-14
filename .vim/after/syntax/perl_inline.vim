@@ -9,6 +9,16 @@ if exists("perl_inline_c")
 		syn region perlInline start="^__C__$" skip="." end="." contains=@InlineC contained
 	endif
 
+	if exists("b:current_syntax")
+		unlet b:current_syntax
+	endif
+	syn include @InlineCPP syntax/cpp.vim
+	if exists("perl_fold")
+		syn region perlInline start="^__CPP__$" skip="." end="." contains=@InlineCPP contained fold
+	else
+		syn region perlInline start="^__CPP__$" skip="." end="." contains=@InlineCPP contained
+	endif
+
 	"==== modified from $VIMRUNTIME/syntax/perl.vim ====
 	" __END__ and __DATA__ clauses
 	if exists("perl_fold")
