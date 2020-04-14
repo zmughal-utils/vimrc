@@ -117,3 +117,5 @@ refresh_git https://github.com/scrooloose/nerdtree nerdtree
 refresh_git https://github.com/scrooloose/nerdcommenter nerdcommenter
 
 refresh_git https://github.com/dhruvasagar/vim-zoom vim-zoom
+
+refresh_git https://github.com/Xuyuanp/nerdtree-git-plugin nerdtree-git-plugin
