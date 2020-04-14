@@ -172,6 +172,8 @@ endfunction
 
 
 function! gitgutter#hunk#stage(...) abort
+  if !s:in_hunk_preview_window() && !gitgutter#utility#has_repo_path(bufnr('')) | return | endif
+
   if a:0 && (a:1 != 1 || a:2 != line('$'))
     call s:hunk_op(function('s:stage'), a:1, a:2)
   else
@@ -181,11 +183,15 @@ function! gitgutter#hunk#stage(...) abort
 endfunction
 
 function! gitgutter#hunk#undo() abort
+  if !gitgutter#utility#has_repo_path(bufnr('')) | return | endif
+
   call s:hunk_op(function('s:undo'))
   silent! call repeat#set("\<Plug>(GitGutterUndoHunk)", -1)
 endfunction
 
 function! gitgutter#hunk#preview() abort
+  if !gitgutter#utility#has_repo_path(bufnr('')) | return | endif
+
   call s:hunk_op(function('s:preview'))
   silent! call repeat#set("\<Plug>(GitGutterPreviewHunk)", -1)
 endfunction
@@ -278,7 +284,7 @@ endfunction
 function! s:undo(hunk_diff)
   " Apply reverse patch to buffer.
   let hunk  = gitgutter#diff#parse_hunk(split(a:hunk_diff, '\n')[4])
-  let lines = map(split(a:hunk_diff, '\n')[5:], 'v:val[1:]')
+  let lines = map(split(a:hunk_diff, '\r\?\n')[5:], 'v:val[1:]')
   let lnum  = hunk[2]
   let added_only   = hunk[1] == 0 && hunk[3]  > 0
   let removed_only = hunk[1]  > 0 && hunk[3] == 0
@@ -295,7 +301,7 @@ endfunction
 
 
 function! s:preview(hunk_diff)
-  let lines = split(a:hunk_diff, '\n')
+  let lines = split(a:hunk_diff, '\r\?\n')
   let header = lines[0:4]
   let body = lines[5:]
 
@@ -422,7 +428,6 @@ function! s:open_hunk_preview_window()
             \ })
 
       call setbufvar(winbufnr(s:winid), '&filetype', 'diff')
-      call win_execute(s:winid, 'syntax enable')
 
       return
     endif
@@ -431,6 +436,7 @@ function! s:open_hunk_preview_window()
   silent! wincmd P
   if !&previewwindow
     noautocmd execute g:gitgutter_preview_win_location &previewheight 'new gitgutter://hunk-preview'
+    doautocmd WinEnter
     let s:winid = win_getid()
     set previewwindow
     setlocal filetype=diff buftype=acwrite bufhidden=delete
@@ -471,7 +477,11 @@ function! s:populate_hunk_preview_window(header, body)
 
     if exists('*popup_create')
       call popup_settext(s:winid, a:body)
-      " TODO add intra line highlights
+
+      for region in gitgutter#diff_highlight#process(a:body)
+        let group = region[1] == '+' ? 'GitGutterAddIntraLine' : 'GitGutterDeleteIntraLine'
+        call win_execute(s:winid, "call matchaddpos('".group."', [[".region[0].", ".region[2].", ".(region[3]-region[2]+1)."]])")
+      endfor
     endif
 
   else
@@ -503,6 +513,7 @@ endfunction
 
 function! s:goto_original_window()
   noautocmd wincmd p
+  doautocmd WinEnter
 endfunction
 
 

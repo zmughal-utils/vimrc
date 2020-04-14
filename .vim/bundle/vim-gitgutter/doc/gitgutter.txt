@@ -13,9 +13,11 @@ CONTENTS                                                            *gitgutter*
 
   Introduction ................. |gitgutter-introduction|
   Installation ................. |gitgutter-installation|
+  Windows      ................. |gitgutter-windows|
   Commands ..................... |gitgutter-commands|
   Mappings ..................... |gitgutter-mappings|
   Autocommand .................. |gitgutter-autocommand|
+  Status line .................. |gitgutter-statusline|
   Options ...................... |gitgutter-options|
   Highlights ................... |gitgutter-highlights|
   FAQ .......................... |gitgutter-faq|
@@ -36,49 +38,26 @@ The signs are always up to date and the plugin never saves your buffer.
 ===============================================================================
 INSTALLATION                                           *gitgutter-installation*
 
-Pathogen:~
->
-  cd ~/.vim/bundle
-  git clone git://github.com/airblade/vim-gitgutter.git
-<
-Voom:~
+Use your favourite package manager, or use Vim's built-in package support.
 
-Edit your plugin manifest (`voom edit`) and add:
+Vim:~
 >
-  airblade/vim-gitgutter
+  mkdir -p ~/.vim/pack/airblade/start
+  cd ~/.vim/pack/airblade/start
+  git clone https://github.com/airblade/vim-gitgutter.git
+  vim -u NONE -c "helptags vim-gitgutter/doc" -c q
 <
-VimPlug:~
 
-Place this in your .vimrc:
+Neovim:~
 >
-    Plug 'airblade/vim-gitgutter'
+  mkdir -p ~/.config/nvim/pack/airblade/start
+  cd ~/.config/nvim/pack/airblade/start
+  git clone https://github.com/airblade/vim-gitgutter.git
+  nvim -u NONE -c "helptags vim-gitgutter/doc" -c q
 <
-Then run the following in Vim:
->
-  :source %
-  :PlugInstall
-<
-NeoBundle:~
-
-Place this in your .vimrc:
->
-  NeoBundle 'airblade/vim-gitgutter'
-<
-Then run the following in Vim:
->
-  :source %
-  :NeoBundleInstall
-<
-No plugin manager:~
-
-Copy vim-gitgutter's subdirectories into your vim configuration directory:
->
-  cd tmp && git clone git://github.com/airblade/vim-gitgutter.git
-  cp vim-gitgutter/* ~/.vim/
-<
-See |add-global-plugin|.
 
 
+===============================================================================
 WINDOWS                                                     *gitgutter-windows*
 
 I recommend configuring vim-gitgutter with the full path to your git executable.
@@ -162,7 +141,9 @@ Commands for jumping between hunks:~
 
                                                  *gitgutter-:GitGutterQuickFix*
 :GitGutterQuickFix      Load all hunks into the |quickfix| list.  Note this
-                        ignores any unsaved changes in your buffers.
+                        ignores any unsaved changes in your buffers. The
+                        |g:gitgutter_use_location_list| option can be set to
+                        populate the location list of the current window instead
 
 
 Commands for operating on a hunk:~
@@ -265,11 +246,29 @@ trailing empty lines.
 
 
 ===============================================================================
+STATUS LINE                                              *gitgutter-statusline*
+
+
+Call the `GitGutterGetHunkSummary()` function from your status line to get a
+list of counts of added, modified, and removed lines in the current buffer.
+For example:
+>
+    " Your vimrc
+    function! GitStatus()
+      let [a,m,r] = GitGutterGetHunkSummary()
+      return printf('+%d ~%d -%d', a, m, r)
+    endfunction
+    set statusline+=%{GitStatus()}
+<
+
+
+===============================================================================
 OPTIONS                                                     *gitgutter-options*
 
 The most important option is 'updatetime' which determines how long (in
 milliseconds) the plugin will wait after you stop typing before it updates the
-signs.  Vim's default is 4000.  I recommend 100.
+signs.  Vim's default is 4000.  I recommend 100.  Note this also controls how
+long vim waits before writing its swap file.
 
 Most important option:~
 
@@ -316,6 +315,7 @@ General:~
     |g:gitgutter_map_keys|
     |g:gitgutter_async|
     |g:gitgutter_log|
+    |g:gitgutter_use_location_list|
 
 
                                              *g:gitgutter_preview_win_location*
@@ -365,6 +365,9 @@ a revision instead.  For example:
 >
     let g:gitgutter_diff_base = '<some commit SHA>'
 <
+
+If you are looking at a previous version of a file with Fugitive (e.g.
+via :0Gclog), gitgutter sets the diff base to the parent of the current revision.
 
 This setting is ignore when the diff is relative to the working tree
 (|g:gitgutter_diff_relative_to|).
@@ -495,7 +498,7 @@ Controls whether or not the plugin is on at startup.
                                                          *g:gitgutter_map_keys*
 Default: 1
 
-Controls whether or not the plugin provides mappings.  See |gitgutter-mapppings|.
+Controls whether or not the plugin provides mappings.  See |gitgutter-mappings|.
 
                                                             *g:gitgutter_async*
 Default: 1
@@ -508,6 +511,12 @@ Default: 0
 
 When switched on, the plugin logs to gitgutter.log in the directory where it is
 installed.  Additionally it logs channel activity to channel.log.
+
+                                                *g:gitgutter_use_location_list*
+Default: 0
+
+When switched on, the :GitGutterQuickFix command populates the location list
+of the current window instead of the global quickfix list.
 
 
 ===============================================================================
@@ -636,6 +645,8 @@ Try reducing 'updatetime':
 >
     set updatetime=100
 <
+
+Note this also controls how long vim waits before writing its swap file.
 
 
 When signs don't update after focusing Vim:~

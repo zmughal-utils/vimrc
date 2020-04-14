@@ -1,5 +1,3 @@
-let s:t_string = type('')
-
 " Primary functions {{{
 
 function! gitgutter#all(force) abort
@@ -35,9 +33,11 @@ function! gitgutter#process_buffer(bufnr, force) abort
       return
     endif
 
+    call gitgutter#utility#set_diff_base_if_fugitive(a:bufnr)
+
     if a:force || s:has_fresh_changes(a:bufnr)
 
-      let diff = ''
+      let diff = 'NOT SET'
       try
         let diff = gitgutter#diff#run_diff(a:bufnr, g:gitgutter_diff_relative_to, 0)
       catch /gitgutter not tracked/
@@ -47,7 +47,7 @@ function! gitgutter#process_buffer(bufnr, force) abort
         call gitgutter#hunk#reset(a:bufnr)
       endtry
 
-      if diff != 'async'
+      if diff != 'async' && diff != 'NOT SET'
         call gitgutter#diff#handler(a:bufnr, diff)
       endif
 
@@ -156,11 +156,7 @@ function! gitgutter#setup_maps()
 endfunction
 
 function! s:setup_path(bufnr, continuation)
-  let p = gitgutter#utility#repo_path(a:bufnr, 0)
-
-  if type(p) == s:t_string && !empty(p)  " if path is known
-    return
-  endif
+  if gitgutter#utility#has_repo_path(a:bufnr) | return | endif
 
   return gitgutter#utility#set_repo_path(a:bufnr, a:continuation)
 endfunction
@@ -188,7 +184,7 @@ endfunction
 function! gitgutter#quickfix()
   let locations = []
   let cmd = g:gitgutter_git_executable.' '.g:gitgutter_git_args.' --no-pager '.g:gitgutter_git_args.
-        \ ' diff --no-ext-diff --no-color -U0 '.g:gitgutter_diff_args
+        \ ' diff --no-ext-diff --no-color -U0 '.g:gitgutter_diff_args. ' '. g:gitgutter_diff_base
   let diff = systemlist(cmd)
   let lnum = 0
   for line in diff
@@ -207,5 +203,9 @@ function! gitgutter#quickfix()
       let lnum = 0
     endif
   endfor
-  call setqflist(locations)
+  if !g:gitgutter_use_location_list
+    call setqflist(locations)
+  else
+    call setloclist(0, locations)
+  endif
 endfunction
