@@ -54,7 +54,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#askvim#scriptid(name)`                     | Returns the id of the script associated to {name}                                                                                                                        |
 | `lh#askvim#scriptname(id)`                     | Returns the name of the script associated to {id}                                                                                                                        |
 | `lh#askvim#scriptnames()`                      | Returns `:scriptnames` result as a list of [scriptid, name] arrays                                                                                                       |
-| `lh#async#queue(cmd, options)`                 | Push a `cmd` to execute in a queue of jobs. Requires Vim 7.4-1980                                                                                                        |
+| `lh#async#get_queue(name,policy).push_or_start(cmd, options)` | Push a `cmd` to execute in a named queue of jobs. Requires Vim 7.4-1980                                                                                   |
 | `lh#common#check_deps()`                       | Checks a Vim symbol is loaded                                                                                                                                            |
 | `lh#common#echomsg_multilines()`               | Applies `:echomsg` on a multi-lines text                                                                                                                                 |
 | `lh#common#error_msg()`                        | Displays an error message                                                                                                                                                |
@@ -80,6 +80,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#has#jobs()`                                | Tells whether +job are correctly implemented                                                                                                                             |
 | `lh#has#partials()`                            | Tells whether partials are correctly implemented                                                                                                                         |
 | `lh#has#patch()`                               | Portable layer over `|has-patch|` feature                                                                                                                                |
+| `lh#has#plugin()`                              | Tells whether a file is present in `'runtimepath'`                                                                                                                       |
 | `lh#has#default_in_getbufvar()`                | Tells whether `getbufvar()` has its 3 parameters                                                                                                                         |
 | `lh#icomplete#new(startcol, matches, Hook)`    | Prepares a smart insert mode omni-completion menu that'll trigger actions instead of inserting text. _smart_ means characters may be typed to reduce choices.            |
 | `lh#icomplete#new_on(pat, matches, Hook)`      | Same as previous, but this time the startcol is automatically deduced from the word pattern.                                                                             |
@@ -119,6 +120,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#string#matchstrpos()`                      | Backports `matchstrpos()` to old vim versions                                                                                                                            |
 | `lh#string#or()`                               | Returns the first non empty string                                                                                                                                       |
 | `lh#string#trim()`                             | Trims a string                                                                                                                                                           |
+| `lh#switch#new()`                              | Creates a new switch object that proposes the `.add_case()` and `.evaluate()` method.                                                                                    |
 | `lh#tags#stack#jump()`                         | Forges a new tag entry in the tag stack, and jump to it                                                                                                                  |
 | `lh#tags#stack#push()`                         | Forges a new tag entry in the tag stack                                                                                                                                  |
 | `lh#time#bench(F,...)`                         | Times the execution of `F(...)`                                                                                                                                          |
@@ -158,6 +160,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#dict#get_composed()`         | Function symetric to `lh#let#*()` functions                                                                       |
 | `lh#dict#key()`                  | Expects the dictionary to have only one element (throw otherwise) and returns it                                  |
 | `lh#dict#let()`                  | Emulates `:let dict.key.key.key = value`                                                                          |
+| `lh#dict#print_as_tree()`        | Pretty printer for dictionaries: present them as tree                                                             |
 | `lh#dict#need_ref_on()`          | Makes sure `:let dict.key.key.key` exists and returns a reference to that element                                 |
 | `lh#dict#subset()`               | Builds a subset dictionary of a dict                                                                              |
 | `lh#list#accumulate()`           | Accumulates the elements from a list                                                                              |

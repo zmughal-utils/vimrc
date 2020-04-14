@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v4.7.0)
-                        For Vim version 7+      Last change: 16th Jul 2019
+*lh-vim-lib.txt*        Vim common libraries (v5.0.0)
+                        For Vim version 7+      Last change: 18th Feb 2020
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -30,6 +30,7 @@ FUNCTIONS                                    *lhvl-functions*     {{{1
                                                                         {{{2Functions list~
 Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#askvim#exe()|
+- |lh#askvim#execute()|
 - |lh#askvim#execute()|
 - |lh#askvim#scriptid()|
 - |lh#askvim#scriptnames()|
@@ -65,6 +66,7 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - *lh#has#partials()* returns whether |Partial|s are implemented
 - *lh#has#vkey()* returns whether |v:key| can be used in |map()| and |filter()|.
 - |lh#has#patch()|
+- |lh#has#plugin()|
 - |lh#lang#set_message_temporarily()|
 - |lh#leader#get()|
 - |lh#leader#get_local()|
@@ -90,6 +92,9 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#position#is_before()|
 - |lh#position#move()|
 - |lh#position#move_n()|
+- |lh#switch#new()|
+  - |lh#switch-add_case()|
+  - |lh#switch-evaluate()|
 - |lh#tags#stack#push()|
 - |lh#tags#stack#jump()|
 - |lh#time#bench()|
@@ -159,6 +164,7 @@ Dict related functions:                                 |lhvl#dict|       {{{2
 - |lh#dict#get_composed()|
 - |lh#dict#key()|
 - |lh#dict#let()|
+- |lh#dict#print_as_tree()|
 - |lh#dict#need_ref_on()|
 - |lh#dict#subset()|
 Stack related functions:                                |lhvl#stack|      {{{2
@@ -278,7 +284,7 @@ Syntax related functions:                               |lhvl#syntax|     {{{2
 - |lh#syntax#list_raw()|
 - |lh#syntax#list()|
 OS/System related functions:                            |lhvl#os|         {{{2
-- |lh#async#queue()|
+- |lh#async#get_queue()|
 - |:Jobs|
 - |:JobUnpause|
 - |:StopBGExecution|
@@ -403,11 +409,13 @@ used, or as a standard vim error message through |:echoerr| otherwise.
                                                  *lh#common#WarningMsg()*          {{{3
 lh#common#WarningMsg({text}) (*deprecated*)~
                                               *lh#common#warning_msg()*
-lh#common#warning_msg({text})~
+lh#common#warning_msg({text}, [{highlight}])~
 @param  {text}      Error message to display
+@param  {hl}        Highlight group name, default: `"WarningMsg"`
 @return             Nothing
 
-This function displays a warning message highlighted with |WarningMsg| syntax.
+This function displays a warning message highlighted with |WarningMsg| syntax,
+or in any other highlight group specified.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#common#CheckDeps()*           {{{3
@@ -710,8 +718,26 @@ Vim.
 The format of the result being ?to be stabilized?
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#async#queue()*                {{{3
-lh#async#queue(job)~
+                                                *lh#async#get_queue()*            {{{3
+                                                *lh#async#queue()*
+lh#async#get_queue(name, policy)~
+@since 5.0.0
+@warning API changes in v5.0.0
+@param[in] {name}   Unique identifier the global queue to obtain
+@param[in] {policy} Tells what shall be done when a new job is pushed into a
+                    non empty queue. Valid values are:
+                    - `'stack'`: push the new job for later
+                    - `'replace'`: stop the current job, and start the new one
+                    - `'dump'`: ignore the new job
+                    - any else will result in the end user being asked what to
+                      do.
+
+This first function returns a job queue object that implements a few services
+like `push_or_start(job)`, `stop()`... End-users are only expected ot use
+|lh#async#queue/push_or_start()|.
+
+                                               *lh#async#queue/push_or_start()*
+queue.push_or_start(job)~
 This function is a wrapper around recent |job_start()| function. As such it
 requires a recent version of Vim without any bugs in the |+job| related part.
 I've chosen to require v7.4-1980 at least.
@@ -737,15 +763,14 @@ Otherwise, it's ran with `&shell .' '. &shellcmdflag .' '. command`
     callback helps to delay operations written in vim-script language.
   - `'start_fail_cb'`: optional callback executed when starting the job fails.
 @todo Support for |job_stop()|
-@todo Support multiple queues -> `lh#async#new_queue()`
 
 Active queues and background job will be presented in |airline-section|`_b`.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *:Jobs*                           {{{3
-:Jobs~
+:Jobs {queue-name}~
 Opens a dialog scratch window displaying all jobs being executed in background
-and programmed to be through |lh#async#queue()|.
+and programmed to be executed through |lh#async#queue| feature.
 
 For the moment this window will:
 - keep the queue displayed up to date
@@ -756,7 +781,7 @@ Eventually, it'll permit to reorganize pending jobs.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *:JobUnpause*                     {{{3
-:JobUnpause~
+:JobUnpause {queue-name}~
 When a process execution fails, if there are pending jobs, the job queue will
 be paused if you confirm it.
 The only ways to un-pause the queue are through `:JobUnpause` command or
@@ -855,7 +880,55 @@ lh#position#move_n({direction}, {count})~
 @since              Version 4.4.0
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                                                *lh#tags#stack#jump()*            {{{3
+                                             *lh#switch#new()*                 {{{3
+lh#switch#new([{cases}...])~
+@param {cases}  passed to |lh#switch-add_case()|
+@return a switch |lhvl#object| with two services: |lh#switch-add_case()| and
+|lh#switch-evaluate()|.
+@since              Version 4.7.1
+
+                                             *lh#switch-add_case()*                 {{{4
+lh#switch-add_case({case})~
+@param {case}  |Dictionary| made of the two keys
+- `'cond'`:     predicate taking N parameters
+- `'function'`: |function| reference, or |string| that can be |eval()|uated,
+              taking N parameters.
+@return |v:true|/1 or |v:false|/0
+@pre The number of parameters N shall match the number of parameters that will
+be passed to |lh#switch-evaluate()| method.
+
+If |lambas| are not supported in your version of vim, you can still define
+string that'll get evaluated. The parameters can be accessed through |a:000|
+... manipulated as a |string.| e.g. >
+
+    let switch = lh#switch#new()
+    call switch.add_case({'cond': {d -> d.conv}, 'func': '"converting constructor from ".a:1.params[0].spelling'})
+    call switch.add_case({'cond': 'a:1.dtr'    ,  'func': '"a destructor"'})
+    call switch.add_case({'cond': 1            ,  'func': '"0"'}) " default case...
+
+    let ctr = {'name': 'MyClass', 'params': [{'spelling': 'double'}], 'ctr': 1, 'dtr': 0}
+    AssertEqual (switch.evaluate(extend(copy(ctr), {'conv': 1})), 'converting constructor from double')
+    AssertEqual (switch.evaluate(extend(copy(ctr), {'conv': 0})), 'a constructor')
+    AssertEqual (switch.evaluate({'conv': 0, 'ctr':0, 'dtr': 1}), 'a destructor')
+    AssertEqual (switch.evaluate({'conv': 0, 'ctr':0, 'dtr': 0}), '0')
+
+Never forget to make sure all possible cases are coverred. A "default" case
+may be reduired.
+
+                                             *lh#switch-evaluate()*                 {{{4
+lh#switch-evaluate({args}...)~
+@param {args}  N parameters that'll be passed to the `'cond'` predicate and
+`'function'` registered previously with |lh#switch-add_case()|.
+@pre The number of parameters N shall match the number of parameters that will
+be passed to the predicates and the functions registered.
+
+This method will first check the first case registered (in order), with a
+predicate that evaluates to 1/|v:true|.
+
+Then, it will evaluate its associated `'function'` and return its value.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                              *lh#tags#stack#jump()*            {{{3
 lh#tags#stack#jump(tagentry [, cmd = 'tag'])~
 Forge a new tag entry in the tag stack and jump to it with the specified
 command.
@@ -1122,12 +1195,18 @@ python, ruby, perl).
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                 *lh#has#patch()*                                  {{{3
-lh#ft#has_patch('patch-{ver}.{patch})~
+lh#has#patch('patch-{ver}.{patch})~
 @since Version 4.0.0
 Provides a portable layer over |has-patch| improved detection added in patch
 7.4-236 and 7.4-237.
 In other, `has('patch-7.4.001')` won't work, while `lh#has#patch('patch-7.4.001')` will.
 Note however, that this function isn't required since Version 7.4-237.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                *lh#has#plugin()*                                 {{{3
+lh#has#plugin(name)~
+@since Version 4.7.1
+Tells whether a file is present in 'runtimepath'.
 
 ------------------------------------------------------------------------------
 OPTION RELATED FUNCTIONS                              *lhvl#option*     {{{2
@@ -2438,6 +2517,37 @@ to an intermediairy subkey to |dictionary|, i.e. the following works >
     call lh#dict#let(d, 'a.b.c.d.e', 42)
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#dict#print_as_tree()*          {{{3
+lh#dict#print_as_tree(dict)~
+@since Version 4.7.1
+
+Pretty printer for |dictionaries|. Present them as trees
+e.g. >
+    echo lh#dict#print_as_tree({'a': 12, 'b': 15, 'c':[['{', 'toto'], 1], 'd':
+    \ { 'foo': 'bar', 1: 'too', 5: 'titi', 6: {42: 'last'}}})
+
+will display: >
+    {
+    +- 'a' = 12
+    +- 'b' = 15
+    +- 'c' = [
+            +- 0 -> [
+                    +- 0 -> '{'
+                    +- 1 -> 'toto'
+                    ]
+            +- 1 -> 1
+            ]
+    +- 'd' = {
+            +- 'foo' = 'bar'
+            +- '1'   = 'too'
+            +- '5'   = 'titi'
+            +- '6'   = {
+                    +- '42' = 'last'
+                    }
+            }
+    }
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                *lh#dict#need_ref_on()*            {{{3
 lh#dict#need_ref_on(root, keys [, last_default])~
 @param[in] {root}           Root |dictionary| that'll be modified
@@ -2767,11 +2877,14 @@ Prepares a permission lists object.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#path#readlink()*               {{{3
 lh#path#readlink({pathname})~
-Resolves any symbolic links in pathnames.
-Where the *nix command readlink is available, it returns >
-    readlink -f {pathname}
-elsewhere it returns {pathname}.
-@param[in] pathslist to resolve
+Resolves any symbolic links in {pathname}.
+@param[in] pathname to resolve
+
+Depending on the available external commands, it tries to return:
+- `greadlink` exists: ` greadlink -f {pathname}`
+- `readlink`  exists: ` readlink  -f {pathname}` -- except on osx
+- `realpath`  exists: ` realpath     {pathname}`
+- otherwise          `resolve({pathname})`, see |resolve()|.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#path#relative_to()*            {{{3
@@ -3419,12 +3532,11 @@ with:
 - {where} are |:split| options (like "bot below") used to open the scratch
   buffer.
 - {support-tagging} is a boolean (0/1) option to enable the multi-selection.
-- {action} is the name of the callback function (more
-  advanced calling mechanisms latter may be supported later with
-  |lhvl-functions|).
+- {action} is the name of the callback function or a |dictionary| of
+  map-trigger <-> actions.
 - {choices} is the |List| of exact strings to display.
 
-The #new function builds and returns a |Dictionary|, it also opens and fills
+The `#new` function builds and returns a |Dictionary|, it also opens and fills
 the scratch buffer, and put us within its context -- i.e. any |:map-<buffer>|
 or other buffer-related definitions will done in the new scratch buffer.
 
@@ -3461,6 +3573,22 @@ Regarding the callback function: *lhvl-dialog-select-callback*
   to anyone, but instead applies transformations in other places.
   This aspect is very important. I don't see how this kind of feature can work
   if not asynchronously in vim.
+
+- Since v4.7.1, there are two ways to fill the {action} parameters. It can be
+  either a function name that'll be bound to `<CR>` or a series of mapping
+  triggers <-> function names/references ;
+  e.g. from lh-cpp |:Override| command: >
+      let b_id = lh#buffer#dialog#new(
+            \ 'override://'.substitute(a:className, '[^A-Za-z0-9_.]', '_', 'g' ),
+            \ 'Overrideable functions for '.a:className,
+            \ 'bot below',
+            \ 1,
+            \ { '\<CR\>': 'lh#cpp#override#select',
+            \   'd': {l -> lh#cpp#override#select(l, 1)}
+            \ },
+            \ choices
+            \)
+<  Note: Special keys need to be escaped, see |lh#mapping#reinterpret_escaped_char()|.
 
 How to customize it:
 - *lh#buffer#dialog#quit()* can be explicitly called, from a registered select
@@ -4922,7 +5050,7 @@ lh#assert#type({actual}).belongs_to({expected}...)              *lh#assert#type(
 
                                                                      }}}1
 ==============================================================================
- (c) Luc Hermitte, 2001-2019 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
+ (c) Luc Hermitte, 2001-2020 <http://github.com/LucHermitte/lh-vim-lib>, CC by SA 3.0 {{{1
  VIM: let b:VS_language = 'american'
  vim:ts=8:sw=4:tw=80:fo=tcq2:ft=help:
  vim600:fdm=marker:

@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/tree/master/License.md>
-" Version:      4.6.4
-let s:k_version = '40604'
+" Version:      4.7.1
+let s:k_version = '40701'
 " Created:      26th Nov 2015
-" Last Update:  26th Oct 2018
+" Last Update:  03rd Dec 2019
 "------------------------------------------------------------------------
 " Description:
 "       |Dict| helper functions
@@ -141,6 +141,50 @@ function! lh#dict#get_composed(dst, key, ...) abort
   catch /.*/
     echoerr "Cannot get ".a:key." in ".string(a:dst).": ".(v:exception .' @ '. v:throwpoint)
   endtry
+endfunction
+
+" Function: lh#dict#print_as_tree(dict, [, indent]) {{{3
+" @since version 4.7.1
+function! lh#dict#print_as_tree(V, ...) abort
+  let indent = get(a:, 1, 0)
+  if type(a:V) == type([])
+    let res = ['['] + s:recurse_list(a:V, indent+4) + [repeat(' ', indent+4) . ']']
+  elseif type(a:V) == type({})
+    if lh#object#is_an_object(a:V)
+      let res = [lh#object#to_string(a:V)]
+    else
+      let res = ['{'] + s:recurse_dict(a:V, indent+4) + [repeat(' ', indent+4) . '}']
+    endif
+  else
+    let res = [string(a:V)]
+  endif
+  return indent == 0 ? join(res, "\n") : res
+endfunction
+
+function! s:recurse_list(list, indent) abort
+  let res = []
+  let lead = repeat(' ', a:indent) . '+- '
+  let nb_digits = float2nr(ceil(log10(len(a:list))))
+  for [k,l:V] in map(copy(a:list), {k0,v0 -> [k0,v0]})
+    let sub_res = lh#dict#print_as_tree(l:V, a:indent+4)
+    let sub_res[0] = printf('%s%'.nb_digits.'d -> %s', lead, k, sub_res[0])
+    let res += sub_res
+  endfor
+  return res
+endfunction
+
+function! s:recurse_dict(dict, indent) abort
+  let res = []
+  let lead = repeat(' ', a:indent) . '+- '
+  let max_length = max(map(keys(a:dict), {k,V -> strdisplaywidth(string(V))}))
+
+  for [k,l:V] in items(a:dict)
+    let start = lead . string(k). repeat(' ', max_length- strdisplaywidth(string(k))+1).'= '
+    let sub_res = lh#dict#print_as_tree(l:V, a:indent+4)
+    let sub_res[0] = start . sub_res[0]
+    let res += sub_res
+  endfor
+  return res
 endfunction
 
 " ## Internal functions {{{1

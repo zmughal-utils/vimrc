@@ -2,10 +2,10 @@
 " File:         autoload/lh/async.vim                             {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      4.7.0
-let s:k_version = '040700'
+" Version:      5.0.0
+let s:k_version = '050000'
 " Created:      01st Sep 2016
-" Last Update:  05th Jul 2019
+" Last Update:  19th Feb 2020
 "------------------------------------------------------------------------
 " Description:
 "       Various functions to run async jobs
@@ -80,44 +80,75 @@ let s:k_job_methods = [
 " # Job queue {{{2
 " TODO: use different named queues ("qf", "tags") and unnamed (loclist for
 " current window...) that can have different properties:
-" statck-by-default, remplace-by-default, always-ask...
+" stack-by-default, remplace-by-default, always-ask...
 
-" Function: lh#async#queue(job) {{{3
-function! lh#async#queue(job) abort
-  call s:job_queue.push_or_start(a:job)
+" Function: lh#async#_new_queue(name, default_behaviour) {{{3
+function! lh#async#_new_queue(name, default_behaviour) abort
+  let queue = lh#object#make_top_type({ 'list': [], 'state': 'active', 'name': a:name, 'default_behaviour': a:default_behaviour })
+  call lh#object#inject_methods(queue, s:k_script_name,
+        \ 'is_running', 'is_empty', 'is_paused',
+        \ 'push_or_start', 'start_next',
+        \ '_unsafe_stop_job', '_check_start_next', '_unpause_jobs',
+        \ '_build_ui_lines', '_update_ui', '_cancel_jobs_ui', '_do_clear_queue')
+  call lh#object#inject(queue, 'stop', 'stop_job', s:k_script_name)
+  return queue
 endfunction
 
-" Function: lh#async#stop(id) {{{3
-function! lh#async#stop(id) abort
-  call s:Verbose('Try to stop %1', a:id)
-  call s:job_queue.stop(a:id)
+" Function: lh#async#get_queue(name, default_behaviour) {{{3
+let s:queues = get(s:, 'queues', {})
+function! lh#async#get_queue(name, default_behaviour) abort
+  if ! has_key(s:queues, a:name)
+    let s:queues[a:name] = lh#async#_new_queue(a:name, a:default_behaviour)
+  endif
+  return s:queues[a:name]
 endfunction
 
-" Function: lh#async#_unpause_jobs() {{{3
-function! lh#async#_unpause_jobs() abort
-  call s:job_queue._unpause_jobs()
+" Function: lh#async#queue(queue_name, job) {{{3
+function! lh#async#queue(queue_name, job) abort
+  call lh#notify#deprecated('lh#async#queue(name,job)', 'lh#async#get_queue(name,policy).push_or_start(job)')
+  let queue = lh#async#get_queue(a:queue_name, '')
+  call queue.push_or_start(a:job)
+endfunction
+
+" Function: lh#async#stop(queue_name, id) {{{3
+function! lh#async#stop(queue_name, id) abort
+  let queue = lh#async#get_queue(a:queue_name, '')
+  call s:Verbose('Try to stop %1 in %2 queue', a:id, a:queue_name)
+  call queue.stop(a:id)
+endfunction
+
+" Function: lh#async#_unpause_jobs(queue_name) {{{3
+function! lh#async#_unpause_jobs(queue_name) abort
+  let queue = lh#async#get_queue(a:queue_name, '')
+  call queue._unpause_jobs()
 endfunction
 
 " Function: lh#async#_do_clear_queue() {{{3
 " Debugging purpose, avoid using this function!!!
 " If a job is really running, errors are to be expected
-function! lh#async#_do_clear_queue() abort
-  call s:Verbose('Clearing job queue. It had %1 element%2 (%3)'
-        \ , len(s:job_queue.list)
-        \ , len(s:job_queue.list) > 1 ? '' : 's'
-        \ , s:job_queue.list
-        \)
-  let s:job_queue.list = []
-  call s:job_queue._update_ui()
+function! lh#async#_do_clear_queue(queue_name) abort
+  let queue = lh#async#get_queue(a:queue_name, '')
+  call queue._do_clear_queue()
 endfunction
 
 "------------------------------------------------------------------------
 " ## Internal functions {{{1
 " # accessors {{{2
+
+function! s:_get_existing_queue(name) abort " {{{3
+  if !has_key(s:queues, a:name)
+    throw 'No job queue named <'.a:name.'> exists'
+  endif
+  return s:queues[a:name]
+endfunction
+
 " Function: lh#async#_get_jobs() {{{3
 " NB: used from airline extension
 function! lh#async#_get_jobs() abort
-  return [s:job_queue.list, s:job_queue.is_paused()]
+  let list = []
+  call map(copy(s:queues), {k,v -> extend(l:list, v.list)})
+  let nb_paused = eval(join(map(copy(values(s:queues)), {k,v -> v.is_paused()}), '+'))
+  return [list, nb_paused]
 endfunction
 
 "------------------------------------------------------------------------
@@ -126,6 +157,23 @@ endfunction
 function! lh#async#_complete_job_names(ArgLead, CmdLine, CursorPos) abort
   let ids = lh#list#get(s:job_queue.list, 'txt', 'v:val.cmd')
   let res = filter(ids, 'v:val =~ a:ArgLead')
+  return res
+endfunction
+
+" Function: lh#async#_job_queue_names(ArgLead, CmdLine, CursorPos) {{{3
+function! lh#async#_job_queue_names(ArgLead, CmdLine, CursorPos) abort
+  call s:Verbose('lh#async#_job_queue_names({1.ArgLead}, {1.CmdLine}, {1.CursorPos})', a:)
+  let names = keys(s:queues)
+  let res = filter(names, 'v:val =~ a:ArgLead')
+  return res
+endfunction
+
+" Function: lh#async#_paused_job_queue_names(ArgLead, CmdLine, CursorPos) {{{3
+function! lh#async#_paused_job_queue_names(ArgLead, CmdLine, CursorPos) abort
+  call s:Verbose('lh#async#_paused_job_queue_names({1.ArgLead}, {1.CmdLine}, {1.CursorPos})', a:)
+  let queues = filter(copy(s:queues), 'v:val.is_paused()')
+  let names = keys(queues)
+  let res = filter(names, 'v:val =~ a:ArgLead')
   return res
 endfunction
 
@@ -148,13 +196,13 @@ function! s:_build_ui_lines() dict abort
   return lines
 endfunction
 
-" Function: lh#async#_jobs_console() {{{3
-function! lh#async#_jobs_console() abort
-  let job_queue = s:job_queue " TODO: select a queue before hand
+" Function: lh#async#_jobs_console(name) {{{3
+function! lh#async#_jobs_console(name) abort
+  let job_queue = s:_get_existing_queue(a:name)
 
-  if exists('s:job_ui')
+  if has_key(job_queue, 'job_ui')
     " make the window visible, and jump to it
-    let b = lh#buffer#jump(s:job_ui.id, 'sp')
+    let b = lh#buffer#jump(job_queue.job_ui.id, 'sp')
     if b > 0
       if line('$') == 1
         bw
@@ -170,8 +218,8 @@ function! lh#async#_jobs_console() abort
   if job_queue.is_paused()
     let title .= '    --> PAUSED <--'
   endif
-  silent let s:job_ui = lh#buffer#dialog#new('jobs://list', title, '', 1, '', job_queue._build_ui_lines())
-  let s:job_ui._job_queue = job_queue
+  silent let job_queue.job_ui = lh#buffer#dialog#new('jobs://list{'.(job_queue.name).'}', title, '', 1, '', job_queue._build_ui_lines())
+  let job_queue.job_ui._job_queue = job_queue
   " Cancellation mappings
   nnoremap <silent> <buffer> x     :call b:dialog._job_queue._cancel_jobs_ui()<cr>
   nnoremap <silent> <buffer> <del> :call b:dialog._job_queue._cancel_jobs_ui()<cr>
@@ -213,17 +261,17 @@ function! lh#async#_jobs_console() abort
 endfunction
 
 function! s:_update_ui() dict abort " {{{3
-  if exists('s:job_ui')
+  if has_key(self, 'job_ui')
     let w = lh#window#getid()
     try
-      let b = lh#buffer#find(s:job_ui.id)
+      let b = lh#buffer#find(self.job_ui.id)
       if b >= 0
         " TODO: try to feed updated tags as well!
         " For now tags are reset
-        call s:job_ui.reset_choices(self._build_ui_lines())
+        call self.job_ui.reset_choices(self._build_ui_lines())
         let state = self.is_paused() ? '> PAUSED <' : '> ACTIVE <'
-        let s:job_ui.help_ruler[0] = substitute(s:job_ui.help_ruler[0], '\v.{12}\zs.{10}', state, '')
-        call lh#buffer#dialog#update_all(s:job_ui)
+        let self.job_ui.help_ruler[0] = substitute(self.job_ui.help_ruler[0], '\v.{12}\zs.{10}', state, '')
+        call lh#buffer#dialog#update_all(self.job_ui)
         " Otherwise, it means there is nothing to update
         " (-> window hidden, or destroyed)
       endif
@@ -238,10 +286,10 @@ function! s:_cancel_jobs_ui() dict abort " {{{3
   let l = len(self.list)
 
   try
-    let selected = s:job_ui.selection()
+    let selected = self.job_ui.selection()
     if (len(selected) == 1 && selected[0] >= 0) || (len(selected) >= 2)
-      " call lh#common#echomsg_multilines(map(copy(selected), 's:job_ui.choices[v:val]'))
-      " call s:Verbose("Cancelling: %1", map(copy(selected), 'get(self.list[v:val], "txt", s:job_ui.list[v:val].cmd'))
+      " call lh#common#echomsg_multilines(map(copy(selected), 'self.job_ui.choices[v:val]'))
+      " call s:Verbose("Cancelling: %1", map(copy(selected), 'get(self.list[v:val], "txt", self.job_ui.list[v:val].cmd'))
       let shall_update_ui = 0
       for j in reverse(selected)
         let shall_update_ui += self._unsafe_stop_job(j, l)
@@ -276,6 +324,7 @@ function! s:is_empty() dict abort                  " {{{3
 endfunction
 
 function! s:push_or_start(job) dict abort          " {{{3
+  let s:k_policies = {'stack': 1, 'replace': 2, 'dump': 3}
   let job_args = lh#dict#subset(a:job, s:k_job_methods)
   try
     let self.interrupted = 0
@@ -286,11 +335,14 @@ function! s:push_or_start(job) dict abort          " {{{3
     call s:Verbose('Found another task in job queue at index %1', idx)
     if idx >= 0
       let txt = get(a:job, 'txt', a:job.cmd)
-      let choice = lh#ui#confirm("A another `".txt."` background task is under way. Do you want to\n-> ",
-            \ ["&Queue the new (redundant task)",
-            \  "&Cancel the previous job and queue this one instead?",
-            \  "&Keep the previous job and dump the new one?"])
-      redraw
+      let choice = get(s:k_policies, self.default_behaviour, -1)
+      if choice < 0
+        let choice = lh#ui#confirm("A another `".txt."` background task is under way. Do you want to\n-> ",
+              \ ["&Queue the new (redundant task)",
+              \  "&Cancel the previous job and queue this one instead?",
+              \  "&Keep the previous job and dump the new one?"])
+        redraw
+      endif
       if choice == 3
         call s:Verbose('Ignore the new job')
         return
@@ -347,7 +399,7 @@ function! s:start_next() dict abort                " {{{3
     endif
     call s:Verbose('Starting next job: %1', job)
     let Close_cb = get(args, 'close_cb', function('s:default_close_cb'))
-    let args.close_cb = function('s:close_cb', [Close_cb])
+    let args.close_cb = function('s:close_cb', [Close_cb, self.name])
 
     " inject env on-the-fly
     let env = lh#project#_environment()
@@ -391,7 +443,7 @@ function! s:default_close_cb(channel, ...)         " {{{3
   call s:Verbose('Job finished (default handler)')
 endfunction
 
-function! s:close_cb(user_close_cb, channel) abort " {{{3
+function! s:close_cb(user_close_cb, queue_name, channel) abort " {{{3
   " Unlike usual MT applications, we cannot yield until we'are ready to handle
   " the close callback.
   " So we need to know whether there is interleaving...
@@ -399,8 +451,7 @@ function! s:close_cb(user_close_cb, channel) abort " {{{3
   " - job_registration (that can become job starting)
   " - job cancelling
   "
-  " TODO: bind this function to s:job_queue
-  let job_queue = s:job_queue
+  let job_queue = s:_get_existing_queue(a:queue_name)
   " Wait till adding/removing a job has finished (poor man's mutex)
   if has_key(job_queue, 'interrupted')
     " Notifies we have have interrupted the current action, and remove the
@@ -414,7 +465,7 @@ function! s:close_cb(user_close_cb, channel) abort " {{{3
   endif
 
   let last_job_status = copy(job_info(job.job))
-  call s:Verbose('Job finished %1 -- %2', job.job, job_info(job.job))
+  call s:Verbose('Job finished in queue %1: %2 -- %3', a:queue_name, job.job, job_info(job.job))
   try
     if has_key(job, 'runner_script')
       call job.runner_script.finalize()
@@ -431,7 +482,7 @@ function! s:close_cb(user_close_cb, channel) abort " {{{3
       if     go_on == 3
         let sure = lh#ui#confirm("Do you confirm you want to clear the following pending jobs ()", ["&Yes", "No"], 2)
         if sure == 2
-          call lh#async#_do_clear_queue()
+          call job_queue._do_clear_queue()
         endif
       elseif go_on != 1
         let job_queue.state = 'paused'
@@ -527,21 +578,25 @@ function! s:_unpause_jobs() dict abort " {{{3
   endif
 endfunction
 
-" Define job_queue global variable                   {{{3
-let s:default_queue = lh#object#make_top_type({ 'list': [], 'state': 'active' })
-let s:job_queue = get(s:, 'job_queue', s:default_queue)
-call lh#object#inject_methods(s:job_queue, s:k_script_name,
-      \ 'is_running', 'is_empty', 'is_paused',
-      \ 'push_or_start', 'start_next',
-      \ '_unsafe_stop_job', '_check_start_next', '_unpause_jobs',
-      \ '_build_ui_lines', '_update_ui', '_cancel_jobs_ui')
-call lh#object#inject(s:job_queue, 'stop', 'stop_job', s:k_script_name)
+function! s:_do_clear_queue() abort " {{{3
+" Debugging purpose, avoid using this function!!!
+" If a job is really running, errors are to be expected
+  call s:Verbose('Clearing job queue. It had %1 element%2 (%3)'
+        \ , len(self.list)
+        \ , len(self.list) > 1 ? '' : 's'
+        \ , self.list
+        \)
+  let self.list = []
+  call self._update_ui()
+endfunction
+
 
 " Example of Use                                     {{{3
 " function! TestCb(...)
 "   call s:Verbose('TestCb(%1)', a:000)
 " endfunction
-" call lh#async#queue('sleep 1', {'close_cb':function('TestCb')})
+" let queue = lh#async#get_queue('myplugin', 'stack')
+" call queue.push_or_start('sleep 1', {'close_cb':function('TestCb')})
 
 " }}}1
 "------------------------------------------------------------------------
