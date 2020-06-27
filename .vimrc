@@ -180,7 +180,7 @@ endif
 " Maps and Abbreviations {{{
 nnoremap ,p		:setlocal path+=<C-R>=expand("%:p:h")<CR>
 nnoremap <Leader>hl	:nohlsearch<CR>
-nnoremap ,l		:LCD<CR>
+nnoremap ,l		:call SmartLCD()<CR>
 nnoremap <Leader>nt	:NERDTreeToggle<CR>
 nnoremap <Leader>bw	:bwipeout<CR>
 nnoremap <Leader>bd	:bdelete<CR>
@@ -362,6 +362,13 @@ command! -nargs=1 ExpandColumnsTo	let &columns+=(<args>-winwidth('.'))
 command! -nargs=0 ExpandColumnsTo80	ExpandColumnsTo 80
 
 command! -nargs=0 LCD		lcd %:p:h
+function SmartLCD()
+	if exists("b:git_dir")
+		Glcd
+	else
+		LCD
+	endif
+endfunction
 
 command! -nargs=0 SouceVIMRC	so $MYVIMRC
 command! -nargs=1 ReadHTTP	silent execute "read ++edit !wget -q -O - ".<args>
