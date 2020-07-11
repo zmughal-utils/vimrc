@@ -51,7 +51,7 @@ if has("unix")
 		if !exists("g:loaded_gvimrc") || g:loaded_gvimrc!=1
 			"set guifont=Fixed\ 10
 			"set guifont=Fixed\ 8
-			set guifont=Terminus\ 8
+			"set guifont=Terminus\ 8
 			"set guifont=Courier\ New\ 8
 		endif
 		"set showtabline=2
