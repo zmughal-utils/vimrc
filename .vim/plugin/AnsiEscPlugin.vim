@@ -1,13 +1,13 @@
 " AnsiEscPlugin.vim
-"   Author: Charles E. Campbell, Jr.
+"   Author: Charles E. Campbell
 "   Date:   Apr 07, 2010
-"   Version: 12
+"   Version: 13s
 " ---------------------------------------------------------------------
 "  Load Once: {{{1
 if &cp || exists("g:loaded_AnsiEscPlugin")
  finish
 endif
-let g:loaded_AnsiEscPlugin = "v12"
+let g:loaded_AnsiEscPlugin = "v13s"
 let s:keepcpo              = &cpo
 set cpo&vim
 

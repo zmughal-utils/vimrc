@@ -1,8 +1,8 @@
-*AnsiEsc.txt*	Ansi Escape Sequence Visualization		Dec 13, 2010
+*AnsiEsc.txt*	Ansi Escape Sequence Visualization		May 01, 2019
 
-Author:  Charles E. Campbell, Jr.  <NdrOchip@ScampbellPfamily.AbizM>
+Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
 	  (remove NOSPAM from Campbell's email first)
-Copyright: (c) 2004-2010 by Charles E. Campbell, Jr.	*AnsiEsc-copyright*
+Copyright: (c) 2004-2017 by Charles E. Campbell		*AnsiEsc-copyright*
            The VIM LICENSE applies to AnsiEsc.vim and AnsiEsc.txt
            (see |copyright|) except use "AnsiEsc" instead of "Vim".
 	   No warranty, express or implied.  Use At-Your-Own-Risk.
@@ -11,24 +11,21 @@ Copyright: (c) 2004-2010 by Charles E. Campbell, Jr.	*AnsiEsc-copyright*
 1. Contents					*AnsiEsc* *AnsiEsc-contents*
    1. Contents         ...................................|AnsiEsc-contents|
    2. AnsiEsc Manual   ...................................|AnsiEsc|
-   3. AnsiEsc History  ...................................|AnsiEsc-history|
+   3. AnsiEsc Method   ...................................|AnsiEsc-Method|
+   4. AnsiEsc History  ...................................|AnsiEsc-history|
 
 ==============================================================================
 2. Manual						*AnsiEsc-manual*
 
-	CONCEAL -- the best mode.
-		For this, your vim must have +conceal.  A typical way to get the
-		conceal feature:
 
-		* cd ..wherever../vim72/
-		* wget http://vince.negri.googlepages.com/conceal-ownsyntax.diff
-		* patch -p0 < conceal-ownsyntax.diff
-		* make distclean
-		* configure --with-features=huge
-		* make
-		* make install
-	
-	Normal: -- ansi escape sequences themselves are Ignore'd~
+	CONCEAL~
+		The best option: for this, your vim must have +conceal. Try either >
+			:version
+			:echo has("conceal")
+<		if you have vim v7.3.  Your vim needs to have been compiled
+		for "big" or "huge" and to support syntax highlighting.
+
+	Vim: (v7.2 or earlier) -- ansi escape sequences themselves are Ignore'd~
 		Ansi escape sequences have the expected effect on subsequent
 		text, but the ansi escape sequences themselves still take up
 		screen columns.  The sequences are displayed using "Ignore"
@@ -37,11 +34,12 @@ Copyright: (c) 2004-2010 by Charles E. Campbell, Jr.	*AnsiEsc-copyright*
 		suppressed.  If the sequences aren't suppressed, you need to
 		improve your colorscheme!
 
+								*:AnsiEsc*
 	USAGE~
 		:AnsiEsc   -- toggles Ansi escape sequence highlighting
 		:AnsiEsc!  -- rebuilds highlighting for new/removed three
 		              or more element Ansi escape sequences.
-	
+
 	RESULT~
 		Ansi escape sequences become concealed or ignored (depending
 		on whether your vim supports Negri's conceal mode), and their
@@ -54,11 +52,30 @@ Copyright: (c) 2004-2010 by Charles E. Campbell, Jr.	*AnsiEsc-copyright*
 		examining the file for such sequences and only building syntax
 		highlighting rules for such sequences as are actually present
 		in the document.
+	
+
+	CUSTOMIZATION~
+		AnsiEsc does not know how to read what your terminal does with
+		several escape sequences.  One may customize what AnsiEsc does
+		with these by specifying global variables which specify the
+		desired highlighting:
+
+		*g:ansiNone* use this variable to specify what should be done
+		with <esc>[0m and <esc>[m. Example: >
+			let g:ansiNone="hi gui=NONE cterm=NONE fg=white bg=black ctermfg=7"
+<
+		*g:ansiBold* use this variable to specify what should be
+		done with <esc>[1m
+
+		*g:ansiItalic* use this variable to specify what should be
+		done with <esc>[3m
+
+		*g:ansiUnderline* use this variable to specify what should be
+		done with <esc>[4m
 
 	EXAMPLE~
 
 		You'll want to use   :AnsiEsc   to see the following properly!
-		(using Vince Negri's conceal option or vim 7.3)
 
             [34;47mColor Escape Sequences[m
 [37m  -  [m   [37;1m  1  [m   [37;2m  2  [m   [37;3m  3  [m   [37;4m  4  [m   [37;5m  5  [m   [37;7m  7  [m
@@ -98,17 +115,96 @@ White   [37;40mW[m  [37;41mW[m  [37;42mW[m  [37;43mW[m  [37;44mW[m   
         [30;48;5;22m\   /[m
          [30;48;5;22m\ /[m
 
+	PROBLEM WITH EMBEDDING:
+
+		AnsiEsc plugin highlighting cannot be embedded in another
+		syntax language.
+
+		AnsiEsc uses the syntax highlighting engine, so it is
+		effectively another syntax highlighting language.  But,
+		there are major differences:
+
+			* It supports being turned on and off
+
+			* AnsiEsc is not a syntax highlighting file, it
+			  is a plugin
+
+			* AnsiEsc dynamically determines some syntax
+			  highlighting by analyzing what's needed in the
+			  current file.
+
+		To do a syntax highlighting file would involve an inordinate
+		quantity of permutations, resulting in a file that would take
+		much time to load (about a half hour with only a partially
+		complete set of permutations on my system).
+
+		Normally to embed a syntax highlighting language in another
+		would involve a pair of syntax highlighting commands such as:
+
+		  syn include @AnsiEsc
+		  syn region ... defines the region where AnsiEsc
+		  \              highlighting is to occur ...  contains=@AnsiEsc
+
+		placed in the other syntax file's definitions.  That won't
+		work with AnsiEc because, again, AnsiEsc is not a syntax
+		highlighting file.
+
 
 ==============================================================================
-3. AnsiEsc History					*AnsiEsc-history* {{{1
+3. AnsiEsc Method					*AnsiEsc-Method* {{{1
+
+Method 1: AnsiEsc implements syntax highlighting rules for highlighting the
+basic eight colors (black-red-green-yellow-blue-magenta-cyan-white, plus gray)
+atop the same basic eight colors, and rules for italic, bold, and underline.
+These comprise a fixed set of syntax highlighting rules.
+
+Method 2: Ansi escape codes may also represent a 6x6x6 color cube for an
+additional 216 colors, plus 25 grayscale colors.  To handle these, AnsiEsc
+analyzes the file and builds custom syntax highlighting rules.  These comprise
+a variable set of syntax highlighting rules.  I did it this way because things
+
+	a) broke (ie. vim was unable to handle 262000+ syntax highlighting rules),
+	   and
+
+	b) took excessive amounts of time to load a fixed set of rules for
+	   256 foreground atop 256 background syntax highlighting rules with
+	   variants for italic, underline, and bold.
+
+
+==============================================================================
+4. AnsiEsc History					*AnsiEsc-history* {{{1
+  v13	Apr 12, 2012	* (Peter Brant) a "conceal" was left on a syntax
+			  definition in a no-conceal-support if block.
+			  Fixed.
+	Apr 17, 2012	* (Ingo Karkat) support for the "reverse" attribute
+	May 13, 2014	* (Jason Schmidt) reported that <esc>[39m didn't work.
+			  This means revert to default foreground.  Similarly,
+			  <esc>[49m didn't work (which means revert to default
+			  background).
+	Dec 11, 2014	* Implemented implicit foreground/background
+	Jan 10, 2015	* (Evgeny Lukianchikov) provided XUbuntu support for
+			  no-ansi-sequence (AnsiNone)
+	Sep 06, 2016	* Implemented bold/italic/underline without color
+			  specification
+	Feb 18, 2017	* ansiConceal priority overruled foregroup specs
+			  containing background specs.
+			  (reported by Lucas Hoffman)
+	Apr 10, 2018	* (James McCoy) provided a patch so that the
+			  |'highlight'| option is no longer used when
+			  conceal is available (see |'conceallevel'|)
+	May 01, 2019	* (barrie) reported that <esc>[24m was showing up as
+			  a "stray m".  Reason: ansiSuppress wasn't handling
+			  the code.
   v12	Jul 23, 2010	* changed conc to |'cole'| to correspond to vim 7.3's
 			  change
+			* for menus, &go =~# used to insure correct case
 	Aug 10, 2010	* (Rainer M Schmid) changed conceallevel setting to
 			  depend on whether the version is before vim 7.3;
 			  for 7.3, also sets concealcursor
 			* Restores conc/cole/cocu settings when AnsiEsc is
 			  toggled off.
 	Dec 13, 2010	* Included some additional sequences involving 0
+	Feb 22, 2011	* for menus, &go =~# used to insure correct case
   v11	Apr 20, 2010	* AnsiEsc now supports enabling/disabling via a menu
 			* <esc>[K and <esc>[00m now supported (as
 			  grep --color=always   issues them)
