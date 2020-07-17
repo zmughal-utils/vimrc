@@ -1,4 +1,6 @@
 let s:winid = 0
+let s:preview_bufnr = 0
+let s:nomodeline = (v:version > 703 || (v:version == 703 && has('patch442'))) ? '<nomodeline>' : ''
 
 function! gitgutter#hunk#set_hunks(bufnr, hunks) abort
   call gitgutter#utility#setbufvar(a:bufnr, 'hunks', a:hunks)
@@ -274,6 +276,10 @@ function! s:stage(hunk_diff)
         \ diff)
   if v:shell_error
     call gitgutter#utility#warn('patch does not apply')
+  else
+    if exists('#User#GitGutterStage')
+      execute 'doautocmd' s:nomodeline 'User GitGutterStage'
+    endif
   endif
 
   " Refresh gitgutter's view of buffer.
@@ -434,14 +440,23 @@ function! s:open_hunk_preview_window()
   endif
 
   silent! wincmd P
-  if !&previewwindow
+  if &previewwindow
+    file gitgutter://hunk-preview
+  else
     noautocmd execute g:gitgutter_preview_win_location &previewheight 'new gitgutter://hunk-preview'
     doautocmd WinEnter
-    let s:winid = win_getid()
     set previewwindow
-    setlocal filetype=diff buftype=acwrite bufhidden=delete
-    " Reset some defaults in case someone else has changed them.
-    setlocal noreadonly modifiable noswapfile
+  endif
+  if exists('*win_getid')
+    let s:winid = win_getid()
+  else
+    let s:preview_bufnr = bufnr('')
+  endif
+  setlocal filetype=diff buftype=acwrite bufhidden=delete
+  " Reset some defaults in case someone else has changed them.
+  setlocal noreadonly modifiable noswapfile
+  if g:gitgutter_close_preview_on_escape
+    nnoremap <buffer> <silent> <Esc> :pclose<CR>
   endif
 endfunction
 
@@ -450,16 +465,21 @@ endfunction
 " Preview window: assumes cursor is in preview window.
 function! s:populate_hunk_preview_window(header, body)
   let body_length = len(a:body)
-  let height = min([body_length, &previewheight])
 
   if g:gitgutter_preview_win_floating
     if exists('*nvim_open_win')
+      let height = min([body_length, &previewheight])
+
       " Assumes cursor is not in previewing window.
       call nvim_buf_set_var(winbufnr(s:winid), 'hunk_header', a:header)
+
+      let [_scrolloff, &scrolloff] = [&scrolloff, 0]
 
       let width = max(map(copy(a:body), 'strdisplaywidth(v:val)'))
       call nvim_win_set_width(s:winid, width)
       call nvim_win_set_height(s:winid, height)
+
+      let &scrolloff=_scrolloff
 
       call nvim_buf_set_lines(winbufnr(s:winid), 0, -1, v:false, [])
       call nvim_buf_set_lines(winbufnr(s:winid), 0, -1, v:false, a:body)
@@ -486,11 +506,15 @@ function! s:populate_hunk_preview_window(header, body)
 
   else
     let b:hunk_header = a:header
-    execute 'resize' height
 
     %delete _
     call setline(1, a:body)
     setlocal nomodified
+
+    normal! G$
+    let height = min([winline(), &previewheight])
+    execute 'resize' height
+    1
 
     call clearmatches()
     for region in gitgutter#diff_highlight#process(a:body)
@@ -506,7 +530,8 @@ endfunction
 function! s:enable_staging_from_hunk_preview_window()
   augroup gitgutter_hunk_preview
     autocmd!
-    execute 'autocmd BufWriteCmd <buffer='.winbufnr(s:winid).'> GitGutterStageHunk'
+    let bufnr = s:winid != 0 ? winbufnr(s:winid) : s:preview_bufnr
+    execute 'autocmd BufWriteCmd <buffer='.bufnr.'> GitGutterStageHunk'
   augroup END
 endfunction
 
@@ -518,7 +543,8 @@ endfunction
 
 
 function! s:close_hunk_preview_window()
-  call setbufvar(winbufnr(s:winid), '&modified', 0)
+  let bufnr = s:winid != 0 ? winbufnr(s:winid) : s:preview_bufnr
+  call setbufvar(bufnr, '&modified', 0)
 
   if g:gitgutter_preview_win_floating
     if win_id2win(s:winid) > 0
@@ -529,4 +555,5 @@ function! s:close_hunk_preview_window()
   endif
 
   let s:winid = 0
+  let s:preview_bufnr = 0
 endfunction
