@@ -4,10 +4,10 @@
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-vim-lib/blob/master/License.md>
-" Version:      4.7.0.
-let s:k_version = '470'
+" Version:      5.1.1.
+let s:k_version = '511'
 " Created:      26th Jun 2018
-" Last Update:  15th Nov 2019
+" Last Update:  18th May 2020
 "------------------------------------------------------------------------
 " Description:
 "       Defines functions related to quickfix feature
@@ -74,11 +74,13 @@ if lh#has#properties_in_qf()
   endfunction
 else
   function! lh#qf#make_context_map(required) abort
-    call lh#assert#true(a:required, "Sorry this feature isn't available in Vim ".v:version)
-    call lh#object#inject(res, 'get_id',   's:dummy', s:k_script_name)
-    call lh#object#inject(res, '_context', 's:dummy', s:k_script_name)
-    call lh#object#inject(res, 'get',      's:dummy', s:k_script_name)
-    call lh#object#inject(res, 'set',      's:dummy', s:k_script_name)
+    call lh#assert#true(! a:required, "Sorry this feature isn't available in Vim ".v:version)
+    let res = lh#object#make_top_type({})
+    call lh#object#inject(res, 'get_id',   'dummy', s:k_script_name)
+    call lh#object#inject(res, '_context', 'dummy', s:k_script_name)
+    call lh#object#inject(res, 'get',      'dummy', s:k_script_name)
+    call lh#object#inject(res, 'set',      'dummy', s:k_script_name)
+    return res
   endfunction
 endif
 
@@ -132,6 +134,19 @@ else
   function! lh#qf#get_title() abort
     let winnr = lh#qf#get_winnr()
     return winnr == 0 ? '' : getwinvar(winnr, 'quickfix_title')
+  endfunction
+endif
+
+" Function: lh#qf#set_title()        {{{3
+" @since V5.1.0
+if lh#has#properties_in_qf()
+  function! lh#qf#set_title(title) abort
+    call setqflist([], 'a', {'title': a:title})
+  endfunction
+else
+  function! lh#qf#set_title(title) abort
+    let winnr = lh#qf#get_winnr()
+    return winnr == 0 ? '' : setwinvar(winnr, 'quickfix_title', a:title)
   endfunction
 endif
 
