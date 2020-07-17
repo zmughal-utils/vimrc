@@ -278,8 +278,8 @@ function! s:TreeDirNode._glob(pattern, all)
     else
         let l:pathSpec = escape(fnamemodify(self.path.str({'format': 'Glob'}), ':.'), ',')
 
-        " On Windows, the drive letter may be removed by fnamemodify().
-        if nerdtree#runningWindows() && l:pathSpec[0] ==# g:NERDTreePath.Slash()
+        " On Windows, the drive letter may be removed by "fnamemodify()".
+        if nerdtree#runningWindows() && l:pathSpec[0] == nerdtree#slash()
             let l:pathSpec = self.path.drive . l:pathSpec
         endif
     endif
@@ -377,8 +377,14 @@ endfunction
 "  1. If cascaded, we don't know which dir is bookmarked or is a symlink.
 "  2. If the parent is a symlink or is bookmarked, you end up with unparsable
 "     text, and NERDTree cannot get the path of any child node.
+" Also, return false if this directory is the tree root, which should never be
+" part of a cascade.
 function! s:TreeDirNode.isCascadable()
     if g:NERDTreeCascadeSingleChildDir ==# 0
+        return 0
+    endif
+
+    if self.isRoot()
         return 0
     endif
 
@@ -425,6 +431,7 @@ function! s:TreeDirNode._initChildren(silent)
         endtry
     endfor
 
+    let g:NERDTreeOldSortOrder = g:NERDTreeSortOrder
     call self.sortChildren()
 
     call nerdtree#echo('')

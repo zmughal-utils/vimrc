@@ -30,9 +30,11 @@ endfunction
 " SECTION: General Functions {{{1
 "============================================================
 
-"FUNCTION: nerdtree#slash() {{{2
+" FUNCTION: nerdtree#slash() {{{2
+" Return the path separator used by the underlying file system.  Special
+" consideration is taken for the use of the 'shellslash' option on Windows
+" systems.
 function! nerdtree#slash() abort
-
     if nerdtree#runningWindows()
         if exists('+shellslash') && &shellslash
             return '/'
@@ -45,7 +47,7 @@ function! nerdtree#slash() abort
 endfunction
 
 "FUNCTION: nerdtree#and(x,y) {{{2
-" Implements and() function for Vim <= 7.2
+" Implements and() function for Vim <= 7.4
 function! nerdtree#and(x,y) abort
     if exists('*and')
         return and(a:x, a:y)
