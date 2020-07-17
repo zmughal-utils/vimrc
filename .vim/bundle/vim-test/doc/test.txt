@@ -91,6 +91,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:Ava*
 :Ava [args]                  Uses the `ava` command.
 
+                                                *test-:DenoTest*
+:DenoTest [args]             Uses the `deno test` command.
+
                                                 *test-:Intern*
 :Intern [args]               Uses the `intern-client` or `intern-runner` command.
 
@@ -206,6 +209,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:PHPUnit*
 :PHPUnit [args]              Uses the `phpunit` command.
 
+                                                *test-:Pest*
+:Pest [args]              Uses the `pest` command.
+
                                                 *test-:Behat*
 :Behat [args]                Uses the `behat` command.
 
@@ -247,6 +253,9 @@ In all commands [args] are forwarded to the underlying test runner.
 
                                                 *test-:StackTest*
 :StackTest [args]            Uses the `stack test` command.
+
+                                                *test-:NgTest*
+:NgTest [args]  	         Uses the Angular `ng test` command.
 
 
 STRATEGIES                                      *test-strategies*
@@ -385,9 +394,18 @@ Please make sure:
 >
   $ kitty -o allow_remote_control=yes --listen-on unix:/tmp/mykitty
 <
+  or via `kitty.conf`:
+>
+  allow_remote_control yes
+  listen_on unix:/tmp/mykitty
+<
 - you export an environment variable `$KITTY_LISTEN_ON` with the same socket, like:
 >
-  $ export KITTY_LISTEN_ON=/tmp/mykitty
+  $ export KITTY_LISTEN_ON=unix:/tmp/mykitty
+<
+  or if via `kitty.conf` (it appends kitty's PID):
+>
+  $ export KITTY_LISTEN_ON=unix:/tmp/mykitty-$PPID
 <
 You can then use this strategy this way:
 >
@@ -576,7 +594,7 @@ ABOUT                                           *test-about*
 
 You can get the latest version, see the changelog, or report a bug on GitHub:
 
-https://github.com/janko-m/vim-test
+https://github.com/vim-test/vim-test
 
 
 CREDITS                                         *test-credits*
