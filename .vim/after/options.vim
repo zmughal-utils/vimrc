@@ -282,5 +282,9 @@ let g:bullets_enabled_file_types = ['markdown', 'text', 'gitcommit', 'ikiwiki']
 let g:RecoverPlugin_Delete_Unmodified_Swapfile = 1
 "}}}
 
+" For <url:~/.vim/plugin/speeddating.vim> {{{
+let g:speeddating_no_mappings = 1
+" }}}
+
 
 " vim:fdm=marker
