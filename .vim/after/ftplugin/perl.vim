@@ -57,3 +57,6 @@ let g:manpageview_options_pl= ";-f;-q"
 let b:surround_{char2nr("i")} = "@{[ \r ]}"
 
 iabbr xrepl require Carp::REPL; Carp::REPL->import('repl'); repl();#DEBUG
+
+command -buffer PerlFoldPOD call synfold#fold_by_name(["perlPOD"])
+command -buffer PerlFoldSub call synfold#fold_by_name(["perlSubFold"])
