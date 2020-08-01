@@ -62,3 +62,4 @@ iabbr xpry  use Pry; pry();#DEBUG
 command! -buffer PerlFoldPOD call synfold#fold_by_name(["perlPOD"])
 command! -buffer PerlFoldSub call synfold#fold_by_name(["perlSubFold"])
 command! -buffer PerlFoldParen call synfold#fold_by_name(["perlParenthesis"])
+command! -buffer PerlFoldComment call synfold#fold_by_name(["perlCommentFold"])
