@@ -5,7 +5,6 @@ syntax region perlParenthesis start="(" end=")" transparent fold
 "syntax region perlCurlyFold start="{" end="}" transparent fold
 syntax region perlCommentFold start=+\(^\s*#.*\n\)\@<!\zs\(\_^\s*#.*\)+ end=+\ze\_^\(\s*#.*\n\)\@!.*$+ transparent fold
 
-syn region perlSubFold     start="\<sub\>[^\n;]*{" end="};" transparent fold keepend extend
 " MooX::Lsub
 syntax match perlStatementProc '\<\%(lsub\)\>'
 
