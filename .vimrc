@@ -487,7 +487,7 @@ endif
 "}}}
 "**********************************************************************************"
 " Stuff {{{
-command! -nargs=1 SetTabstops	set tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
+command! -nargs=1 SetTabstops	setl tabstop=<args> softtabstop=<args> shiftwidth=<args> noexpandtab 
 command! Wsudo	:w !sudo tee % >/dev/null
 
 let g:surround_{char2nr("o")}="\n\r\n\n"	" open line above and below
