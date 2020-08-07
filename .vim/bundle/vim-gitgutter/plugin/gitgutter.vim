@@ -62,7 +62,7 @@ else
   call s:set('g:gitgutter_sign_removed_first_line', '_^')
 endif
 
-call s:set('g:gitgutter_sign_removed_above_and_below', '[')
+call s:set('g:gitgutter_sign_removed_above_and_below', '_¯')
 call s:set('g:gitgutter_sign_modified_removed',       '~_')
 call s:set('g:gitgutter_git_args',                      '')
 call s:set('g:gitgutter_diff_relative_to',         'index')
@@ -242,6 +242,11 @@ augroup gitgutter
   autocmd TabEnter * let t:gitgutter_didtabenter = 1
 
   autocmd BufEnter * call s:on_bufenter()
+
+  " Ensure Vim is always checking for CursorMoved to avoid CursorMoved
+  " being fired at the wrong time in floating preview window on Neovim.
+  " See vim/vim#2053.
+  autocmd CursorMoved * execute ''
 
   autocmd CursorHold,CursorHoldI * call gitgutter#process_buffer(bufnr(''), 0)
   if exists('*timer_start') && has('lambda')
