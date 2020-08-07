@@ -36,7 +36,7 @@ runners are supported:
 |       **Perl** | Prove                                                                                                              | `prove`                                                                                                                                      |
 |     **Python** | Django, Mamba, Nose, Nose2, PyTest, PyUnit                                                                         | `djangotest`, `djangonose`, `mamba`, `nose`, `nose2`, `pytest`, `pyunit`                                                                     |
 |     **Racket** | RackUnit                                                                                                           | `rackunit`                                                                                                                                   |
-|       **Ruby** | Cucumber, [M], [Minitest][minitest], Rails, RSpec                                                                  | `cucumber`, `m`, `minitest`, `rails`, `rspec`                                                                                                |
+|       **Ruby** | Cucumber, [M], [Minitest][minitest], Rails, RSpec, TestBench                                                       | `cucumber`, `m`, `minitest`, `rails`, `rspec`, `testbench`                                                                                   |
 |       **Rust** | Cargo                                                                                                              | `cargotest`                                                                                                                                  |
 |      **Scala** | SBT, Bloop                                                                                                         | `sbttest`, `blooptest`                                                                                                                       |
 |      **Shell** | Bats                                                                                                               | `bats`                                                                                                                                       |
@@ -387,8 +387,8 @@ let test#filename_modifier = ':~' " ~/Code/my_project/test/models/user_test.rb
 
 Test.vim relies on you being `cd`-ed into the project root. However, sometimes
 you may want to execute tests from a different directory than Vim's current
-working directory. You might have a bigger project with many subprojects, or
-you might be using [`autochdir`]. In any case, you can tell test.vim to use a
+working directory. You might have a bigger project or monorepo with many subprojects,
+or you might be using [`autochdir`]. In any case, you can tell test.vim to use a
 different working directory for running tests:
 
 ```vim
