@@ -71,7 +71,7 @@ refresh_git https://github.com/godlygeek/csapprox CSApprox
 
 refresh_git https://github.com/vim-perl/vim-perl vim-perl-src
 mkdir vim-perl;
-make -Cvim-perl-src clean carp dancer highlight-all-pragmas moose test-more try-tiny
+make -Cvim-perl-src clean carp dancer heredoc-sql highlight-all-pragmas moose test-more try-tiny
 rsync -avz vim-perl-src/after vim-perl/
 rm -Rfv vim-perl-src/after
 git add vim-perl && git commit -m "refresh bundles [automated]: vim-perl built from vim-perl-src"
