@@ -3,6 +3,7 @@
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
+" License: Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 
 if exists("b:did_ftplugin") | finish | endif
@@ -41,6 +42,10 @@ setlocal iskeyword+=:
 " after/ftplugin/perl.vim file that contains
 "       set isfname-=:
 set isfname+=:
+
+if get(g:, 'perl_fold', 0)
+  setlocal foldmethod=syntax
+endif
 
 " Set this once, globally.
 if !exists("perlpath")
