@@ -4,7 +4,12 @@
 call programming#Programming()
 "call programming#CurlyBraces()
 let perl_fold = 1
-let perl_fold_blocks = 1
+
+"let perl_fold_blocks = 1
+if exists("perl_fold_blocks")
+	unlet perl_fold_blocks
+endif
+
 let perl_fold_anonymous_subs = 1
 setlocal foldmethod=syntax
 
