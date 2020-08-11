@@ -69,7 +69,7 @@ refresh_git https://github.com/terryma/vim-expand-region vim-expand-region
 
 refresh_git https://github.com/godlygeek/csapprox CSApprox
 
-refresh_git https://github.com/vim-perl/vim-perl vim-perl-src
+refresh_git https://github.com/vim-perl/vim-perl vim-perl-src dev
 mkdir vim-perl;
 make -Cvim-perl-src clean carp dancer heredoc-sql highlight-all-pragmas moose test-more try-tiny
 rsync -avz vim-perl-src/after vim-perl/
