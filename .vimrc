@@ -457,6 +457,9 @@ endif
 "        command! -nargs=0 CNERDTree		exe "NERDTree ".getcwd()
 "        command! -nargs=0 CNERDTreeToggle	exe "NERDTreeToggle ".getcwd()
 "endif
+
+command! -nargs=0 -bar WdiffMark	exe 'Mark \[-.\{-}-\]' | exe 'Mark {+.\{-}+}'
+
 "}}}
 "**********************************************************************************"
 " Tabs {{{
