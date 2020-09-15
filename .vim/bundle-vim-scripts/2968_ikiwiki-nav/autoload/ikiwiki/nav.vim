@@ -54,7 +54,7 @@ function! s:WikiLinkText() " {{{1
 
   let ccol = col('.')
   let cline = line('.')
-  let ikilink_ini = searchpos('\%(^\|[^\\]\)\zs\[\[\ze\($\|[^!]\|!traillink\)', 'bcnW')
+  let ikilink_ini = searchpos('\%(^\|[^\\]\)\zs\[\[\ze\($\|[^!]\|!trailitem\|!traillink\)', 'bcnW')
   call cursor(cline, ccol - 1)
   let ikilink_end = searchpos('\]\]', 'cnW')
   call cursor(cline, ccol)
@@ -95,8 +95,9 @@ function! s:WikiLinkText() " {{{1
   if ikilink_end[0] == ikilink_ini[0]
     let st = ikilink_ini[1] + 1
   endif
-  let wikilink_text = matchlist(getline(ikilink_end[0]), '\([^|]\{-}\)\%(#\|]]\)', st)[1]
+  let wikilink_text = matchlist(getline(ikilink_end[0]), '\([^|]\{-}\)\%(#\|\s*]]\)', st)[1]
   let wikilink_text = substitute( wikilink_text, '^!traillink ', '', '' )
+  let wikilink_text = substitute( wikilink_text, '^!trailitem ', '', '' )
   return wikilink_text
 endfunction " }}}1
 
