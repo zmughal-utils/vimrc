@@ -1,10 +1,10 @@
-#!/usr/bin/env -S swipl -f -q
+#!/usr/bin/env -S swipl -q
 % vim: ft=prolog
 
-:- initialization main.
+:- initialization(main, program).
 
 :- use_module(library(<++>)).
 
 main :-
-	<++>,
+	<+write("Hello, world"), nl+>,
 	halt.
