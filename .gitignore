@@ -7,3 +7,4 @@ tags-ja
 
 .vim/bundle/vimproc.vim/autoload/vimproc_linux64.so
 .vim/bundle/YouCompleteMe
+.vim/view
