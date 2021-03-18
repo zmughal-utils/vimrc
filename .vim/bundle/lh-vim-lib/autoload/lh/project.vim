@@ -2,10 +2,10 @@
 " File:         autoload/lh/project.vim                           {{{1
 " Author:       Luc Hermitte <EMAIL:luc {dot} hermitte {at} gmail {dot} com>
 "		<URL:http://github.com/LucHermitte/lh-vim-lib>
-" Version:      5.2.1
-let s:k_version = '521'
+" Version:      5.2.2
+let s:k_version = '522'
 " Created:      08th Sep 2016
-" Last Update:  12th Aug 2020
+" Last Update:  26th Sep 2020
 "------------------------------------------------------------------------
 " Description:
 "       Define new kind of variables: `p:` variables.
@@ -355,7 +355,7 @@ function! s:GetPlausibleRoot() abort " {{{3
   let auto_discover_root = lh#project#_auto_discover_root()
   call s:Verbose('s:GetPlausibleRoot() -- auto discover root: %1', auto_discover_root)
   if auto_discover_root == 'in_doubt_ask'
-    if s:permission_lists.check_paths([ expand('%:p:h')])
+    if s:permission_lists.check_paths([ expand('%:p')])
       let prj_dirname = lh#ui#input("prj needs to know the current project root directory.\n-> ", expand('%:p:h'))
     else
       let prj_dirname = ''
@@ -406,6 +406,7 @@ endfunction
 let s:k_unset_no_VCS_dir = lh#option#unset('No VCS directory detected')
 function! lh#project#_check_VCS_roots() abort
   let possible_prj_dirnames = map(copy(g:lh#project.root_patterns), '[v:val, lh#path#find_upward(v:val)]')
+  call filter(possible_prj_dirnames, '!empty(v:val[1])')
   " TODO: permit to sort result by depth instead of patterns order
   if !empty(possible_prj_dirnames)
     call s:Verbose("s:FetchPrjDirname() -> %1 found in %2", possible_prj_dirnames[0][0], possible_prj_dirnames[0][1])
@@ -499,8 +500,8 @@ function! lh#project#_auto_detect_project() abort
           let name = repo_path[-1]
         else
           let name = fnamemodify(root, ':h:t')
-          let name = substitute(name, '[^A-Za-z0-9_]', '_', 'g')
         endif
+        let name = (name[0] =~ '\d' ? '_' : '') . substitute(name, '[^A-Za-z0-9_]', '_', 'g')
         let opt = {'name': name}
         let opt.auto_discover_root = {'value':  root}
         call lh#project#define(s:, opt, name)

@@ -1,5 +1,5 @@
-*lh-vim-lib.txt*        Vim common libraries (v5.2.0)
-                        For Vim version 7+      Last change: 18th Jul 2020
+*lh-vim-lib.txt*        Vim common libraries (v5.3.1)
+                        For Vim version 7+      Last change: 08th Mar 2021
 
                         By Luc Hermitte
                         hermitte {at} free {dot} fr
@@ -75,6 +75,7 @@ Miscellanous functions:                                 |lhvl#misc|       {{{2
 - |lh#mark#find_first_unused()|
 - |lh#mark#is_unused()|
 - |lh#math#abs()|
+- |lh#mapping#create_toggable_group()|
 - |lh#mapping#define()|
 - |lh#mapping#plug()|
 - |lh#mapping#reinterpret_escaped_char()|
@@ -113,6 +114,7 @@ Option related functions:                               |lhvl#option|     {{{2
 - |lh#option#getbufglobvar()|
 - |lh#option#is_set()|
 - |lh#option#is_unset()|
+- |lh#option#update()|
 - |lh#ft#option#get()|
 - |lh#ft#option#get_postfixed()|
 - |lh#ft#option#get_all()|
@@ -140,6 +142,7 @@ List related functions:                                 |lhvl#list|       {{{2
 - |lh#list#for_each_call()|
 - |lh#list#get()|
 - |lh#list#intersect()|
+- |lh#list#is_contained_in()|
 - |lh#list#lower_bound()| and |lh#list#upper_bound()|
 - |lh#list#map_on()|
 - |lh#list#mask()|
@@ -510,6 +513,30 @@ lh#math#abs(val)~
 
 The purpose of the function is to emulate |abs()| on vim version where it
 isn't defined.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                             *lh#mapping#create_toggable_group()* {{{3
+lh#mapping#create_toggable_group(group_name)~
+@returns a |lhvl#object| that permits to define mappings that can be
+deactivated.
+@version 5.3.0
+
+It's subservices are:
+- *define_map()*  -- `(mode, lhs, rhs, isLocal, isExpr)`
+                Defines a new mapping
+- *define_imap()* -- `(lhs, rhs, isLocal, isExpr [, isNore])`
+                Defines a new insert-mode mapping. In the particular case
+                *IMAP* is installed, it'll be used to define the mapping.
+- *list_mappings()* -- `(isLocal)`
+                Displays the list of mappings defined through this object
+- *clear_mappings()* -- `(isLocal)`
+                Removes all mappings defined through this object
+- *toggle_mappings()*
+                Toggle the activation state of the mappings defined through
+                this object.
+                The activation state is global (multi-buffers), and it'll be
+                propagated even to mappings local in buffer other than the
+                current one.
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#mapping#define()*             {{{3
@@ -1344,6 +1371,23 @@ This function will permit to test whether an option is set or not: >
     Assert lh#option#is_unset(lh#option#getbufvar('%', 'foobar'))
     let b:foobar = 1
     Assert lh#option#is_set(lh#option#getbufvar('%', 'foobar'))
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                                *lh#option#update()*              {{{3
+lh#option#update({bid}, {varname}, {value})~
+@param {bid} buffer id
+@param {varname} Name of the option to update
+@param {value}   Assignment to apply to the option
+@since version 5.3.1
+
+Examples: >
+   call lh#option#update(bufnr('%'), '&tags',    '+=~/tags,/opt/some/project/tags')
+   call lh#option#update(bufnr('%'), '&isfname', '+={,}')
+   call lh#option#update(bufnr('%'), '&isfname', '-==')
+   call lh#option#update(bufnr('%'), '&cindent', '=1') " or:
+   call lh#option#update(bufnr('%'), '&cindent', '1')  " without the "="
+   call lh#option#update(bufnr('%'), 'foo',      '=somevalue')      " b:foo
+   call lh#option#update(bufnr('%'), 'bar',      '=someothervalue') " b:bar
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#ft#option#get()*              {{{3
@@ -2324,6 +2368,17 @@ Example: >
     :let l2 = [ 3, 8, 7, 25, 6 ]
     :echo lh#list#intersect(l1, l2)
     [ 25, 7, 6 ]
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                               *lh#list#is_contained_in()*        {{{3
+lh#list#is_contained_in({sublist},{list})~
+Returns whether all elements from {sublist} are present in {list}
+
+@param[in] {sublist} |List|
+@param[in] {list}    |List|
+kepts in the same order as in {list1}
+@see also |lh#list#intersect()| upon which this function is built.
+@since Version 5.2.2
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                                                 *lh#list#concurrent_for()*         {{{3
@@ -4821,6 +4876,24 @@ Executes {cmd} in all buffers associated to the specified (or current)
 project. A temporary window is opened for the occasion (contrary to
 |:bufdo| which uses the current window) .
 @pre the project shall have listed buffers.
+
+                                                    *:Project-:bnext*
+:Project [{prj-name}] :bnext[!] [--hidden]~
+|:bnext|-like command restricted to buffers from the specified/current
+project.
+Go to the next buffer in the buffer list of the specified (or current)
+project.
+See |:buffer-!| for [!]
+`--hidden` option will restrict the iteration to |hidden-buffer|s.
+
+                                                    *:Project-:bprevious*
+:Project [{prj-name}] :bprevious[!] [--hidden]~
+|:bprevious|-like command restricted to buffers from the specified/current
+project.
+Go to the previous buffer in the buffer list of the specified (or current)
+project.
+See |:buffer-!| for [!]
+`--hidden` option will restrict the iteration to |hidden-buffer|s.
 
                                                     *:Project-:bdelete*
                                                     *:Project-:bwipeout*

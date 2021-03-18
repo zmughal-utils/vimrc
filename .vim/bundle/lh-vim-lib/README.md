@@ -22,6 +22,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
   * [Installation](#installation)
   * [Credits](#credits)
   * [Some other Vim Scripting libraries](#some-other-vim-scripting-libraries)
+  * [Design Notes](doc/design_notes.md)
 
 ## Functions
 
@@ -95,6 +96,7 @@ The [complete documentation](http://github.com/LucHermitte/lh-vim-lib/blob/maste
 | `lh#mark#is_unused(markname)`                  | Tells whether a mark is already used                                                                                                                                     |
 | `lh#mark#find_first_unused()`                  | Returns the name of the first unused mark found in A..Z and a..z                                                                                                         |
 | `lh#math#abs()`                                | Portable `abs()` function                                                                                                                                                |
+| `lh#mapping#create_toggable_group()`           | Returns a object that permits to define toggable mappings                                                                                                                |
 | `lh#mapping#define()`                          | Defines a mapping from its description                                                                                                                                   |
 | `lh#mapping#plug()`                            | Defines a series of default mappings associated to a plug mapping                                                                                                        |
 | `lh#mapping#reinterpret_escaped_char()`        | Transforms sequences into interpreted sequences for mappings                                                                                                             |
@@ -182,6 +184,7 @@ See also [system-tools](http://github.com/LucHermitte/vim-system-tools)
 | `lh#list#for_each_call()`        | Calls a function of all elements from a list                                                                      |
 | `lh#list#get()`                  | Returns a list with the elements of index/key in a list of lists/dictionaries (<=> map get(key/idx) list)         |
 | `lh#list#intersect()`            | Intersection of two lists                                                                                         |
+| `lh#list#is_contained_in()`      | Returns whether all elements from the sublist are present in the second list                                      |
 | `lh#list#lower_bound()`          | See C++ [`std::lower_bound`](http://en.cppreference.com/w/cpp/algorithm/lower_bound)                              |
 | `lh#list#map_on()`               | Transforms a list of lists/dictionaries at key/index with specified action.                                       |
 | `lh#list#mask()`                 | Builds a subset of the input list ; elements are kept according to a mask list.                                   |
