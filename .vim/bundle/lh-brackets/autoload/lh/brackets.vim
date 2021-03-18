@@ -6,7 +6,7 @@
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
 " Version:      3.6.0
 " Created:      28th Feb 2008
-" Last Update:  16th May 2020
+" Last Update:  15th Jan 2021
 "------------------------------------------------------------------------
 " Description:
 "               This autoload plugin defines the functions behind the command
@@ -27,6 +27,12 @@
 " Version 3.6.0:  26th Nov 2019
 "               * Fix When -close is provided but not -open
 "               * Export s:Jump() as lh#brackets#_jump()
+"               * Fix g:cb_disable_default/g:cb_enable_default
+"               * Support enriching non-<expr> imaps
+"               * Moving `s:DefineMap()` function to lh-vim-lib
+"               * Move bracket manipulation functions to autoload plugin
+"               * Use registered brackets in bracket manipulation functions
+"               * Improve pair registration for deleting, replacing...
 " Version 3.5.3:  21st Jan 2019
 "               * Fix <BS> when cb_no_default_brackets is true
 " Version 3.5.2:  12th Sep 2018
@@ -200,66 +206,15 @@ endfunction
 "
 "# Globals                                                                                                   {{{2
 "# Definitions {{{3
-if !exists('s:definitions') || exists('brackets_clear_definitions')
-  let s:definitions = {}
+if !exists('s:pairs') || exists('brackets_clear_definitions')
+  "" let s:definitions = {}
   let s:pairs       = {}
 endif
-
-"# Activation State {{{3
-" let s:active = 1
-let s:state = {
-      \ 'isActive': 1,
-      \ 'isActiveInBuffer': {},
-      \}
-
-function! s:state.toggle() dict abort
-  let self.isActive = 1 - self.isActive
-  let bid = bufnr('%')
-  let self.isActiveInBuffer[bid] = self.isActive
-endfunction
-
-function! s:state.mustActivate() dict abort
-  let bid = bufnr('%')
-  if has_key(self.isActiveInBuffer, bid)
-    let must = !self.isActiveInBuffer[bid]
-    let why = must." <= has key, global=". (self.isActive) . ", local=".self.isActiveInBuffer[bid]
-  else " first time in the buffer
-    " throw "lh#Brackets#mustActivate() assertion failed: unknown local activation state"
-    let must = 0
-    let why = must." <= has not key, global=". (self.isActive)
-  endif
-  let self.isActiveInBuffer[bid] = self.isActive
-  " echomsg "mustActivate[".bid."]: ".why
-  return must
-endfunction
-
-function! s:state.mustDeactivate() dict abort
-  let bid = bufnr('%')
-  if has_key(self.isActiveInBuffer, bid)
-    let must = self.isActiveInBuffer[bid]
-    let why = must." <= has key, global=". (self.isActive) . ", local=".self.isActiveInBuffer[bid]
-  else " first time in the buffer
-    " throw "lh#Brackets#mustDeactivate() assertion failed: unknown local activation state"
-    let must = 0
-    let why = must." <= has not key, global=". (self.isActive)
-  endif
-  let self.isActiveInBuffer[bid] = self.isActive
-  " echomsg "mustDeactivate[".bid."]: ".why
-  return must
-endfunction
+if !exists('s:toggable_mappings')
+  let s:toggable_mappings = lh#mapping#create_toggable_group('Brackets ')
+endif
 
 "# Functions                                                                                                 {{{2
-
-" Function: s:GetDefinitions(isLocal) {{{3
-" Fetch the brackets defined for the current buffer.
-function! s:GetDefinitions(isLocal) abort
-  let bid = a:isLocal ? bufnr('%') : -1
-  if !has_key(s:definitions, bid)
-    let s:definitions[bid] = []
-  endif
-  let crt_definitions = s:definitions[bid]
-  return crt_definitions
-endfunction
 
 " Function: s:GetPairs(isLocal) {{{3
 " Fetch the brackets defined for the current buffer.
@@ -269,6 +224,13 @@ function! s:GetPairs(isLocal) abort
     let s:pairs[bid] = []
   endif
   let crt_pairs = s:pairs[bid]
+  return crt_pairs
+endfunction
+
+" Function: s:GetAllPairs() {{{3
+function! s:GetAllPairs() abort
+  let crt_pairs = copy(s:GetPairs(0))
+  call extend(crt_pairs, s:GetPairs(1))
   return crt_pairs
 endfunction
 
@@ -282,51 +244,7 @@ endfunction
 
 " Function: Main function called to toggle bracket mappings. {{{3
 function! lh#brackets#toggle() abort
-  " TODO: when entering a buffer, update the mappings depending on whether it
-  " has been toggled
-  if exists('*IMAP')
-    let g:Imap_FreezeImap = 1 - s:state.isActive
-  else
-    let crt_definitions = s:GetDefinitions(0) + s:GetDefinitions(1)
-    if s:state.isActive " active -> inactive
-      for m in crt_definitions
-        call s:UnMap(m)
-      endfor
-      call lh#common#warning_msg("Brackets mappings deactivated")
-    else " inactive -> active
-      for m in crt_definitions
-        call s:Map(m)
-      endfor
-      call lh#common#warning_msg("Brackets mappings (re)activated")
-    endif
-  endif " No imaps.vim
-  call s:state.toggle()
-endfunction
-
-" Function: Activate or deactivate the mappings in the current buffer. {{{3
-function! s:UpdateMappingsActivationE() abort
-  if s:state.isActive
-    if s:state.mustActivate()
-      let crt_definitions = s:GetDefinitions(1)
-      for m in crt_definitions
-        call s:Map(m)
-      endfor
-    endif " active && must activate
-  else " not active
-    let crt_definitions = s:GetDefinitions(1)
-    if s:state.mustDeactivate()
-    for m in crt_definitions
-        call s:UnMap(m)
-      endfor
-    endif
-  endif
-endfunction
-
-function! s:UpdateMappingsActivationL() abort
-  let bid = bufnr('%')
-  let s:state.isActiveInBuffer[bid] = s:state.isActive
-  " echomsg "updateL[".bid."]: <- ". s:state.isActive
-  " call confirm( "updateL[".bid."]: <- ". s:state.isActive, '&Ok', 1)
+  call s:toggable_mappings.toggle_mappings()
 endfunction
 
 " Function: lh#brackets#toggle_usemarks() {{{3
@@ -342,13 +260,6 @@ function! lh#brackets#toggle_usemarks() abort
     call lh#common#warning_msg('g:usemarks <-'.g:usemarks)
   endif
 endfunction
-
-"# Autocommands                                                                                              {{{2
-augroup LHBrackets
-  au!
-  au BufEnter * call s:UpdateMappingsActivationE()
-  au BufLeave * call s:UpdateMappingsActivationL()
-augroup END
 
 "------------------------------------------------------------------------
 
@@ -366,87 +277,6 @@ function! lh#brackets#_string(s) abort
   return '"'.escape(a:s, '|"').'"'  " version that works with double quote and \n
   " return '"'.a:s.'"'                " version that works with \n
   " return string(a:s) " version that doesn't work: need to return something enclosed in double quotes
-endfunction
-
-" Function: s:UnMap(m)                                                                                       {{{2
-" TODO: move to lh#mapping
-function! s:UnMap(m) abort
-  try
-    let cmd = a:m.mode[0].'unmap '. a:m.buffer . a:m.lhs
-    call s:Verbose(cmd)
-    exe cmd
-  catch /E31/
-    call s:Verbose("%1: %2", v:exception, cmd)
-  endtry
-endfunction
-
-" Function: s:Map(m)                                                                                         {{{2
-" TODO: move to lh#mapping
-function! s:Map(m) abort
-  let cmd = a:m.mode.'map <silent> ' . a:m.expr . a:m.buffer . a:m.lhs .' '.a:m.rhs
-  call s:Verbose(cmd)
-  exe cmd
-endfunction
-
-" Function: s:DefineMap(mode, trigger, action, isLocal, isExpr)                                              {{{2
-function! s:DefineMap(mode, trigger, action, isLocal, isExpr) abort
-  let crt_definitions = s:GetDefinitions(a:isLocal)
-  let crt_mapping = {}
-  let crt_mapping.lhs = escape(a:trigger, '|') " need to escape bar
-  let crt_mapping.mode    = a:mode
-  let crt_mapping.rhs  = a:action
-  let crt_mapping.buffer  = a:isLocal ? '<buffer> ' : ''
-  let crt_mapping.expr    = a:isExpr  ? '<expr> '   : ''
-  if s:state.isActive
-    call s:Map(crt_mapping)
-  endif
-  let p = lh#list#Find_if(crt_definitions,
-        \ 'v:val.mode==v:1_.mode && v:val.lhs==v:1_.lhs',
-        \ [crt_mapping])
-  if p == -1
-    call add(crt_definitions, crt_mapping)
-  else
-    if crt_mapping.rhs != a:action
-      call lh#common#warning_msg( "Overrriding ".a:mode."map ".a:trigger." ".crt_definitions[p].rhs."  with ".a:action)
-    elseif &verbose >= 2
-      call s:Log("(almost) Overrriding ".a:mode."map ".a:trigger." ".crt_definitions[p].rhs." with ".a:action)
-    endif
-    let crt_definitions[p] = crt_mapping
-  endif
-endfunction
-
-" Function: s:DefineImap(trigger, inserter, isLocal)                                                         {{{2
-function! s:DefineImap(trigger, inserter, isLocal) abort
-  if exists('*IMAP') && a:trigger !~? '<bs>\|<cr>\|<up>\|<down>\|<left>\|<right>'
-    if a:isLocal
-      call IMAP(a:trigger,  "\<c-r>=".a:inserter."\<cr>", &ft)
-    else
-      call IMAP(a:trigger,  "\<c-r>=".a:inserter."\<cr>", '')
-    endif
-  else
-    " call s:DefineMap('inore', a:trigger, " \<c-r>=".(a:inserter)."\<cr>", a:isLocal)
-    call s:DefineMap('inore', a:trigger, (a:inserter), a:isLocal, 1)
-  endif
-endfunction
-
-" Function: s:ListMappings(isLocal)                                                                          {{{2
-function! s:ListMappings(isLocal) abort
-  let crt_definitions = s:GetDefinitions(a:isLocal)
-  for m in crt_definitions
-    let cmd = m.mode.'map <silent> ' . m.buffer . m.lhs .' '.m.rhs
-    echomsg cmd
-  endfor
-endfunction
-
-" Function: s:ClearMappings(isLocal)                                                                         {{{2
-function! s:ClearMappings(isLocal) abort
-  let crt_definitions = s:GetDefinitions(a:isLocal)
-  if s:state.isActive
-    for m in crt_definitions
-      call s:UnMap(m)
-    endfor
-  endif
-  unlet crt_definitions[:]
 endfunction
 
 "------------------------------------------------------------------------
@@ -646,8 +476,7 @@ endfunction
 "------------------------------------------------------------------------
 " Function: s:outer_blocks()                                                                                 {{{2
 function! s:outer_blocks() abort
-  let crt_pairs = copy(s:GetPairs(0))
-  call extend(crt_pairs, s:GetPairs(1))
+  let crt_pairs = s:GetAllPairs()
   let matches = {}
   for p in crt_pairs
     if p[0] != p[1] " searchpos doesn't work in that case
@@ -783,7 +612,7 @@ function! lh#brackets#define_imap(trigger, cases, isLocal, ...) abort
     call lh#assert#type(a:cases).is('')
     let sCases = a:cases
   endif
-  call s:DefineImap(a:trigger, sCases, a:isLocal)
+  call s:toggable_mappings.define_imap(a:trigger, sCases, a:isLocal)
 endfunction
 
 " Function: lh#brackets#enrich_imap(trigger, case, isLocal [,default=trigger])                               {{{2
@@ -792,20 +621,27 @@ function! lh#brackets#enrich_imap(trigger, case, isLocal, ...) abort
   " - Some keys, like '<bs>', cannot be used to code the default.
   " - Double "string(" because those chars are correctly interpreted with
   " lh#mapping#reinterpret_escaped_char(eval()), which requires nested strings...
+  call s:Verbose('Enriching imaping on %1', strtrans(a:trigger))
+  call s:Verbose('...previously %1', strtrans(join(lh#askvim#execute('verbose imap <cr>'), "\n")))
+  let nore = 1
   if a:0 == 0
     let previous = maparg(a:trigger, 'i', 0, 1)
-    if !empty(previous) && previous.expr
-      " If not an expression, I do know yet how to forward a non expr mapping
-      " from an expr mapping definition
-      let default = lh#mapping#_build_rhs(previous)
-    else
+    if empty(previous)
       let default = string(a:trigger)
+    elseif previous.expr
+      let default = lh#mapping#_build_rhs(previous)
+      let nore    = previous.noremap
+    else
+      let default = string(previous.rhs)
+      let nore    = previous.noremap
+      " call s:Verbose('%1 ==> %2', previous.rhs, default)
     endif
   else
     let default = string(a:1)
   endif
   let sCase='lh#mapping#_switch('.string(default).', '.string([a:case]).')'
-  call s:DefineImap(a:trigger, sCase, a:isLocal)
+  call s:toggable_mappings.define_imap(a:trigger, sCase, a:isLocal, nore)
+  call s:Verbose('New i-mapping on %1 is %2', strtrans(a:trigger), strtrans(join(lh#askvim#execute('verbose imap <cr>'), "\n")))
 endfunction
 
 "------------------------------------------------------------------------
@@ -815,9 +651,9 @@ function! s:ShallKeepDefaultMapping(trigger, mode) abort
     call lh#notify#once('lh_brackets_no_defaults', 'Warning: Both g:cb_enable_default and g:cb_disable_default are defined, g:cb_disable_default will be ignored')
   endif
   if exists('g:cb_enable_default')
-    return stridx(get(g:cb_enable_default, a:trigger, ''), a:mode) >= 0
+    return stridx(get(g:cb_enable_default, a:trigger, 'inv'), a:mode) >= 0
   elseif exists('g:cb_disable_default')
-    return stridx(get(g:cb_disable_default, a:trigger, 'inv'), a:mode) == -1
+    return stridx(get(g:cb_disable_default, a:trigger, ''), a:mode) == -1
   else
     return 1
   endif
@@ -847,11 +683,13 @@ function! s:DecodeDefineOptions(isLocal, a000) abort
   let context    = {}
   let options    = []
   let default    = 0
+  let pair       = []
   for p in a:a000
-    if     p =~ '-l\%[list]'        | call s:ListMappings(a:isLocal)  | return []
-    elseif p =~ '-cle\%[ar]'        | call s:ClearMappings(a:isLocal) | return []
+    if     p =~ '-l\%[list]'        | call s:toggable_mappings.list_mappings(a:isLocal)  | return []
+    elseif p =~ '-cle\%[ar]'        | call s:toggable_mappings.clear_mappings(a:isLocal) | return []
     elseif p =~ '-nl\|-ne\%[wline]' | let nl        = '\n'
     elseif p =~ '-e\%[scapable]'    | let escapable = 1
+    elseif p =~ '-p\%[air]='        | let pair      = matchstr(p, '-p\%[air]=\zs.*')
     elseif p =~ '-t\%[rigger]'      | let trigger   = matchstr(p, '-t\%[rigger]=\zs.*')
     elseif p =~ '-i\%[nsert]'       | let insert    = matchstr(p, '-i\%[nsert]=\zs.*')
     elseif p =~ '-v\%[isual]'       | let visual    = matchstr(p, '-v\%[isual]=\zs.*')
@@ -899,6 +737,12 @@ function! s:DecodeDefineOptions(isLocal, a000) abort
   if !exists('l:Open')       | let l:Open       = options[0] | endif
   if !exists('l:Close')      | let l:Close      = options[1] | endif
   if !exists('l:Exceptions') | let l:Exceptions = ''         | endif
+  if empty(pair)
+    let pair_list = options
+  else
+    let sep = pair[0]
+    let pair_list = split(pair[1:], sep)
+  endif
 
   if default
     let insert = insert && s:ShallKeepDefaultMapping(trigger, 'i')
@@ -906,7 +750,7 @@ function! s:DecodeDefineOptions(isLocal, a000) abort
     let normal = !s:IsFalse(normal) && s:ShallKeepDefaultMapping(trigger, 'n') ? normal : 0
   endif
 
-  return [nl, insert, visual, normal, options, trigger, l:Open, l:Close, l:Exceptions, escapable, context]
+  return [nl, insert, visual, normal, options, trigger, l:Open, l:Close, l:Exceptions, escapable, context, pair_list]
 endfunction
 
 " Function: lh#brackets#define(bang, ...)                                                                    {{{2
@@ -915,13 +759,14 @@ function! lh#brackets#define(bang, ...) abort
   let isLocal    = a:bang != "!"
   let res = s:DecodeDefineOptions(isLocal, a:000)
   if empty(res) | return | endif
-  let [nl, insert, visual, normal, options, trigger, l:Open, l:Close, l:Exceptions, escapable, context]
+  let [nl, insert, visual, normal, options, trigger, l:Open, l:Close, l:Exceptions, escapable, context, pair]
         \ = res
 
-  if type(l:Open) != type(function('has')) &&  type(l:Close) != type(function('has'))
-    call s:AddPair(isLocal, l:Open, l:Close)
+  if len(pair) == 2
+    " if type(l:Open) != type(function('has')) &&  type(l:Close) != type(function('has'))
+    call s:AddPair(isLocal, pair[0], pair[1])
     if escapable
-      call s:AddPair(isLocal, '\\'.l:Open, '\\'.l:Close)
+      call s:AddPair(isLocal, '\\'.pair[0], '\\'.pair[1])
     endif
   endif
 
@@ -932,10 +777,10 @@ function! lh#brackets#define(bang, ...) abort
     let map_ctx = empty(context) ? '' : ','.string(context)
     let inserter = 'lh#brackets#opener('.lh#brackets#_string(trigger).','. escapable.',"'.(nl).
           \'",'. lh#brackets#_string(l:Open).','.lh#brackets#_string(options[1]).','.string(areSameTriggers).','.string(l:Exceptions).map_ctx.')'
-    call s:DefineImap(trigger, inserter, isLocal)
+    call s:toggable_mappings.define_imap(trigger, inserter, isLocal)
     if ! areSameTriggers
       let inserter = 'lh#brackets#closer('.lh#brackets#_string(options[1]).','.lh#brackets#_string (l:Close).','.lh#brackets#_string(l:Exceptions).map_ctx.')'
-      call s:DefineImap(options[1], inserter, isLocal)
+      call s:toggable_mappings.define_imap(options[1], inserter, isLocal)
       if len(options[1])
         " TODO: enrich <bs> & <del> imaps for the close triggers
       endif
@@ -952,7 +797,7 @@ function! lh#brackets#define(bang, ...) abort
       let action = ' <c-\><c-n>@=lh#map#surround('.
             \ lh#brackets#_string(options[0]).', '.lh#brackets#_string(options[1]).", 0, 0, '`>ll', 1)\<cr>"
     endif
-    call s:DefineMap(s:k_vmap_type.'nore', trigger, action, isLocal, 0)
+    call s:toggable_mappings.define_map(s:k_vmap_type.'nore', trigger, action, isLocal, 0)
 
     if type(normal)==type('string') && normal=="default=1"
       let normal = 1
@@ -971,15 +816,14 @@ function! lh#brackets#define(bang, ...) abort
     let normal = empty(nl) ? 'viw' : 'V'
   endif
   if lh#type#is_string(normal)
-    call s:DefineMap('n', trigger, normal.escape(trigger, '|'), isLocal, 0)
+    call s:toggable_mappings.define_map('n', trigger, normal.escape(trigger, '|'), isLocal, 0)
   endif
 endfunction
 
 "------------------------------------------------------------------------
 " Function: lh#brackets#_match_any_bracket_pair()                                                            {{{2
 function! lh#brackets#_match_any_bracket_pair() abort
-  let crt_pairs = copy(s:GetPairs(0))
-  call extend(crt_pairs, s:GetPairs(1))
+  let crt_pairs = s:GetAllPairs()
   if empty(crt_pairs)
     return 0
   endif
@@ -991,8 +835,7 @@ endfunction
 "------------------------------------------------------------------------
 " Function: lh#brackets#_delete_empty_bracket_pair()                                                         {{{2
 function! lh#brackets#_delete_empty_bracket_pair() abort
-  let crt_pairs = copy(s:GetPairs(0))
-  call extend(crt_pairs, s:GetPairs(1))
+  let crt_pairs = s:GetAllPairs()
   let regex = '\V\('.join(map(crt_pairs, 'join(v:val,"\\%'.col('.').'c")'), '\|').'\)'
         \ . '\('.lh#marker#txt('\.\{-}').'\)\='
   let line = getline('.')
@@ -1043,6 +886,189 @@ function! lh#brackets#_split_line(line, c, tw) abort
   return [head, before, after]
 endfunction
 
+"------------------------------------------------------------------------
+" ## Brackets changing functions {{{1
+
+" Function: lh#brackets#_delete_brackets() {{{2
+function! lh#brackets#_delete_brackets() abort
+  let line = getline(line("."))
+  let off = col(".") - 1
+  let b = line[off - 1]
+  let c = line[off]
+  if b == '\' && (c == '{' || c == '}')
+    normal! X%X%
+  endif
+  let crt_pairs = filter(s:GetAllPairs(), 'strlen(v:val[0]) == 1')
+  let iso_pairs = map(filter(copy(crt_pairs), 'v:val[0] == v:val[1]'), 'v:val[0]')
+  if index(iso_pairs, c) >= 0
+    " let's suppose everything is on the same line
+    " let's ignore vim comments
+    " let's ignore embedded stuff like "'"
+
+    " need to detect to which pair the character belongs to
+    let m = len(lh#string#matches(line[:off], c))
+    let lline = split(line, '\zs')
+    if m % 2 == 0
+      let c2 = matchend(line[:off-1], '.*'.c)
+      if c2 >= 0
+        unlet lline[off]
+        unlet lline[c2-1]
+        let line = join(lline, '')
+        call setline(line('.'), line)
+      endif
+    else
+      let c2 = stridx(line, c, off+1 )
+      if c2 >= 0
+        unlet lline[c2]
+        unlet lline[off]
+        let line = join(lline, '')
+        call setline(line('.'), line)
+      endif
+    endif
+
+    return
+  endif
+  let cleanup = lh#on#exit()
+        \.restore('&matchpairs')
+  try
+    call filter(crt_pairs, 'v:val[0] != v:val[1]')
+    exe 'set matchpairs='.join(map(copy(crt_pairs), 'join(v:val,":")'),',')
+    let openings = map(copy(crt_pairs), 'v:val[0]')
+    let closings = map(copy(crt_pairs), 'v:val[1]')
+    if     index(openings, c) >= 0 | normal! %x``x
+    elseif index(closings, c) >= 0 | normal! %%x``x``
+    endif
+  finally
+    call cleanup.finalize()
+  endtry
+endfunction
+
+" Function: lh#brackets#_toggle_backslash() {{{2
+" TODO: support identical characters for opening/closing
+function! lh#brackets#_toggle_backslash() abort
+  let b = getline(line("."))[col(".") - 2]
+  let c = getline(line("."))[col(".") - 1]
+  let cleanup = lh#on#exit()
+        \.restore('&matchpairs')
+  try
+    let crt_pairs = filter(s:GetAllPairs(), '(strlen(v:val[0]) == 1) && (v:val[0] != v:val[1])')
+    exe 'set matchpairs='.join(map(copy(crt_pairs), 'join(v:val,":")'),',')
+    if b == '\'
+      if     c =~ '[[({<$]' | normal! %X``X
+      elseif c =~ '[\])}>$]' | normal! %%X``X%
+      endif
+    else
+      if     c =~ '[[({<$]' | exe "normal! %i\\\<esc>``i\\\<esc>l"
+      elseif c =~ '[\])}>$]' | exe "normal! %%i\\\<esc>``i\\\<esc>%"
+      endif
+    endif
+  finally
+    call cleanup.finalize()
+  endtry
+endfunction
+
+" Function: lh#brackets#_change_to(open_close) {{{2
+function! lh#brackets#_change_to(open_close) abort
+  let crt_pairs = filter(s:GetAllPairs(), 'strlen(v:val[0]) == 1')
+  let iso_pairs = map(filter(copy(crt_pairs), 'v:val[0] == v:val[1]'), 'v:val[0]')
+  let line = getline(line("."))
+  let off = col(".") - 1
+  let c = line[off]
+  " matchpairs only accept different pair characters
+  if index(iso_pairs, c) >= 0
+    " let's suppose everything is on the same line
+    " let's ignore vim comments
+    " let's ignore embedded stuff like "'"
+
+    " need to detect to which pair the character belongs to
+    let m = len(lh#string#matches(line[:off], c))
+    let lline = split(line, '\zs')
+    if m % 2 == 0
+      let c2 = matchend(line[:off-1], '.*'.c)
+      if c2 >= 0
+        let lline[c2-1] = a:open_close[0]
+        let lline[off]  = a:open_close[1]
+        let line = join(lline, '')
+        call setline(line('.'), line)
+      endif
+    else
+      let c2 = stridx(line, c, off+1 )
+      if c2 >= 0
+        let lline[c2] = a:open_close[1]
+        let lline[off]  = a:open_close[0]
+        let line = join(lline, '')
+        call setline(line('.'), line)
+      endif
+    endif
+
+    return
+  endif
+  let cleanup = lh#on#exit()
+        \.restore('&matchpairs')
+  try
+    call filter(crt_pairs, 'v:val[0] != v:val[1]')
+    exe 'set matchpairs='.join(map(copy(crt_pairs), 'join(v:val,":")'),',')
+    let openings = map(copy(crt_pairs), 'v:val[0]')
+    let closings = map(copy(crt_pairs), 'v:val[1]')
+    if     index(openings, c) >= 0 | exe 'normal! %r'.(a:open_close[1]).'``r'.(a:open_close[0])
+    elseif index(closings, c) >= 0 | exe 'normal! %%r'.(a:open_close[1]).'``r'.(a:open_close[0])
+    endif
+  finally
+    call cleanup.finalize()
+  endtry
+endfunction
+
+" Function: lh#brackets#_manip_mode(starting_key) {{{3
+function! lh#brackets#_manip_mode(starting_key) abort
+  let crt_pairs    = filter(s:GetAllPairs(), 'strlen(v:val[0]) == 1')
+  let openings     = map(copy(crt_pairs), 'v:val[0]')
+  let openings_str = join(openings, '')
+  let msg          = "\r-- brackets manipulation mode (x ".join(openings, ' ')." \\ <F1> q)"
+  redraw! " clear the msg line
+  while 1
+    echohl StatusLineNC
+    echo msg
+    echohl None
+    let key = getchar()
+    let bracketsManip=nr2char(key)
+    if (-1 != stridx("x".openings_str."\\q",bracketsManip)) ||
+          \ (key =~ "\\(\<F1>\\|\<Del>\\)")
+      if     bracketsManip == "x"      || key == "\<Del>"
+        call lh#brackets#_delete_brackets() | redraw! | return ''
+      elseif bracketsManip == "\\"          | call lh#brackets#_toggle_backslash()
+      elseif stridx(openings_str, bracketsManip) >= 0
+        let idx = stridx(openings_str, bracketsManip)
+        call s:Verbose('Changing to #%1: %2', idx, openings[idx])
+        call lh#brackets#_change_to(crt_pairs[idx])
+        redraw!
+        return
+      elseif key == "\<F1>"
+        redraw! " clear the msg line
+        echo "\r *x* -- delete the current brackets pair\n"
+        echo " *(* -- change the current brackets pair to round brackets ()\n"
+        echo " *[* -- change the current brackets pair to square brackets []\n"
+        echo " *{* -- change the current brackets pair to curly brackets {}\n"
+        echo " *<* -- change the current brackets pair to angle brackets <>\n"
+        echo " *'* -- change the current brackets pair to single quotes ''\n"
+        echo " *\"* -- change the current brackets pair to double quotes \"\"\n"
+        echo " *`* -- change the current brackets pair to back quotes ''\n"
+        echo " *\\* -- toggle a backslash before the current brackets pair\n"
+        echo " *q* -- quit the mode\n"
+        continue
+      elseif bracketsManip == "q"
+        redraw! " clear the msg line
+        return ''
+        " else
+      endif
+      redraw! " clear the msg line
+    else
+      redraw! " clear the msg line
+      return a:starting_key.bracketsManip
+    endif
+  endwhile
+endfunction
+
+"------------------------------------------------------------------------
 " }}}1
 "------------------------------------------------------------------------
 let &cpo=s:cpo_save

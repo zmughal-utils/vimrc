@@ -7,7 +7,7 @@
 " Version:      3.6.0
 let s:k_version = 360
 " Created:      17th Mar 2008
-" Last Update:  16th Nov 2019
+" Last Update:  05th Jan 2021
 "------------------------------------------------------------------------
 " Description:
 "       Functions that tune how some bracket characters should expand in C&C++
@@ -52,21 +52,47 @@ endfunction
 " ## Functions {{{1
 
 " - Callback function that specializes the behaviour of '<' {{{2
+function! s:is_template(type) abort
+  let type = matchstr(a:type, '\k\+\ze\s*$')
+  call s:Verbose('check if template: "%1" -> "%2"', a:type, type)
+  " 1- Check if this is a standard type registered in lh-cpp DB
+  if !exists('s:has_lh_cpp')
+    runtime autoload/lh/cpp/types.vim
+    let s:has_lh_cpp = exists('*lh#cpp#types#version') && lh#cpp#types#version() >= 221
+  endif
+  if s:has_lh_cpp
+    if lh#cpp#types#get_info(type).is_template()
+      return 1
+    endif
+  endif
+  " 2- ask ... who?
+  " While tag database would have been a nice source of information,
+  " unfortunately, it does not store any information that would tell
+  " that a type, or a variable is template.
+  " At best there is a `template` in the returned `'cmd'` field when
+  " `template`  occurs on the same line of the class/struct defined.
+  " Also asking lh-clang would be too expensive. May be some day LSP
+  " servers would return information on the current code... who knows?
+  " 3- Return ... "no"
+  return 0
+endfunction
+
 function! lh#cpp#brackets#lt() abort
   let c = col('.') - 1
   let l = getline('.')
   let l = strpart(l, 0, c)
-  if l =~ '^#\s*include\s*$'
+  if (l =~ '^#\s*include\s*$'
         \ . '\|\U\{-}_cast\s*$'
         \ . '\|template\s*$'
-        \ . '\|typename[^<]*$'
+        \ . '\|typename[^<]*$')
+        \ || s:is_template(l)
         " \ . '\|\%(lexical\|dynamic\|reinterpret\|const\|static\)_cast\s*$'
     if lh#brackets#usemarks()
       return '<!cursorhere!>!mark!'
       " NB: InsertSeq with "\<left>" as parameter won't work in utf-8 => Prefer
       " "h" when motion is needed.
-      " return '<>' . "!mark!\<esc>".lh#encoding#strlen(Marker_Txt())."hi"
-      " return '<>' . "!mark!\<esc>".lh#encoding#strlen(Marker_Txt())."\<left>i"
+      " return '<>' . "!mark!\<esc>".lh#encoding#strlen(lh#marker#txt())."hi"
+      " return '<>' . "!mark!\<esc>".lh#encoding#strlen(lh#marker#txt())."\<left>i"
     else
       " return '<>' . "\<Left>"
       return '<!cursorhere!>'
@@ -147,7 +173,6 @@ function! s:Mark() abort " {{{2
   return lh#brackets#usemarks()
         \ ?  "!mark!"
         \ : ""
-  endif
 endfunction
 
 " Function: lh#cpp#brackets#semicolon() {{{2

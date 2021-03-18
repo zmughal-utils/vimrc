@@ -4,16 +4,17 @@
 "		<URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-brackets/tree/master/License.md>
-" Version:      3.5.2
-let s:k_version = '352'
+" Version:      3.6.0
+let s:k_version = '360'
 " Created:      03rd Nov 2015
-" Last Update:  17th Oct 2018
+" Last Update:  08th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       API plugin: Several mapping-oriented functions
 "
 "------------------------------------------------------------------------
 " History:
+"       v3.6.0 Move functions into autoload plugin
 "       v3.5.2 Improve logs
 "       v3.2.1 Fix regression with `set et`
 "       v3.2.0 Add `lh#map#4_this_context()`
@@ -293,8 +294,8 @@ function! lh#map#smart_insert_seq2(key, expr, ...) abort
     let rhs = substitute(rhs, '<+\(.\{-}\)+>', "!cursorhere!&", '')
     let rhs = substitute(rhs, '<+\(.\{-}\)+>', "\<c-r>=lh#marker#txt(".string('\1').")\<cr>", 'g')
     let rhs .= "!movecursor!"
-    " let rhs = lh#map#build_map_seq(escape(rhs, '\'))."\<c-\>\<c-n>@=Marker_Jump({'direction':1, 'mode':'n'})\<cr>"
-    let rhs = lh#map#build_map_seq(rhs."\<c-\>\<c-n>@=Marker_Jump({'direction':1, 'mode':'n'})\<cr>")
+    " let rhs = lh#map#build_map_seq(escape(rhs, '\'))."\<c-\>\<c-n>@=lh#marker#_jump({'direction':1, 'mode':'n'})\<cr>"
+    let rhs = lh#map#build_map_seq(rhs."\<c-\>\<c-n>@=lh#marker#_jump({'direction':1, 'mode':'n'})\<cr>")
   endif
   " Build & return the context dependent sequence to insert
   if a:0 > 0
@@ -353,9 +354,9 @@ function! lh#map#surround_by_substitute(
     let goback = ''
 
     if a:mustInterpret
-      inoremap !cursorhere! <c-\><c-n>:call lh#map#_cursor_here()<cr>a
+      inoremap <silent> !cursorhere! <c-\><c-n>:call lh#map#_cursor_here()<cr>a
       " inoremap !movecursor! <c-\><c-n>:call lh#map#_goto_mark()<cr>a
-      inoremap !movecursor! <c-\><c-n>:call lh#map#_goto_mark()<cr>a<c-r>=lh#map#_fix_indent()<cr>
+      inoremap <silent> !movecursor! <c-\><c-n>:call lh#map#_goto_mark()<cr>a<c-r>=lh#map#_fix_indent()<cr>
 
       if ! lh#brackets#usemarks()
         let seq = substitute(seq, '!mark!', '', 'g')
@@ -390,15 +391,15 @@ function! lh#map#surround(begin, end, isLine, isIndented, goback, mustInterpret,
     " internal mappings
     " <c-o> should be better for !cursorhere! as it does not move the cursor
     " But only <c-\><c-n> works correctly.
-    inoremap !cursorhere! <c-\><c-n>:call lh#map#_cursor_here()<cr>a
+    inoremap <silent> !cursorhere! <c-\><c-n>:call lh#map#_cursor_here()<cr>a
     " Weird: cursorpos1 & 2 require <c-o> an not <c-\><c-n>
-    inoremap !cursorpos1! <c-o>:call lh#map#_cursor_here(1)<cr>
-    inoremap !cursorpos2! <c-o>:call lh#map#_cursor_here(2)<cr>
+    inoremap <silent> !cursorpos1! <c-o>:call lh#map#_cursor_here(1)<cr>
+    inoremap <silent> !cursorpos2! <c-o>:call lh#map#_cursor_here(2)<cr>
     " <c-\><c-n>....a is better for !movecursor! as it leaves the cursor `in'
     " insert-mode... <c-o> does not; that's odd.
     " inoremap !movecursor! a<c-r>=lh#map#_goto_mark().lh#map#_fix_indent()<cr>
-    inoremap !movecursor! <c-\><c-n>:call lh#map#_goto_mark(1)<cr>a<c-r>=lh#map#_fix_indent()<cr>
-    inoremap !movecursor2! <c-\><c-n>:call lh#map#_goto_end_mark()<cr>a<c-r>=lh#map#_fix_indent()<cr>
+    inoremap <silent> !movecursor! <c-\><c-n>:call lh#map#_goto_mark(1)<cr>a<c-r>=lh#map#_fix_indent()<cr>
+    inoremap <silent> !movecursor2! <c-\><c-n>:call lh#map#_goto_end_mark()<cr>a<c-r>=lh#map#_fix_indent()<cr>
 
     " Check whether markers must be used
     if !lh#brackets#usemarks()

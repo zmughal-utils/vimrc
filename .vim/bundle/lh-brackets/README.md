@@ -61,6 +61,7 @@ It is possible to:
   * toggle the definitions of all the brackets mappings by pressing `<F9>` (`:h <Plug>ToggleBrackets`) ;
   * make the mappings global with `:Brackets!`, or local to a buffer with `:Brackets`. ;
   * neutralize the mapping with `-but` option ; typically to neutralize the insertion of the brackets-pair for specified filetypes, or for more complex contexts.
+  * specify exactly which is the canonical pair for deletion when it's not immediate from the context (thanks to the `-pair` option)
 
 
 Here is an excerpt from the C&C++ brackets definitions, see the documentation for more help.
@@ -107,7 +108,7 @@ As [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib), map-tools provides a 
 
 
 # Installation
-  * Requirements: Vim 7.+ (7.4-849 in order to support redo), [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v4.4.0+, [lh-style](http://github.com/LucHermitte/lh-style) v1.0.0+ for unit testing.
+  * Requirements: Vim 7.+ (7.4-849 in order to support redo), [lh-vim-lib](http://github.com/LucHermitte/lh-vim-lib) v5.3.0+, [lh-style](http://github.com/LucHermitte/lh-style) v1.0.0+ for unit testing.
   * With [vim-addon-manager](https://github.com/MarcWeber/vim-addon-manager), install lh-brackets (this is the preferred method because of the dependencies)
 ```vim
 ActivateAddons lh-brackets
