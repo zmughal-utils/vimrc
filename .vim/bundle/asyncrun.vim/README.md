@@ -10,6 +10,7 @@ This plugin takes the advantage of new apis in Vim 8 (and NeoVim) to enable you 
 - Customizable runners and command modifiers brings you dark power of asyncrun.
 - Fast and lightweight, just a single self-contained `asyncrun.vim` source file.  
 - Provide corresponding user experience in vim, neovim, gvim and macvim.
+- Separated extension [asyncrun.extra](https://github.com/skywind3000/asyncrun.extra) to provide extra runners.
 
 If that doesn't excite you, then perhaps this GIF screen capture below will change your mind.
 
@@ -31,7 +32,7 @@ Copy `asyncrun.vim` to your `~/.vim/plugin` or use Vundle to install it from `sk
 
 # Example
 
-![](https://skywind3000.github.io/images/p/asyncrun/screenshot.gif)
+![](https://github.com/skywind3000/images/raw/master/p/asyncrun/screenshot.gif)
 
 Remember to open vim's quickfix window by `:copen` (or setting  `g:asyncrun_open`) before invoking `AsyncRun`, otherwise, you will not see any output.
 
@@ -43,7 +44,7 @@ Remember to open vim's quickfix window by `:copen` (or setting  `g:asyncrun_open
 - [Manual](#manual)
     - [AsyncRun - Run shell command](#asyncrun---run-shell-command)
     - [AsyncStop - Stop the running job](#asyncstop---stop-the-running-job)
-    - [Function (API)](#function-api)
+    - [Function API](#function-api)
     - [Settings](#settings)
     - [Variables](#variables)
     - [Autocmd](#autocmd)
@@ -185,6 +186,7 @@ There can be some options before your `[cmd]`:
 | `-focus=?` | 1 | set to `0` to prevent focus changing when `-mode=term` |
 | `-hidden=?` | 0 | set to `1` to setup `bufhidden` to `hide` for internal terminal |
 | `-silent` | `unset` | provide `-silent` to prevent open quickfix window (will override `g:asyncrun_open` temporarily) |
+| `-close` | `unset` | when using `-mode=term`, close the terminal automatically when terminal process finished |
 
 All options must start with a minus and position **before** `[cmd]`. Since no shell command string starts with a minus. So they can be distinguished from shell command easily without any ambiguity. 
 
@@ -278,6 +280,7 @@ For more information, please see [here](https://github.com/skywind3000/asyncrun.
 AsyncRun is capable to run commands in Vim/NeoVim's internal terminal with the `-mode=term` option. You can specify how to open the terminal window by `-pos=?`, available positions are:
 
 - `-pos=tab`: open the terminal in a new tab.
+- `-pos=TAB`: open the terminal in a new tab on the left side.
 - `-pos=curwin`: open the terminal in the current window.
 - `-pos=top`: open the terminal above the current window.
 - `-pos=bottom`: open the terminal below the current window.
@@ -290,6 +293,7 @@ Examples:
 
 ```VimL
 :AsyncRun -mode=term -pos=tab python "$(VIM_FILEPATH)"
+:AsyncRun -mode=term -pos=TAB -close -cwd=<root> lazygit
 :AsyncRun -mode=term -pos=bottom -rows=10 python "$(VIM_FILEPATH)"
 :AsyncRun -mode=term -pos=right -cols=80 python "$(VIM_FILEPATH)"
 :AsyncRun -mode=term -pos=curwin python "$(VIM_FILEPATH)"
@@ -299,6 +303,8 @@ Examples:
 The `-pos` field accepts an uppercase `TAB`, to create tab on the left of current tab. When using internal terminal in a split window, AsyncRun will firstly reuse a finished previous terminal window if it exists, if not, a new terminal window will be created in given position. Tab based terminal can also be reusable if `-reuse` is provided.
 
 Except the quickfix and internal terminal, AsyncRun is capable to run command in another tmux split or a new gnome-terminal window/tab with the advantage of [customizable runners](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner).
+
+More extra runners can be found in the extension [asyncrun.extra](https://github.com/skywind3000/asyncrun.extra).
 
 ### Terminal Name
 
@@ -343,7 +349,7 @@ The visual selection (line-wise) will be taken as stdin.
 
 ### Customize Runner
 
-You may want your command run in a tmux split or a new gnome-terminal window, for this reason, AsyncRun allows you create new runners:
+AsyncRun allows you to define new runners to specify how to run your command. It can be useful when you want your commands run in a tmux split or a new gnome-terminal window:
 
 ```VimL
 function! MyRunner(opts)
@@ -362,9 +368,11 @@ Then try:
 
 When `-mode` is `term` and `-pos` can used to represent runner name.
 
-Runner function has only one argument: `opts`, it contains the options extracted from `:AsyncRun` command line, and `opts.cmd` stores current command. 
+Runner function has only one argument: `opts`, it contains the options extracted from `:AsyncRun` command line, and `opts.cmd` stores current command.
 
-For examples like `tmux`, `gnome-terminal` and other runners please visit project wiki: [customize runner](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner).
+There is a separated extension [asyncrun.extra](https://github.com/skywind3000/asyncrun.extra) which provide extra runners to run commands in `gnome-terminal`, `tmux`, `floaterm` and more. You can check this to see if it can fit your needs.
+
+If you want to create new runners please visit project wiki: [customize runner](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner).
 
 
 ### Command Modifier
@@ -403,7 +411,7 @@ Recommend to use Vim 8.0 or later.
 
 asyncrun.vim can cooperate with `vim-fugitive`, see [here](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins#fugitive).
 
-![](https://skywind3000.github.io/images/p/asyncrun/cooperate_with_fugitive.gif)
+![](https://github.com/skywind3000/images/raw/master/p/asyncrun/cooperate_with_fugitive.gif)
 
 
 ## Language Tips
