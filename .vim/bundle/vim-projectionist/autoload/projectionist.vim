@@ -65,14 +65,21 @@ function! s:slash(str) abort
 endfunction
 
 function! projectionist#json_parse(string) abort
-  let [null, false, true] = ['', 0, 1]
   let string = type(a:string) == type([]) ? join(a:string, ' ') : a:string
-  let stripped = substitute(string, '\C"\(\\.\|[^"\\]\)*"', '', 'g')
-  if stripped !~# "[^,:{}\\[\\]0-9.\\-+Eaeflnr-u \n\r\t]"
+  if exists('*json_decode')
     try
-      return eval(substitute(string, "[\r\n]", ' ', 'g'))
+      return json_decode(string)
     catch
     endtry
+  else
+    let [null, false, true] = ['', 0, 1]
+    let stripped = substitute(string, '\C"\(\\.\|[^"\\]\)*"', '', 'g')
+    if stripped !~# "[^,:{}\\[\\]0-9.\\-+Eaeflnr-u \n\r\t]"
+      try
+        return eval(substitute(string, "[\r\n]", ' ', 'g'))
+      catch
+      endtry
+    endif
   endif
   throw "invalid JSON: ".string
 endfunction
@@ -539,6 +546,11 @@ function! projectionist#append(root, ...) abort
     if !has_key(b:projectionist, root)
       let b:projectionist[root] = []
     endif
+    for [k, v] in items(filter(copy(projections), 'type(v:val) == type("")'))
+      if (k =~# '\*') ==# (v =~# '\*') && has_key(projections, v)
+        let projections[k] = projections[v]
+      endif
+    endfor
     call add(b:projectionist[root], filter(projections, 'type(v:val) == type({})'))
     return 1
   endif
@@ -689,6 +701,7 @@ let s:prefixes = {
       \ 'S': 'split',
       \ 'V': 'vsplit',
       \ 'T': 'tabedit',
+      \ 'O': 'drop',
       \ 'D': 'read'}
 
 function! projectionist#navigation_commands() abort
