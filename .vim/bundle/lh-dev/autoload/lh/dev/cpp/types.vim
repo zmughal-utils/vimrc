@@ -7,7 +7,7 @@
 " Version:	2.0.0
 let s:k_version = '2.0.0'
 " Created:	10th Feb 2009
-" Last Update:	19th Dec 2019
+" Last Update:	09th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 " 	Analysis functions for C++ types.
@@ -19,6 +19,11 @@ let s:k_version = '2.0.0'
 " 	        + Fix lh#dev#cpp#types#const_correct_type() for vim 7.4.152
 "               ~ Update to lh-tags 3.0 new API
 "               + lh#dev#cpp#types#add_const()
+"                 opt: lh#ft#option#get('place_const_after_type', 'cpp', 1)
+"               + lh#dev#cpp#types#define()
+"                 opt: lh#option#get('cpp_define_types_with_using', 1)
+"               + lh#dev#cpp#types#define_constexpression()
+"                 opt: lh#dev#cpp#use_cpp11()
 "               + Fix const related functions to support multi-levels types
 "                 (T**)
 " 	v1.5.0: - #_of_var
@@ -83,6 +88,16 @@ endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
+
+" # Misc functions {{{2
+" Function: lh#dev#cpp#types#define(name, expression) {{{3
+function! lh#dev#cpp#types#define(name, expression) abort
+  if lh#dev#cpp#use_cpp11() && lh#option#get('cpp_define_types_with_using', 1)
+    return printf("using %s = %s;", a:name, a:expression)
+  else
+    return printf("typedef %s %s;", a:expression, a:name)
+  endif
+endfunction
 
 " # const related functions {{{2
 " TODO: handle things like C<T&>, C<T const&>...
@@ -200,6 +215,18 @@ function! lh#dev#cpp#types#remove_cv(type) abort
   let parts = s:DecomposeType(a:type)
   let parts[-1] = substitute(parts[-1], '\v\s*<(const|volatile)>\s*', '', '')
   return join(parts, '')
+endfunction
+
+" Function: lh#dev#cpp#types#define_constexpression(type, varname, expression) {{{3
+function! lh#dev#cpp#types#define_constexpression(type, varname, expression) abort
+  if &ft == 'c' && exists('g:c_no_c99')
+    let fmt = '#define %2 (%3)'
+  elseif &ft == 'cpp' && lh#dev#cpp#use_cpp11()
+    let fmt = 'constexpr %1 %2 = %3;'
+  else " C99, C++98
+    let fmt = 'const/*expr*/ %1 %2 = %3;'
+  endif
+  return lh#fmt#printf(fmt, a:type, a:varname, a:expression)
 endfunction
 
 " # References related functions {{{2

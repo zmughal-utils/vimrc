@@ -4,7 +4,7 @@
 "               <URL:http://github.com/LucHermitte/lh-dev>
 " Version:      2.0.0
 " Created:      31st May 2010
-" Last Update:  03rd Sep 2018
+" Last Update:  11th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       Various helper functions that return ctags information on (OO) classes
@@ -60,9 +60,19 @@ endfunction
 " - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 " # Fetch Attributes {{{2
 " @todo, may need to adapt m_member to other languages
+" @todo share the unique_sort with other members?
+function! s:cmp_tagline(lhs, rhs) abort
+  return a:lhs.line - a:rhs.line
+endfunction
+
 function! lh#dev#class#attributes(id, ...) abort
   let need_local = get(a:, 1, 1)
-  return s:FetchMembers(a:id, 'm', need_local)
+  let attributes = s:FetchMembers(a:id, 'm', need_local)
+  " Keep only those w/ fully specified name
+  call filter(attributes, 'v:val.name =~ "^".a:id')
+  " sort them by line number
+  call sort(attributes, function('s:cmp_tagline'))
+  return attributes
 endfunction
 
 " # Fetch Methods {{{2

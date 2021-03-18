@@ -4,10 +4,10 @@
 "               <URL:http://github.com/LucHermitte>
 " License:      GPLv3 with exceptions
 "               <URL:http://github.com/LucHermitte/lh-dev/License.md>
-" Version:      1.5.0.
-let s:k_version = '1.5.0'
+" Version:      2.0.0.
+let s:k_version = '2.0.0'
 " Created:      31st Aug 2011
-" Last Update:  18th Apr 2016
+" Last Update:  09th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -16,6 +16,8 @@ let s:k_version = '1.5.0'
 
 let s:cpo_save=&cpo
 set cpo&vim
+" Import functions from lh-cpp if it's installed
+runtime autoload/lh/cpp.vim
 "------------------------------------------------------------------------
 " ## Misc Functions     {{{1
 " # Version {{{2
@@ -49,10 +51,11 @@ endfunction
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
 " Function: lh#dev#cpp#use_cpp11() {{{3
-" this function is deprecated by the functions lh#cpp#use_cpp*()
+" this function is deprecated by the functions lh#cpp#use_cpp*() from lh-cpp,
+" but still kept to not impose a dependency on lh-cpp in vim-refactor
 function! lh#dev#cpp#use_cpp11()
-  " default is no for the moment (Aug 2011)
-  return lh#option#get('cpp_use_cpp11', 0)
+  " default is yes now (Mar 2021)
+  return exists('*lh#cpp#use_cpp11') ? lh#cpp#use_cpp11() : lh#option#get('cpp_use_cpp11', 1)
 endfunction
 
 "------------------------------------------------------------------------
