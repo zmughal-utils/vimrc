@@ -78,15 +78,6 @@ that are part of Git repositories).
                                                 *:Git_mergetool*
 :Git mergetool [args]   Like |:Git_difftool|, but target merge conflicts.
 
-                                                *:Git_push*
-:Git push [args]        Invoke git-push, load the results into the |quickfix|
-                        list, and invoke |:cwindow| to reveal any errors.
-                        |:Dispatch| is used if available for asynchronous
-                        invocation.
-
-                                                *:Git_fetch*
-:Git fetch [args]       Like |:Git_push|, but for git-fetch.
-
                                                 *:Ggrep* *:Gcgrep* *:Git_grep*
 :Ggrep[!] [args]        |:grep|[!] with git-grep as 'grepprg'.
 :Git[!] grep [args]
@@ -100,8 +91,9 @@ that are part of Git repositories).
                         |quickfix| list.  Jumps to the first commit unless [!]
                         is given.
 
-                        The quickfix list can be slow and awkward for many use
-                        cases.  Consider using |:Git| log instead.
+                        The quickfix list can be awkward for many use cases
+                        and exhibits extremely poor performance with larger
+                        data sets.  Consider using |:Git| log instead.
 
 :{range}Gclog[!] [args] Use git-log -L to load previous revisions of the given
                         range of the current file into the |quickfix| list.
@@ -263,10 +255,9 @@ U                       Unstage everything.
 X                       Discard the change under the cursor.  This uses
                         `checkout` or `clean` under the hood.  A command is
                         echoed that shows how to undo the change.  Consult
-                        `:messages` to see it again.  You can use this during
-                        a merge conflict do discard "our" changes (--theirs)
-                        in the "Unstaged" section or discard "their" changes
-                        (--ours) in the "Staged" section.
+                        `:messages` to see it again.  During a merge conflict,
+                        use 2X to call `checkout --ours` or 3X to call
+                        `checkout --theirs` .
 
                                                 *fugitive_=*
 =                       Toggle an inline diff of the file under the cursor.
@@ -632,8 +623,8 @@ just one space character longer than the legacy version.
 *:Gpull*        Superseded by |:Git| pull.
 *:Grebase*      Superseded by |:Git| rebase.
 *:Grevert*      Superseded by |:Git| revert.
-*:Gpush*        Superseded by |:Git_push|.
-*:Gfetch*       Superseded by |:Git_fetch|.
+*:Gpush*        Superseded by |:Git| push.
+*:Gfetch*       Superseded by |:Git| fetch.
 *:Glog*         Superseded by |:Gclog|.
 *:Gstatus*      Superseded by |:Git| (with no arguments).
 *:Git!*         Superseded by |:Git_--paginate|.
