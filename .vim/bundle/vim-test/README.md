@@ -24,6 +24,7 @@ runners are supported:
 |         **C#** | .NET                                                                                                               | `xunit`, `dotnettest`                                                                                                                        |
 |    **Clojure** | Fireplace.vim                                                                                                      | `fireplacetest`                                                                                                                              |
 |    **Crystal** | Crystal                                                                                                            | `crystalspec`                                                                                                                                |
+|       **Dart** | Flutter Test                                                                                                       | `fluttertest`                                                                                                                                |
 |     **Elixir** | ESpec, ExUnit                                                                                                      | `espec`, `exunit`                                                                                                                            |
 |        **Elm** | elm-test                                                                                                           | `elmtest`                                                                                                                                    |
 |     **Erlang** | CommonTest, EUnit                                                                                                  | `commontest`, `eunit`                                                                                                                        |
@@ -31,10 +32,11 @@ runners are supported:
 |    **Haskell** | stack                                                                                                              | `stacktest`                                                                                                                                  |
 |       **Java** | Maven, Gradle                                                                                                      | `maventest`, `gradletest`                                                                                                                    |
 | **JavaScript** | Ava, Cucumber.js, Cypress, Deno, Intern, Jasmine, Jest, Karma, Lab, Mocha, ng test, ReactScripts, TAP, WebdriverIO | `ava`, `cucumberjs`, `cypress`, `deno`, `intern`, `jasmine`, `jest`, `karma`, `lab`, `mocha`, `ngtest` ,`reactscripts`, `tap`, `webdriverio` |
+|     **Kotlin** | Gradle                                                                                                             | `gradletest`                                                                                                                                 |
 |        **Lua** | Busted                                                                                                             | `busted`                                                                                                                                     |
-|        **PHP** | Behat, Codeception, Kahlan, Peridot, Pest, PHPUnit, PHPSpec, Dusk                                                  | `behat`, `codeception`, `dusk`, `kahlan`, `peridot`, `phpunit`, `phpspec`, `pest`                                                            |
+|        **PHP** | Behat, Codeception, Kahlan, Peridot, Pest, PHPUnit, Sail, PHPSpec, Dusk                                            | `behat`, `codeception`, `dusk`, `kahlan`, `peridot`, `phpunit`, `sail`, `phpspec`, `pest`                                                    |
 |       **Perl** | Prove                                                                                                              | `prove`                                                                                                                                      |
-|     **Python** | Django, Mamba, Nose, Nose2, PyTest, PyUnit                                                                         | `djangotest`, `djangonose`, `mamba`, `nose`, `nose2`, `pytest`, `pyunit`                                                                     |
+|     **Python** | Behave, Django, Mamba, Nose, Nose2, PyTest, PyUnit                                                                 | `behave`, `djangotest`, `djangonose`, `mamba`, `nose`, `nose2`, `pytest`, `pyunit`                                                           |
 |     **Racket** | RackUnit                                                                                                           | `rackunit`                                                                                                                                   |
 |       **Ruby** | Cucumber, [M], [Minitest][minitest], Rails, RSpec, TestBench                                                       | `cucumber`, `m`, `minitest`, `rails`, `rspec`, `testbench`                                                                                   |
 |       **Rust** | Cargo                                                                                                              | `cargotest`                                                                                                                                  |
@@ -368,7 +370,7 @@ certain testing framework. You can override that pattern by overriding the
 `file_pattern` variable:
 
 ```vim
-let test#ruby#minitest#file_pattern = '_spec\.rb' " the default is '(((^|/)test_.+)|_test)\.rb'
+let test#ruby#minitest#file_pattern = '_spec\.rb' " the default is '\v(((^|/)test_.+)|_test)(spec)@<!\.rb$'
 ```
 
 ### Filename modifier
@@ -412,7 +414,9 @@ let test#python#runner = 'pytest'
 The pytest runner optionally supports [pipenv](https://github.com/pypa/pipenv).
 If you have a `Pipfile`, it will use `pipenv run pytest` instead of just
 `pytest`. It also supports [poetry](https://github.com/sdispater/poetry)
-and will use `poetry run pytest` if it detects a `poetry.lock`.
+and will use `poetry run pytest` if it detects a `poetry.lock`. The pyunit
+runner supports [pipenv](https://github.com/pypa/pipenv) as well and will
+use `pipenv run python -m unittest` if there is a `Pipfile`.
 
 #### Java
 
@@ -422,6 +426,21 @@ force a specific runner:
 ``` vim
 let test#java#runner = 'gradletest'
 ```
+
+There is a specific strategy for Java with maven which invokes the mvn verify for a file instead of mvn test tailored for integration tests. In this way you can leverage the pre-integration goals, like firing up a database and so on. This strategy is called 'integration' and you can setup a command for it (preferably within the Java filetype plugin):
+
+``` vim
+command! -nargs=* -bar IntegrationTest call test#run('integration', split(<q-args>))
+```
+
+With this set up you can run your integration tests with the :IntegrationTest plugin for that single file and module. As there might be some dependencies between the maven modules you might need to pass in other parameters for the tests just like any other commands in vim-test. Here is a mapping with other optional parameters:
+
+
+``` vim
+nnoremap <silent><leader>itf :IntegrationTest -Dtest=foo -DfailIfNoTests=false -am -Dpmd.skip=true -Dcheckstyle.skip=true<CR>
+```
+
+The above command makes sure that no surefire tests will be run (by passing in a dummy test and makes sure that the plugin won't fail), it also makes the dependent modules, skips PMD and checkstyle checks as well.
 
 #### Scala
 
@@ -497,11 +516,29 @@ let test#ruby#use_spring_binstub = 1
 
 #### JavaScript
 
-Test runner detection for JavaScript works by checking which runner is listed in the package.json dependencies. If you have globally installed the runner make sure it's also listed in the dependencies.
+Test runner detection for JavaScript works by checking which runner is listed in the package.json dependencies. If you have globally installed the runner make sure it's also listed in the dependencies. When you have multiple runners listed in the package.json dependencies you can specify a runner like so:
+
+```vim
+let g:test#javascript#runner = 'jest'
+```
 
 #### Haskell
 
 The `stackTest` runner currently supports running tests in Stack projects with the [HSpec](http://hackage.haskell.org/package/hspec) framework.
+
+#### PHP
+
+The PHPUnit runner has support for the alternate runner [ParaTest](https://github.com/paratestphp/paratest) and will automatically use it if present in `./vendor/bin`. If you prefer to use PHPUnit then override the executable:
+
+```vim
+let test#php#phpunit#executable = 'phpunit'
+```
+
+Similarly if you'd prefer to use an alternate runner such as the [Laravel artisan runner](https://laravel.com/docs/7.x/testing) then override the executable:
+
+```vim
+let test#php#phpunit#executable = 'php artisan test'
+```
 
 ## Autocommands
 
