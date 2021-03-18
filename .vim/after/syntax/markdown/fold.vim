@@ -5,14 +5,14 @@ syn region mkdHeaderFold
     \ start="^\z(#\+\)"
     \ skip="^\z1#\+"
     \ end="^\(#\)\@="
-    \ fold contains=TOP
+    \ transparent fold contains=TOP
 
 " fold region for lists
 syn region mkdListFold
     \ start="^\z(\s*\)[\*\-]\z(\s*\)"
     \ skip="^\z1 \z2\s*[^#]"
     \ end="^\(.\)\@="
-    \ fold contains=TOP
+    \ transparent fold contains=TOP
 
 " fold region for code blocks
 syn region mkdCodeBlockFold
