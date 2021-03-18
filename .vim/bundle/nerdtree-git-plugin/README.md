@@ -1,5 +1,8 @@
 nerdtree-git-plugin
 ===================
+[![Github Action](https://img.shields.io/github/workflow/status/Xuyuanp/nerdtree-git-plugin/CI)](https://github.com/Xuyuanp/nerdtree-git-plugin/actions?query=workflow%3ACI)
+[![License: WTFPL](https://img.shields.io/github/license/Xuyuanp/nerdtree-git-plugin)](http://www.wtfpl.net/about/)
+[![GitHub contributors](https://img.shields.io/github/contributors/Xuyuanp/nerdtree-git-plugin)](https://github.com/Xuyuanp/nerdtree-git-plugin/graphs/contributors)
 
 A plugin of [NERDTree](https://github.com/preservim/nerdtree) showing git status flags.
 
@@ -15,6 +18,10 @@ Use your favorite package manager. Here is the example of using [vim-plug](https
 Plug 'preservim/nerdtree' |
             \ Plug 'Xuyuanp/nerdtree-git-plugin'
 ```
+
+## New project
+
+[Yanil](https://github.com/Xuyuanp/yanil): Another nerdtree like plugin for neovim(>= 0.5.0) only. I'm focusing on this project.
 
 ## FAQ
 
