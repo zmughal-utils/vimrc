@@ -7,7 +7,7 @@
 " Version:      1.0.0
 let s:k_version = 100
 " Created:      12th Feb 2014
-" Last Update:  06th Sep 2019
+" Last Update:  09th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to help implement coding styles (e.g. Allman or K&R
@@ -161,7 +161,7 @@ function! lh#style#get(ft) abort
     " call lh#assert#value(len(hows)).eq(1)
     call lh#assert#value(hows[0]).has_key('_definitions')
     for [pattern, really_how] in items(hows[0]._definitions)
-      call s:Verbose("grp:%1: /%2/, hows: %2", gname, pattern, really_how)
+      call s:Verbose("grp:%1: /%2/, hows: %3", gname, pattern, really_how)
       let new_repl = {}
       let new_repl[pattern] = {'replacement': really_how.replacement, 'prio': really_how.priority}
       call extend(res, new_repl)
@@ -170,6 +170,40 @@ function! lh#style#get(ft) abort
 
   " Return the result...
   return res
+endfunction
+
+" Function: lh#style#update_options(ft) {{{3
+function! s:update_options(bids, ft) abort
+  let res = []
+  let fts = lh#ft#option#inherited_filetypes(a:ft) + ['*']
+
+  for bufnr in a:bids
+    " Extract groups
+    let style_groups = s:filter_related(s:style_groups, fts, bufnr)
+    call s:Verbose("Updating: fts: %1, bufnr; %2", fts, bufnr)
+    for [gname, hows] in style_groups
+      call lh#assert#value(hows).not().empty()
+      " The numbers of matching policies for a given group may be > 1, e.g.
+      " - 1 policy for buffer=this
+      " - 1 policy for ft=cpp, buffer=*
+      " - 1 global policy ft=*, buffer=*
+      " The first is the most with the highest priority. We'll take options
+      " from this one an ignore other => "how[0]"
+      " call lh#assert#value(len(hows)).eq(1)
+      call lh#assert#value(hows[0]).has_key('_options')
+      call s:Verbose(" - grp:%1: update option %2 (from %3)", gname, hows[0]._options, hows[0].name)
+      let res += hows[0]._options
+    endfor
+
+    for optassign in res
+      let [all, opt, val; _] = matchlist(optassign, '\v(\k+)(.*)')
+      call lh#option#update(bufnr, '&'.opt, val)
+    endfor
+  endfor
+endfunction
+
+function! lh#style#update_options(ft) abort
+  call s:update_options([bufnr('%')], a:ft)
 endfunction
 
 " Function: lh#style#_sort_styles(styles) {{{3
@@ -220,7 +254,9 @@ function! lh#style#apply_these(styles, text, ...) abort
   call lh#list#sort(styles, s:getSNR('cmp_e1_prio'))
   for [pattern, style] in styles
     " TODO: see whether a chained map() would be faster
-    let res = substitute(res, pattern, style.replacement, 'g')
+    let r2 = substitute(res, pattern, style.replacement, 'g')
+    call s:Verbose("%1 ---/%2/---(%3)--> %4", res, pattern, style, r2)
+    let res = r2
   endfor
   let res = call('lh#style#reinject_cached_ignored_matches', [res]+a:000)
   return res
@@ -269,8 +305,12 @@ endfunction
 function! lh#style#surround(
       \ begin, end, isLine, isIndented, goback, mustInterpret, ...) range
   let styles = lh#style#get(&ft)
-  let begin = lh#style#apply_these(styles, a:begin)
-  let end   = lh#style#apply_these(styles, a:end)
+  " We need something after {begin} and something before {after} to make sure
+  " the style is applied on the whole text
+  " However, we cannot apply the style of the selected text as it may reformat
+  " comments or string that need to stay unchanged.
+  let begin = split(lh#style#apply_these(styles, a:begin.'§§'), '§§', 1)[0]
+  let end   = split(lh#style#apply_these(styles, '§§'.a:end),   '§§', 1)[1]
   return call(function('lh#map#surround'), [begin, end, a:isLine, a:isIndented, a:goback, a:mustInterpret]+a:000)
 endfunction
 
@@ -300,12 +340,14 @@ endfunction
 "   - spaces_around_operators (true/hybrid/false) (see
 "   https://github.com/jedmao/codepainter/tree/master/test/cases)
 " * clang-format settings (https://clangformat.com/)
+"   - AlwaysBreakTemplateDeclarations
 "   - BreakBeforeBinaryOperators
 "   - BreakBeforeTernaryOperators
 "   - BreakConstructorInitializersBeforeComma (though one!!)
 "   - IndentCaseLabels
 "   - IndentFunctionDeclarationAfterType
 "   - NamespaceIndentation
+"   - SpaceAfterTemplateKeyword
 "   - SpaceBeforeAssignmentOperators
 "   - SpacesBeforeTrailingComments
 "   - SpacesInAngles
@@ -554,7 +596,8 @@ function! lh#style#get_group(kind, name, local_global, ft) abort
     let s:style_groups[a:kind] = previous + [group]
     let group.name         = a:name
     let group._definitions = {}
-    call lh#object#inject_methods(group, s:k_script_name, ['add'])
+    let group._options     = []
+    call lh#object#inject_methods(group, s:k_script_name, ['add', 'register_options'])
   endif
   call lh#assert#value(group).get('ft').eq(a:ft)
   call lh#assert#value(group).get('local').eq(local)
@@ -583,9 +626,11 @@ function! lh#style#define_group(kind, name, local_global, ft) abort
   endif
   call lh#assert#value(group).get('ft').eq(a:ft)
   call lh#assert#value(group).get('local').eq(local)
+  let group.kind         = a:kind
   let group.name         = a:name
   let group._definitions = {}
-  call lh#object#inject_methods(group, s:k_script_name, ['add'])
+  let group._options     = []
+  call lh#object#inject_methods(group, s:k_script_name, ['add', 'register_options'])
   return group
 endfunction
 
@@ -594,6 +639,33 @@ function! s:add(pattern, repl, ...) dict abort
   let prio = get(a:, 1, 1)
   let self._definitions[a:pattern] = {'replacement': a:repl, 'priority': prio}
   return self
+endfunction
+
+function! s:register_options(...) dict abort
+  call s:Verbose("Register to 'options': %1", a:000)
+  let self._options += a:000
+  let cmd
+        \ = self.local != -1  ? 'setlocal '
+        \ : self.ft    == '*' ? 'set '
+        \ :                     ''
+  if empty(cmd)
+    " Case where only ft is set, IOW: "any buffer of the selected ft"
+    if !exists('#LH_Style')
+      " Register the update for future buffers
+      augroup LH_Style
+        au!
+        au Filetype * call s:update_options([expand("<abuf")], expand("<amatch>"))
+      augroup END
+    endif
+    " Update the existing buffers
+    let bids = filter(range(1, bufnr('$')), 'getbufvar(v:val, "&ft") == self.ft')
+    call s:Verbose("Update options for %1, triggered by %2#%3", bids, self.name, self.kind)
+    call s:update_options(bids, self.ft)
+  else
+    for opt in a:000
+      execute cmd . opt
+    endfor
+  endif
 endfunction
 
 " # Internals {{{2

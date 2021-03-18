@@ -7,7 +7,7 @@
 " Version:      1.0.0.
 let s:k_version = '100'
 " Created:      29th Aug 2017
-" Last Update:  05th Sep 2019
+" Last Update:  08th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       Factorize all styles related to curly-braces.
@@ -66,21 +66,24 @@ endfunction
 " TODO: Provide a way to inject other keywords.
 let s:follow_end_braces_keywords            = ['else', 'while', 'catch', 'finally']
 let s:re_accepted_keywords_after_end_braces = '\%(' . join(s:follow_end_braces_keywords, '\|') . '\)'
-let s:re_accepted_after_end_braces          = join(s:follow_end_braces_keywords + [';', '$'], '\|')
+let s:re_accepted_after_end_braces          = join(s:follow_end_braces_keywords + [';', '$', '\n', '/'], '\|')
 function! lh#style#__braces#__k_r_end_bracket(style, prio) abort
   let re_marker = lh#marker#txt('.\{-}') . '\|!mark!'
   " call a:style.add('}\%(\s*\%(;\|else\|while\|catch\|finally\|$\|'.re_marker.'\|!mark!\)\)\@!' , '}\n' , a:prio)
   call a:style.add('}\%(\s*\%('.s:re_accepted_after_end_braces.'\|'.re_marker.'\)\)\@!' , '}\n' , a:prio)
-  " Insert a space before the keyword
-  call a:style.add('}\ze\%(\s*'.s:re_accepted_keywords_after_end_braces.'\)'            , '} '  , a:prio)
+  " Insert a space before the keyword -- and merge any other space
+  call a:style.add('}\s*\ze\%('.s:re_accepted_keywords_after_end_braces.'\)'            , '} '  , a:prio)
   " Wait after a marker or the end-of-line (as we don't know what the user will type
   call a:style.add('}\ze\('.re_marker.'\|$\)'                                           , '}'   , a:prio)
   " Always an extra new line after the end of a declaration in C++.
-  call a:style.add('};'                                                                 , '};\n', a:prio)
+  call a:style.add('};' . s:k_no_non_spaces_after                                       , '};\n' , a:prio)
 endfunction
 
 "------------------------------------------------------------------------
 " ## Exported functions {{{1
+let s:k_no_non_spaces_before = '\%(\%(^\|\n\)\s*\)\@<!'
+" To not add any thing if followed by newline/end/comment-start
+let s:k_no_non_spaces_after  = '\%(\s*\%($\|\n\)\|/\)\@!'
 
 " Function: lh#style#__braces#none(local_global, ft) {{{2
 " Permits to clear everything on this topic and to define things manually
@@ -95,8 +98,10 @@ endfunction
 function! lh#style#__braces#attach(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('attach', a:local_global, a:ft)
   " except at the start of the line
-  call style.add('^\@<!{', ' {\n'  , a:prio)
-  call style.add('}'     , '\n}'   , a:prio)
+  call style.add('^\@<!{'.s:k_no_non_spaces_after, ' {\n'  , a:prio)
+  " Add \n before } unless } is at the start of a line (real: ^, or
+  " within a string: \n)
+  call style.add(s:k_no_non_spaces_before . '}'  , '\n}'   , a:prio)
   call lh#style#__braces#__k_r_end_bracket(style, a:prio)
   return style
 endfunction
@@ -123,8 +128,8 @@ function! lh#style#__braces#linux(local_global, ft, prio, ...) abort
   call style.add(s:k_linux_context_no_break.'\zs{'              , ' {\n', a:prio)
   " break if not behind one of the previous contexts, or at the beginning of
   " the line
-  call style.add('\('.s:k_linux_context_no_break.'\s*\|^\)\@<!{', '\n{\n', a:prio + 1)
-  call style.add('}'                                            , '\n}'  , a:prio)
+  call style.add('\('.s:k_linux_context_no_break.'\s*\|^\s*\|\n\s*\)\@<!{', '\n{\n', a:prio + 1)
+  call style.add(s:k_no_non_spaces_before. '}'                  , '\n}'  , a:prio)
   call lh#style#__braces#__k_r_end_bracket(style, a:prio)
   return style
 endfunction
@@ -144,16 +149,16 @@ function! lh#style#__braces#stroustrup(local_global, ft, prio, ...) abort
 
   " Let's assume there is no function definition in a control statement, we'll
   " see about lambdas later
-  call style.add(s:k_stroutrup_context_no_break.'\zs{'              , ' {' , a:prio)
-  call style.add('{', '{\n', a:prio)
+  call style.add(s:k_stroutrup_context_no_break.'\zs{'                        , ' {' , a:prio)
+  call style.add('{' . s:k_no_non_spaces_after                                , '{\n', a:prio)
   " break if not behind one of the previous contexts, or at the beginning of
   " the line
-  call style.add('\('.s:k_stroutrup_context_no_break.'\s*\|^\)\@<!{', '\n{', a:prio + 1)
-  call style.add('}'                                                , '\n}'  , a:prio)
+  call style.add('\('.s:k_stroutrup_context_no_break.'\s*\|^\s*\|\n\s*\)\@<!{', '\n{', a:prio + 1)
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
   " extra \n if followed by a semi-colon
-  call style.add('};'                                               , '};\n' , a:prio)
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
   " extra \n either way, unless followed by semi-colon or comment-start
-  call style.add('}[;/]\@!'                                         , '}\n', a:prio)
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n', a:prio)
   return style
 endfunction
 
@@ -164,9 +169,30 @@ endfunction
 function! lh#style#__braces#allman(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('allman', a:local_global, a:ft)
 
-  call style.add('^\@<!{'  , '\n{\n' , a:prio)
-  call style.add('}[;/]\@!', '\n}\n' , a:prio) " no \n before ; or comment start
-  call style.add('};'      , '\n};\n', a:prio)
+  call style.add(s:k_no_non_spaces_before.'{', '\n{'  , a:prio)
+  call style.add('{'.s:k_no_non_spaces_after , '{\n'  , a:prio)
+
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
+  " extra \n if followed by a semi-colon
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n', a:prio)
+  return style
+endfunction
+
+" Function: lh#style#__braces#whitesmith(local_global, ft, prio, ...) {{{2
+" Idem Allman, but with extra cinoptions
+function! lh#style#__braces#whitesmith(local_global, ft, prio, ...) abort
+  let style = lh#style#__braces#__new('whitesmith', a:local_global, a:ft)
+  call style.add(s:k_no_non_spaces_before.'{', '\n{'  , a:prio)
+  call style.add('{'.s:k_no_non_spaces_after , '{\n'  , a:prio)
+
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
+  " extra \n if followed by a semi-colon
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n', a:prio)
+  call style.register_options('cinoptions+=f1s,{1s')
   return style
 endfunction
 
@@ -174,13 +200,18 @@ endfunction
 " Always break before braces and add an extra level of indentation to braces of
 " control statements, not to those of class, function or other definitions.
 " "gnu" comes from clang-format BreakBeforeBrace
-" TODO: adjust cindent
 function! lh#style#__braces#gnu(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('gnu', a:local_global, a:ft)
 
-  call style.add('^\@<!{'  , '\n{\n' , a:prio)
-  call style.add('}[;/]\@!', '\n}\n' , a:prio) " no \n before ; or comment start
-  call style.add('};'      , '\n};\n', a:prio)
+  call style.add(s:k_no_non_spaces_before.'{', '\n{'  , a:prio)
+  call style.add('{'.s:k_no_non_spaces_after , '{\n'  , a:prio)
+
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
+  " extra \n if followed by a semi-colon
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n', a:prio)
+  call style.register_options('cinoptions+={.5s')
   return style
 endfunction
 
@@ -199,10 +230,14 @@ function! lh#style#__braces#bsd_knf(local_global, ft, prio, ...) abort
   call style.add(s:k_bsd_knf_context_no_break.'\zs{'              , ' {\n', a:prio)
   " break if not behind one of the previous contexts, or at the beginning of
   " the line
-  call style.add('\('.s:k_bsd_knf_context_no_break.'\s*\|^\)\@<!{', '\n{\n', a:prio + 1)
+  call style.add('\('.s:k_bsd_knf_context_no_break.'\s*\|^\s*\|\n\s*\)\@<!{', '\n{\n', a:prio + 1)
+
   " extra \n either way, unless followed by semi-colon or comment-start
-  call style.add('}[;/]\@!'                                       , '\n}\n', a:prio)
-  call style.add('};'                                             , '\n};\n', a:prio)
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
+  " extra \n if followed by a semi-colon
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n', a:prio)
 
   " TODO: should it be registered as a paren_style?
   call style.add('\<\%(if\|while\|switch\|for\|catch\)\>\zs(', ' (', a:prio)
@@ -223,10 +258,13 @@ function! lh#style#__braces#ratliff(local_global, ft, prio, ...) abort
   call style.add(s:k_ratliff_context_no_break.'\zs{'              , ' {\n', a:prio)
   " break if not behind one of the previous contexts, or at the beginning of
   " the line
-  call style.add('\('.s:k_ratliff_context_no_break.'\s*\|^\)\@<!{', '\n{\n', a:prio + 1)
+  call style.add('\('.s:k_ratliff_context_no_break.'\s*\|^\s*\|\n\s*\)\@<!{', '\n{\n', a:prio + 1)
   " extra \n either way, unless followed by semi-colon or comment-start
-  call style.add('}[;/]\@!'                                       , '\n}\n', a:prio)
-  call style.add('};'                                             , '\n};\n', a:prio)
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
+  " extra \n if followed by a semi-colon
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n', a:prio)
   return style
 endfunction
 
@@ -237,10 +275,16 @@ endfunction
 " complicates &sw management...
 function! lh#style#__braces#horstmann(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('horstmann', a:local_global, a:ft)
-  call style.add('^\@<!{'   , '\n{'.repeat( ' ', &sw-1), a:prio)
-  call style.add('^{'       , '\n{'.repeat( ' ', &sw-1), a:prio)
-  call style.add('}[;/]\@!' , '\n}\n'                  , a:prio)
-  call style.add('};'       , '\n};\n'                 , a:prio)
+  " Add \n before { only if not after the start of line
+  call style.add(s:k_no_non_spaces_before.'{'                 , '\n{'                  , a:prio)
+  " Add sw-1 spaces between { and a non-space character
+  call style.add('{\s*\ze\S'                                  , '{'.repeat( ' ', &sw-1), a:prio)
+
+  call style.add(s:k_no_non_spaces_before. '}'                                , '\n}'  , a:prio)
+  " extra \n if followed by a semi-colon
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n'  , a:prio)
   return style
 endfunction
 
@@ -250,29 +294,35 @@ endfunction
 " complicates &sw management...
 function! lh#style#__braces#pico(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('pico', a:local_global, a:ft)
-  call style.add('^\@<!{'   , '\n{'.repeat( ' ', &sw-1), a:prio)
-  call style.add('^{'       , '{'.repeat( ' ', &sw-1)  , a:prio)
+  " Add \n before { only if not after the start of line
+  call style.add(s:k_no_non_spaces_before.'{'                 , '\n{'                  , a:prio)
+  " Add sw-1 spaces between { and a non-space character
+  call style.add('{\s*\ze\S'                                  , '{'.repeat( ' ', &sw-1), a:prio)
   " TODO: Don't add a space in `{}` case.
-  call style.add('}[;/]\@!' , ' }\n'                   , a:prio)
-  call style.add('};'       , ' };\n'                  , a:prio)
+  call style.add('\%(\%(^\|\n\|{\)\s*\)\@<!\s*}'    , ' }'   , a:prio+1)
+  call style.add('{\s*}'    , '{}'   , a:prio+2)
+  call style.add('};' . s:k_no_non_spaces_after                               , '};\n' , a:prio)
+  " extra \n either way, unless followed by semi-colon or comment-start
+  call style.add('}\%(\s*\%($\|\n\)\|[;/]\)\@!'                               , '}\n'  , a:prio)
   return style
 endfunction
 
 " Function: lh#style#__braces#lisp(local_global, ft, prio) {{{2
 function! lh#style#__braces#lisp(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('lisp', a:local_global, a:ft)
-  call style.add('^\@<!{' , ' {\n', a:prio)
-  call style.add('^{'     , '{\n' , a:prio) " Not meant to exist
-  call style.add('}\+;\=\zs'     , '\n', a:prio)
+  call style.add(s:k_no_non_spaces_before.'\s*{'      , ' {'  , a:prio)
+  call style.add('{' . s:k_no_non_spaces_after     , '{\n' , a:prio)
+  call style.add('}\+;\=\zs\%(\s*\%($\|\n\|}\)\)\@!'  , '\n'  , a:prio)
   return style
 endfunction
 
 " Function: lh#style#__braces#java(local_global, ft, prio) {{{2
 function! lh#style#__braces#java(local_global, ft, prio, ...) abort
   let style = lh#style#__braces#__new('java', a:local_global, a:ft)
-  call style.add('^{'    , ' {\n'    , a:prio) " Not meant to exist
-  call style.add('^\@<!{', ' {\n'    , a:prio)
-  call style.add('}'                                            , '\n}'  , a:prio)
+  call style.add(s:k_no_non_spaces_before. '\s*{'  , ' {'  , a:prio)
+  call style.add('{' . s:k_no_non_spaces_after  , '{\n' , a:prio)
+
+  call style.add(s:k_no_non_spaces_before. '}'  , '\n}'  , a:prio)
   call lh#style#__braces#__k_r_end_bracket(style, a:prio)
   return style
 endfunction
