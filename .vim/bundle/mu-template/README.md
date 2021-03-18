@@ -1,4 +1,4 @@
-# µTemplate [![Build Status](https://secure.travis-ci.org/LucHermitte/mu-template.png?branch=master)](http://travis-ci.org/LucHermitte/mu-template) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
+# µTemplate [![Last release](https://img.shields.io/github/tag/LucHermitte/mu-template.svg)](https://github.com/LucHermitte/mu-template/releases) [![Build Status](https://secure.travis-ci.org/LucHermitte/mu-template.png?branch=master)](http://travis-ci.org/LucHermitte/mu-template) [![Project Stats](https://www.openhub.net/p/21020/widgets/project_thin_badge.gif)](https://www.openhub.net/p/21020)
 
 ## Introduction
 
@@ -278,6 +278,11 @@ VimL: silent! unlet s:times
     " don't forget also to support a few default snippets
     Bundle 'LucHermitte/lh-dev'
     ```
+
+### Note: regarding [COC](https://github.com/neoclide/coc.nvim)
+
+Since v.4.4.0, µTemplate delegates the selection of its snippets to COC, when
+COC is detected.
 
 ## Credits
   * Gergely Kontra is the author of the first version of µTemplate.

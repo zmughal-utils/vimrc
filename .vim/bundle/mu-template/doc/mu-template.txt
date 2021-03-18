@@ -1,9 +1,9 @@
 *mu-template.txt*       Utility for loading and expanding template-files
-*mu-template.vim*       For Vim version 7+      Last change: 02nd Jun 2020
+*mu-template.vim*       For Vim version 7+      Last change: 11th Mar 2021
 *µTemplate*
 
                     µTemplate MANUAL    by Luc Hermitte (LH)
-                    Version 4.3.3
+                    Version 4.4.0
 
 
 ==============================================================================
@@ -448,6 +448,9 @@ TEMPLATE FILES SYNTAX                       *MuT-syntax*       {{{1
         {snippet-hint} is a textual hint intended to summarize what the
         snippet will be expanded into. So far hints serve only with
         |MuT-snippets|.
+        When displayed hints will be processed through |lh#style#apply_these()|,
+        and `\n` will be transformed into newlines. To produce `\n` sequence,
+        use `\%n`.
 
 ------------------------------------------------------------------------------
 {{{2 How-To                            ~
@@ -776,6 +779,28 @@ For instance, |C-if| snippet looks like:
         ¡s:Surround(1,'<+code+>')¡
     }<++>
 
+Q: "How to have indenting style applied on separated lines?" *s:mut_merge_next_line*
+A: Sometimes we cannot have two lines merged in a snippet, but still want to
+apply styling options on bot line. A typical scenario would be: >
+    VimL: Some first snippet
+    auto a_function()
+    VimL: call s:Include('anothersnippet', 'cpp', arg)
+
+    VimL: The other snippet
+    VimL: let s:mut_merge_next_line = 1 " <<---- what makes the difference!!
+    {return expression;}
+
+Than depending on the style used (|:UseStyle|), this could be translated into:
+- with `:UseStyle -b indent_brace_style=java`: >
+  auto a_function() {
+      return expression;
+  }
+- with `:UseStyle -b indent_brace_style=allman`: >
+  auto a_function()
+  {
+      return expression;
+  }
+
 ------------------------------------------------------------------------------
 {{{2 Encoding issues                   ~
                                                     *MuT-encodings*
@@ -888,6 +913,9 @@ it to:
     imap ²         <Plug>MuT_ckword
     vmap <c-space> <Plug>MuT_Surround
 
+Note: if you have installed COC, don't use these mappings and let COC be a
+front-end for µTemplate. See |MuT-COC|.
+
 
 ==============================================================================
 DESIGN CONSIDERATIONS                       *MuT-design*       {{{1
@@ -952,6 +980,18 @@ like |b:sources_root|, can be set before a new |buffer| is created.
 
 Note: This set of ftplugins contains many C&C++ specific code-snippets that
 are not shipped with mu-tempate.
+
+|coc-nvim.txt|                                  *MuT-COC*
+<https://github.com/neoclide/coc.nvim>
+µTemplate can register itself as a |coc-custom-source|. Actually if COC is
+detected after Vim has been started, µTemplate will try to avoid to register
+any keybinding to |<Plug>MuT_ckword| and |<Plug>MuT_cWORD|. Selection of the
+snippet to expand will be taken care of by COC.
+
+Moreover, µTemplate historic selection of snippets to complete seems to be
+incompatible with COC (or the other way around...) and typed characters may
+be scrambled. That's why it's preferable to rely entirelly on COC to select
+snippets, when both are installed.
 
 
 ==============================================================================
