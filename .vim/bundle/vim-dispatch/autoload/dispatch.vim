@@ -267,8 +267,19 @@ endfunction
 
 function! dispatch#autowrite() abort
   if &autowrite || &autowriteall
-    silent! wall
+    try
+      if &confirm
+        let reconfirm = 1
+        setglobal noconfirm
+      endif
+      silent! wall
+    finally
+      if exists('reconfirm')
+        setglobal confirm
+      endif
+    endtry
   endif
+  return ''
 endfunction
 
 function! dispatch#status_var() abort
@@ -343,7 +354,7 @@ function! dispatch#isolate(request, keep, ...) abort
   let command += a:000
   let temp = type(a:request) == type({}) ? a:request.file . '.dispatch' : dispatch#tempname()
   call writefile(command, temp)
-  return 'env -i ' . join(map(copy(keep), 'v:val."=\"$". v:val ."\" "'), '') . &shell . ' ' . temp
+  return 'env -i ' . join(map(copy(keep), 'v:val."=". dispatch#shellescape(eval("$".v:val))." "'), '') . &shell . ' ' . temp
 endfunction
 
 function! s:current_compiler(...) abort
@@ -1194,15 +1205,6 @@ function! dispatch#complete(file, ...) abort
       let status = -1
       call writefile([-1], request.file . '.complete')
     endtry
-    if has_key(request, 'aborted')
-      let label = 'Aborted:'
-    elseif status > 0
-      let label = 'Failure:'
-    elseif status == 0
-      let label = 'Success:'
-    else
-      let label = 'Complete:'
-    endif
     if !a:0
       silent doautocmd ShellCmdPost
     endif
@@ -1210,7 +1212,21 @@ function! dispatch#complete(file, ...) abort
       call s:cwindow(request, 0, status, '', 'make')
       redraw!
     endif
+    if has_key(request, 'aborted')
+      echohl DispatchAbortedMsg
+      let label = 'Aborted:'
+    elseif status > 0
+      echohl DispatchFailureMsg
+      let label = 'Failure:'
+    elseif status == 0
+      echohl DispatchSuccessMsg
+      let label = 'Success:'
+    else
+      echohl DispatchCompleteMsg
+      let label = 'Complete:'
+    endif
     echo label '!'.request.expanded s:postfix(request)
+    echohl NONE
     if !a:0
       checktime
     endif
