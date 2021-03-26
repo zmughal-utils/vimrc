@@ -7,7 +7,7 @@
 " Version:      1.0.0
 let s:k_version = '1.0.0'
 " Created:      04th Aug 2017
-" Last Update:  08th Mar 2021
+" Last Update:  11th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       lh-style style-plugin for EditorConfig non-official
@@ -80,7 +80,7 @@ endfunction
 let s:k_function = {
       \ 'none'        : 'lh#style#__braces#none'
       \,'k_r'         : 'lh#style#__braces#linux'
-      \,'0tbs'        : 'lh#style#__braces#linux'
+      \,'otbs'        : 'lh#style#__braces#linux'
       \,'1tbs'        : 'lh#style#__braces#linux'
       \,'linux_kernel': 'lh#style#indent_brace_style#_linux_kernel'
       \,'bsd_knf'     : 'lh#style#indent_brace_style#_bsd_knf'

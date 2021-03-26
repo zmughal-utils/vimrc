@@ -7,7 +7,7 @@
 " Version:      1.0.0
 let s:k_version = 100
 " Created:      12th Feb 2014
-" Last Update:  09th Mar 2021
+" Last Update:  20th Mar 2021
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to help implement coding styles (e.g. Allman or K&R
@@ -242,7 +242,7 @@ endfunction
 
 function! lh#style#apply_these(styles, text, ...) abort
   let g:applyied_on += [a:text]
-  let s:cache_of_ignored_matches = get(a:, 1, [])
+  " let s:cache_of_ignored_matches = get(a:, 1, get(s:, 'cache_of_ignored_matches', []))
   " Alas:
   " - substitute+_get_replacement cannot work because it cannot tell exactly
   "   which key matched
@@ -272,12 +272,17 @@ function! s:reinject_cached_ignored_matches(match, nl) abort
 endfunction
 
 function! lh#style#reinject_cached_ignored_matches(text, ...) abort
-  let s:cache_of_ignored_matches = get(a:, 1, [])
-  if !empty(s:cache_of_ignored_matches)
-    return substitute(a:text, '\v¤(\d+)¤(\n)=', '\=s:reinject_cached_ignored_matches(submatch(1), submatch(2))', 'g')
-  else
-    return a:text
-  endif
+  let s:cache_of_ignored_matches = get(a:, 1, get(s:, 'cache_of_ignored_matches', []))
+  try
+    if !empty(s:cache_of_ignored_matches)
+      return substitute(a:text, '\v¤(\d+)¤(\n)=', '\=s:reinject_cached_ignored_matches(submatch(1), submatch(2))', 'g')
+    else
+      return a:text
+    endif
+  finally
+    " Reset the cache
+    let s:cache_of_ignored_matches = []
+  endtry
 endfunction
 
 " Function: lh#style#ignore(pattern, local_global, ft) {{{3
