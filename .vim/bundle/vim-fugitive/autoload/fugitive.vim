@@ -199,7 +199,29 @@ function! s:Map(mode, lhs, rhs, ...) abort
   endfor
 endfunction
 
+function! fugitive#Autowrite() abort
+  if &autowrite || &autowriteall
+    try
+      if &confirm
+        let reconfirm = 1
+        setglobal noconfirm
+      endif
+      silent! wall
+    finally
+      if exists('reconfirm')
+        setglobal confirm
+      endif
+    endtry
+  endif
+  return ''
+endfunction
+
 " Section: Git
+
+function! s:UserCommandCwd(dir) abort
+  let tree = s:Tree(a:dir)
+  return len(tree) ? FugitiveVimPath(tree) : getcwd()
+endfunction
 
 function! s:UserCommandList(...) abort
   let git = split(get(g:, 'fugitive_git_command', g:fugitive_git_executable), '\s\+')
@@ -637,18 +659,37 @@ function! fugitive#SshHostAlias(...) abort
   endif
 endfunction
 
+let s:redirects = {}
+
+function! fugitive#ResolveRemote(remote) abort
+  if a:remote =~# '^https\=://' && s:executable('curl')
+    if !has_key(s:redirects, a:remote)
+      let s:redirects[a:remote] = matchstr(s:SystemError(
+            \ 'curl --disable --silent --max-time 5 -I ' .
+            \ s:shellesc(a:remote . '/info/refs?service=git-upload-pack'))[0],
+            \ 'Location: \zs\S\+\ze/info/refs?')
+    endif
+    if len(s:redirects[a:remote])
+      return s:redirects[a:remote]
+    endif
+  endif
+  return substitute(a:remote,
+        \ '^ssh://\%([^@:/]\+@\)\=\zs[^/:]\+\|^\%([^@:/]\+@\)\=\zs[^/:]\+\ze:/\@!',
+        \ '\=fugitive#SshHostAlias(submatch(0))', '')
+endfunction
+
 function! fugitive#RemoteUrl(...) abort
   let dir = a:0 > 1 ? a:2 : s:Dir()
-  let remote = !a:0 || a:1 =~# '^\.\=$' ? s:Remote(dir) : a:1
-  if !fugitive#GitVersion(2, 7)
-    let url = FugitiveConfigGet('remote.' . remote . '.url')
-  else
-    let url = s:ChompDefault('', [dir, 'remote', 'get-url', remote, '--'])
+  let url = !a:0 || a:1 =~# '^\.\=$' ? s:Remote(dir) : a:1
+  if url !~# ':\|^/\|^\.\.\=/'
+    if !fugitive#GitVersion(2, 7)
+      let url = FugitiveConfigGet('remote.' . url . '.url')
+    else
+      let url = s:ChompDefault('', [dir, 'remote', 'get-url', url, '--'])
+    endif
   endif
   if !get(a:, 3, 0)
-    let url = substitute(url,
-          \ '^ssh://\%([^@:/]\+@\)\=\zs[^/:]\+\|^\%([^@:/]\+@\)\=\zs[^/:]\+\ze:/\@!',
-          \ '\=fugitive#SshHostAlias(submatch(0))', '')
+    let url = fugitive#ResolveRemote(url)
   endif
   return url
 endfunction
@@ -2458,13 +2499,13 @@ function! s:RunWait(state, tmp, job) abort
       if !exists('*jobwait')
         sleep 1m
       endif
-      if !get(a:state, 'closed')
+      if !get(a:state, 'closed_in')
         let peek = getchar(1)
         if peek != 0 && !(has('win32') && peek == 128)
           let c = getchar()
           let c = type(c) == type(0) ? nr2char(c) : c
           if c ==# "\<C-D>"
-            let a:state.closed = 1
+            let a:state.closed_in = 1
             if type(a:job) ==# type(0)
               call chanclose(a:job, 'stdin')
             else
@@ -2486,7 +2527,7 @@ function! s:RunWait(state, tmp, job) abort
   finally
     if !finished
       try
-        if a:state.pty
+        if a:state.pty && !get(a:state, 'closed_in')
           call s:RunSend(a:job, "\<C-C>")
         elseif type(a:job) == type(0)
           call jobstop(a:job)
@@ -2525,7 +2566,7 @@ augroup fugitive_job
   autocmd BufDelete * call s:RunBufDelete(expand('<abuf>'))
   autocmd VimLeave *
         \ for s:jobbuf in keys(s:edit_jobs) |
-        \   call writefile([], s:edit_jobs[s:jobbuf][0].file . '.exit') |
+        \   call writefile(['Aborting edit due to Vim exit.'], s:edit_jobs[s:jobbuf][0].file . '.exit') |
         \   redraw! |
         \   call call('s:RunWait', remove(s:edit_jobs, s:jobbuf)) |
         \ endfor
@@ -2656,10 +2697,10 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
     let mods = substitute(s:Mods(a:mods), '\<tab\>', '-tab', 'g')
     let assign = len(dir) ? '|let b:git_dir = ' . string(dir) : ''
     if has('nvim')
-      if &autowrite || &autowriteall | silent! wall | endif
+      call fugitive#Autowrite()
       return mods . (a:line2 ? 'split' : 'edit') . ' term://' . s:fnameescape(s:UserCommand(options, args)) . assign . '|startinsert' . after
     elseif has('terminal')
-      if &autowrite || &autowriteall | silent! wall | endif
+      call fugitive#Autowrite()
       return 'exe ' . string(mods . 'terminal ' . (a:line2 ? '' : '++curwin ') . join(map(s:UserCommandList(options) + args, 's:fnameescape(v:val)'))) . assign . after
     endif
   endif
@@ -2671,6 +2712,8 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
         \ 'flags': flags,
         \ 'args': args,
         \ 'dir': dir,
+        \ 'git_dir': dir,
+        \ 'cwd': s:UserCommandCwd(dir),
         \ 'filetype': 'git',
         \ 'mods': s:Mods(a:mods),
         \ 'file': s:Resolve(tempname())}
@@ -2689,7 +2732,7 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
           \ 'escape': ''}
     let env.FUGITIVE = state.file
     let editor = 'sh ' . s:TempScript(
-          \ '[ -f "$FUGITIVE.exit" ] && exit 1',
+          \ '[ -f "$FUGITIVE.exit" ] && cat "$FUGITIVE.exit" >&2 && exit 1',
           \ 'echo "$1" > "$FUGITIVE.edit"',
           \ 'printf "\033]51;fugitive:edit\007" >&2',
           \ 'while [ -f "$FUGITIVE.edit" -a ! -f "$FUGITIVE.exit" ]; do sleep 0.05 2>/dev/null || sleep 1; done',
@@ -2704,7 +2747,7 @@ function! fugitive#Command(line1, line2, range, bang, mods, arg) abort
     let args = s:disable_colors + flags + ['-c', 'advice.waitingForEditor=false'] + args
     let argv = s:UserCommandList({'git': git, 'dir': dir}) + args
     let [argv, jobopts] = s:JobOpts(argv, env)
-    if &autowrite || &autowriteall | silent! wall | endif
+    call fugitive#Autowrite()
     call writefile([], state.file, 'b')
     call s:RunSave(state)
     echo ""
@@ -5511,6 +5554,8 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
             \ 'flags': a:options.flags,
             \ 'args': [a:options.subcommand] + a:options.subcommand_args,
             \ 'dir': dir,
+            \ 'git_dir': dir,
+            \ 'cwd': s:UserCommandCwd(dir),
             \ 'filetype': (raw ? 'git' : 'fugitiveblame'),
             \ 'blame_options': a:options,
             \ 'blame_flags': flags,
@@ -5523,7 +5568,8 @@ function! s:BlameSubcommand(line1, count, range, bang, mods, options) abort
         return s:BlameCommit(edit, get(readfile(temp), 0, ''), temp_state)
       else
         let temp = s:Resolve(temp)
-        let s:temp_files[s:cpath(temp)] = temp_state
+        let temp_state.file = temp
+        call s:RunSave(temp_state)
         if len(ranges + commits + files) || raw
           let mods = s:Mods(a:mods)
           if a:count != 0
@@ -5832,8 +5878,6 @@ augroup END
 
 " Section: :GBrowse
 
-let s:redirects = {}
-
 function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abort
   let dir = s:Dir()
   exe s:DirCheck(dir)
@@ -6003,17 +6047,6 @@ function! fugitive#BrowseCommand(line1, count, range, bang, mods, arg, args) abo
     let raw = fugitive#RemoteUrl(remote)
     if empty(raw)
       let raw = remote
-    endif
-
-    if raw =~# '^https\=://' && s:executable('curl')
-      if !has_key(s:redirects, raw)
-        let s:redirects[raw] = matchstr(system('curl -I ' .
-              \ s:shellesc(raw . '/info/refs?service=git-upload-pack')),
-              \ 'Location: \zs\S\+\ze/info/refs?')
-      endif
-      if len(s:redirects[raw])
-        let raw = s:redirects[raw]
-      endif
     endif
 
     let opts = {
