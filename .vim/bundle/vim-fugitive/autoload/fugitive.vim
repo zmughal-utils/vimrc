@@ -2360,7 +2360,7 @@ endfunction
 
 function! s:TempDelete(file) abort
   let key = s:cpath(a:file)
-  if has_key(s:temp_files, key) && key !=# s:cpath(get(get(g:, '_fugitive_last_job', {}), 'file', ''))
+  if has_key(s:temp_files, key) && !has_key(s:temp_files[key], 'job') && key !=# s:cpath(get(get(g:, '_fugitive_last_job', {}), 'file', ''))
     call delete(a:file)
     call remove(s:temp_files, key)
   endif
@@ -2393,14 +2393,14 @@ function! s:RunJobs() abort
 endfunction
 
 function! s:RunSave(state) abort
-  if has_key(get(g:, '_fugitive_last_job', {}), 'file') && bufnr(g:_fugitive_last_job.file) < 0
-    exe s:TempDelete(remove(g:, '_fugitive_last_job').file)
-  endif
-  let g:_fugitive_last_job = a:state
   let s:temp_files[s:cpath(a:state.file)] = a:state
 endfunction
 
 function! s:RunFinished(state) abort
+  if has_key(get(g:, '_fugitive_last_job', {}), 'file') && bufnr(g:_fugitive_last_job.file) < 0
+    exe s:TempDelete(remove(g:, '_fugitive_last_job').file)
+  endif
+  let g:_fugitive_last_job = a:state
   let first = join(readfile(a:state.file, '', 2), "\n")
   if get(a:state, 'filetype', '') ==# 'git' && first =~# '\<\([[:upper:][:digit:]_-]\+(\d\+)\).*\1'
     let a:state.filetype = 'man'
@@ -2421,8 +2421,8 @@ function! s:RunEdit(state, tmp, job) abort
 endfunction
 
 function! s:RunReceive(state, tmp, type, job, data, ...) abort
-  let data = type(a:data) == type([]) ? join(a:data, "\n") : a:data
   if a:type ==# 'err' || a:state.pty
+    let data = type(a:data) == type([]) ? join(a:data, "\n") : a:data
     let data = a:tmp.escape . data
     let escape = "\033]51;[^\007]*"
     let a:tmp.escape = matchstr(data, escape . '$')
@@ -2447,12 +2447,12 @@ function! s:RunReceive(state, tmp, type, job, data, ...) abort
     let lines[-1] = ''
   endif
   call writefile(lines, a:state.file, 'ba')
-  let data = a:tmp.echo . data
-  let a:tmp.echo = matchstr(data, "[\r\n]\\+$")
-  if len(a:tmp.echo)
-    let data = strpart(data, 0, len(data) - len(a:tmp.echo))
+  if has_key(a:tmp, 'echo')
+    if !exists('l:data')
+      let data = type(a:data) == type([]) ? join(a:data, "\n") : a:data
+    endif
+    let a:tmp.echo .= data
   endif
-  echon substitute(data, "\r\\ze\n", '', 'g')
 endfunction
 
 function! s:RunExit(state, tmp, job, exit_status) abort
@@ -2489,16 +2489,36 @@ function! s:RunSend(job, str) abort
   endtry
 endfunction
 
+function! s:RunEcho(tmp) abort
+  if !has_key(a:tmp, 'echo')
+    return
+  endif
+  let data = a:tmp.echo
+  let a:tmp.echo = matchstr(data, "[\r\n]\\+$")
+  if len(a:tmp.echo)
+    let data = strpart(data, 0, len(data) - len(a:tmp.echo))
+  endif
+  echon substitute(data, "\r\\ze\n", '', 'g')
+endfunction
+
+function! s:RunTick(job) abort
+  if type(a:job) == v:t_number
+    return jobwait([a:job], 1)[0] == -1
+  elseif type(a:job) == 8
+    let running = ch_status(a:job) !=# 'closed' || job_status(a:job) ==# 'run'
+    sleep 1m
+    return running
+  endif
+endfunction
+
 if !exists('s:edit_jobs')
   let s:edit_jobs = {}
 endif
 function! s:RunWait(state, tmp, job) abort
   let finished = 0
   try
-    while get(a:state, 'request', '') !=# 'edit' && (type(a:job) == type(0) ? jobwait([a:job], 1)[0] == -1 : ch_status(a:job) !=# 'closed' || job_status(a:job) ==# 'run')
-      if !exists('*jobwait')
-        sleep 1m
-      endif
+    while get(a:state, 'request', '') !=# 'edit' && s:RunTick(a:job)
+      call s:RunEcho(a:tmp)
       if !get(a:state, 'closed_in')
         let peek = getchar(1)
         if peek != 0 && !(has('win32') && peek == 128)
@@ -2520,8 +2540,14 @@ function! s:RunWait(state, tmp, job) abort
         endif
       endif
     endwhile
-    sleep 1m
-    echo
+    if !has_key(a:state, 'request') && has_key(a:state, 'job') && exists('*job_status') && job_status(a:job) ==# "dead"
+      throw 'fugitive: close callback did not fire; this should never happen'
+    endif
+    call s:RunEcho(a:tmp)
+    if has_key(a:tmp, 'echo')
+      let a:tmp.echo = substitute(a:tmp.echo, "^\r\\=\n", '', '')
+      echo
+    endif
     call s:RunEdit(a:state, a:tmp, a:job)
     let finished = 1
   finally
