@@ -3,7 +3,7 @@
 " Maintainer: skywind3000 (at) gmail.com, 2016, 2017, 2018, 2019, 2020
 " Homepage: http://www.vim.org/scripts/script.php?script_id=5431
 "
-" Last Modified: 2021/02/14 19:14
+" Last Modified: 2021/03/29 08:58
 "
 " Run shell command in background and output to quickfix:
 "     :AsyncRun[!] [options] {cmd} ...
@@ -1121,14 +1121,16 @@ endfunc
 
 
 "----------------------------------------------------------------------
-" open terminal in current window
+" init terminal in current window
 "----------------------------------------------------------------------
-function! s:terminal_open(opts)
+function! s:terminal_init(opts)
 	let command = a:opts.cmd
 	let hidden = get(a:opts, 'hidden', 0)
 	let shell = (has('nvim') == 0)? 1 : 0
 	let pos = get(a:opts, 'pos', 'bottom')
 	let pos = (pos == 'background')? 'hide' : pos
+	let cwd = get(a:opts, 'cwd', '')
+	let cwd = (cwd != '' && isdirectory(cwd))? cwd : ''
 	if get(a:opts, 'safe', get(g:, 'asyncrun_term_safe', 0)) != 0
 		let command = s:ScriptWrite(command, 0)
 		if stridx(command, ' ') >= 0
@@ -1162,6 +1164,11 @@ function! s:terminal_open(opts)
 			if close
 				let opts.term_finish = 'close'
 			endif
+			if has('patch-8.1.0230')
+				if cwd != ''
+					let opts.cwd = cwd
+				endif
+			endif
 			try
 				let bid = term_start(command, opts)
 			catch /^.*/
@@ -1173,6 +1180,9 @@ function! s:terminal_open(opts)
 		else
 			let opts = {'stoponexit':'term'}
 			let opts.exit_cb = function('s:terminal_exit')
+			if cwd != ''
+				let opts.cwd = cwd
+			endif
 			let jid = job_start(command, opts)
 			let bid = -1
 			let success = (job_status(jid) != 'fail')? 1 : 0
@@ -1181,6 +1191,9 @@ function! s:terminal_open(opts)
 	else
 		let opts = {}
 		let opts.on_exit = function('s:terminal_exit')
+		if cwd != ''
+			let opts.cwd = cwd
+		endif
 		if pos != 'hide'
 			try
 				enew
@@ -1226,6 +1239,22 @@ function! s:terminal_open(opts)
 	let opts.bid = bid
 	let s:async_term[pid] = opts
 	return pid
+endfunc
+
+
+"----------------------------------------------------------------------
+" init terminal in current window
+"----------------------------------------------------------------------
+function! s:terminal_open(opts)
+	let previous = getcwd()
+	if a:opts.cwd != ''
+		silent! call s:chdir(a:opts.cwd)
+	endif
+	let hr = s:terminal_init(a:opts)
+	if a:opts.cwd != ''
+		silent! call s:chdir(previous)
+	endif
+	return hr
 endfunc
 
 
@@ -1886,7 +1915,7 @@ endfunc
 " asyncrun - version
 "----------------------------------------------------------------------
 function! asyncrun#version()
-	return '2.8.4'
+	return '2.8.6'
 endfunc
 
 
