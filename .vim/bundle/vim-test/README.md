@@ -24,7 +24,7 @@ runners are supported:
 |         **C#** | .NET                                                                                                               | `xunit`, `dotnettest`                                                                                                                        |
 |    **Clojure** | Fireplace.vim                                                                                                      | `fireplacetest`                                                                                                                              |
 |    **Crystal** | Crystal                                                                                                            | `crystalspec`                                                                                                                                |
-|       **Dart** | Flutter Test, Pub Run Test                                                                                         | `fluttertest`, `pubruntest`                                                                                                                  |
+|       **Dart** | Dart Test, Flutter Test                                                                                            | `darttest`, `fluttertest`
 |     **Elixir** | ESpec, ExUnit                                                                                                      | `espec`, `exunit`                                                                                                                            |
 |        **Elm** | elm-test                                                                                                           | `elmtest`                                                                                                                                    |
 |     **Erlang** | CommonTest, EUnit                                                                                                  | `commontest`, `eunit`                                                                                                                        |
@@ -143,6 +143,13 @@ which is difficult to press, so I recommend mapping it to `CTRL-o`:
 if has('nvim')
   tmap <C-o> <C-\><C-n>
 endif
+```
+
+By default vim-test will echo the test command before running it. You can
+disable this behavior with:
+
+```vim
+let g:test#echo_command = 0
 ```
 
 ### Kitty strategy setup

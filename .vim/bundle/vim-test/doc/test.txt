@@ -267,8 +267,8 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:FlutterTest*
 :FlutterTest [args]  	         Uses the `flutter` `test` command.
 
-                                                *test-:PubRunTest*
-:PubRunTest [args]  	         Uses the `pub run test` command.
+                                                *test-:DartTest*
+:DartTest [args]  	         Uses the `dart test` command.
 
 MAVEN TEST DIFFERENCES                          *test-maven-test-differences*
 
@@ -545,6 +545,11 @@ of even per command:
 If you want to disable clearing the screen for strategies, you can do
 >
   let g:test#preserve_screen = 1
+<
+By default, vim-test will echo the test command before running it. You can
+disable this behavior with
+>
+  let g:test#echo_command = 0
 <
 You may find yourself specifying certain options for your test runners in
 certain situations. You can configure your preferred options with
