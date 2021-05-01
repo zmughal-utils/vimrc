@@ -84,7 +84,7 @@ let g:NERDTreeGitStatusUntrackedFilesMode = 'all' " a heave feature too. default
 > How to set `git` executable file path?
 
 ```vim
-let g:NERDTreeGitStatusGitBinPath = '/your/file/path' " defualt: git (auto find in path)
+let g:NERDTreeGitStatusGitBinPath = '/your/file/path' " default: git (auto find in path)
 ```
 
 > How to show `Clean` indicator?
@@ -100,6 +100,10 @@ let g:NERDTreeGitStatusConcealBrackets = 1 " default: 0
 ```
 
 **NOTICE**: DO NOT enable this feature if you have also installed [vim-devicons](https://github.com/ryanoasis/vim-devicons).
+
+## Shameless Self Promotion
+
+[Yanil](https://github.com/Xuyuanp/yanil): Yet Another Nerdtree In Lua
 
 ## Credits
 
