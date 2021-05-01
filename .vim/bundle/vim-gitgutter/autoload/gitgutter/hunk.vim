@@ -64,6 +64,9 @@ function! gitgutter#hunk#next_hunk(count) abort
         if g:gitgutter_show_msg_on_hunk_jumping
           redraw | echo printf('Hunk %d of %d', index(hunks, hunk) + 1, len(hunks))
         endif
+        if s:is_preview_window_open()
+          call gitgutter#hunk#preview()
+        endif
         return
       endif
     endif
@@ -91,6 +94,9 @@ function! gitgutter#hunk#prev_hunk(count) abort
         execute 'normal!' target . 'Gzv'
         if g:gitgutter_show_msg_on_hunk_jumping
           redraw | echo printf('Hunk %d of %d', index(hunks, hunk) + 1, len(hunks))
+        endif
+        if s:is_preview_window_open()
+          call gitgutter#hunk#preview()
         endif
         return
       endif
@@ -260,7 +266,7 @@ function! s:hunk_op(op, ...)
     call gitgutter#diff#process_hunks(bufnr, gitgutter#hunk#hunks(bufnr))  " so the hunk summary is updated
 
     if empty(s:current_hunk())
-      call gitgutter#utility#warn('cursor is not in a hunk')
+      call gitgutter#utility#warn('Cursor is not in a hunk')
     elseif s:cursor_in_two_hunks()
       let choice = input('Choose hunk: upper or lower (u/l)? ')
       " Clear input
@@ -270,7 +276,7 @@ function! s:hunk_op(op, ...)
       elseif choice =~ 'l'
         call a:op(gitgutter#diff#hunk_diff(bufnr, diff, 1))
       else
-        call gitgutter#utility#warn('did not recognise your choice')
+        call gitgutter#utility#warn('Did not recognise your choice')
       endif
     else
       let hunk_diff = gitgutter#diff#hunk_diff(bufnr, diff)
@@ -294,7 +300,7 @@ function! s:stage(hunk_diff)
         \ gitgutter#utility#cd_cmd(bufnr, g:gitgutter_git_executable.' '.g:gitgutter_git_args.' apply --cached --unidiff-zero - '),
         \ diff)
   if v:shell_error
-    call gitgutter#utility#warn('patch does not apply')
+    call gitgutter#utility#warn('Patch does not apply')
   else
     if exists('#User#GitGutterStage')
       execute 'doautocmd' s:nomodeline 'User GitGutterStage'
@@ -468,7 +474,7 @@ function! s:open_hunk_preview_window()
 
   " Specifying where to open the preview window can lead to the cursor going
   " to an unexpected window when the preview window is closed (#769).
-  noautocmd execute g:gitgutter_preview_win_location 'pedit gitgutter://hunk-preview'
+  silent! noautocmd execute g:gitgutter_preview_win_location 'pedit gitgutter://hunk-preview'
   silent! wincmd P
   setlocal statusline=%{''}
   doautocmd WinEnter
@@ -547,7 +553,8 @@ function! s:populate_hunk_preview_window(header, body)
     setlocal nomodified
 
     normal! G$
-    let height = min([winline(), &previewheight])
+    let hunk_height = max([body_length, winline()])
+    let height = min([hunk_height, &previewheight])
     execute 'resize' height
     1
 
@@ -591,4 +598,15 @@ function! s:close_hunk_preview_window()
 
   let s:winid = 0
   let s:preview_bufnr = 0
+endfunction
+
+
+" Only makes sense for traditional, non-floating preview window.
+function s:is_preview_window_open()
+  for i in range(1, winnr('$'))
+    if getwinvar(i, '&previewwindow')
+      return 1
+    endif
+  endfor
+  return 0
 endfunction
