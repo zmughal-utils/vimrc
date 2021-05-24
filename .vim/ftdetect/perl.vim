@@ -1,5 +1,8 @@
-" Perl Data Language
+" Perl Data Language (PDL)
 au BufNewFile,BufRead *.pd       setf perl
-au BufNewFile,BufRead *.t        setf perl " test files
+" Test files (App::Prove)
+au BufNewFile,BufRead *.t        setf perl
+" cpanfile (Module::CPANfile)
 au BufNewFile,BufRead cpanfile   setf perl
+" alienfile (Alien::Build)
 au BufNewFile,BufRead alienfile  setf perl
