@@ -6,3 +6,5 @@ au BufNewFile,BufRead *.t        setf perl
 au BufNewFile,BufRead cpanfile   setf perl
 " alienfile (Alien::Build)
 au BufNewFile,BufRead alienfile  setf perl
+" Orbitalfile (Orbital::Transfer)
+au BufNewFile,BufRead Orbitalfile  setf perl
