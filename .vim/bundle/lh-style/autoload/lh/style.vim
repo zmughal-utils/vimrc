@@ -7,7 +7,7 @@
 " Version:      1.0.0
 let s:k_version = 100
 " Created:      12th Feb 2014
-" Last Update:  20th Mar 2021
+" Last Update:  05th Jul 2021
 "------------------------------------------------------------------------
 " Description:
 "       Functions related to help implement coding styles (e.g. Allman or K&R
