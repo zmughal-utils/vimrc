@@ -1,0 +1,1199 @@
+{
+  "$schema": "https://mattn.github.io/vim-lsp-settings/schema.json",
+  "_": [
+    {
+      "command": "efm-langserver",
+      "disabled": true,
+      "requires": [
+        "go"
+      ]
+    }
+  ],
+  "apex": [
+    {
+      "command": "apex-jorje-lsp",
+      "requires": [
+        "java"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "apxc",
+          "apxt",
+          "cls",
+          "trigger",
+          "tgr"
+        ],
+        "name": "ejholmes/vim-forcedotcom"
+      }
+    }
+  ],
+  "c": [
+    {
+      "command": "clangd",
+      "requires": []
+    }
+  ],
+  "clojure": [
+    {
+      "command": "clojure-lsp",
+      "requires": [],
+      "root_uri_patterns": [
+        ".lein/",
+        ".shadow-cljs/",
+        "project.clj",
+        "deps.edn",
+        "shadow-cljs.edn"
+      ]
+    },
+    {
+      "command": "clj-kondo-lsp",
+      "requires": [
+        "java"
+      ],
+      "root_uri_patterns": [
+        ".lein/",
+        ".shadow-cljs/",
+        "project.clj",
+        "deps.edn",
+        "shadow-cljs.edn"
+      ]
+    }
+  ],
+  "cmake": [
+    {
+      "command": "cmake-language-server",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "cmake-language-server",
+      "requires": [
+        "python3"
+      ]
+    }
+  ],
+  "cobol": [
+    {
+      "command": "cobol-language-support",
+      "requires": [
+        "java"
+      ]
+    }
+  ],
+  "context": [
+    {
+      "command": "texlab",
+      "requires": []
+    },
+    {
+      "command": "digestif",
+      "requires": [
+        "luarocks"
+      ]
+    }
+  ],
+  "cpp": [
+    {
+      "command": "clangd",
+      "requires": []
+    }
+  ],
+  "cs": [
+    {
+      "command": "omnisharp-lsp",
+      "requires": []
+    }
+  ],
+  "css": [
+    {
+      "command": "css-languageserver",
+      "config": {
+        "refresh_pattern": "\\([a-zA-Z0-9_-]\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "tailwindcss-intellisense",
+      "config": {
+        "refresh_pattern": "\\(@[a-zA-Z0-9_]*\\|[a-zA-Z0-9_-]\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "d": [
+    {
+      "command": "serve-d",
+      "requires": []
+    },
+    {
+      "command": "dls",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "dart": [
+    {
+      "command": "analysis-server-dart-snapshot",
+      "requires": []
+    }
+  ],
+  "dockerfile": [
+    {
+      "command": "docker-langserver",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "elixir": [
+    {
+      "command": "elixir-ls",
+      "requires": [
+        "elixir"
+      ],
+      "root_uri_patterns": [
+        "mix.exs"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "ex",
+          "exs"
+        ],
+        "name": "elixir-editors/vim-elixir"
+      }
+    }
+  ],
+  "elm": [
+    {
+      "command": "elm-language-server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "elm.json"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "elm"
+        ],
+        "name": "ElmCast/elm-vim"
+      }
+    }
+  ],
+  "erlang": [
+    {
+      "command": "erlang-ls",
+      "requires": [
+        "make",
+        "rebar3"
+      ],
+      "root_uri_patterns": [
+        "rebar.config"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "erl"
+        ],
+        "name": "vim-erlang/vim-erlang-runtime"
+      }
+    }
+  ],
+  "fortran": [
+    {
+      "command": "fortls",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "fortls",
+      "requires": [
+        "python3"
+      ]
+    }
+  ],
+  "fsharp": [
+    {
+      "command": "fsautocomplete",
+      "requires": []
+    },
+    {
+      "command": "fsharp-language-server",
+      "requires": [
+        "dotnet"
+      ]
+    }
+  ],
+  "gdscript": [
+    {
+      "command": "godot",
+      "requires": []
+    }
+  ],
+  "gdscript3": [
+    {
+      "command": "godot",
+      "requires": []
+    }
+  ],
+  "glsl": [
+    {
+      "command": "glslls",
+      "requires": [
+        "cmake",
+        "git",
+        "make"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "vert",
+          "tesc",
+          "tese",
+          "glsl",
+          "geom",
+          "frag"
+        ],
+        "name": "tikhomirov/vim-glsl"
+      }
+    }
+  ],
+  "go": [
+    {
+      "command": "gopls",
+      "requires": [
+        "go"
+      ],
+      "root_uri_patterns": [
+        "go.mod"
+      ]
+    },
+    {
+      "command": "golangci-lint-langserver",
+      "requires": [
+        "go"
+      ],
+      "root_uri_patterns": [
+        "go.mod"
+      ]
+    }
+  ],
+  "gomod": [
+    {
+      "command": "gopls",
+      "requires": [
+        "go"
+      ],
+      "root_uri_patterns": [
+        "go.mod"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "mod"
+        ],
+        "name": "mattn/vim-gomod"
+      }
+    }
+  ],
+  "graphql": [
+    {
+      "command": "graphql-language-server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        ".graphqlrc",
+        ".graphqlrc.json",
+        ".graphqlrc.yml",
+        ".graphqlrc.yaml",
+        ".graphql.config.js",
+        ".graphqlrc.js",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "graphql"
+        ],
+        "name": "jparise/vim-graphql"
+      }
+    },
+    {
+      "command": "gql-language-server",
+      "requires": [
+        "npm",
+        "watchman"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json",
+        ".gqlconfig"
+      ]
+    }
+  ],
+  "groovy": [
+    {
+      "command": "groovy-language-server",
+      "requires": [
+        "java"
+      ],
+      "root_uri_patterns": [
+        "build.gradle"
+      ]
+    }
+  ],
+  "haskell": [
+    {
+      "command": "hie",
+      "requires": [
+        "stack"
+      ],
+      "root_uri_patterns": [
+        "stack.yaml",
+        "package.yaml"
+      ]
+    },
+    {
+      "command": "haskell-language-server",
+      "requires": [],
+      "root_uri_patterns": [
+        "stack.yaml",
+        "package.yaml"
+      ]
+    }
+  ],
+  "html": [
+    {
+      "command": "html-languageserver",
+      "config": {
+        "refresh_pattern": "\\(/\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "angular-language-server",
+      "config": {
+        "refresh_pattern": "\\(/\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "tailwindcss-intellisense",
+      "config": {
+        "refresh_pattern": "\\(@[a-zA-Z0-9_]*\\|[a-zA-Z0-9_-]\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "java": [
+    {
+      "command": "eclipse-jdt-ls",
+      "requires": [
+        "java"
+      ],
+      "root_uri_patterns": [
+        "pom.xml",
+        "build.gradle"
+      ]
+    },
+    {
+      "command": "java-language-server",
+      "requires": [
+        "java",
+        "mvn"
+      ],
+      "root_uri_patterns": [
+        "pom.xml",
+        "build.gradle"
+      ]
+    }
+  ],
+  "javascript": [
+    {
+      "command": "typescript-language-server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    {
+      "command": "javascript-typescript-stdio",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "eslint-language-server",
+      "requires": [
+        "node"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ]
+    },
+    {
+      "command": "rome",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "deno",
+      "requires": []
+    },
+    {
+      "command": "rslint-lsp",
+      "requires": [
+        "cargo"
+      ]
+    },
+    {
+      "command": "flow",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        ".flowconfig"
+      ]
+    }
+  ],
+  "javascriptreact": [
+    {
+      "command": "typescript-language-server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ]
+    },
+    {
+      "command": "eslint-language-server",
+      "requires": [
+        "node"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ]
+    },
+    {
+      "command": "javascript-typescript-stdio",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "rome",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "deno",
+      "requires": []
+    },
+    {
+      "command": "flow",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        ".flowconfig"
+      ]
+    }
+  ],
+  "json": [
+    {
+      "command": "json-languageserver",
+      "config": {
+        "refresh_pattern": "\\(\"\\k*\\|\\[\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "rome",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "jsonc": [
+    {
+      "command": "json-languageserver",
+      "requires": [
+        "npm"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "cjson"
+        ],
+        "name": "neoclide/jsonc.vim"
+      }
+    }
+  ],
+  "julia": [
+    {
+      "command": "julia-language-server",
+      "requires": [
+        "julia"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "jl"
+        ],
+        "name": "ajpaulson/julia-syntax.vim"
+      }
+    }
+  ],
+  "kotlin": [
+    {
+      "command": "kotlin-language-server",
+      "requires": [
+        "java"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "kt"
+        ],
+        "name": "udalov/kotlin-vim"
+      }
+    }
+  ],
+  "less": [
+    {
+      "command": "css-languageserver",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "lisp": [
+    {
+      "command": "cl-lsp",
+      "requires": [
+        "ros"
+      ]
+    }
+  ],
+  "lua": [
+    {
+      "command": "emmylua-ls",
+      "requires": [
+        "java"
+      ]
+    },
+    {
+      "command": "sumneko-lua-language-server",
+      "requires": []
+    }
+  ],
+  "nim": [
+    {
+      "command": "nimlsp",
+      "requires": [
+        "nimble"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "nim"
+        ],
+        "name": "zah/nim.vim"
+      }
+    }
+  ],
+  "objc": [
+    {
+      "command": "clangd",
+      "requires": []
+    }
+  ],
+  "objcpp": [
+    {
+      "command": "clangd",
+      "requires": []
+    }
+  ],
+  "ocaml": [
+    {
+      "command": "ocaml-lsp",
+      "requires": [
+        "opam"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "ml"
+        ],
+        "name": "ocaml/vim-ocaml"
+      }
+    }
+  ],
+  "perl": [
+    {
+      "command": "slp",
+      "requires": [
+        "cpanm"
+      ]
+    },
+    {
+      "command": "monastery",
+      "requires": [
+        "cpanm"
+      ]
+    },
+    {
+      "command": "perl-languageserver",
+      "requires": [
+        "cpanm"
+      ]
+    }
+  ],
+  "php": [
+    {
+      "command": "intelephense",
+      "config": {
+        "refresh_pattern": "\\(\\$[a-zA-Z0-9_:]*\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "psalm-language-server",
+      "config": {
+        "refresh_pattern": "\\(\\$[a-zA-Z0-9_:]*\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "composer"
+      ],
+      "root_uri_patterns": [
+        "psalm.xml",
+        "psalm.xml.dist"
+      ]
+    }
+  ],
+  "plaintex": [
+    {
+      "command": "texlab",
+      "requires": []
+    },
+    {
+      "command": "digestif",
+      "requires": [
+        "luarocks"
+      ]
+    }
+  ],
+  "prisma": [
+    {
+      "command": "prisma-language-server",
+      "requires": [
+        "npm"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "prisma"
+        ],
+        "name": "pantharshit00/vim-prisma"
+      }
+    }
+  ],
+  "prolog": [
+    {
+      "command": "prolog-lsp_server",
+      "requires": [
+        "swipl"
+      ]
+    }
+  ],
+  "ps1": [
+    {
+      "command": "powershell-languageserver",
+      "config": {
+        "refresh_pattern": "\\(\\$[a-zA-Z0-9_:]*\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "pwsh"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "ps1"
+        ],
+        "name": "PProvost/vim-ps1"
+      }
+    }
+  ],
+  "python": [
+    {
+      "command": "pylsp-all",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "pylsp-all",
+      "requires": [
+        "python3"
+      ]
+    },
+    {
+      "command": "pylsp",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "pylsp",
+      "requires": [
+        "python3"
+      ]
+    },
+    {
+      "command": "pyls-all",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "pyls-all",
+      "requires": [
+        "python3"
+      ]
+    },
+    {
+      "command": "pyls",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "pyls",
+      "requires": [
+        "python3"
+      ]
+    },
+    {
+      "command": "pyls-ms",
+      "requires": [
+        "python"
+      ]
+    },
+    {
+      "command": "pyright-langserver",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "jedi-language-server",
+      "requires": [
+        "py"
+      ]
+    },
+    {
+      "command": "jedi-language-server",
+      "requires": [
+        "python3"
+      ]
+    }
+  ],
+  "r": [
+    {
+      "command": "r-languageserver",
+      "requires": [
+        "R"
+      ]
+    }
+  ],
+  "racket": [
+    {
+      "command": "racket-lsp",
+      "requires": [
+          "raco"
+      ]
+    }
+  ],
+  "reason": [
+    {
+      "command": "reason-language-server",
+      "requires": [],
+      "root_uri_patterns": [
+        "package.json"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "re",
+          "rei"
+        ],
+        "name": "reasonml-editor/vim-reason-plus"
+      }
+    }
+  ],
+  "rst": [
+    {
+      "command": "esbonio",
+      "requires": [
+        "python"
+      ],
+      "root_uri_patterns": [
+        "conf.py"
+      ]
+    }
+  ],
+  "ruby": [
+    {
+      "command": "solargraph",
+      "requires": [
+        "gem"
+      ]
+    },
+    {
+      "command": "ruby_language_server",
+      "requires": [
+        "gem"
+      ]
+    }
+  ],
+  "rust": [
+    {
+      "command": "rust-analyzer",
+      "requires": [],
+      "root_uri_patterns": [
+        "Cargo.toml"
+      ]
+    },
+    {
+      "command": "rls",
+      "requires": [],
+      "root_uri_patterns": [
+        "Cargo.toml"
+      ]
+    }
+  ],
+  "sass": [
+    {
+      "command": "css-languageserver",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "scss": [
+    {
+      "command": "css-languageserver",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "scala": [
+    {
+      "command": "metals",
+      "requires": [
+        "java"
+      ],
+      "root_uri_patterns": [
+        "build.sbt"
+      ]
+    }
+  ],
+  "sh": [
+    {
+      "command": "bash-language-server",
+      "config": {
+        "refresh_pattern": "\\([a-zA-Z0-9_-]\\+\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "sql": [
+    {
+      "command": "sql-language-server",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "sqls",
+      "config": {
+        "refresh_pattern": "\\( \\zs\\k*\\|[a-zA-Z0-9_-]\\+\\)$"
+      },
+      "requires": [
+        "go"
+      ]
+    }
+  ],
+  "svelte": [
+    {
+      "command": "svelte-language-server",
+      "config": {
+        "refresh_pattern": "\\(/\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "svelte"
+        ],
+        "name": "evanleck/vim-svelte"
+      }
+    }
+  ],
+  "swift": [
+    {
+      "command": "sourcekit-lsp",
+      "requires": [
+        "sourcekit-lsp"
+      ],
+      "root_uri_patterns": [
+        "Package.swift",
+        ".xcodeproj",
+        ".xcworkspace",
+        "Cartfile",
+        "Podfile"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "swift"
+        ],
+        "name": "keith/swift.vim"
+      }
+    }
+  ],
+  "systemverilog": [
+    {
+      "command": "svls",
+      "requires": []
+    }
+  ],
+  "terraform": [
+    {
+      "command": "terraform-lsp",
+      "requires": [],
+      "vim_plugin": {
+        "extensions": [
+          "tf",
+          "tfvars"
+        ],
+        "name": "hashivim/vim-terraform"
+      }
+    },
+    {
+      "command": "terraform-ls",
+      "requires": [],
+      "vim_plugin": {
+        "extensions": [
+          "tf",
+          "tfvars"
+        ],
+        "name": "hashivim/vim-terraform"
+      }
+    }
+  ],
+  "tex": [
+    {
+      "command": "texlab",
+      "requires": []
+    },
+    {
+      "command": "digestif",
+      "requires": [
+        "luarocks"
+      ]
+    }
+  ],
+  "ttcn": [
+    {
+      "command": "ntt",
+      "requires": [],
+      "root_uri_patterns": [
+        "package.yml"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "ttcn",
+          "ttcn3"
+        ],
+        "name": "gustafj/vim-ttcn"
+      }
+    }
+  ],
+  "typescript": [
+    {
+      "command": "typescript-language-server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    {
+      "command": "eslint-language-server",
+      "requires": [
+        "node"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    {
+      "command": "rome",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "deno",
+      "requires": []
+    }
+  ],
+  "typescriptreact": [
+    {
+      "command": "typescript-language-server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    {
+      "command": "eslint-language-server",
+      "requires": [
+        "node"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    {
+      "command": "rome",
+      "requires": [
+        "npm"
+      ]
+    },
+    {
+      "command": "deno",
+      "requires": []
+    }
+  ],
+  "vala": [
+    {
+      "command": "vala-language-server",
+      "requires": [
+        "meson",
+        "valac"
+      ],
+      "root_uri_patterns": [
+        "meson.build"
+      ]
+    }
+  ],
+  "vim": [
+    {
+      "command": "vim-language-server",
+      "requires": [
+        "npm"
+      ],
+      "config": {
+        "refresh_pattern": "\\([bwtglsav]:\\)\\?\\k*$"
+      },
+      "root_uri_patterns": [
+        ".vim/",
+        "vimfiles/"
+      ]
+    },
+    {
+      "command": "vimscript-language-server",
+      "requires": [
+        "cargo"
+      ],
+      "root_uri_patterns": [
+        ".vim/",
+        "vimfiles/"
+      ]
+    }
+  ],
+  "vlang": [
+    {
+      "command": "vlang-vls",
+      "requires": [
+        "git",
+        "v"
+      ],
+      "root_uri_patterns": [
+        "v.mod"
+      ]
+    }
+  ],
+  "vue": [
+    {
+      "command": "vls",
+      "config": {
+        "refresh_pattern": "\\([a-zA-Z0-9_-]\\+\\|/\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "vue"
+        ],
+        "name": "posva/vim-vue"
+      }
+    }
+  ],
+  "xml": [
+    {
+      "command": "lemminx",
+      "requires": [
+        "java"
+      ]
+    }
+  ],
+  "yaml": [
+    {
+      "command": "yaml-language-server",
+      "requires": [
+        "npm"
+      ]
+    }
+  ],
+  "zig": [
+    {
+      "command": "zls",
+      "requires": [
+        "zig",
+        "git"
+      ]
+    }
+  ]
+}
