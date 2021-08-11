@@ -124,6 +124,9 @@ refresh_git https://github.com/Xuyuanp/nerdtree-git-plugin nerdtree-git-plugin
 #refresh_git https://github.com/Shougo/deoplete.nvim.git deoplete.nvim
 #refresh_git https://github.com/roxma/nvim-yarp.git nvim-yarp
 #refresh_git https://github.com/roxma/vim-hug-neovim-rpc.git vim-hug-neovim-rpc
-#
-#refresh_git https://github.com/prabirshrestha/vim-lsp.git vim-lsp
+
+refresh_git https://github.com/prabirshrestha/vim-lsp.git vim-lsp
+refresh_git https://github.com/mattn/vim-lsp-settings.git vim-lsp-settings
 #refresh_git https://github.com/lighttiger2505/deoplete-vim-lsp.git deoplete-vim-lsp
+
+refresh_git https://github.com/vim-vdebug/vdebug.git vdebug
