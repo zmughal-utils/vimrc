@@ -6,7 +6,9 @@ function! test#strategy#basic(cmd) abort
   if has('nvim')
     -tabnew
     call termopen(a:cmd)
-    startinsert
+    if !get(g:, 'test:basic:start_normal', 0)
+      startinsert
+    endif
   else
     if s:restorescreen()
       execute '!'.s:pretty_command(a:cmd)
@@ -76,7 +78,9 @@ function! test#strategy#neovim(cmd) abort
   execute term_position . ' new'
   call termopen(a:cmd)
   au BufDelete <buffer> wincmd p " switch back to last window
-  startinsert
+  if !get(g:, 'test#neovim#start_normal', 0)
+    startinsert
+  endif
 endfunction
 
 function! test#strategy#vimterminal(cmd) abort
@@ -163,6 +167,17 @@ function! test#strategy#shtuff(cmd) abort
   endif
 
   call system("shtuff into " . shellescape(g:shtuff_receiver) . " " . shellescape("clear;" . a:cmd))
+endfunction
+
+function! test#strategy#harpoon(cmd) abort
+  let g:cmd = a:cmd . "\n"
+  if(exists("g:test#harpoon_term"))
+    lua require("harpoon.term").sendCommand(vim.g["test#harpoon_term"] ,vim.g.cmd)
+    lua require("harpoon.term").gotoTerminal(vim.g["test#harpoon_term"])
+  else
+    lua require("harpoon.term").sendCommand(1 ,vim.g.cmd)
+    lua require("harpoon.term").gotoTerminal(1)
+  endif
 endfunction
 
 function! s:execute_with_compiler(cmd, script) abort
