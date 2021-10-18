@@ -628,13 +628,13 @@ nmap <C-Down> :call Vicle_history_move(1)<CR>
 imap <C-Down> <ESC><C-Down>
 
 " Commands
-command! -complete=command VicleSend call Vicle_send_command(g:vicle_normal)
-command! -complete=command VicleSession call Vicle_session()
-command! -complete=command VicleSessionVars call Vicle_session_vars()
-command! -complete=command VicleEditionToggle call Vicle_edition_toggle()
-command! -complete=command VicleHistoryToggle call Vicle_history_toggle()
-command! -complete=command VicleHistoryClear call Vicle_history_clear('Vicle history cleared')
-command! -complete=command VicleHistorySize call Vicle_history_size()
-command! -complete=command VicleHistorySave call Vicle_history_save()
-command! -complete=command VicleHistoryLoad call Vicle_history_load()
+command! -nargs=* -complete=command VicleSend call Vicle_send_command(g:vicle_normal)
+command! -nargs=* -complete=command VicleSession call Vicle_session()
+command! -nargs=* -complete=command VicleSessionVars call Vicle_session_vars()
+command! -nargs=* -complete=command VicleEditionToggle call Vicle_edition_toggle()
+command! -nargs=* -complete=command VicleHistoryToggle call Vicle_history_toggle()
+command! -nargs=* -complete=command VicleHistoryClear call Vicle_history_clear('Vicle history cleared')
+command! -nargs=* -complete=command VicleHistorySize call Vicle_history_size()
+command! -nargs=* -complete=command VicleHistorySave call Vicle_history_save()
+command! -nargs=* -complete=command VicleHistoryLoad call Vicle_history_load()
 
