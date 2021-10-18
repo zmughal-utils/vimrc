@@ -1,11 +1,14 @@
 'Tail_Height'	tail.txt	/*'Tail_Height'*
 .netrwbook	pi_netrw.txt	/*.netrwbook*
 .netrwhist	pi_netrw.txt	/*.netrwhist*
+:AN	AsNeeded.txt	/*:AN*
+:ANX	AsNeeded.txt	/*:ANX*
 :AlignCenter	textformat.txt	/*:AlignCenter*
 :AlignJustify	textformat.txt	/*:AlignJustify*
 :AlignLeft	textformat.txt	/*:AlignLeft*
 :AlignRight	textformat.txt	/*:AlignRight*
 :AnsiEsc	AnsiEsc.txt	/*:AnsiEsc*
+:AsNeeded	AsNeeded.txt	/*:AsNeeded*
 :CVSEdit	vcscommand.txt	/*:CVSEdit*
 :CVSEditors	vcscommand.txt	/*:CVSEditors*
 :CVSUnedit	vcscommand.txt	/*:CVSUnedit*
@@ -179,6 +182,7 @@ AnsiEsc-copyright	AnsiEsc.txt	/*AnsiEsc-copyright*
 AnsiEsc-history	AnsiEsc.txt	/*AnsiEsc-history*
 AnsiEsc-manual	AnsiEsc.txt	/*AnsiEsc-manual*
 AnsiEsc.txt	AnsiEsc.txt	/*AnsiEsc.txt*
+AsNeeded.txt	AsNeeded.txt	/*AsNeeded.txt*
 ClearSwapList	swapit.txt	/*ClearSwapList*
 DistractFree	DistractFree.txt	/*DistractFree*
 DistractFree-Colorscheme	DistractFree.txt	/*DistractFree-Colorscheme*
@@ -397,7 +401,6 @@ asneeded-contents	AsNeeded.txt	/*asneeded-contents*
 asneeded-copyright	AsNeeded.txt	/*asneeded-copyright*
 asneeded-history	AsNeeded.txt	/*asneeded-history*
 asneeded-var	AsNeeded.txt	/*asneeded-var*
-asneeded.txt	AsNeeded.txt	/*asneeded.txt*
 astroboy-options	mimicpak.txt	/*astroboy-options*
 astroboy-variants	mimicpak.txt	/*astroboy-variants*
 astroboy.vim	mimicpak.txt	/*astroboy.vim*
