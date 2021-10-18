@@ -2,7 +2,7 @@ augroup vim_lsp_settings_deno
   au!
   LspRegisterServer {
       \ 'name': 'deno',
-      \ 'cmd': {server_info->lsp_settings#get('deno', 'cmd', [lsp_settings#exec_path('deno'), 'lsp'])},
+      \ 'cmd': {server_info->lsp_settings#get('deno', 'cmd', [lsp_settings#exec_path('deno')]+lsp_settings#get('deno', 'args', ['lsp']))},
       \ 'root_uri':{server_info->lsp_settings#get('deno', 'root_uri', lsp_settings#root_uri('deno'))},
       \ 'initialization_options': lsp_settings#get('deno', 'initialization_options', {
       \   'enable': v:true,
@@ -13,7 +13,11 @@ augroup vim_lsp_settings_deno
       \     'implementations': v:true,
       \     'references': v:true,
       \     'referencesAllFunctions': v:true,
+      \     'test': v:true,
+      \     'testArgs': ['--allow-all'],
       \   },
+      \   'config': empty(lsp#utils#find_nearest_parent_file(lsp#utils#get_buffer_path(), 'tsconfig.json')) ? v:null : lsp#utils#find_nearest_parent_file(lsp#utils#get_buffer_path(), 'tsconfig.json'),
+      \   'internalDebug': lsp_settings#get('deno', 'internalDebug', v:false),
       \ }),
       \ 'allowlist': lsp_settings#get('deno', 'allowlist', ['typescript', 'javascript', 'typescriptreact', 'javascriptreact']),
       \ 'blocklist': lsp_settings#get('deno', 'blocklist', {c->empty(lsp#utils#find_nearest_parent_file_directory(lsp#utils#get_buffer_path(), 'node_modules/')) ? [] : lsp_settings#utils#warning('server "deno" is disabled since "node_modules" is found', ['typescript', 'javascript', 'typescriptreact', 'javascriptreact'])}),
@@ -80,7 +84,7 @@ function! s:handle_deno_location(ctx, server, type, data) abort "ctx = {counter,
 
     if a:ctx['counter'] == 0
         if empty(a:ctx['list'])
-            if type(a:data['response']) == type(v:none)
+            if type(a:data['response']) == type(v:null)
                 call lsp#utils#error('Failed to retrieve '. a:type . ' for ' . a:server . ': response is null')
                 return
             endif
