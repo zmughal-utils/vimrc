@@ -42,10 +42,10 @@ endfunction
 "
 function fuf#updateMruList(mrulist, newItem, maxItem, exclude)
   let result = copy(a:mrulist)
-  let result = filter(result,'v:val.word !=# a:newItem.word')
+  let result = filter(result,'v:val["word"] !=# a:newItem["word"]')
   let result = insert(result, a:newItem)
   if len(a:exclude)
-    let result = filter(result, 'v:val.word !~ a:exclude')
+    let result = filter(result, 'v:val["word"] !~ a:exclude')
   endif
   return result[0 : a:maxItem - 1]
 endfunction
