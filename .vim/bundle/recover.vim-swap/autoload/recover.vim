@@ -17,8 +17,8 @@ let s:is_linux = has("unix") && isdirectory('/proc')
 fu! s:Swapname() "{{{1
   " Use sil! so a failing redir (e.g. recursive redir call)
   " won't hurt. (https://github.com/chrisbra/Recover.vim/pull/8)
-  if exists('*execute')
-    let a=execute('swapname')
+  if exists('*execute') && exists('*trim')
+    let a=trim(execute('swapname'))
   else
     sil! redir => a |sil swapname|redir end
   endif
