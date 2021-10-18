@@ -11,6 +11,7 @@
 "                Nick Hibma <nick@van-laarhoven.org>
 "                Sonia Heimann <niania@netsurf.org>
 "                Rob Hoelz <rob@hoelz.ro>
+"                Doug Kearns <dougkearns@gmail.com>
 "                and many others.
 "
 " Please download the most recent version first, before mailing
@@ -220,10 +221,16 @@ syn region  perlShellCommand	matchgroup=perlMatchStartEnd start="`" end="`" cont
 " Constants
 "
 " Numbers
-syn match  perlNumber	"\<\%(0\%(x\x[[:xdigit:]_]*\|b[01][01_]*\|\o[0-7_]*\|\)\|[1-9][[:digit:]_]*\)\>"
-syn match  perlFloat	"\<\d[[:digit:]_]*[eE][\-+]\=\d\+"
-syn match  perlFloat	"\<\d[[:digit:]_]*\.[[:digit:]_]*\%([eE][\-+]\=\d\+\)\="
-syn match  perlFloat    "\.[[:digit:]][[:digit:]_]*\%([eE][\-+]\=\d\+\)\="
+syn case   ignore
+syn match  perlNumber	"\<\%(0\|[1-9]\%(_\=\d\)*\)\>"
+syn match  perlNumber	"\<0\%(x\x\%(_\=\x\)*\|b[01]\%(_\=[01]\)*\|o\=\%(_\=\o\)*\)\>"
+syn match  perlFloat	"\<\d\%(_\=\d\)*e[-+]\=\d\%(_\=\d\)*"
+syn match  perlFloat	"\<\d\%(_\=\d\)*\.\%(\d\%(_\=\d\)*\)\=\%(e[-+]\=\d\%(_\=\d\)*\)\="
+syn match  perlFloat    "\.\d\%(_\=\d\)*\%(e[-+]\=\d\%(_\=\d\)*\)\="
+syn match  perlFloat	"\<0x\x\%(_\=\x\)*p[-+]\=\d\%(_\=\d\)*"
+syn match  perlFloat	"\<0x\x\%(_\=\x\)*\.\%(\x\%(_\=\x\)*\)\=\%(p[-+]\=\d\%(_\=\d\)*\)\="
+syn match  perlFloat    "\<0x\.\x\%(_\=\x\)*\%(p[-+]\=\d\%(_\=\d\)*\)\="
+syn case   match
 
 syn match  perlString	"\<\%(v\d\+\%(\.\d\+\)*\|\d\+\%(\.\d\+\)\{2,}\)\>" contains=perlVStringV
 syn match  perlVStringV	"\<v" contained
@@ -357,7 +364,7 @@ syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*""+                             end=+$+        contains=@perlTop oneline
 syn region perlIndentedHereDocStart	matchgroup=perlStringStartEnd start=+<<\~\s*''+                             end=+$+        contains=@perlTop oneline
-if exists("perl_fold")
+if get(g:, 'perl_fold', 0)
   syn region perlIndentedHereDoc	start=+<<\~\z(\I\i*\)+                        matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ fold extend
   syn region perlIndentedHereDoc	start=+<<\~\s*"\z([^\\"]*\%(\\.[^\\"]*\)*\)"+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpDQ fold extend
   syn region perlIndentedHereDoc	start=+<<\~\s*'\z([^\\']*\%(\\.[^\\']*\)*\)'+ matchgroup=perlStringStartEnd end=+^\s*\z1$+ contains=perlIndentedHereDocStart,@perlInterpSQ fold extend
@@ -409,11 +416,11 @@ syn match  perlFormatField	"@$" contained
 
 " __END__ and __DATA__ clauses
 if get(g:, 'perl_fold', 0)
-  syntax region perlDATA		start="^__DATA__$" skip="." end="." contains=@perlDATA fold
-  syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA fold
 else
-  syntax region perlDATA		start="^__DATA__$" skip="." end="." contains=@perlDATA
-  syntax region perlDATA		start="^__END__$" skip="." end="." contains=perlPOD,@perlDATA
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA
+  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA
 endif
 
 "
@@ -558,6 +565,7 @@ hi def link perlSpecialString	perlSpecial
 hi def link perlSpecialStringU	perlSpecial
 hi def link perlSpecialMatch		perlSpecial
 hi def link perlDATA			perlComment
+hi def link perlDATAStart		perlDATA
 
 " NOTE: Due to a bug in Vim (or more likely, a misunderstanding on my part),
 "       I had to remove the transparent property from the following regions
