@@ -16,4 +16,6 @@ if exists("*strftime")
 	inoreabbr xfulltd	<C-R>=strftime(strftime_isotime_fmt)<CR>
 	inoreabbr xfiletd	<C-R>=strftime(strftime_isotime_fmt,getftime(expand('%')))<CR>
 	inoreabbr xrfc		<C-R>=strftime(strftime_rfc_fmt)<CR>
+	inoreabbr xdatecmd	<C-R>=system('LC_TIME=C date <Bar> tr -d "\n"')<CR>
+	inoreabbr xdateabbr	<C-R>=strftime("%b %d, %Y")<CR>
 endif
