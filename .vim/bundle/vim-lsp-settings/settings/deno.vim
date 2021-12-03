@@ -1,3 +1,17 @@
+function! Vim_lsp_settings_deno_get_blocklist() abort
+    if !empty(lsp#utils#find_nearest_parent_file(lsp#utils#get_buffer_path(), 'deno.json'))
+        return []
+    endif
+    if !empty(lsp#utils#find_nearest_parent_file(lsp#utils#get_buffer_path(), 'deno.jsonc'))
+        return []
+    endif
+
+    if empty(lsp#utils#find_nearest_parent_file_directory(lsp#utils#get_buffer_path(), 'node_modules/'))
+        return []
+    endif
+    return lsp_settings#utils#warning('server "deno" is disabled since "node_modules" is found', ['typescript', 'javascript', 'typescriptreact', 'javascriptreact'])
+endfunction
+
 augroup vim_lsp_settings_deno
   au!
   LspRegisterServer {
@@ -16,11 +30,23 @@ augroup vim_lsp_settings_deno
       \     'test': v:true,
       \     'testArgs': ['--allow-all'],
       \   },
+      \   "suggest": {
+      \     "autoImports": v:true,
+      \     "completeFunctionCalls": v:true,
+      \     "names": v:true,
+      \     "paths": v:true,
+      \     "imports": {
+      \       "autoDiscover": v:false,
+      \       "hosts": {
+      \         "https://deno.land/": v:true,
+      \       },
+      \     },
+      \   },
       \   'config': empty(lsp#utils#find_nearest_parent_file(lsp#utils#get_buffer_path(), 'tsconfig.json')) ? v:null : lsp#utils#find_nearest_parent_file(lsp#utils#get_buffer_path(), 'tsconfig.json'),
       \   'internalDebug': lsp_settings#get('deno', 'internalDebug', v:false),
       \ }),
       \ 'allowlist': lsp_settings#get('deno', 'allowlist', ['typescript', 'javascript', 'typescriptreact', 'javascriptreact']),
-      \ 'blocklist': lsp_settings#get('deno', 'blocklist', {c->empty(lsp#utils#find_nearest_parent_file_directory(lsp#utils#get_buffer_path(), 'node_modules/')) ? [] : lsp_settings#utils#warning('server "deno" is disabled since "node_modules" is found', ['typescript', 'javascript', 'typescriptreact', 'javascriptreact'])}),
+      \ 'blocklist': lsp_settings#get('deno', 'blocklist', Vim_lsp_settings_deno_get_blocklist()),
       \ 'config': lsp_settings#get('deno', 'config', lsp_settings#server_config('deno')),
       \ 'workspace_config': lsp_settings#get('deno', 'workspace_config', {}),
       \ 'semantic_highlight': lsp_settings#get('deno', 'semantic_highlight', {}),
@@ -101,7 +127,7 @@ function! s:handle_deno_location(ctx, server, type, data) abort "ctx = {counter,
                 " `s:ensure_start()` checks path is remote uri like or not.
                 " `deno://http/` is detected as remote uri and finish.
                 let a:ctx['target_uri'] = l:target_uri =~# 'deno://' ? substitute(l:target_uri, '^deno:\/\/', 'deno:', '') : l:target_uri
-            elseif l:target_uri =~# 'deno:/'
+            elseif l:target_uri =~# 'deno:/' || l:target_uri =~# 'deno:asset/'
                 " deno 1.7.5 response `deno:/`
                 " deno lsp encode `@` such as `std@0.87.0` to `std%400.87.0`
                 " It's hard to handle in vim-lsp, so decode `@` for filepath.
@@ -235,6 +261,12 @@ function! s:handle_deno_cache(data) abort
     endif
 endfunction
 
+function! s:handle_reload_import_registries(data) abort
+    if a:data['response']['result'] == v:true
+        echo 'Import registries reloaded'
+    endif
+endfunction
+
 function! s:cache() abort
     let l:is_download_cache = input('Download all cache files?(y/n) ', 'y')
     if l:is_download_cache =~# 'y'
@@ -246,6 +278,20 @@ function! s:cache() abort
          \ },
          \ 'on_notification': function('s:handle_deno_cache', [])
          \ })
+    endif
+endfunction
+
+function! s:reload_import_registries() abort
+  let l:is_download_cache = input('Do you reload import registries?(y/n) ', 'y')
+  if l:is_download_cache =~# 'y'
+    call lsp#send_request('deno', {
+        \ 'method': 'deno/reloadImportRegistries',
+        \ 'params': {
+        \   'referrer': lsp#get_text_document_identifier(),
+        \   'uris': [],
+        \ },
+        \ 'on_notification': function('s:handle_reload_import_registries', [])
+        \ })
     endif
 endfunction
 
@@ -261,6 +307,9 @@ function! s:on_lsp_buffer_enabled() abort
 
   command! -buffer LspDenoCache call <SID>cache()
   nnoremap <buffer> <plug>(lsp-deno-cache) :<c-u>call <SID>cache()<cr>
+
+  command! -buffer LspDenoReloadImportRegistries call <SID>reload_import_registries()
+  nnoremap <buffer> <plug>(lsp-deno-reload-import-registries) :<c-u>call <SID>reload_import_registries()<cr>
 endfunction
 
 function! s:deno_test(context) abort

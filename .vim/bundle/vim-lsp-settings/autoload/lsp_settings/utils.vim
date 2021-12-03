@@ -72,6 +72,17 @@ function! lsp_settings#utils#load_schemas(name) abort
   return extend(l:schemas, lsp_settings#get(a:name, 'schemas', []))
 endfunction
 
+function! lsp_settings#utils#load_schemas_map(name) abort
+  let l:schemas = json_decode(join(readfile(s:catalog_path), "\n"))['schemas']
+  let l:result = {}
+  for l:v in extend(l:schemas, lsp_settings#get(a:name, 'schemas', []))
+    if has_key(l:v, 'fileMatch')
+      let l:result[l:v['url']] = l:v['fileMatch']
+    endif
+  endfor
+  return l:result
+endfunction
+
 function! lsp_settings#utils#term_start(cmd, options) abort
     let l:options = {}
     if has_key(a:options, 'cwd')
