@@ -8,3 +8,5 @@ au BufNewFile,BufRead cpanfile   setf perl
 au BufNewFile,BufRead alienfile  setf perl
 " Orbitalfile (Orbital::Transfer)
 au BufNewFile,BufRead Orbitalfile  setf perl
+" Rexfile (Rex)
+au BufNewFile,BufRead Rexfile  setf perl
