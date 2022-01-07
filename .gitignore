@@ -4,6 +4,7 @@
 .vim/.netrwhist
 .*.sw*
 tags-ja
+tags-cn
 
 .vim/bundle/vimproc.vim/autoload/vimproc_linux64.so
 .vim/bundle/YouCompleteMe
