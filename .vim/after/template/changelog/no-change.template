@@ -1,0 +1,7 @@
+VimL:" changelog no changes File Template
+VimL:" hint: phrase for no changes
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+No change from v<+VERSION+>.
