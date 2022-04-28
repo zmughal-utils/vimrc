@@ -16,9 +16,10 @@
 
 # 新闻
 
+- 2021/12/15 新的 runner 机制，扩展 AsyncRun 的能力，在 tmux/floaterm 中运行命令。
+- 2020/02/18 [asynctasks](https://github.com/skywind3000/asynctasks.vim) 使用 AsyncRun 为 Vim 提供了一套类似 vscode 的任务机制，更好的构建、测试和运行项目。
 - 2020/01/21 使用 `-mode=term` 在内置终端里运行你的命令，见 [内置终端](#内置终端)。
 - 2018/04/17 支持 range 了，可以 Vim 中选中一段文本，然后 `:%AsyncRun cat`。
-- 2017/06/26 新增参数 `-cwd=<root>` 可以指定在项目的根目录运行命令，见 [project-root](#项目根目录)。
 
 # 安装
 
@@ -34,8 +35,13 @@
 
 <!-- TOC -->
 
-- [快速入门](#快速入门)
-- [使用手册](#使用手册)
+- [特性说明](#特性说明)
+- [新闻](#新闻)
+- [安装](#安装)
+- [例子](#例子)
+- [内容目录](#内容目录)
+  - [快速入门](#快速入门)
+  - [使用手册](#使用手册)
     - [AsyncRun - 运行 shell 命令](#asyncrun---运行-shell-命令)
     - [AsyncStop - 停止正在运行的任务](#asyncstop---停止正在运行的任务)
     - [函数接口](#函数接口)
@@ -47,12 +53,14 @@
     - [内置终端](#内置终端)
     - [Quickfix window](#quickfix-window)
     - [Range 支持](#range-支持)
+  - [高级话题](#高级话题)
+    - [额外的 Runner](#额外的-runner)
     - [自定义 Runner](#自定义-runner)
     - [命令修改器](#命令修改器)
     - [运行需求](#运行需求)
     - [同 fugitive 协作](#同-fugitive-协作)
-- [语言参考](#语言参考)
-- [更多话题](#更多话题)
+  - [语言参考](#语言参考)
+  - [更多话题](#更多话题)
 - [插件协作](#插件协作)
 - [Credits](#credits)
 
@@ -62,10 +70,10 @@
 
 **异步运行 gcc 编译当前的文件**
 
-	:AsyncRun gcc % -o %<
-	:AsyncRun g++ -O3 "%" -o "%<" -lpthread 
+	:AsyncRun gcc "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENOEXT)"
+	:AsyncRun g++ -O3 "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENOEXT)" -lpthread 
 
-上面的命令会在后台运行 gcc 命令，并把编译输出实时显示到 quickfix 窗口中，标记 '`%`' 代表当前正在编辑的文件名，而 '`%<`' 代表去掉扩展名的文件名。
+上面的命令会在后台运行 gcc 命令，并把编译输出实时显示到 quickfix 窗口中，标记 '`$(VIM_FILEPATH)`' 代表当前正在编辑的文件名，而 '`$(VIM_FILENOEXT)`' 代表去掉扩展名的文件名。
 
 **异步运行 make**
 
@@ -83,9 +91,9 @@
 
 **编译 go 项目**
 
-    :AsyncRun go build "%:p:h"
+    :AsyncRun go build "$(VIM_FILEDIR)"
 
-标记 '`%:p:h`' 表示当前文件的所在目录。 
+标记 '`$(VIM_FILEDIR)`' 表示当前文件的所在目录。 
 
 **查看 man page**
 
@@ -94,20 +102,32 @@
 **异步 git push**
 
     :AsyncRun git push origin master
+    
+**项目目录 git push**
+
+    :AsyncRun -cwd=<root> git push origin master
+
+使用 `-cwd=?` 来指定运行目录，变量 `<root>` 或者 `$(VIM_ROOT)` 代表当前项目的 [Project Root](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root).
 
 **初始化 `<F7>` 来编译文件**
 
     :noremap <F7> :AsyncRun gcc "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENAME)" <cr> 
 
-文件可能会包含空格，所以正式使用推荐用 `$(...)` 的宏形，后面有表格说明可用宏。
+文件可能会包含空格，所以用引号引起来更安全，就像命令行输入文件名一样。
 
 **运行 Python 脚本**
 
-    :AsyncRun -raw python %
+    :AsyncRun -cwd=$(VIM_FILEDIR) python "$(VIM_FILEPATH)"
 
 使用 `-raw` 参数可以在 quickfix 中显示原始输出（不进行 errorformat 匹配），记得用 `let $PYTHONNUNBUFFERED=1` 来禁止 python 的行缓存，这样可以实时查看结果。很多程序在后台运行时都会将输出全部缓存住直到调用 flush 或者程序结束，python 可以设置该变量来禁用缓存，让你实时看到输出，而无需每次手工调用 `sys.stdout.flush()`。
 
 关于缓存的更多说明见 [这里](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ#cant-see-the-realtime-output-when-running-a-python-script).
+
+**在新终端里运行 Python**
+
+    :AsyncRun -cwd=$(VIM_FILEDIR) -mode=term -pos=TAB  python "$(VIM_FILEPATH)"
+
+可以在一个新的 tab 里用内置终端运行 Python (vim 8.2 or nvim-0.4.0)。
 
 **使用 AsyncRun 的助手**
 
@@ -125,41 +145,36 @@
 
 在后台运行 shell 命令，并把结果实时输出到 quickfix 窗口，当命令后跟随一个 `!` 时，quickfix 将不会自动滚动。参数用空格分隔，如果某项参数包含空格，那么需要双引号引起来（unix 下面还可以使用反斜杠加空格）。
 
-参数可以接受各种以 '`%`', '`#`' or '`<`' 开头的文件名宏：
+下面这些宏变量在运行时会展开成具体值：
 
-    %:p     - 当前 buffer 的文件名全路径
-    %:t     - 当前 buffer 的文件名（没有前面的路径）
-    %:p:h   - 当前 buffer 的文件所在路径
-    %:e     - 当前 buffer 的扩展名
-    %:t:r   - 当前 buffer 的主文件名（没有前面路径和后面扩展名）
-    %       - 相对于当前路径的文件名
-    %:h:.   - 相对于当前路径的文件路径
+    $(VIM_FILEPATH)  - 当前 buffer 的文件名全路径
+    $(VIM_FILENAME)  - 当前 buffer 的文件名（没有前面的路径）
+    $(VIM_FILEDIR)   - 当前 buffer 的文件所在路径
+    $(VIM_FILEEXT)   - 当前 buffer 的扩展名
+    $(VIM_FILENOEXT) - 当前 buffer 的主文件名（没有前面路径和后面扩展名）
+    $(VIM_PATHNOEXT) - 带路径的主文件名（$VIM_FILEPATH 去掉扩展名）
+    $(VIM_CWD)       - 当前 Vim 目录
+    $(VIM_RELDIR)    - 相对于当前路径的文件名
+    $(VIM_RELNAME)   - 相对于当前路径的文件路径
+    $(VIM_ROOT)      - 当前 buffer 的项目根目录
+    $(VIM_CWORD)     - 光标下的单词
+    $(VIM_CFILE)     - 光标下的文件名
+    $(VIM_GUI)       - 是否在 GUI 下面运行？
+    $(VIM_VERSION)   - Vim 版本号
+    $(VIM_COLUMNS)   - 当前屏幕宽度
+    $(VIM_LINES)     - 当前屏幕高度
+    $(VIM_SVRNAME)   - v:servername 的值
+    $(VIM_PRONAME)   - 项目名称（Project Root 目录的名称）
+    $(VIM_DIRNAME)   - 当前目录的名称
+
+同名环境变量也会被初始化，比如 `$VIM_FILENAME` 这样的，可以被命令进程读取。
+
+参数还可以接受以 '`<`' 开头的别名：
+
     <cwd>   - 当前路径
     <cword> - 光标下的单词
     <cfile> - 光标下的文件名
     <root>  - 当前 buffer 的项目根目录
-
-在运行前会批量初始化一些环境变量（方便你在 shell 脚本中使用）：
-
-    $VIM_FILEPATH  - 当前 buffer 的文件名全路径
-    $VIM_FILENAME  - 当前 buffer 的文件名（没有前面的路径）
-    $VIM_FILEDIR   - 当前 buffer 的文件所在路径
-    $VIM_FILEEXT   - 当前 buffer 的扩展名
-    $VIM_FILENOEXT - 当前 buffer 的主文件名（没有前面路径和后面扩展名）
-    $VIM_PATHNOEXT - 带路径的主文件名（$VIM_FILEPATH 去掉扩展名）
-    $VIM_CWD       - 当前 Vim 目录
-    $VIM_RELDIR    - 相对于当前路径的文件名
-    $VIM_RELNAME   - 相对于当前路径的文件路径
-    $VIM_ROOT      - 当前 buffer 的项目根目录
-    $VIM_CWORD     - 光标下的单词
-    $VIM_CFILE     - 光标下的文件名
-    $VIM_GUI       - 是否在 GUI 下面运行？
-    $VIM_VERSION   - Vim 版本号
-    $VIM_COLUMNS   - 当前屏幕宽度
-    $VIM_LINES     - 当前屏幕高度
-    $VIM_SVRNAME   - v:servername 的值
-
-上面这些环境变量，可以使用 `$(...)` 的形式（比如 `$(VIM_FILENAME)`之类）用在 AsyncRun 的参数里面，这样的用法比 `%` 前缀的 vim 宏要安全，因为百分号的 vim 宏是由 vim 展开的，当使用 `-cwd=?` 时百分号宏会失效，所以调用 `AsyncRun` 命令时，推荐使用 `$(...)` 形式的参数。
 
 宏 `$(VIM_ROOT)` 或者 `<root>` 指代当前文件的[项目根目录](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root)。
 
@@ -181,6 +196,11 @@
 | `-errorformat=?` | `未设置` | 用于 quickfix 中匹配错误输出的格式字符串，如果未提供，则使用当前 `&errorformat` 的值。注意 `%` 需要转写成 `\%`。 |
 | `-focus=?` | 1 | 设置成 `0` 可以防止使用内置终端时窗口焦点切换。 |
 | `-hidden=?` | 0 | 设置成 `1` 可以将内置终端的 `bufhidden` 初始化为 `hide` |
+| `-silent` | `未设置` | 设置该参数可以避免打开 quickfix 窗口 (临时覆盖 `g:asyncrun_open`) |
+| `-close` | `未设置` | 使用 `-mode=term` 时，如果 term 进程结束就自动关闭窗口 |
+| `-scroll=?` | `未设置` | 设置为 `0` 可以禁止 quickfix 自动滚动 |
+| `-once=?` | `未设置` | 设置为 `1` 会缓存所有后台输出，直到进程结束一次性显示（类似 Dispatch 的行为），当 `errorformat` 中设置了多行模式后比较有用。 |
+| `-encoding=?` | `未设置` | 独立设置命令编码，如果提供的话会覆盖 `g:asyncrun_encs` 的全局配置 |
 
 所有的这些配置参数都必须放在具体 shell 命令 **前面**，因为没有任何 shell 命令使用 `-` 开头，因此很容易区分哪里是命令的开始。如果你确实有一条 shell 命令是减号开头的，那么为了明显区别参数和命令，可以在命令前面放一个 `@` 符号，那么 AsyncRun 在解析参数时碰到 `@` 就知道参数结束了，后面都是命令。
 
@@ -220,6 +240,7 @@
 - g:asyncrun_timer - 每 100ms 处理多少条消息，默认为 25。
 - g:asyncrun_wrapper - 命令前缀，默认为空，比如可以设置成 `nice`。
 - g:asyncrun_stdin - 设置成非零的话，允许 stdin，比如 cmake 在 windows 下要求 stdin 为打开状态。
+- g:asyncrun_qfid - 使用 quickfix id 来防止附加到 quickfix 列表的并发插件的交错输出。
 
 更多配置内容，见 **[这里](https://github.com/skywind3000/asyncrun.vim/wiki/Options)**.
 
@@ -284,7 +305,7 @@ AsyncRun 可以用 `-mode=?` 参数指定运行模式，不指定的话，将会
 - `-pos=bottom`: 在下方打开终端。
 - `-pos=left`: 在左边打开终端。
 - `-pos=right`: 在右边打开终端。
-- `-pos=hidden`: 不打开终端窗口，隐藏在后台运行。
+- `-pos=hide`: 不打开终端窗口，隐藏在后台运行。
 - `-pos=external`: 使用外部终端（仅支持 Windows）。
 
 建议 Windows 下面直接用 `-pos=external`。
@@ -334,6 +355,45 @@ AsyncRun 可以指定一个当前 buffer 的文本范围，用作命令的 stdin
 
 选中区域的文本 (行模式) 作为标准输入。
 
+## 高级话题
+
+AsyncRun 提供足够的可能性和灵活性让你指定运行命令的各处细节。
+
+### 额外的 Runner
+
+除去默认的 Quickfix 和 internal-terminal 外，AsyncRun 还允许你自定义各种 runner 来为命令提供新的运行方式，本项目已经自带一批 runner：
+
+| Runner | 描 述 | 依 赖 | 链 接 |
+|-|-|-|-|
+| `gnome` | 在新的 Gnome 终端里运行 | GNOME | [gnome.vim](autoload/asyncrun/runner/gnome.vim) |
+| `gnome_tab` | 在另一个 Gnome 终端的 Tab 里运行 | GNOME | [gnome_tab.vim](autoload/asyncrun/runner/gnome_tab.vim) |
+| `xterm` | 在新的 xterm 窗口内运行 | xterm | [xterm.vim](autoload/asyncrun/runner/xterm.vim) |
+| `tmux` | 在一个新的 tmux 的 pane 里运行 | [Vimux](https://github.com/preservim/vimux) | [tmux.vim](autoload/asyncrun/runner/tmux.vim) |
+| `floaterm` | 在 floaterm 的新窗口里运行 | [floaterm](https://github.com/voldikss/vim-floaterm) | [floaterm.vim](autoload/asyncrun/runner/floaterm.vim) |
+| `floaterm_reuse` | 再一个可复用的 floaterm 窗口内运行 | [floaterm](https://github.com/voldikss/vim-floaterm) | [floaterm_reuse.vim](autoload/asyncrun/runner/floaterm.vim) |
+| `quickui` | 在 quickui 的浮窗里运行 | [vim-quickui](https://github.com/skywind3000/vim-quickui) | [quickui.vim](autoload/asyncrun/runner/quickui.vim) |
+| `toggleterm` | 使用 toggleterm 窗口运行 | [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim) | [toggleterm.vim](autoload/asyncrun/runner/toggleterm.vim) |
+| `xfce` | 在 xfce 终端中运行 | xfce4-terminal | [xfce.vim](autoload/asyncrun/runner/xfce.vim) |
+| `konsole` | 在 KDE 的自带终端里运行 | KDE | [konsole.vim](autoload/asyncrun/runner/konsole.vim) |
+| `macos` | 在 macOS 的系统终端内运行 | macOS | [macos.vim](autoload/asyncrun/runner/macos.vim) |
+| `iterm` | 在 iTerm2 的 tab 中运行 | macOS + iTerm2 | [iterm.vim](autoload/asyncrun/runner/iterm.vim) |
+
+比如：
+
+```VimL
+:AsyncRun -mode=term -pos=gnome      ls -la
+:AsyncRun -mode=term -pos=floaterm   ls -la
+:AsyncRun -mode=term -pos=tmux       ls -la
+```
+
+下面是 `gnome` 这个 runner 的效果：
+
+![](https://raw.githubusercontent.com/skywind3000/images/master/p/asyncrun/runner-gnome2.png)
+
+当你在 GVim 中使用 `gnome`, `konsole` 或者 `xfce` 之类的 runner 来运行程序，你会觉得就跟 IDE 里面启动命令行程序是一样的感觉。
+
+所有 runner 皆可定制，你可以很方便的开发新 runner，详细见下一节 “自定义 Runner”。
+
 ### 自定义 Runner
 
 你可能还希望更多的执行方式，比如在新的 tmux 或者 gnore-terminal 的窗口里运行，AsyncRun 允许你自定义 runner：
@@ -357,8 +417,9 @@ let g:asyncrun_runner.test = function('MyRunner')
 
 Runner 函数只有一个参数：`opts`，是一个字典，里面保存着 `:AsyncRun` 命令行里传过来的值，同时 `opts.cmd` 记录着需要运行的命令。
 
-关于更多 tmux / gnome-terminal 的 runner 例子，以及更多运行模式，参考 [自定义运行模式](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner) 。
+Runner 还有另外一种写法，就是在 `autoload/asyncrun/runner` 路径下面简历一个独立文件，提供一个 `run` 方法，这些脚本将会被按需加载。
 
+关于更多 runner 文档和例子，参考 [自定义运行模式](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner) 。
 
 
 ### 命令修改器
@@ -418,24 +479,23 @@ asyncrun.vim 可以同 `vim-fugitive` 协作，为 fugitive 提供异步支持�
 
 Don't forget to read the [Frequently Asked Questions](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ).
 
-## 插件协作
+# 插件协作
 
 | Name | Description |
 |------|-------------|
+| [asynctasks](https://github.com/skywind3000/asynctasks.vim) | Introduce vscode's task system to vim (powered by AsyncRun). |
 | [vim-fugitive](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins#fugitive)  | perfect cooperation, asyncrun gets Gfetch/Gpush running in background |
 | [errormarker](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins) | perfect cooperation, errormarker will display the signs on the error or warning lines |
 | [airline](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins#vim-airline) | very well, airline will display status of background jobs |
 | [sprint](https://github.com/pedsm/sprint) | nice plugin who uses asyncrun to provide an IDE's run button to runs your code |
-| [netrw](https://github.com/skywind3000/asyncrun.vim/wiki/Get-netrw-using-asyncrun-to-save-remote-files) | netrw can save remote files on background now. Experimental, take your own risk | 
 
 
 See: [Cooperate with famous plugins](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins)
 
-## Credits
+# Credits
 
-Trying best to provide the most simply and convenience experience in the asynchronous-jobs. 
+- 作者：skywind3000
+- 地址：http://www.vim.org/scripts/script.php?script_id=5431
 
-Author: skywind3000
-Please vote it if you like it: 
-http://www.vim.org/scripts/script.php?script_id=5431
+喜欢的话欢迎帮在上面地址中投一票。
 

@@ -1,16 +1,15 @@
 # Preface
 
-This plugin takes the advantage of new apis in Vim 8 (and NeoVim) to enable you to run shell commands in background and read output in the quickfix window in realtime:
+This plugin takes the advantage of new APIs in Vim 8 (and NeoVim) to enable you to run shell commands in the background and read the output in the quickfix window in realtime:
 
 - Easy to use, start your background command by `:AsyncRun` (just like old `!` cmd).
-- Command is done in the background, no need to wait for the entire process to finish.
-- Output are displayed in the quickfix window, errors are matched with `errorformat`.
+- The command is running in the background, no need to wait for the entire process to finish.
+- Output is displayed in the quickfix window, errors are matched with `errorformat`.
 - You can explore the error output immediately or keep working in vim while executing.
-- Ring the bell or play a sound to notify you job finished while you're focusing on editing.
-- Customizable runners and command modifiers brings you dark power of asyncrun.
+- Ring the bell or play a sound to notify your job is finished while you're focusing on editing.
+- Customizable runners and command modifiers bring you the dark power of asyncrun.
 - Fast and lightweight, just a single self-contained `asyncrun.vim` source file.  
-- Provide corresponding user experience in vim, neovim, gvim and macvim.
-- Separated extension [asyncrun.extra](https://github.com/skywind3000/asyncrun.extra) to provide extra runners.
+- Provide corresponding user experience in vim, neovim, gvim, and macvim.
 
 If that doesn't excite you, then perhaps this GIF screen capture below will change your mind.
 
@@ -18,17 +17,18 @@ If that doesn't excite you, then perhaps this GIF screen capture below will chan
 
 # News
 
+- 2021/12/15 new [extra runners](#extra-runners) to run command in a tmux, or floaterm window.
 - 2020/02/18 [asynctasks](https://github.com/skywind3000/asynctasks.vim) uses asyncrun to introduce vscode's task system to vim.
 - 2020/01/21 run command in internal terminal with `-mode=term` see [here](#internal-terminal).
-- 2018/04/17 AsyncRun now supports command range, try: `:%AsyncRun cat`.
-- 2018/04/16 better makeprg/grepprg handling, accepts `%` and `$*` macros now.
-- 2018/03/11 new option [g:asyncrun_open](#quickfix-window) to open quickfix window after job starts.
-- 2017/07/12 new option `-raw=1` to use raw output (not match with the errorformat)
-- 2017/06/26 new option `-cwd=<root>` to change working directory to project root, see [here](#project-root). 
+- 2020/04/17 AsyncRun now supports command range, try: `:%AsyncRun cat`.
 
 # Install
 
-Copy `asyncrun.vim` to your `~/.vim/plugin` or use Vundle to install it from `skywind3000/asyncrun.vim` .
+Install with vim-plug:
+
+```VimL
+Plug 'skywind3000/asyncrun.vim'
+```
 
 # Example
 
@@ -40,27 +40,34 @@ Remember to open vim's quickfix window by `:copen` (or setting  `g:asyncrun_open
 
 <!-- TOC -->
 
-- [Tutorials](#tutorials)
-- [Manual](#manual)
+- [Preface](#preface)
+- [News](#news)
+- [Install](#install)
+- [Example](#example)
+- [Contents](#contents)
+  - [Tutorials](#tutorials)
+  - [Manual](#manual)
     - [AsyncRun - Run shell command](#asyncrun---run-shell-command)
     - [AsyncStop - Stop the running job](#asyncstop---stop-the-running-job)
-    - [Function API](#function-api)
+    - [Function (API)](#function-api)
     - [Settings](#settings)
     - [Variables](#variables)
     - [Autocmd](#autocmd)
     - [Project Root](#project-root)
-    - [Running modes](#running-modes)
+    - [Running Modes](#running-modes)
     - [Internal Terminal](#internal-terminal)
     - [Terminal Name](#terminal-name)
     - [Quickfix window](#quickfix-window)
     - [Range support](#range-support)
+  - [Advanced Topics](#advanced-topics)
+    - [Extra Runners](#extra-runners)
     - [Customize Runner](#customize-runner)
     - [Command Modifier](#command-modifier)
     - [Requirements](#requirements)
     - [Cooperate with vim-fugitive:](#cooperate-with-vim-fugitive)
-- [Language Tips](#language-tips)
-- [More Topics](#more-topics)
-- [Cooperate with other Plugins](#cooperate-with-other-plugins)
+  - [Language Tips](#language-tips)
+  - [More Topics](#more-topics)
+  - [Cooperate with other Plugins](#cooperate-with-other-plugins)
 - [History](#history)
 - [Credits](#credits)
 
@@ -70,17 +77,17 @@ Remember to open vim's quickfix window by `:copen` (or setting  `g:asyncrun_open
 
 **Async run gcc to compile current file**
 
-	:AsyncRun gcc % -o %<
-	:AsyncRun g++ -O3 "%" -o "%<" -lpthread 
+	:AsyncRun gcc "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENOEXT)"
+	:AsyncRun g++ -O3 "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENOEXT)" -lpthread 
 
-This command will run gcc in the background and output to the quickfix window in realtime. Macro '`%`' stands for filename and '`%<`' represents filename without extension.
+This command will run gcc in the background and output to the quickfix window in real time. Macro '`$(VIM_FILEPATH)`' stands for filename with full path and '`$(VIM_FILENOEXT)`' represents filename without extension.
 
 **Async run make**
 
     :AsyncRun make
 	:AsyncRun make -f makefile
 
-Remember to open quickfix window by `:copen` before using `AsyncRun` command, if you don't open it, you will not see any output.
+Remember to open the quickfix window by `:copen` before using the `AsyncRun` command, if you don't open it, you will not see any output.
 
 **Grep key word**
 
@@ -91,9 +98,9 @@ when `!` is included, auto-scroll in quickfix will be disabled. `<cword>` repres
 
 **Compile go project**
 
-    :AsyncRun go build "%:p:h"
+    :AsyncRun go build "$(VIM_FILEDIR)"
 
-Macro '`%:p:h`' stands for current file dir. 
+Macro '`$(VIM_FILEDIR)`' stands for the current file dir. 
 
 **Lookup man page**
 
@@ -103,21 +110,33 @@ Macro '`%:p:h`' stands for current file dir.
 
     :AsyncRun git push origin master
 
+**Git push from project root**
+
+    :AsyncRun -cwd=<root> git push origin master
+
+Use `-cwd=?` to specify the working directory, macro `<root>` or `$(VIM_ROOT)` represents current [Project Root](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root).
+
 **Setup `<F7>` to compile file**
 
-    :noremap <F7> :AsyncRun gcc "%" -o "%<" <cr> 
+    :noremap <F7> :AsyncRun gcc "$(VIM_FILEPATH)" -o "$(VIM_FILEDIR)/$(VIM_FILENAME)" <cr> 
 
 File name may contain spaces, therefore, it's safe to quote them.
 
 **Run a python script**
 
-    :AsyncRun -raw python %
+    :AsyncRun -cwd=$(VIM_FILEDIR) python "$(VIM_FILEPATH)"
 
-New option `-raw` will display the raw output (without matching to errorformat), you need the latest AsyncRun (after 1.3.13) to use this option. Remember to put `let $PYTHONUNBUFFERED=1` in your `.vimrc` to disable python stdout buffering, see [here](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ#cant-see-the-realtime-output-when-running-a-python-script).
+New option `-raw` will display the raw output (without matching to errorformat). Remember to put `let $PYTHONUNBUFFERED=1` in your `.vimrc` to disable python stdout buffering, see [here](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ#cant-see-the-realtime-output-when-running-a-python-script).
+
+**Run a python script in a new terminal**
+
+    :AsyncRun -cwd=$(VIM_FILEDIR) -mode=term -pos=TAB  python "$(VIM_FILEPATH)"
+
+This will run python in the internal-terminal (vim 8.2 or nvim-0.4.0 is required) in a new tabpage.
 
 **A good assistant to asyncrun**
 
-[asynctasks.vim](https://github.com/skywind3000/asynctasks.vim) a plugin built upon asyncrun, an easy way to use asyncrun. It allows you to manage your building, testing and deploying tasks in a global or project local configuration, and run them by their names.
+[asynctasks.vim](https://github.com/skywind3000/asynctasks.vim) a plugin built upon asyncrun, an easy way to use asyncrun. It allows you to manage your building, testing, and deploying tasks in a global or project local configuration, and run them by their names.
 
 ## Manual
 
@@ -129,66 +148,67 @@ There are two vim commands: `:AsyncRun` and `:AsyncStop` to control async jobs.
 :AsyncRun[!] [options] {cmd} ...
 ```
 
-run shell command in background and output to quickfix. when `!` is included, auto-scroll in quickfix will be disabled. Parameters are splited by space, if a parameter contains space, it should be **quoted** or escaped as backslash + space (unix only).
+Run shell command in the background and output to quickfix. when `!` is included, auto-scroll in quickfix will be disabled. Parameters are split by space, if a parameter contains space, it should be **quoted** or escaped as backslash + space (Unix only).
 
-Parameters accept macros start with '`%`', '`#`' or '`<`' :
+Macro variables in the parameters will be expanded before executing:
 
-    %:p     - File name of current buffer with full path
-    %:t     - File name of current buffer without path
-    %:p:h   - File path of current buffer without file name
-    %:e     - File extension of current buffer
-    %:t:r   - File name of current buffer without path and extension
-    %       - File name relativize to current directory
-    %:h:.   - File path relativize to current directory
+    $(VIM_FILEPATH)  - File name of current buffer with full path
+    $(VIM_FILENAME)  - File name of current buffer without path
+    $(VIM_FILEDIR)   - Full path of current buffer without the file name
+    $(VIM_FILEEXT)   - File extension of current buffer
+    $(VIM_FILENOEXT) - File name of current buffer without path and extension
+    $(VIM_PATHNOEXT) - Current file name with full path but without extension
+    $(VIM_CWD)       - Current directory
+    $(VIM_RELDIR)    - File path relativize to current directory
+    $(VIM_RELNAME)   - File name relativize to current directory 
+    $(VIM_ROOT)      - Project root directory
+    $(VIM_CWORD)     - Current word under cursor
+    $(VIM_CFILE)     - Current filename under cursor
+    $(VIM_GUI)       - Is running under gui ?
+    $(VIM_VERSION)   - Value of v:version
+    $(VIM_COLUMNS)   - How many columns in vim's screen
+    $(VIM_LINES)     - How many lines in vim's screen
+    $(VIM_SVRNAME)   - Value of v:servername for +clientserver usage
+    $(VIM_PRONAME)   - Name of current project root directory
+    $(VIM_DIRNAME)   - Name of current directory
+
+Environment variables with same name, like `$VIM_FILENAME`, are also initialized. Thus your child process can access them with `getenv(xxx)` at any time.
+
+Some macros variables have their short names starting with '`<`' :
+
     <cwd>   - Current directory
     <cword> - Current word under cursor
     <cfile> - Current file name under cursor
     <root>  - Project root directory
 
-Environment variables are set before executing:
-
-    $VIM_FILEPATH  - File name of current buffer with full path
-    $VIM_FILENAME  - File name of current buffer without path
-    $VIM_FILEDIR   - Full path of current buffer without the file name
-    $VIM_FILEEXT   - File extension of current buffer
-    $VIM_FILENOEXT - File name of current buffer without path and extension
-    $VIM_PATHNOEXT - Current file name with full path but without extension
-    $VIM_CWD       - Current directory
-    $VIM_RELDIR    - File path relativize to current directory
-    $VIM_RELNAME   - File name relativize to current directory 
-    $VIM_ROOT      - Project root directory
-    $VIM_CWORD     - Current word under cursor
-    $VIM_CFILE     - Current filename under cursor
-    $VIM_GUI       - Is running under gui ?
-    $VIM_VERSION   - Value of v:version
-    $VIM_COLUMNS   - How many columns in vim's screen
-    $VIM_LINES     - How many lines in vim's screen
-    $VIM_SVRNAME   - Value of v:servername for +clientserver usage 
-
-These environment variables wrapped by `$(...)` (eg. `$(VIM_FILENAME)`) will also be expanded in the parameters. Macro `$(VIM_ROOT)` and `<root>` (new in version 1.3.12) indicate the [Project Root](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root) of the current file. 
+They are also acceptable. So, you can use both `$(VIM_ROOT)` or its alias `<root>` to represent [Project Root](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root) of the current file. Macro variables can be quoted with `"..."` in the command string when file name contains spaces (like normal shell command escaping), but they **should not** be quoted in the `-cwd=?` option.
 
 There can be some options before your `[cmd]`:
 
-| Option | Default Value | Description |
-|-|-|-|
+| Option | Default | Description |
+|:-|:-:|-|
 | `-mode=?` | "async" | specify how to run the command as `-mode=?`, available modes are `"async"` (default), `"bang"` (with `!` command) and `"terminal"` (in internal terminal), see [running modes](#running-modes) for details. |
 | `-cwd=?` | `unset` | initial directory (use current directory if unset), for example use `-cwd=<root>` to run commands in [project root directory](#project-root), or `-cwd=$(VIM_FILEDIR)` to run commands in current buffer's parent directory. |
 | `-save=?` | 0 | use `-save=1` to save current file, `-save=2` to save all modified files before executing. |
 | `-program=?` | `unset` | set to `make` to use `&makeprg`, `grep` to use `&grepprt` and `wsl` to execute commands in WSL (windows 10), see [command modifiers](#command-modifier). |
 | `-post=?` | `unset` | vimscript to exec after job finished, spaces **must** be escaped to '\ ' |
 | `-auto=?` | `unset` | event name to trigger `QuickFixCmdPre`/`QuickFixCmdPost` [name] autocmd. |
-| `-raw` | `unset` | use raw output if provided, and `&errorformat` will be ignored. |
-| `-strip` | `unset` | remove the heading/trailing messages if provided (omit command and "[Finished in ...]" message). |
+| `-raw` | `unset` | use raw output if present, and `&errorformat` will be ignored. |
+| `-strip` | `unset` | remove the heading/trailing messages if it is present (omit command and "[Finished in ...]" message). |
+| `-errorformat=?` | `unset` | errorformat for error matching, if it is unprovided, use current `&errorformat` value. Beware that `%` needs to be escaped into `\%`. |
+| `-silent` | `unset` | provide `-silent` to prevent open quickfix window (will override `g:asyncrun_open` temporarily) |
+| `-scroll=?` | `unset` | set to `0` to prevent quickfix auto-scrolling |
+| `-once` | `unset` | provide to buffer all output and flush when job is finished, useful when there are multi-line patterns in your `errorformat` |
+| `-encoding=?` | `unset` | specify command encoding independently (overshadow `g:asyncrun_encs`) |
 | `-pos=?` | "bottom" | When using internal terminal with `-mode=term`, `-pos` is used to specify where to split the terminal window, it can be one of `"tab"`, `"curwin"`, `"top"`, `"bottom"`, `"left"`, `"right"` and `"external"`. And you can [customize new runners](#customize-runner) and pass runner's name to `-pos` option. |
 | `-rows=num` | 0 | When using a horizontal split terminal, this value represents the height of terminal window. |
 | `-cols=num` | 0 | When using a vertical split terminal, this value represents the width of terminal window. |
-| `-errorformat=?` | `unset` | errorformat for error matching, if it is unprovided, use current `&errorformat` value. Beware that `%` needs to be escaped into `\%`. |
 | `-focus=?` | 1 | set to `0` to prevent focus changing when `-mode=term` |
 | `-hidden=?` | 0 | set to `1` to setup `bufhidden` to `hide` for internal terminal |
-| `-silent` | `unset` | provide `-silent` to prevent open quickfix window (will override `g:asyncrun_open` temporarily) |
-| `-close` | `unset` | when using `-mode=term`, close the terminal automatically when terminal process finished |
+| `-listed=?` | 1 | when using `-mode=term`, set to 0 to hide the terminal in the buffer list |
+| `-close` | `unset` | when using `-mode=term`, close the terminal automatically when terminal process is finished |
 
-All options must start with a minus and position **before** `[cmd]`. Since no shell command string starts with a minus. So they can be distinguished from shell command easily without any ambiguity. 
+All options must start with a minus and position **before** `[cmd]`. Since no shell command string starting with a minus. So they can be distinguished from shell command easily without any ambiguity. 
 
 Don't worry if you do have a shell command starting with '-', Just put a placeholder `@` before your command to tell asyncrun explicitly: "stop parsing options now, the following string is all my command".
 
@@ -227,6 +247,7 @@ parameters:
 - g:asyncrun_timer - how many messages should be inserted into quickfix every 100ms interval.
 - g:asyncrun_wrapper - enable to setup a command prefix.
 - g:asyncrun_stdin - non-zero to enable stdin (useful for cmake on windows).
+- g:asyncrun_qfid - use quickfix id to prevent interleaving output of concurrent plugins appending to the quickfix list.
 
 For more information of above options, please visit **[option details](https://github.com/skywind3000/asyncrun.vim/wiki/Options)**.
 
@@ -246,7 +267,7 @@ autocmd User AsyncRunStop  - triggered when job finished
 
 Note, `AsyncRunPre` is always likely to be invoked, but `AsyncRunStart` and `AsyncRunStop` will only be invoked if the job starts successfully. 
 
-When previous job is still running or vim job slot is full, AsyncRun may fail. In this circumstance, `AsyncRunPre` will be invoked but `AsyncRunStart` and `AsyncRunStop` will have no chance to trigger.
+When the previous job is still running or vim job slot is full, AsyncRun may fail. In this circumstance, `AsyncRunPre` will be invoked but `AsyncRunStart` and `AsyncRunStop` will have no chance to trigger.
 
 ### Project Root
 
@@ -263,7 +284,7 @@ The first `make` will run in the vim's current directory (which `:pwd` returns),
 
 The project root is the nearest ancestor directory of the current file which contains one of these directories or files: `.svn`, `.git`, `.hg`, `.root` or `.project`. If none of the parent directories contains these root markers, the directory of the current file is used as the project root. The root markers can also be configurated, see [Project Root](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root).
 
-### Running modes
+### Running Modes
 
 The default behavior is to run async command and output to quickfix window. However there is a `-mode=?` option can allow you specify how to run your command:
 
@@ -287,7 +308,7 @@ AsyncRun is capable to run commands in Vim/NeoVim's internal terminal with the `
 - `-pos=left`: open the terminal on the left side.
 - `-pos=right`: open the terminal on the right side.
 - `-pos=hide`: don't open a window, run in background.
-- `-pos=external`: use an external terminal (Windows only).
+- `-pos=external`: use an external terminal (Windows & Gnome only).
 
 Examples:
 
@@ -300,11 +321,20 @@ Examples:
 :AsyncRun -mode=term -pos=curwin -hidden python "$(VIM_FILEPATH)"
 ```
 
-The `-pos` field accepts an uppercase `TAB`, to create tab on the left of current tab. When using internal terminal in a split window, AsyncRun will firstly reuse a finished previous terminal window if it exists, if not, a new terminal window will be created in given position. Tab based terminal can also be reusable if `-reuse` is provided.
+Internal terminal related options:
 
-Except the quickfix and internal terminal, AsyncRun is capable to run command in another tmux split or a new gnome-terminal window/tab with the advantage of [customizable runners](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner).
+| Option | Default | Description |
+|:-:|:-:|-|
+| `-pos=?` | "bottom" | When using internal terminal with `-mode=term`, `-pos` is used to specify where to split the terminal window, it can be one of `"tab"`, `"curwin"`, `"top"`, `"bottom"`, `"left"`, `"right"` and `"external"`. |
+| `-rows=num` | 0 | When using a horizontal split terminal, this value represents the height of terminal window. |
+| `-cols=num` | 0 | When using a vertical split terminal, this value represents the width of terminal window. |
+| `-focus=?` | 1 | set to `0` to prevent focus changing when `-mode=term` |
+| `-close` | `unset` | when using `-mode=term`, close the terminal automatically when terminal process is finished |
+| `-hidden=?` | 0 | set to `1` to setup `bufhidden` to `hide` for internal terminal |
+| `-listed=?` | 1 | when using `-mode=term`, set to 0 to hide the terminal in the buffer list |
 
-More extra runners can be found in the extension [asyncrun.extra](https://github.com/skywind3000/asyncrun.extra).
+The `-pos` field accepts an uppercase `TAB`, to create a tab on the left of the current tab. When using internal terminal in a split window, AsyncRun will firstly reuse a finished previous terminal window if it exists, if not, a new terminal window will be created in given position. Tab based terminal can also be reusable if `-reuse` is provided.
+
 
 ### Terminal Name
 
@@ -323,6 +353,7 @@ AsyncRun displays its output in quickfix window, so if you don't use `:copen {he
     :let g:asyncrun_open = 8
 
 Setting `g:asyncrun_open` to 8 will open quickfix window automatically at 8 lines height after command starts.
+
 
 ### Range support
 
@@ -347,9 +378,56 @@ text between line 10-20 will be taken as the stdin of python. code in that range
 
 The visual selection (line-wise) will be taken as stdin.
 
+
+## Advanced Topics
+
+AsyncRun provides enough flexibility and possibility to customize various details of how to run a command.
+
+### Extra Runners
+
+Besides the default quickfix and internal terminal mechanism, the user-defined runners allow you to run commands in any way you want. eg. in a new gnome-terminal window/tab, a floaterm window, or a side-by-side tmux split.
+
+By default, AsyncRun is shipped with some popular runners:
+
+| Runner | Description | Requirement | Link |
+|-|-|-|-|
+| `gnome` | run in a new gnome terminal | GNOME | [gnome.vim](autoload/asyncrun/runner/gnome.vim) |
+| `gnome_tab` | run in a new gnome terminal tab | GNOME | [gnome_tab.vim](autoload/asyncrun/runner/gnome_tab.vim) |
+| `xterm` | run in a xterm window | xterm | [xterm.vim](autoload/asyncrun/runner/xterm.vim) |
+| `tmux` | run in a separated tmux split | [Vimux](https://github.com/preservim/vimux) | [tmux.vim](autoload/asyncrun/runner/tmux.vim) |
+| `floaterm` | run in a new floaterm window | [floaterm](https://github.com/voldikss/vim-floaterm) | [floaterm.vim](autoload/asyncrun/runner/floaterm.vim) |
+| `floaterm_reuse` | run in a reusable floaterm window | [floaterm](https://github.com/voldikss/vim-floaterm) | [floaterm_reuse.vim](autoload/asyncrun/runner/floaterm.vim) |
+| `quickui` | run in a quickui window | [vim-quickui](https://github.com/skywind3000/vim-quickui) | [quickui.vim](autoload/asyncrun/runner/quickui.vim) |
+| `termhelp` | run in terminal help | [vim-terminal-help](https://github.com/skywind3000/vim-terminal-help) | [termhelp.vim](autoload/asyncrun/runner/termhelp.vim) |
+| `toggleterm` | run in a toggleterm window | [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim) | [toggleterm.vim](autoload/asyncrun/runner/toggleterm.vim) |
+| `xfce` | run in a new xfce terminal | xfce4-terminal | [xfce.vim](autoload/asyncrun/runner/xfce.vim) |
+| `konsole` | run in a new konsole terminal | KDE | [konsole.vim](autoload/asyncrun/runner/konsole.vim) |
+| `macos` | run in a macOS system terminal | macOS | [macos.vim](autoload/asyncrun/runner/macos.vim) |
+| `iterm` | run in a new iTerm2 tab | macOS + iTerm2 | [iterm.vim](autoload/asyncrun/runner/iterm.vim) |
+
+e.g.
+
+```VimL
+:AsyncRun -mode=term -pos=gnome      ls -la
+:AsyncRun -mode=term -pos=floaterm   ls -la
+:AsyncRun -mode=term -pos=tmux       ls -la
+```
+
+Screenshot for `gnome` runner:
+
+<!-- 
+![](https://github.com/skywind3000/images/raw/master/p/asyncrun_extra/p_gnome_gvim.gif) 
+-->
+
+![](https://raw.githubusercontent.com/skywind3000/images/master/p/asyncrun/runner-gnome2.png)
+
+When using `gnome`, `konsole`, or `xfce` runner in GVim, you get exactly the same experience like starting a command-line program from IDEs. 
+
+All runners are customizable, you can modify or define your own runners, see the next section "customize runner".
+
 ### Customize Runner
 
-AsyncRun allows you to define new runners to specify how to run your command. It can be useful when you want your commands run in a tmux split or a new gnome-terminal window:
+User-defined runners allow you to specify how the command will run by creating a new runner. It can be useful when you want your commands run in a tmux split or a new gnome-terminal window:
 
 ```VimL
 function! MyRunner(opts)
@@ -370,9 +448,9 @@ When `-mode` is `term` and `-pos` can used to represent runner name.
 
 Runner function has only one argument: `opts`, it contains the options extracted from `:AsyncRun` command line, and `opts.cmd` stores current command.
 
-There is a separated extension [asyncrun.extra](https://github.com/skywind3000/asyncrun.extra) which provide extra runners to run commands in `gnome-terminal`, `tmux`, `floaterm` and more. You can check this to see if it can fit your needs.
+**Another way** to create a runner is to simply create a `.vim` file in the `autoload/asyncrun/runner/` folder of your run-time-path (see the [examples](autoload/asyncrun/runner)).
 
-If you want to create new runners please visit project wiki: [customize runner](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner).
+For more information, please visit project wiki: [customize runner](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner).
 
 
 ### Command Modifier
@@ -420,6 +498,8 @@ asyncrun.vim can cooperate with `vim-fugitive`, see [here](https://github.com/sk
 
 ## More Topics
 
+- [Command Specification](https://github.com/skywind3000/asyncrun.vim/wiki/Command-Specification)
+- [The project root directory of the current file](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root)
 - [Additional examples (background ctags updating, pdf conversion, ...)](https://github.com/skywind3000/asyncrun.vim/wiki/Additional-Examples)
 - [Notify user job finished by playing a sound](https://github.com/skywind3000/asyncrun.vim/wiki/Playing-Sound)
 - [View progress in status line or vim airline](https://github.com/skywind3000/asyncrun.vim/wiki/Display-Progress-in-Status-Line-or-Airline)
@@ -428,8 +508,8 @@ asyncrun.vim can cooperate with `vim-fugitive`, see [here](https://github.com/sk
 - [Replace old ':make' command with asyncrun](https://github.com/skywind3000/asyncrun.vim/wiki/Replace-old-make-command-with-AsyncRun)
 - [Quickfix encoding problem when using Chinese or Japanese](https://github.com/skywind3000/asyncrun.vim/wiki/Quickfix-encoding-problem-when-using-Chinese-or-Japanese)
 - [Example for updating and adding cscope files](https://github.com/skywind3000/asyncrun.vim/wiki/Example-for-updating-and-adding-cscope)
-- [The project root directory of the current file](https://github.com/skywind3000/asyncrun.vim/wiki/Project-Root)
 - [Specify how to run your command](https://github.com/skywind3000/asyncrun.vim/wiki/Specify-how-to-run-your-command)
+- [Customize Runners](https://github.com/skywind3000/asyncrun.vim/wiki/Customize-Runner)
 
 Don't forget to read the [Frequently Asked Questions](https://github.com/skywind3000/asyncrun.vim/wiki/FAQ).
 
@@ -437,17 +517,19 @@ Don't forget to read the [Frequently Asked Questions](https://github.com/skywind
 
 | Name | Description |
 |------|-------------|
+| [asynctasks](https://github.com/skywind3000/asynctasks.vim) | Introduce vscode's task system to vim (powered by AsyncRun). |
 | [vim-fugitive](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins#fugitive)  | perfect cooperation, asyncrun gets Gfetch/Gpush running in background |
 | [errormarker](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins) | perfect cooperation, errormarker will display the signs on the error or warning lines |
 | [airline](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins#vim-airline) | very well, airline will display status of background jobs |
 | [sprint](https://github.com/pedsm/sprint) | nice plugin who uses asyncrun to provide an IDE's run button to runs your code |
-| [netrw](https://github.com/skywind3000/asyncrun.vim/wiki/Get-netrw-using-asyncrun-to-save-remote-files) | netrw can save remote files on background now. Experimental, take your own risk | 
+
 
 
 See: [Cooperate with famous plugins](https://github.com/skywind3000/asyncrun.vim/wiki/Cooperate-with-famous-plugins)
 
-## History
+# History
 
+- 2.9.1 (2021-12-15): extra runners to run command in a tmux, or floaterm window.
 - 2.6.2 (2020-03-08): change runner's argument from string to dict.
 - 2.6.0 (2020-03-07): `-post` can be used in terminal mode.
 - 2.5.5 (2020-03-07): "-mode=term -pos=tab" obeys "-focus=0" now.
@@ -518,7 +600,7 @@ See: [Cooperate with famous plugins](https://github.com/skywind3000/asyncrun.vim
 - 0.0.1 (2016-09-08): improve arguments parsing
 - 0.0.0 (2016-08-24): initial version
 
-## Credits
+# Credits
 
 Trying best to provide the most simply and convenience experience in the asynchronous-jobs. 
 
