@@ -42,7 +42,21 @@ fu! s:PIDName(pid) "{{{1
   return ''
 endfu
 fu! s:AttentionMessage(swap_info, pname)
-  let statinfo = executable('stat') ? systemlist('stat --printf="%U\n%Y\n" '. a:swap_info['fname']) : []
+  let statinfo = []
+  if executable('stat')
+    try
+      if !has("bsd")
+        " linux / GNU
+        let statinfo = systemlist('stat --printf="%U\n%Y\n" '. a:swap_info['fname'])
+      else
+        " BSD
+        let statinfo = systemlist('stat -f "%Su\n%m\n" '. a:swap_info['fname'])
+      endif
+    " for some reason, it's not possible to read that file, see #74
+    catch /^Vim\%((\a\+)\)\=:E484:/
+      let statinfo=[]
+    endtry
+  endif
   let owner = get(statinfo, 0, '')
   let time  = get(statinfo, 1, '')
   return [ 'E325: ATTENTION',
