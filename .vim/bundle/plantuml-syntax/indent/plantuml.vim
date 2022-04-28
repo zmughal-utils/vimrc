@@ -1,7 +1,5 @@
-scriptencoding utf-8
 " Vim indent file
 " Language:     PlantUML
-" Maintainer:   Anders Thøgersen <first name at bladre dot dk>
 " License:      VIM LICENSE
 
 if exists('b:did_indent')
@@ -17,7 +15,7 @@ if exists('*GetPlantUMLIndent')
   finish
 endif
 
-let s:decIndent = '^\s*\%(end\|else\|}\)'
+let s:decIndent = '^\s*\%(end\|else\|fork again\|}\)'
 
 function! GetPlantUMLIndent(...) abort
   "for current line, use arg if given or v:lnum otherwise
