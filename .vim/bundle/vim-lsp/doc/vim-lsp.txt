@@ -65,8 +65,10 @@ CONTENTS                                                  *vim-lsp-contents*
       g:lsp_signature_help_enabled          |g:lsp_signature_help_enabled|
       g:lsp_fold_enabled                    |g:lsp_fold_enabled|
       g:lsp_hover_conceal                   |g:lsp_hover_conceal|
+      g:lsp_hover_ui                        |g:lsp_hover_ui|
       g:lsp_ignorecase                      |g:lsp_ignorecase|
       g:lsp_log_file                        |g:lsp_log_file|
+      g:lsp_log_verbose                     |g:lsp_log_verbose|
       g:lsp_semantic_enabled                |g:lsp_semantic_enabled|
       g:lsp_text_document_did_save_delay    |g:lsp_text_document_did_save_delay|
       g:lsp_snippet_expand                  |g:lsp_snippet_expand|
@@ -136,6 +138,7 @@ CONTENTS                                                  *vim-lsp-contents*
       lsp_complete_done                     |lsp_complete_done|
       lsp_float_opened                      |lsp_float_opened|
       lsp_float_closed                      |lsp_float_closed|
+      lsp_float_focused                     |lsp_float_focused|
       lsp_register_server                   |lsp_register_server|
       lsp_unregister_server                 |lsp_unregister_server|
       lsp_server_init                       |lsp_server_init|
@@ -153,6 +156,8 @@ CONTENTS                                                  *vim-lsp-contents*
     Snippets                              |vim-lsp-snippets|
     Folding                               |vim-lsp-folding|
     Semantic highlighting                 |vim-lsp-semantic|
+    Popup Formatting                      |vim-lsp-popup-format|
+    Workspace Folders                     |vim-lsp-workspace-folders|
     License                               |vim-lsp-license|
     Maintainers                           |vim-lsp-maintainers|
 
@@ -305,7 +310,7 @@ g:lsp_preview_float                         *g:lsp_preview_float*
     If set and nvim_win_open() or popup_create is available, hover information
     are shown in a floating window as |preview-window| at the cursor position.
     The |preview-window| is closed automatically on cursor moves, unless it is
-    focused. While focused it may be closed with <esc>.
+    focused. While focused it may be closed with <C-c>.
 
     This feature requires neovim 0.4.0 (current master) or
     Vim8.1 with has('patch-8.1.1517').
@@ -324,10 +329,10 @@ g:lsp_preview_float                         *g:lsp_preview_float*
     of the window.
 
     Example of custom keybindings: >
-	" Close preview window with <esc>
-	autocmd User lsp_float_opened nmap <buffer> <silent> <esc>
+	" Close preview window with <C-c>
+	autocmd User lsp_float_opened nmap <buffer> <silent> <C-c>
 		      \ <Plug>(lsp-preview-close)
-	autocmd User lsp_float_closed nunmap <buffer> <esc>
+	autocmd User lsp_float_closed nunmap <buffer> <C-c>
 <
 
     Example of customising the highlighting: >
@@ -860,6 +865,19 @@ g:lsp_hover_conceal                                   *g:lsp_hover_conceal*
     To override this setting per server, see
     |vim-lsp-server_info-hover_conceal|.
 
+g:lsp_hover_ui                                                *g:lsp_hover_ui*
+    Type: |String|
+    Default: `''`
+
+    Controls deafult UI behavior for |LspHover|.
+    If empty string, defaults to `float` if popup is supported in vim or
+    floating window is supported in neovim else uses |preview-window|.
+
+    Example: >
+	let g:lsp_hover_ui = ''
+	let g:lsp_hover_ui = 'float'
+	let g:lsp_hover_ui = 'preview'
+
 g:lsp_ignorecase                                         *g:lsp_ignorecase*
     Type: |Boolean|
     Default: the value of 'ignorecase'
@@ -879,6 +897,20 @@ g:lsp_log_file                                           *g:lsp_log_file*
     Example: >
 	let g:lsp_log_file = ''
 	let g:lsp_log_file = expand('~/vim-lsp.log')
+
+g:lsp_log_verbose                                           *g:lsp_log_verbose*
+    Type: |Number|
+    Default: `'1'`
+
+    Determines whether or not verbose logging should be enabled. This usually
+    includes logging the entire request and response from the LSP servers and
+    clients which can have significant performance impact. Requires
+    |g:lsp_log_file| to be set else there is no impact on enabling or
+    disabling this flag.
+
+    Example: >
+	let g:lsp_log_verbose = 1
+	let g:lsp_log_verbose = 0
 
 g:lsp_semantic_enabled                             *g:lsp_semantic_enabled*
     Type: |Boolean|
@@ -1424,8 +1456,8 @@ lsp#scroll(count)                                             *lsp#scroll()*
     Scroll current displayed floating/popup window with specified count.
 
     Example: >
-	inoremap <buffer> <expr><c-f> lsp#scroll(+4)
-	inoremap <buffer> <expr><c-d> lsp#scroll(-4)
+	nnoremap <buffer> <expr><c-f> lsp#scroll(+4)
+	nnoremap <buffer> <expr><c-d> lsp#scroll(-4)
 
 ==============================================================================
 Commands                                                  *vim-lsp-commands*
@@ -1535,7 +1567,7 @@ LspDocumentSymbolSearch                             *:LspDocumentSymbolSearch*
 
 Search the symbols for the current document and navigate.
 
-LspHover                                                         *:LspHover*
+LspHover [--ui=float|preview]                                      *:LspHover*
 
 Gets the hover information and displays it in the |preview-window|.
 
@@ -1544,8 +1576,13 @@ Gets the hover information and displays it in the |preview-window|.
    configure |g:lsp_preview_keep_focus|.
  * If using neovim with nvim_win_open() available, |g:lsp_preview_float| can
    be set to enable a floating preview at the cursor which is closed
-   automatically on cursormove if not focused and can be closed with <esc> if
+   automatically on cursormove if not focused and can be closed with <C-c> if
    focused.
+
+    Example: >
+	:LspHover
+	:LspHover --ui=float
+	:LspHover --ui=preview
 
 LspNextDiagnostic [-wrap=0]                              *:LspNextDiagnostic*
 
@@ -1694,6 +1731,13 @@ lsp_float_closed                                          *lsp_float_closed*
 This autocommand is run after the floating window is closed.
 See also |preview-window|
 
+lsp_float_focused                                          *lsp_float_focused*
+
+This autocommand is run after the floating window is focused. Only supported in
+neovim.
+
+You can map `<Plug>(lsp-float-close)` to close the floating window.
+
 lsp_register_server                                    *lsp_register_server*
 
 This autocommand is run after the server is registered.
@@ -1756,6 +1800,8 @@ Available plug mappings are following:
   nnoremap <plug>(lsp-document-symbol-search)
   nnoremap <plug>(lsp-document-diagnostics)
   nnoremap <plug>(lsp-hover)
+  nnoremap <plug>(lsp-hover-float)
+  nnoremap <plug>(lsp-hover-preview)
   nnoremap <plug>(lsp-next-diagnostic)
   nnoremap <plug>(lsp-next-diagnostic-nowrap)
   nnoremap <plug>(lsp-next-error)
@@ -1970,6 +2016,26 @@ want function calls to still use the |Label| group, but use |Identifier| for
         \ })
 <
 ==============================================================================
+Popup Formatting                                      *vim-lsp-popup-format*
+
+Popup windows use the |gq| operator for formatting content to the window.
+
+For customization, see 
+|formatprg|.
+
+==============================================================================
+Workspace Folders                                  *vim-lsp-workspace-folders*
+
+Workspace folders is an experimental feature of vim-lsp. To enable workspace
+folders set `let g:lsp_experimental_workspace_folders = 1`. In the future this
+flag will be removed and workspace folders will be enabled by default.
+
+When a new buffer is opened, if the server supports workspace folder, it will
+call `root_uri` function to detect the workspace folder. If the folder is not
+part of workspace folder, it will automatically notify the server to add the
+workspace folder.
+
+=============================================================================
 License                                                    *vim-lsp-license*
 
 The MIT License (MIT)
