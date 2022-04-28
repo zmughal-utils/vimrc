@@ -3,7 +3,7 @@
 " Version:      1.3
 " GetLatestVimScripts: 4989 1 :AutoInstall: projectionist.vim
 
-if exists("g:loaded_projectionist") || v:version < 700 || &cp
+if exists("g:loaded_projectionist") || v:version < 704 || &cp
   finish
 endif
 let g:loaded_projectionist = 1
@@ -14,7 +14,6 @@ function! ProjectionistHas(req, ...) abort
     return
   endif
   let ns = matchstr(a:0 ? a:1 : a:req, '^\a\a\+\ze:')
-  call s:load(ns)
   if !a:0
     return s:nscall(ns, a:req =~# '[\/]$' ? 'isdirectory' : 'filereadable', a:req)
   endif
@@ -25,24 +24,15 @@ function! ProjectionistHas(req, ...) abort
   endfor
 endfunction
 
+let s:slash = exists('+shellslash') ? '\' : '/'
+
 if !exists('g:projectionist_heuristics')
   let g:projectionist_heuristics = {}
 endif
 
-if !exists('s:loaded')
-  let s:loaded = {}
-endif
-
-function! s:load(ns) abort
-  if len(a:ns) && !has_key(s:loaded, a:ns) && len(findfile('autoload/' . a:ns . '.vim', escape(&rtp, ' ')))
-    exe 'runtime! autoload/' . a:ns . '.vim'
-    let s:loaded[a:ns] = 1
-  endif
-endfunction
-
 function! s:nscall(ns, fn, path, ...) abort
-  if len(a:ns) && !get(g:, 'projectionist_ignore_' . a:ns) && exists('*' . a:ns . '#' . a:fn)
-    return call(a:ns . '#' . a:fn, [a:path] + a:000)
+  if !get(g:, 'projectionist_ignore_' . a:ns)
+    return call(get(get(g:, 'io_' . a:ns, {}), a:fn, a:fn), [a:path] + a:000)
   else
     return call(a:fn, [a:path] + a:000)
   endif
@@ -68,23 +58,43 @@ function! s:has(ns, root, requirements) abort
   return 1
 endfunction
 
-function! ProjectionistDetect(path) abort
+function! s:IsAbs(path) abort
+  return tr(a:path, s:slash, '/') =~# '^/\|^\a\+:'
+endfunction
+
+function! ProjectionistDetect(...) abort
   let b:projectionist = {}
   unlet! b:projectionist_file
-  if a:path =~# '^\a[[:alnum:].+-]\+:'
-    let file = substitute(a:path, '[\/]$', '', '')
+  if a:0
+    let file = a:1
+  elseif &l:buftype =~# '^\%(nowrite\)\=$' && len(@%) || &l:buftype =~# '^\%(nofile\|acwrite\)' && s:IsAbs(@%)
+    let file = @%
   else
-    let file = simplify(fnamemodify(resolve(a:path), ':p:s?[\/]$??'))
-  endif
-
-  let root = file
-  let ns = matchstr(file, '^\a\a\+\ze:')
-  if len(ns) && get(g:, 'projectionist_ignore_' . ns)
     return
   endif
-  call s:load(ns)
+  if !s:IsAbs(file)
+    let file = simplify(getcwd() . (exists('+shellslash') && !&shellslash ? '\' : '/') . file)
+  endif
+  let file = substitute(file, '[' . s:slash . '/]$', '', '')
+
+  try
+    if exists('*ExcludeBufferFromDiscovery') && ExcludeBufferFromDiscovery(file, 'projectionist')
+      return
+    endif
+  catch
+  endtry
+  let ns = matchstr(file, '^\a\a\+\ze:')
+  if empty(ns)
+    let file = resolve(file)
+  elseif get(g:, 'projectionist_ignore_' . ns)
+    return
+  endif
+  let root = file
+  if empty(ns) && !isdirectory(root)
+    let root = fnamemodify(root, ':h')
+  endif
   let previous = ""
-  while root !=# previous && root !=# '.'
+  while root !=# previous && root !~# '^\.\=$\|^[\/][\/][^\/]*$'
     if s:nscall(ns, 'filereadable', root . '/.projections.json')
       try
         let value = projectionist#json_parse(projectionist#readfile(root . '/.projections.json'))
@@ -105,24 +115,12 @@ function! ProjectionistDetect(path) abort
   endwhile
 
   if exists('#User#ProjectionistDetect')
-    if v:version >= 704 || (v:version == 703 && has('patch442'))
-      try
-        let g:projectionist_file = file
-        doautocmd <nomodeline> User ProjectionistDetect
-      finally
-        unlet! g:projectionist_file
-      endtry
-    else
-      let modelines = &modelines
-      try
-        set modelines=0
-        let g:projectionist_file = file
-        doautocmd User ProjectionistDetect
-      finally
-        let &modelines = modelines
-        unlet! g:projectionist_file
-      endtry
-    endif
+    try
+      let g:projectionist_file = file
+      doautocmd <nomodeline> User ProjectionistDetect
+    finally
+      unlet! g:projectionist_file
+    endtry
   endif
 
   if !empty(b:projectionist)
@@ -138,17 +136,18 @@ endif
 augroup projectionist
   autocmd!
   autocmd FileType *
-        \ if &filetype ==# 'netrw' ? !exists('b:projectionist') :
-        \     &buftype !~# 'nofile\|quickfix' |
-        \   call ProjectionistDetect(expand('%:p')) |
+        \ if &filetype !=# 'netrw' |
+        \   call ProjectionistDetect() |
+        \ elseif !exists('b:projectionist') |
+        \   call ProjectionistDetect(get(b:, 'netrw_curdir', @%)) |
         \ endif
   autocmd BufFilePost *
         \ if type(getbufvar(+expand('<abuf>'), 'projectionist')) == type({}) |
-        \   call ProjectionistDetect(expand('<afile>:p')) |
+        \   call ProjectionistDetect(expand('<afile>')) |
         \ endif
   autocmd BufNewFile,BufReadPost *
         \ if empty(&filetype) |
-        \   call ProjectionistDetect(expand('<afile>:p')) |
+        \   call ProjectionistDetect() |
         \ endif
   autocmd CmdWinEnter *
         \ if !empty(getbufvar('#', 'projectionist_file')) |
@@ -161,13 +160,12 @@ augroup projectionist
         \   call ProjectionistDetect(b:NERDTree.root.path.str()) |
         \ endif
   autocmd VimEnter *
-        \ if get(g:, 'projectionist_vim_enter', 1) && empty(expand('<afile>:p')) |
+        \ if get(g:, 'projectionist_vim_enter', 1) && empty(expand('<afile>')) |
         \   call ProjectionistDetect(getcwd()) |
         \ endif
-  autocmd BufWritePost .projections.json call ProjectionistDetect(expand('<afile>:p'))
+  autocmd BufWritePost .projections.json call ProjectionistDetect(expand('<afile>'))
   autocmd BufNewFile *
         \ if !empty(get(b:, 'projectionist')) |
         \   call projectionist#apply_template() |
-        \   setlocal nomodified |
         \ endif
 augroup END

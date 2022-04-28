@@ -135,20 +135,8 @@ function! s:parse(mods, args) abort
   return cmd
 endfunction
 
-if !exists('s:loaded')
-  let s:loaded = {}
-endif
 function! s:fcall(fn, path, ...) abort
-  let ns = matchstr(a:path, '^\a\a\+\ze:')
-  if len(ns) && !has_key(s:loaded, ns) && len(findfile('autoload/' . ns . '.vim', escape(&rtp, ' ')))
-    exe 'runtime! autoload/' . ns . '.vim'
-    let s:loaded[ns] = 1
-  endif
-  if len(ns) && exists('*' . ns . '#' . a:fn)
-    return call(ns . '#' . a:fn, [a:path] + a:000)
-  else
-    return call(a:fn, [a:path] + a:000)
-  endif
+  return call(get(get(g:, 'io_' . matchstr(a:path, '^\a\a\+\ze:'), {}), a:fn, a:fn), [a:path] + a:000)
 endfunction
 
 function! s:mkdir_p(path) abort
@@ -232,11 +220,7 @@ function! projectionist#glob(file, ...) abort
     let root = projectionist#path('', a:1)
   endif
   let path = s:absolute(a:file, root)
-  if v:version >= 704
-    let files = s:fcall('glob', path, a:0 > 1 ? a:2 : 0, 1)
-  else
-    let files = split(s:fcall('glob', path), "\n")
-  endif
+  let files = s:fcall('glob', path, a:0 > 1 ? a:2 : 0, 1)
   if len(root) || a:0 && a:1 is# 0
     call map(files, 's:slash(v:val) . (v:val !~# "[\/]$" && projectionist#isdirectory(v:val) ? "/" : "")')
   endif
@@ -577,15 +561,15 @@ function! projectionist#activate() abort
           \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(projectionist#path(<count>) . '/' . <q-args>)
     if exists(':Cd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Cd
-            \ exe 'cd' projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
+            \ exe 'cd' projectionist#real(projectionist#path(<count>) . '/' . <q-args>)
     endif
     if exists(':Tcd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Tcd
-            \ exe (<bang>0 ? 'cd' : 'tcd') projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
+            \ exe (<bang>0 ? 'cd' : 'tcd') projectionist#real(projectionist#path(<count>) . '/' . <q-args>)
     endif
     if exists(':Lcd') != 2
       command! -buffer -bar -bang -nargs=? -range=1 -complete=customlist,s:dir_complete Lcd
-            \ exe (<bang>0 ? 'cd' : 'lcd') projectionist#real(projectionist#path(<line2>) . '/' . <q-args>)
+            \ echo (<bang>0 ? 'cd' : 'lcd') projectionist#real(projectionist#path(<count>) . '/' . <q-args>)
     endif
     command! -buffer -bang -nargs=1 -range=0 -complete=command ProjectDo
           \ exe s:do('<bang>', <count>==<line1>?<count>:-1, <q-args>)
@@ -817,10 +801,12 @@ endfunction
 " Section: :A
 
 function! s:jumpopt(file) abort
-  let pattern = '!$\|[:@#]\d\+$\|[@#].*$'
+  let pattern = '!$\|:\d\+:\d\+$\|[:@#]\d\+$\|[@#].*$'
   let file = substitute(a:file, pattern, '', '')
   let jump = matchstr(a:file, pattern)
-  if jump =~# '^[:+@#]\d\+$'
+  if jump =~# '^:\d\+:\d\+$'
+    return [file, '+call\ cursor('.tr(jump[1:-1], ':', ',') . ') ']
+  elseif jump =~# '^[:+@#]\d\+$'
     return [file, '+'.jump[1:-1].' ']
   elseif jump ==# '!'
     return [file, '+AD ']
@@ -939,15 +925,17 @@ function! projectionist#apply_template() abort
     let l:.template = join(template, "\n")
   endif
   if !empty(template)
-    let template = s:gsub(template, '\t', repeat(' ', &sw))
-    if !&et
-      let template = s:gsub(template, repeat(' ', &ts), "\t")
-    endif
     silent %delete_
+    if exists('#User#ProjectionistApplyTemplatePre')
+      doautocmd <nomodeline> User ProjectionistApplyTemplatePre
+    endif
+    if &et
+      let template = s:gsub(template, '\t', repeat(' ', &sw ? &sw : &ts))
+    endif
     call setline(1, split(template, "\n"))
-     if exists('#User#ProjectionistApplyTemplate')
-       doautocmd User ProjectionistApplyTemplate
-     endif
+    if exists('#User#ProjectionistApplyTemplate')
+      doautocmd <nomodeline> User ProjectionistApplyTemplate
+    endif
     doautocmd BufReadPost
   endif
   return ''
