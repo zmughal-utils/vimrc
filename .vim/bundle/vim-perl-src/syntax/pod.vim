@@ -2,9 +2,9 @@
 " Language:      Perl POD format
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Previously:    Scott Bigham <dsb@killerbunnies.org>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" License: Vim License (see :help license)
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 
 " To add embedded POD documentation highlighting to your syntax file, add
@@ -43,7 +43,7 @@ syn match podForKeywd	"\S\+" contained contains=@NoSpell
 " An indented line, to be displayed verbatim
 syn region podVerbatim	start="^\s\+\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=@NoSpell
 
-syn region podOrdinary	start="^\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=podFormat,podSpecial,@NoSpell
+syn region podOrdinary	start="^\S.*$" end="^\ze\s*$" end="^\ze=cut\>" contains=podFormat,podSpecial,@Spell
 
 " Inline textual items handled specially by POD
 syn match podSpecial	"\(\<\|&\)\I\i*\(::\I\i*\)*([^)]*)" contains=@NoSpell

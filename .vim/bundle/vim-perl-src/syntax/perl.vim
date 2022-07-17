@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:      Perl 5
+" Language:      Perl
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" License: Vim License (see :help license)
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
 " Last Change:   {{LAST_CHANGE}}
 " Contributors:  Andy Lester <andy@petdance.com>
 "                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
@@ -443,10 +443,17 @@ syn match  perlFormatField	"@$" contained
 " known workaround for that case.
 if get(g:, 'perl_fold', 0)
   syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="VIM_PERL_EOF\%$" contains=@perlDATA fold
-  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="VIM_PERL_EOF\%$" contains=perlPOD,@perlDATA fold
+  syntax region perlEND  matchgroup=perlENDStart  start="^__END__$"  end="VIM_PERL_EOF\%$" contains=@perlDATA fold
 else
   syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA
-  syntax region perlDATA matchgroup=perlDATAStart start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA
+  syntax region perlEND  matchgroup=perlENDStart  start="^__END__$"  end="\%$" contains=@perlDATA
+endif
+
+" TODO: generalise this to allow other filetypes
+if get(g:, 'perl_highlight_data', 0)
+  syn cluster perlDATA add=perlPOD
+else
+  syn cluster perlDATA remove=perlPOD
 endif
 
 "
@@ -597,6 +604,8 @@ hi def link perlSpecialDollar		perlSpecial
 hi def link perlSpecialString		perlSpecial
 hi def link perlSpecialStringU		perlSpecial
 hi def link perlSpecialMatch		perlSpecial
+hi def link perlEND			perlComment
+hi def link perlENDStart		perlEND
 hi def link perlDATA			perlComment
 hi def link perlDATAStart		perlDATA
 
