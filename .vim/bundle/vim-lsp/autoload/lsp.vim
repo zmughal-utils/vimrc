@@ -64,6 +64,7 @@ function! lsp#enable() abort
     call lsp#internal#document_highlight#_enable()
     call lsp#internal#diagnostics#_enable()
     call lsp#internal#document_code_action#signs#_enable()
+    call lsp#internal#semantic#_enable()
     call lsp#internal#show_message_request#_enable()
     call lsp#internal#show_message#_enable()
     call lsp#internal#work_done_progress#_enable()
@@ -80,6 +81,7 @@ function! lsp#disable() abort
     call lsp#internal#document_highlight#_disable()
     call lsp#internal#diagnostics#_disable()
     call lsp#internal#document_code_action#signs#_disable()
+    call lsp#internal#semantic#_disable()
     call lsp#internal#show_message_request#_disable()
     call lsp#internal#show_message#_disable()
     call lsp#internal#work_done_progress#_disable()
@@ -411,7 +413,7 @@ endfunction
 function! s:ensure_start(buf, server_name, cb) abort
     let l:path = lsp#utils#get_buffer_path(a:buf)
 
-    if lsp#utils#is_remote_uri(l:path)
+    if lsp#utils#is_remote_uri(l:path) || !has_key(s:servers, a:server_name)
         let l:msg = s:new_rpc_error('ignoring start server due to remote uri', { 'server_name': a:server_name, 'uri': l:path})
         call lsp#log(l:msg)
         call a:cb(l:msg)
@@ -548,8 +550,27 @@ function! lsp#default_get_supported_capabilities(server_info) abort
     \       'references': {
     \           'dynamicRegistration': v:false,
     \       },
-    \       'semanticHighlightingCapabilities': {
-    \           'semanticHighlighting': lsp#ui#vim#semantic#is_enabled()
+    \       'semanticTokens': {
+    \           'dynamicRegistration': v:false,
+    \           'requests': {
+    \               'range': v:false,
+    \               'full': lsp#internal#semantic#is_enabled()
+    \                     ? {'delta': v:true}
+    \                     : v:false
+    \
+    \           },
+    \           'tokenTypes': [
+    \               'type', 'class', 'enum', 'interface', 'struct',
+    \               'typeParameter', 'parameter', 'variable', 'property',
+    \               'enumMember', 'event', 'function', 'method', 'macro',
+    \               'keyword', 'modifier', 'comment', 'string', 'number',
+    \               'regexp', 'operator'
+    \           ],
+    \           'tokenModifiers': [],
+    \           'formats': ['relative'],
+    \           'overlappingTokenSupport': v:false,
+    \           'multilineTokenSupport': v:false,
+    \           'serverCancelSupport': v:false
     \       },
     \       'publishDiagnostics': {
     \           'relatedInformation': v:true,
@@ -846,14 +867,7 @@ function! s:on_notification(server_name, id, data, event) abort
     endif
     call lsp#stream(1, l:stream_data) " notify stream before callbacks
 
-    if lsp#client#is_server_instantiated_notification(a:data)
-        if has_key(l:response, 'method')
-            if l:response['method'] ==# 'textDocument/semanticHighlighting'
-                call lsp#ui#vim#semantic#handle_semantic(a:server_name, a:data)
-            endif
-            " NOTE: this is legacy code, use stream instead of handling notifications here
-        endif
-    else
+    if !lsp#client#is_server_instantiated_notification(a:data)
         let l:request = a:data['request']
         let l:method = l:request['method']
         if l:method ==# 'initialize'
@@ -1164,10 +1178,9 @@ function! s:add_didchange_queue(buf) abort
         endfor
         return
     endif
-    if index(s:didchange_queue, a:buf) != -1
-        return
+    if index(s:didchange_queue, a:buf) == -1
+        call add(s:didchange_queue, a:buf)
     endif
-    call add(s:didchange_queue, a:buf)
     call lsp#log('s:send_didchange_queue() will be triggered')
     call timer_stop(s:didchange_timer)
     let l:lazy = &updatetime > 1000 ? &updatetime : 1000
@@ -1215,6 +1228,10 @@ endfunction
 " 'percentage': 0 - 100 or not exist
 function! lsp#get_progress() abort
     return lsp#internal#work_done_progress#get_progress()
+endfunction
+
+function! lsp#document_hover_preview_winid() abort
+    return lsp#internal#document_hover#under_cursor#getpreviewwinid()
 endfunction
 
 "
