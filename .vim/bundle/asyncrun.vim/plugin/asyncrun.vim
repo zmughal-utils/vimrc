@@ -3,7 +3,7 @@
 " Maintainer: skywind3000 (at) gmail.com, 2016-2022
 " Homepage: https://github.com/skywind3000/asyncrun.vim
 "
-" Last Modified: 2022/06/14 20:43
+" Last Modified: 2022/09/13 17:50
 "
 " Run shell command in background and output to quickfix:
 "     :AsyncRun[!] [options] {cmd} ...
@@ -1537,24 +1537,7 @@ endfunc
 "----------------------------------------------------------------------
 function! s:DispatchEvent(name, ...)
 	if has_key(g:asyncrun_event, a:name)
-		let l:F = g:asyncrun_event[a:name]
-		if type(l:F) == type('')
-			let test = l:F
-			unlet l:F
-			let l:F = function(test)
-		endif
-		if a:0 == 0
-			call l:F()
-		else
-			let args = []
-			for index in range(a:0)
-				let args += ['a:' . (index + 1)]
-			endfor
-			let text = join(args, ',')
-			let cmd = 'call l:F(' . text . ')'
-			exec cmd
-		endif
-		unlet l:F
+		call call(g:asyncrun_event[a:name], a:000)
 	endif
 endfunc
 
@@ -2092,7 +2075,24 @@ endfunc
 " asyncrun - version
 "----------------------------------------------------------------------
 function! asyncrun#version()
-	return '2.9.12'
+	return '2.9.14'
+endfunc
+
+
+"----------------------------------------------------------------------
+" asyncrun - reset
+"----------------------------------------------------------------------
+function! asyncrun#reset()
+	call asyncrun#stop('!')
+	let s:async_state = 0
+	if exists('s:async_timer')
+		call timer_stop(s:async_timer)
+		unlet s:async_timer
+	endif
+	if exists('s:async_job')
+		unlet s:async_job
+	endif
+	let s:async_state = 0
 endfunc
 
 
@@ -2103,6 +2103,8 @@ command! -bang -nargs=+ -range=0 -complete=file AsyncRun
 		\ call asyncrun#run('<bang>', '', <q-args>, <count>, <line1>, <line2>)
 
 command! -bar -bang -nargs=0 AsyncStop call asyncrun#stop('<bang>')
+
+command! -nargs=0 AsyncReset call asyncrun#reset()
 
 
 "----------------------------------------------------------------------
