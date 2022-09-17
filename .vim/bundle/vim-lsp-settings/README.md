@@ -130,7 +130,9 @@ You can change the directory to install servers by set `g:lsp_settings_servers_d
 | PHP               | intelephense                        |    Yes    |      Yes      |
 | PHP               | psalm-language-server               |    Yes    |      Yes      |
 | OCaml             | ocaml-lsp                           | UNIX Only |      Yes      |
+| Protobuf          | bufls                               |    Yes    |      Yes      |
 | Puppet            | puppet-languageserver               |    Yes    |      Yes      |
+| PureScript        | purescript-language-server          |    Yes    |      Yes      |
 | Python            | pyls-all (pyls with dependencies)   |    Yes    |      Yes      |
 | Python            | pyls (pyls without dependencies)    |    Yes    |      Yes      |
 | Python            | pyls-ms (Microsoft Version)         |    Yes    |      Yes      |
@@ -169,8 +171,8 @@ You can change the directory to install servers by set `g:lsp_settings_servers_d
 | Vim               | vim-language-server                 |    Yes    |      Yes      |
 | Vala              | vala-language-server                |    No     |      No       |
 | Vue               | volar-server                        |    Yes    |      Yes      |
-| Vue               | vue-language-server                 |    Yes    |      Yes      |
-| V                 | vls                                 |    Yes    |      Yes      |
+| Vue               | vls                                 |    Yes    |      Yes      |
+| V                 | vlang-vls                           |    Yes    |      Yes      |
 | XML               | lemminx                             |    Yes    |      Yes      |
 | YAML              | yaml-language-server                |    Yes    |      Yes      |
 | ZIG               | zls                                 |    Yes    |      Yes      |
@@ -274,6 +276,20 @@ location. See 'Configurations' below.
 
 If you installed `hie` with stack, you can use hie without configurations.
 But if you have not installed `hie` yet, you can install it by following [these steps](https://github.com/haskell/haskell-ide-engine#installation).
+
+### [golangci-lint-langserver](https://github.com/nametake/golangci-lint-langserver) (Go)
+
+To use older version `golangci-lint`, please run `:LspSettingsGlobalEdit` and put bellow configuration.
+
+```json5
+"golangci-lint-langserver": {
+    "initialization_options": {
+        "command": [
+            "golangci-lint", "run", "--enable-all", "--disable", "lll", "--out-format", "json"
+        ]
+    }
+}
+```
 
 ## Extra Configurations
 
