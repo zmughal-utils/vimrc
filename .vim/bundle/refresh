@@ -131,3 +131,5 @@ refresh_git https://github.com/mattn/vim-lsp-settings.git vim-lsp-settings
 
 refresh_git https://github.com/vim-vdebug/vdebug.git vdebug
 refresh_git https://github.com/joeytwiddle/git_shade.vim.git git_shade.vim
+
+refresh_git https://github.com/tpope/vim-sleuth.git vim-sleuth
