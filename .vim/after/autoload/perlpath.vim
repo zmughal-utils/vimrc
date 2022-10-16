@@ -11,7 +11,7 @@ function! perlpath#IsFileATestScript()
 endfunction
 
 function! perlpath#GetModuleNameFromPath()
-	return expand("%:p:s,\\(.*/*\\)\\?lib/,,:s?\.pm$??:gs?/?::?")
+	return expand("%:p:s,\\C\\(.*/*\\)\\?lib/,,:s?\.pm$??:gs?/?::?")
 endfunction
 
 function! perlpath#AddToPerl5Lib(libpath)
