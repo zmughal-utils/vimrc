@@ -105,7 +105,15 @@ endif
 "}}}
 
 " CtrlP {{{
+let g:ctrlp_mruf_max = 2000
+
 let g:ctrlp_extensions = [ 'smarttabs' ]
+
+if platform#WINDOWS()
+	let g:ctrlp_mruf_exclude = '^C:\\tmp\\.*' " Windows
+else
+	let g:ctrlp_mruf_exclude = '/tmp/.*\|/temp/.*' " MacOSX/Linux
+endif
 
 " On Windows use "dir" as fallback command.
 if platform#WINDOWS()
