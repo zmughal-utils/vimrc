@@ -1,0 +1,7 @@
+VimL:" prep for release File Template
+VimL:" hint: Insert "Prep for release" commit message
+VimL: let s:value_start = '¡'
+VimL: let s:value_end   = s:value_start
+VimL: let s:marker_open  = '<+'
+VimL: let s:marker_close = '+>'
+Prep for release v<++>
