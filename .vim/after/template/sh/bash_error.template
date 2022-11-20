@@ -1,0 +1,2 @@
+set -o pipefail
+shopt -s inherit_errexit
