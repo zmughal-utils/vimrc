@@ -55,6 +55,10 @@ let g:syntastic_perl_checkers = [ "perl", "perlcritic", "podchecker" ]
 let g:syntastic_enable_perl_checker = 1 " security (maybe this should be disabled for any Perl outside certain directories)
 let g:syntastic_perl_lib_path = [ './lib', './lib/auto' ]
 
+if filereadable('perlcritic.rc')
+	let b:syntastic_perl_perlcritic_args = '--profile perlcritic.rc'
+endif
+
 " manpageview setting
 let g:manpageview_options_pl= ";-f;-q"
 
