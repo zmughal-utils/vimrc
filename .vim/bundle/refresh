@@ -37,7 +37,7 @@ fi
 
 #rm -f $COMMIT_FILE
 refresh_git https://github.com/kchmck/vim-coffee-script.git vim-coffee-script
-refresh_git https://github.com/scrooloose/syntastic.git syntastic
+refresh_git https://github.com/vim-syntastic/syntastic.git syntastic
 refresh_git https://github.com/mileszs/ack.vim.git ack.vim
 refresh_git https://github.com/zmughal/vim-matlab-fold vim-matlab-fold zmughal
 refresh_git https://github.com/wesQ3/vim-windowswap vim-windowswap
@@ -101,20 +101,20 @@ refresh_git https://github.com/LucHermitte/lh-tags lh-tags
 refresh_git https://github.com/LucHermitte/lh-dev lh-dev
 refresh_git https://github.com/LucHermitte/lh-brackets lh-brackets
 refresh_git https://github.com/LucHermitte/lh-style lh-style
-refresh_git https://github.com/LucHermitte/searchInRuntime searchInRuntime
+refresh_git https://github.com/LucHermitte/SearchInRuntime searchInRuntime
 refresh_git https://github.com/LucHermitte/mu-template mu-template
 refresh_git https://github.com/tomtom/stakeholders_vim stakeholders_vim
 refresh_git https://github.com/DataWraith/auto_mkdir auto_mkdir
 refresh_git https://github.com/aklt/plantuml-syntax plantuml-syntax
 
-refresh_git https://github.com/janko-m/vim-test vim-test
+refresh_git https://github.com/vim-test/vim-test vim-test
 refresh_git https://github.com/skywind3000/asyncrun.vim asyncrun.vim
 
 refresh_git https://github.com/dkarter/bullets.vim bullets.vim
 refresh_git https://github.com/dkprice/vim-easygrep vim-easygrep
 
-refresh_git https://github.com/scrooloose/nerdtree nerdtree
-refresh_git https://github.com/scrooloose/nerdcommenter nerdcommenter
+refresh_git https://github.com/preservim/nerdtree nerdtree
+refresh_git https://github.com/preservim/nerdcommenter nerdcommenter
 
 refresh_git https://github.com/dhruvasagar/vim-zoom vim-zoom
 
