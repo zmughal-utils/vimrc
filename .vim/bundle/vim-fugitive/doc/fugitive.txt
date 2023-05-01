@@ -70,12 +70,10 @@ that are part of Git repositories).
                         O     jump to patch or blob in new tab
                         p     jump to patch or blob in preview window
                         -     reblame at commit
-                        ~     reblame at commit~[count]
-                        P     reblame at commit^[count]
 
                                                 *g:fugitive_dynamic_colors*
                         In the GUI or a 256 color terminal, commit hashes will
-                        highlighted in different colors. To disable this:
+                        be highlighted in different colors. To disable this:
 >
                         let g:fugitive_dynamic_colors = 0
 <
@@ -512,8 +510,10 @@ Stash maps ~
 czz                     Push stash.  Pass a [count] of 1 to add
                         `--include-untracked` or 2 to add `--all`.
 
-czw                     Push stash of worktree.  Like `czz` with
+czw                     Push stash of the work-tree.  Like `czz` with
                         `--keep-index`.
+
+czs                     Push stash of the stage.  Does not accept a count.
 
 czA                     Apply topmost stash, or stash@{count}.
 
