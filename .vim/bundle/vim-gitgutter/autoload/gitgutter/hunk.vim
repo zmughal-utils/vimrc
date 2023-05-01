@@ -328,6 +328,9 @@ function! s:undo(hunk_diff)
     call append(lnum-1, lines[0:hunk[1]])
     execute (lnum+hunk[1]) .','. (lnum+hunk[1]+hunk[3]) .'d _'
   endif
+
+  " Refresh gitgutter's view of buffer.
+  call gitgutter#process_buffer(bufnr(''), 1)
 endfunction
 
 
@@ -433,7 +436,7 @@ function! s:open_hunk_preview_window()
       call nvim_buf_set_name(buf, 'gitgutter://hunk-preview')
 
       " Assumes cursor is in original window.
-      autocmd CursorMoved <buffer> ++once call gitgutter#hunk#close_hunk_preview_window()
+      autocmd CursorMoved,TabLeave <buffer> ++once call gitgutter#hunk#close_hunk_preview_window()
 
       if g:gitgutter_close_preview_on_escape
         " Map <Esc> to close the floating preview.
@@ -501,18 +504,15 @@ endfunction
 " Floating window: does not care where cursor is.
 " Preview window: assumes cursor is in preview window.
 function! s:populate_hunk_preview_window(header, body)
-  let body_length = len(a:body)
-
   if g:gitgutter_preview_win_floating
     if exists('*nvim_open_win')
-      let height = min([body_length, g:gitgutter_floating_window_options.height])
-
       " Assumes cursor is not in previewing window.
       call nvim_buf_set_var(winbufnr(s:winid), 'hunk_header', a:header)
 
       let [_scrolloff, &scrolloff] = [&scrolloff, 0]
 
-      let width = max(map(copy(a:body), 'strdisplaywidth(v:val)'))
+      let [width, height] = s:screen_lines(a:body)
+      let height = min([height, g:gitgutter_floating_window_options.height])
       call nvim_win_set_width(s:winid, width)
       call nvim_win_set_height(s:winid, height)
 
@@ -548,9 +548,7 @@ function! s:populate_hunk_preview_window(header, body)
     call setline(1, a:body)
     setlocal nomodified
 
-    normal! G$
-    let hunk_height = max([body_length, winline()])
-    let height = min([hunk_height, &previewheight])
+    let [_, height] = s:screen_lines(a:body)
     execute 'resize' height
     1
 
@@ -562,6 +560,27 @@ function! s:populate_hunk_preview_window(header, body)
 
     1
   endif
+endfunction
+
+
+" Calculates the number of columns and the number of screen lines the given
+" array of lines will take up, taking account of wrapping.
+function! s:screen_lines(lines)
+  let [_virtualedit, &virtualedit]=[&virtualedit, 'all']
+  let cursor = getcurpos()
+  normal! 0g$
+  let available_width = virtcol('.')
+  call setpos('.', cursor)
+  let &virtualedit=_virtualedit
+  let width = min([max(map(copy(a:lines), 'strdisplaywidth(v:val)')), available_width])
+
+  if exists('*reduce')
+    let height = reduce(a:lines, { acc, val -> acc + strdisplaywidth(val) / width + (strdisplaywidth(val) % width == 0 ? 0 : 1) }, 0)
+  else
+    let height = eval(join(map(copy(a:lines), 'strdisplaywidth(v:val) / width + (strdisplaywidth(v:val) % width == 0 ? 0 : 1)'), '+'))
+  endif
+
+  return [width, height]
 endfunction
 
 

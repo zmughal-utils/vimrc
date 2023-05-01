@@ -547,6 +547,13 @@ Default:
 This dictionary is passed directly to |popup_create()| (Vim) or
 |nvim_open_win()| (Neovim).
 
+If you simply want to override one or two of the default values, create a file
+in an after/ directory.  For example:
+>
+    " ~/.vim/after/vim-gitgutter/overrides.vim
+    let g:gitgutter_floating_window_options['border'] = 'single'
+<
+
                                           *g:gitgutter_close_preview_on_escape*
 Default: 0
 
@@ -628,7 +635,7 @@ colorscheme or |vimrc|:
     GitGutterAddLine          " default: links to DiffAdd
     GitGutterChangeLine       " default: links to DiffChange
     GitGutterDeleteLine       " default: links to DiffDelete
-    GitGutterChangeDeleteLine " default: links to GitGutterChangeLineDefault
+    GitGutterChangeDeleteLine " default: links to GitGutterChangeLine
 <
 
 For example, to use |hl-DiffText| instead of |hl-DiffChange|:
@@ -641,7 +648,7 @@ your colorscheme or |vimrc|:
     GitGutterAddLineNr          " default: links to CursorLineNr
     GitGutterChangeLineNr       " default: links to CursorLineNr
     GitGutterDeleteLineNr       " default: links to CursorLineNr
-    GitGutterChangeDeleteLineNr " default: links to CursorLineNr
+    GitGutterChangeDeleteLineNr " default: links to GitGutterChangeLineNr
 <
 For example, to use |hl-Underlined| instead of |hl-CursorLineNr|:
 >
