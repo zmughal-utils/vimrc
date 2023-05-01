@@ -31,6 +31,31 @@
       }
     }
   ],
+  "astro": [
+    {
+      "command": "astro-ls",
+      "url": "https://github.com/withastro/language-tools/tree/main/packages/language-server",
+      "description": "The Astro Language Server, and official extensions which use it",
+      "config": {
+        "refresh_pattern": "\\(/\\|\\k\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json",
+        "jsconfig.json",
+        ".git"
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "astro"
+        ],
+        "name": "wuelnerdotexe/vim-astro"
+      }
+    }
+  ],
   "c": [
     {
       "command": "clangd",
@@ -162,6 +187,14 @@
       "requires": [
         "npm"
       ]
+    }
+  ],
+  "cuda": [
+    {
+      "command": "clangd",
+      "url": "https://github.com/clangd/clangd",
+      "description": "clangd language server",
+      "requires": []
     }
   ],
   "d": [
@@ -849,6 +882,16 @@
       }
     }
   ],
+  "nix": [
+    {
+      "command": "rnix-lsp",
+      "url": "https://github.com/nix-community/rnix-lsp",
+      "description": "Language server implementation for Nix",
+      "requires": [
+        "nix"
+      ]
+    }
+  ],
   "objc": [
     {
       "command": "clangd",
@@ -894,6 +937,21 @@
           "odin"
         ],
         "name": "https://github.com/Tetralux/odin.vim"
+      }
+    }
+  ],
+  "openscad": [
+    {
+      "command": "openscad-lsp",
+      "url": "https://github.com/Leathong/openscad-LSP",
+      "description": "A LSP (Language Server Protocol) server for OpenSCAD.",
+      "requires": [
+      ],
+      "vim_plugin": {
+        "extensions": [
+          "scad"
+        ],
+        "name": "https://github.com/sirtaj/vim-openscad"
       }
     }
   ],
@@ -1552,6 +1610,14 @@
       "root_uri_patterns": [
         "meson.build"
       ]
+    }
+  ],
+  "veryl": [
+    {
+      "command": "veryl-ls",
+      "url": "https://github.com/dalance/veryl",
+      "description": "Veryl language server",
+      "requires": []
     }
   ],
   "vim": [
