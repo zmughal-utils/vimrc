@@ -19,6 +19,7 @@ INTRODUCTION                                    *test*
 This plugin allows you to:
 
   * run nearest test (to the cursor)
+  * run nearest test class (to the cursor)
   * run (current) test file
   * run test suite
   * run last test
@@ -29,6 +30,7 @@ test runner it has to use for the file you're looking at.
 Add your preferred mappings to your `.vimrc` file:
 >
   nmap <silent> <leader>t :TestNearest<CR>
+  nmap <silent> <leader>C :TestClass<CR>
   nmap <silent> <leader>T :TestFile<CR>
   nmap <silent> <leader>a :TestSuite<CR>
   nmap <silent> <leader>l :TestLast<CR>
@@ -44,6 +46,11 @@ In all commands [args] are forwarded to the underlying test runner.
                              runners may not support this). If the current
                              file is not a test file, it reruns a previous
                              "nearest test" (if present).
+
+                                                *test-:TestClass*
+:TestClass [args]            Run the first test class above or on the same
+                             line as the cursor (some test runners may not
+                             support this).
 
                                                 *test-:TestFile*
 :TestFile [args]             Run tests for the current file. If the current
@@ -99,6 +106,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:TAP*
 :TAP [args]                  Uses the `tap` or `tape` command.
 
+                                                *test-:Teenytest*
+:Teenytest [args]            Uses the `teenytest` command.
+
                                                 *test-:Lab*
 :Lab [args]                  Uses the `lab` command.
 
@@ -119,6 +129,9 @@ In all commands [args] are forwarded to the underlying test runner.
 
                                                 *test-:Mocha*
 :Mocha [args]                Uses the `mocha` command.
+
+                                                *test-:Ember*
+:Ember [args]                Uses the `ember exam` command.
 
                                                 *test-:Jasmine*
 :Jasmine [args]              Uses the `jasmine` command.
@@ -607,6 +620,7 @@ You may find yourself specifying certain options for your test runners in
 certain situations. You can configure your preferred options with
 >
   let g:test#ruby#minitest#options = '--verbose'
+  let g:test#rust#cargotest#test_options = '-- --nocapture'
 <
 Or, if you prefer more granular approach, you can do
 >
@@ -614,6 +628,10 @@ Or, if you prefer more granular approach, you can do
     \ 'nearest': '--format documentation',
     \ 'file':    '--format documentation',
     \ 'suite':   '--tag ~slow',
+  \}
+  let test#rust#cargotest#test_options = {
+    \ 'nearest': ['--', '--nocapture', '--exact'],
+    \ 'file':    [],
   \}
 <
 You can also specify a global option for the test runner to work alongside the
@@ -697,7 +715,7 @@ function! CustomAlternateFile(cmd)
   return "test_file_spec.rb"
 endfunction
 
-let g:test#custom_alternate_file = function('echo')
+let g:test#custom_alternate_file = function('CustomAlternateFile')
 <
 
 ABOUT                                           *test-about*
