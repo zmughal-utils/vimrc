@@ -606,6 +606,7 @@ function! projectionist#activate() abort
           \ ' -title=' . escape(fnamemodify(root, ':t'), '\ ') . '\ console ' .
           \ command
     execute 'command! -bar -bang -buffer -nargs=* Console ' .
+          \ (has('patch-7.4.1898') ? '<mods> ' : '') .
           \ (exists(':Start') < 2 ?
           \ 'ProjectDo ' . (offset == 1 ? '' : offset.' ') . '!' . command :
           \ 'Start<bang> ' . b:start) . ' <args>'
@@ -877,7 +878,7 @@ endfunction
 " Section: :ProjectDo
 
 function! s:do(bang, count, cmd) abort
-  let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
+  let cd = haslocaldir() ? 'lcd' : exists(':tcd') && haslocaldir(-1) ? 'tcd' : 'cd'
   let cwd = getcwd()
   let cmd = substitute(a:cmd, '^\d\+ ', '', '')
   let offset = cmd ==# a:cmd ? 1 : matchstr(a:cmd, '^\d\+')
@@ -898,7 +899,7 @@ function! s:qf_pre() abort
   let dir = substitute(matchstr(','.&l:errorformat, ',\%(%\\&\)\=\%(ch\)\=dir[ =]\zs\%(\\.\|[^,]\)*'), '\\,' ,',', 'g')
   let cwd = getcwd()
   if !empty(dir) && dir !=# cwd
-    let cd = exists('*haslocaldir') && haslocaldir() ? 'lcd' : 'cd'
+    let cd = haslocaldir() ? 'lcd' : exists(':tcd') && haslocaldir(-1) ? 'tcd' : 'cd'
     execute cd fnameescape(dir)
     let s:qf_post = cd . ' ' . fnameescape(cwd)
   endif
@@ -926,6 +927,9 @@ function! projectionist#apply_template() abort
   endif
   if !empty(template)
     silent %delete_
+    if template =~# '\t' && !exists('b:sleuth') && exists(':Sleuth') == 2
+      silent! Sleuth!
+    endif
     if exists('#User#ProjectionistApplyTemplatePre')
       doautocmd <nomodeline> User ProjectionistApplyTemplatePre
     endif
