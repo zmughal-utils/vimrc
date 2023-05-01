@@ -14,7 +14,7 @@ let s:notification_callbacks = [] " { name, callback }
 "        "bingo": [ "first-line", "next-line", ... ]
 "      },
 "      2: {
-"        "pyls": [ "first-line", "next-line", ... ]
+"        "pylsp": [ "first-line", "next-line", ... ]
 "      }
 "    }
 let s:file_content = {}
@@ -148,7 +148,22 @@ let s:color_map = {
 \ 'not running': 'Comment'
 \}
 
-" Print the current status of all servers (if called with no arguments)
+" Collect the current status of all servers
+function! lsp#collect_server_status() abort
+    let l:results = {}
+    for l:k in keys(s:servers)
+        let l:status = s:server_status(l:k)
+        " Copy to prevent callers from corrupting our config.
+        let l:info = deepcopy(s:servers[l:k].server_info)
+        let l:results[l:k] = {
+            \ 'status': l:status,
+            \ 'info': l:info,
+            \ }
+    endfor
+    return l:results
+endfunction
+
+" Print the current status of all servers
 function! lsp#print_server_status() abort
     for l:k in sort(keys(s:servers))
         let l:status = s:server_status(l:k)
@@ -157,6 +172,15 @@ function! lsp#print_server_status() abort
         echon l:status
         echohl None
         echo ''
+        if &verbose
+            let l:cfg = { 'workspace_config': s:servers[l:k].server_info.workspace_config }
+            if get(g:, 'loaded_scriptease', 0)
+                call scriptease#pp_command(0, -1, l:cfg)
+            else
+                echo json_encode(l:cfg)
+            endif
+            echo ''
+        endif
     endfor
 endfunction
 
@@ -425,7 +449,7 @@ function! s:ensure_start(buf, server_name, cb) abort
     let l:server_info = l:server['server_info']
     if l:server['lsp_id'] > 0
         let l:msg = s:new_rpc_success('server already started', { 'server_name': a:server_name })
-        call lsp#log(l:msg)
+        call lsp#log_verbose(l:msg)
         call a:cb(l:msg)
         return
     endif
@@ -484,6 +508,9 @@ function! lsp#default_get_supported_capabilities(server_info) abort
     " Sorted alphabetically
     return {
     \   'textDocument': {
+    \       'callHierarchy': {
+    \           'dynamicRegistration': v:false,
+    \       },
     \       'codeAction': {
     \         'dynamicRegistration': v:false,
     \         'codeActionLiteralSupport': {
@@ -548,11 +575,19 @@ function! lsp#default_get_supported_capabilities(server_info) abort
     \           'dynamicRegistration': v:false,
     \           'linkSupport' : v:true
     \       },
+    \       'publishDiagnostics': {
+    \           'relatedInformation': v:true,
+    \       },
     \       'rangeFormatting': {
     \           'dynamicRegistration': v:false,
     \       },
     \       'references': {
     \           'dynamicRegistration': v:false,
+    \       },
+    \       'rename': {
+    \           'dynamicRegistration': v:false,
+    \           'prepareSupport': v:true,
+    \           'prepareSupportDefaultBehavior': 1
     \       },
     \       'semanticTokens': {
     \           'dynamicRegistration': v:false,
@@ -576,8 +611,8 @@ function! lsp#default_get_supported_capabilities(server_info) abort
     \           'multilineTokenSupport': v:false,
     \           'serverCancelSupport': v:false
     \       },
-    \       'publishDiagnostics': {
-    \           'relatedInformation': v:true,
+    \       'signatureHelp': {
+    \           'dynamicRegistration': v:false,
     \       },
     \       'synchronization': {
     \           'didSave': v:true,
@@ -585,12 +620,12 @@ function! lsp#default_get_supported_capabilities(server_info) abort
     \           'willSave': v:false,
     \           'willSaveWaitUntil': v:false,
     \       },
-    \       'typeHierarchy': {
-    \           'dynamicRegistration': v:false
-    \       },
     \       'typeDefinition': {
     \           'dynamicRegistration': v:false,
     \           'linkSupport' : v:true
+    \       },
+    \       'typeHierarchy': {
+    \           'dynamicRegistration': v:false
     \       },
     \   },
     \   'window': {
@@ -599,6 +634,9 @@ function! lsp#default_get_supported_capabilities(server_info) abort
     \   'workspace': {
     \       'applyEdit': v:true,
     \       'configuration': v:true,
+    \       'symbol': {
+    \           'dynamicRegistration': v:false,
+    \       },
     \       'workspaceFolders': g:lsp_experimental_workspace_folders ? v:true : v:false,
     \   },
     \ }
@@ -609,7 +647,7 @@ function! s:ensure_init(buf, server_name, cb) abort
 
     if has_key(l:server, 'init_result')
         let l:msg = s:new_rpc_success('lsp server already initialized', { 'server_name': a:server_name, 'init_result': l:server['init_result'] })
-        call lsp#log(l:msg)
+        call lsp#log_verbose(l:msg)
         call a:cb(l:msg)
         return
     endif
@@ -678,12 +716,12 @@ function! s:ensure_conf(buf, server_name, cb) abort
         call s:send_notification(a:server_name, {
             \ 'method': 'workspace/didChangeConfiguration',
             \ 'params': {
-            \   'settings': l:server_info['workspace_config'],
+            \   'settings': lsp#utils#workspace_config#get(a:server_name),
             \ }
             \ })
     endif
     let l:msg = s:new_rpc_success('configuration sent', { 'server_name': a:server_name })
-    call lsp#log(l:msg)
+    call lsp#log_verbose(l:msg)
     call a:cb(l:msg)
 endfunction
 
@@ -730,7 +768,7 @@ function! s:ensure_changed(buf, server_name, cb) abort
 
     if l:buffer_info['changed_tick'] == l:changed_tick
         let l:msg = s:new_rpc_success('not dirty', { 'server_name': a:server_name, 'path': l:path })
-        call lsp#log(l:msg)
+        call lsp#log_verbose(l:msg)
         call a:cb(l:msg)
         return
     endif
@@ -767,7 +805,7 @@ function! s:ensure_open(buf, server_name, cb) abort
 
     if has_key(l:buffers, l:path)
         let l:msg = s:new_rpc_success('already opened', { 'server_name': a:server_name, 'path': l:path })
-        call lsp#log(l:msg)
+        call lsp#log_verbose(l:msg)
         call a:cb(l:msg)
         return
     endif
@@ -896,7 +934,8 @@ function! s:on_request(server_name, id, request) abort
         call lsp#utils#workspace_edit#apply_workspace_edit(a:request['params']['edit'])
         call s:send_response(a:server_name, { 'id': a:request['id'], 'result': { 'applied': v:true } })
     elseif a:request['method'] ==# 'workspace/configuration'
-        let l:response_items = map(a:request['params']['items'], { key, val -> lsp#utils#workspace_config#get_value(a:server_name, val) })
+        let l:config = lsp#utils#workspace_config#get(a:server_name)
+        let l:response_items = map(a:request['params']['items'], { key, val -> lsp#utils#workspace_config#projection(l:config, val) })
         call s:send_response(a:server_name, { 'id': a:request['id'], 'result': l:response_items })
     elseif a:request['method'] ==# 'workspace/workspaceFolders'
         let l:server_info = s:servers[a:server_name]['server_info']
@@ -1271,6 +1310,13 @@ function! lsp#update_workspace_config(server_name, workspace_config) abort
     let l:server = s:servers[a:server_name]
     let l:server_info = l:server['server_info']
     if has_key(l:server_info, 'workspace_config')
+        if type(l:server_info['workspace_config']) == v:t_func
+            call lsp#utils#error('''workspace_config'' is a function, so
+                  \ lsp#update_workspace_config() can not be used.  Either
+                  \ replace function with a dictionary, or adjust the value
+                  \ generated by the function as necessary.')
+            return
+        endif
         call s:merge_dict(l:server_info['workspace_config'], a:workspace_config)
     else
         let l:server_info['workspace_config'] = a:workspace_config
