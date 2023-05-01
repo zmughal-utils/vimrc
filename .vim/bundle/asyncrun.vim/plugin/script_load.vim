@@ -11,6 +11,18 @@
 
 
 "----------------------------------------------------------------------
+" tune
+"----------------------------------------------------------------------
+let g:asyncrun_term_wipe = get(g:, 'asyncrun_term_wipe', 1)
+" let g:asyncrun_term_hidden = get(g:, 'asyncrun_term_hidden', 'wipe')
+if has('nvim') == 0
+	if v:version >= 802
+		let g:asyncrun_term_safe = get(g:, 'asyncrun_term_safe', 1)
+	endif
+endif
+
+
+"----------------------------------------------------------------------
 " internal
 "----------------------------------------------------------------------
 let g:asyncrun_event = get(g:, 'asyncrun_event', {})

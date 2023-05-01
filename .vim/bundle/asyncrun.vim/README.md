@@ -204,9 +204,11 @@ There can be some options before your `[cmd]`:
 | `-rows=num` | 0 | When using a horizontal split terminal, this value represents the height of terminal window. |
 | `-cols=num` | 0 | When using a vertical split terminal, this value represents the width of terminal window. |
 | `-focus=?` | 1 | set to `0` to prevent focus changing when `-mode=term` |
-| `-hidden=?` | 0 | set to `1` to setup `bufhidden` to `hide` for internal terminal |
+| `-hidden=?` | 0 | set to `1` to init `bufhidden` to `hide` for internal terminal, set to `0` to init `bufhidden` to `wipe` |
 | `-listed=?` | 1 | when using `-mode=term`, set to 0 to hide the terminal in the buffer list |
 | `-close` | `unset` | when using `-mode=term`, close the terminal automatically when terminal process is finished |
+
+For the full list of the options, please see the [Command Specification](https://github.com/skywind3000/asyncrun.vim/wiki/Command-Specification).
 
 All options must start with a minus and position **before** `[cmd]`. Since no shell command string starting with a minus. So they can be distinguished from shell command easily without any ambiguity. 
 
@@ -422,6 +424,20 @@ Screenshot for `gnome` runner:
 ![](https://raw.githubusercontent.com/skywind3000/images/master/p/asyncrun/runner-gnome2.png)
 
 When using `gnome`, `konsole`, or `xfce` runner in GVim, you get exactly the same experience like starting a command-line program from IDEs. 
+
+When you use toggleterm2 and use the packer.nvim management plugin, you can set shortcut keys to specify the open window, such as:
+```lua
+	use({
+		"skywind3000/asyncrun.vim",
+		as = "asyncrun",
+		config = function()
+			require("asyncrun_toggleterm").setup({
+				mapping = "<leader>tt",
+				start_in_insert = false,
+			})
+		end,
+	})
+```
 
 All runners are customizable, you can modify or define your own runners, see the next section "customize runner".
 
