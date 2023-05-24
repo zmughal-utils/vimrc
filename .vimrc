@@ -621,6 +621,10 @@ if filereadable(g:otl_agenda_script)
 	exe "so " . g:otl_agenda_script
 endif
 
+let g:fzf_vim_script = expand('/usr/share/doc/fzf/examples/fzf.vim')
+if filereadable(g:fzf_vim_script)
+	exe "so " . g:fzf_vim_script
+endif
 "}}}
 "**********************************************************************************"
 " A.vim things {{{
