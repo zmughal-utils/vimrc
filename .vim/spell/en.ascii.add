@@ -419,3 +419,7 @@ metaprogramming
 composability
 composable
 Prolog
+TensorFlow
+CUDA
+SIGSEGV
+syscall
