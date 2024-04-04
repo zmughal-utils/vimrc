@@ -1,15 +1,26 @@
 # Design Notes
 
 * [Scope](#scope)
+* [Good practices](#good-practices)
+   * [Function definitions](#function-definitions)
+        * [Where shall we define functions?](#where-shall-we-define-functions)
+            * [Script-local functions](#script-local-functions)
+            * [Library functions](#library-functions)
+            * [Functions that don't need to be defined when Vim starts](#functions-that-dont-need-to-be-defined-when-vim-starts)
+        * [Signature](#signature)
+            * [bang -> `:function!`](#bang---function)
+            * [`abort`](#abort)
 * [Regarding debugging and maintenance](#regarding-debugging-and-maintenance)
     * [Debugging](#debugging)
         * [Debugging loops](#debugging-loops)
     * [Code instrumentation (Logs and global variables)](#code-instrumentation-logs-and-global-variables)
         * [Variables](#variables)
         * [Logs](#logs)
+        * [Warnings](#warnings)
     * [Design by Contract](#design-by-contract)
     * [Unit Testing](#unit-testing)
     * [`:WTF`](#wtf)
+    * [Plugin reloading](#plugin-reloading)
 * [Regarding OO](#regarding-oo)
 * [Regarding dependencies](#regarding-dependencies)
     * [1. Standalone plugins](#1-standalone-plugins)
@@ -19,7 +30,12 @@
 
 ----
 ## Scope
-TBC
+
+I will only cover the writting and maintenance of portable code across multiple
+versions of Vim, and even neovim. I won't cover
+[`Vim9-script`](http://vimhelp.appspot.com/vim9.txt.html#Vim9%2dscript) nor
+Lua.
+
 <!---
 
 common stuff used elsewhere but not programming related (lh-dev: analysing
@@ -32,8 +48,107 @@ But, given the old: project-specific, `p:` were a natural extension for
 
 -->
 
+## Good practices
+
+Here are a few good practices that I regularly share when reviewing Vim codes.
+
+### Function definitions
+
+#### Where shall we define functions?
+
+While _global-functions_ are probably the oldest, they are best avoided. The
+reason? Unless you find a convoluted naming scheme, you have no guarantee that
+other plugins won't use the same name.
+
+Most examples you'll find also use global-functions as they as the default and
+thus they don't require extra explanations about
+[local-functions](http://vimhelp.appspot.com/userfunc.txt.html#local%2dfunction)
+(the new default for Vim9!) nor
+[autoload-functions](http://vimhelp.appspot.com/userfunc.txt.html#autoload%2dfunctions)
+
+See also [Object Oriented Programming in vim scripts](OO.md) regarding
+dictionary-function.
+
+##### Script-local functions
+
+If your function is internal (it's only used to define other functions, or
+to define mappings/commands/menus/... in the same file), we can make them
+[_local_](http://vimhelp.appspot.com/userfunc.txt.html#local%2dfunction). The
+name will start with `s:`, and then, use any naming convention you fancy (the
+first letter of the function name no longer needs to be capitalized).
+
+The only drawbacks are:
+
+- The name will start with
+  [`<SID>`](http://vimhelp.appspot.com/map.txt.html#%3cSID%3e) when used from a
+  mapping.
+- They cannot be tested from other files, like for instance from
+  [Unit Testing](#unit-testing) frameworks. But as we all know, private
+  functions shall not be tested...
+
+##### Library functions
+
+Since vim7, library functions are best defined as
+[autoload-functions](http://vimhelp.appspot.com/userfunc.txt.html#autoload%2dfunctions).
+
+**Pro:**
+
+- Nice naming scheme. We can use _snake-case_ in lowercase.
+  I usually go for `{my-initials}#{plugin-name}#{function-name}`.
+- They are loaded lazily/on-demand.
+
+Note: 20ish years ago with Vim6, we either defined such functions as global
+functions in `plugin/` files (always loaded), or in `macros/` files (needed to
+be loaded explicitly), or in `ftplugin/` files (which required convoluted
+workarounds to avoid defining them multiple times).
+
+##### Functions that don't need to be defined when Vim starts
+
+Lazy function loading is the _reason d'être_ behind
+[autoload-functions](http://vimhelp.appspot.com/userfunc.txt.html#autoload%2dfunctions).
+
+They are loaded on-demand (they may never be loaded). And as long as we avoid
+crazy circular dependencies, they are perfect most of the time.
+
+Unlike script-local functions, they can be called from anywhere, and thus
+tested in Unit Testing. It's up to us to have a naming policy that says:
+_«This is a private function»_. I use Python conventions here.
+
+Nowadays, I define support functions for mappings, commands... as _protected_
+functions from autoload plugins. They as thus lazily loaded when the
+mapping/command... is executed (=> no impact on vim startup time), and
+[reloading](http://vimhelp.appspot.com/repeat.txt.html#%3asource) the vim
+script file, will permit to update the function definition.
+
+I will seldom define functions in my `.vimrc`, in `plugin/` files, `ftplugin/`
+files... It may still happen when I'm testing small things.
+
+#### Function signature
+
+##### bang -> `:function!`
+
+When I'm maintening vimscripts, I
+[reload](http://vimhelp.appspot.com/repeat.txt.html#%3asource) my files a lot.
+Really. As a consequence, my functions are always defined
+[_banged_](http://vimhelp.appspot.com/userfunc.txt.html#E127). Even if they may
+be overriden from other plugins...
+
+##### `abort`
+
+A long time ago, functions were continuing their execution even if a error has
+been detected. On the contrary, what we want 99% of the time, is for the
+execution to stop as soon an an error is encountered.
+As introducing changes in behaviour is always source of regression. It's been
+made up to us to be explicit about what we really want:
+
+**we need to append
+[`abort`](http://vimhelp.appspot.com/userfunc.txt.html#%3afunc%2dabort)
+at the end of function definitions**.
+
 ----
+
 ## Regarding debugging and maintenance
+
 Softwares have bugs, and neither lh-vim-lib nor my other plugins are exempted.
 
 Various techniques exists, and I'm using them in my plugins. These techniques
@@ -42,7 +157,8 @@ defining in lh-vim-lib.
 
 Let's have a quick tour.
 
-###  Debugging
+### Debugging
+
 Vim provides a debugger for its Vim script language. It is started with
 [`:h :debug`](http://vimhelp.appspot.com/repeat.txt.html#%3adebug). And from
 here we can display expressions with `:echo`,
@@ -64,6 +180,7 @@ that tries to work around this limitation (by running two instances of Vim,
 IIRC)
 
 #### Debugging loops
+
 Debugging loops is one of the things that annoys me the most when debugging vim
 scripts. We have to do `>next` several times, check manually the thing that
 changes (_variant_/index/element) at each iteration (as there is no possible
@@ -88,6 +205,7 @@ far as I'm concerned)
 [`reduce()`](http://vimhelp.appspot.com/eval.txt.html#reduce%28%29).
 
 ### Code instrumentation (Logs and global variables)
+
 One of the oldest alternative approach to debug consist in instrumenting our
 source code to observe what happens -- I guess this is even much older than
 debuggers.
@@ -95,6 +213,7 @@ debuggers.
 Two approaches mainly.
 
 #### Variables
+
 We can store
 [local-variables](http://vimhelp.appspot.com/eval.txt.html#local%2dvariable)
 into [global-variables](http://vimhelp.appspot.com/eval.txt.html#global%2dvariable)
@@ -109,6 +228,7 @@ This is quite efficient to store complex things like
 before a crash. It's more complex to follow the code flow with them.
 
 #### Logs
+
 Logs can start with a single
 [`:echomsg`](http://vimhelp.appspot.com/eval.txt.html#%3aechomsg). In the past
 I was even playing with
@@ -142,7 +262,26 @@ control their verbosity level. I can activate logs in one file and not the
 other. e.g. `:call lh#path#verbose(1)` (or `:Verbose pa<tab>` thanks to a small
 miscellaneous plugin I have)
 
+#### Warnings
+
+There is some room for something in between silent debug logs, and errors that
+stop the execution. _Warnings_. They make sense when we don't intend to stop
+violently the execution, but yet report that something is fishy, if not plain
+wrong.
+
+Most of the time printing in a different colour what happened is a good start.
+`lh#common#warning_msg()` does that.
+
+Sometimes, we still smell that some investigation is required and yet this
+isn't a full programming error (see next section on _design by contract_).
+That's why I've introduced `lh#warning#emit(message)`, to emit a new warning,
+and `:Warnings` to display the last warnings in their context. In other words,
+`lh#warning#emit()` records the [callstack](Callstack.md) at the point of
+emission, and `:Warning` displays the messages and the full callstack in the
+[`quickfix-window`](http://vimhelp.appspot.com/quickfix.txt.html#quickfix%2dwindow).
+
 ### Design by Contract
+
 There is a lot to say about Designing by Contract, and I've already said a lot,
 but [in French, and for C++](https://luchermitte.github.io/blog/2014/05/24/programmation-par-contrat-un-peu-de-theorie/).
 
@@ -187,6 +326,7 @@ the best tools for post-conditions. Unit tests are much better for
 post-conditions.
 
 ### Unit Testing
+
 I also have my
 [own solution for unit-testing](https://github.com/LucHermitte/vim-UT). An old one.
 
@@ -203,6 +343,7 @@ filling the quickfix-window.
 
 
 ### `:WTF`
+
 Thanks to [`:WTF`](Callstack.md#lhexceptionsay_what) I have a nice tool to
 analyse error messages and fill the
 [`quickfix-window`](http://vimhelp.appspot.com/quickfix.txt.html#quickfix%2dwindow)
@@ -220,6 +361,7 @@ Also, as I try to avoid defining too many commands, mappings... in lh-vim-lib,
 whatever we want in our `.vimrc.`
 
 ### Plugin reloading
+
 TBC
 <!--
 `:Reload`
@@ -229,6 +371,7 @@ guards
 
 ----
 ## Regarding OO
+
 I delved into the subject in another document: [Object Oriented Programming in vim scripts](OO.md).
 
 
@@ -244,6 +387,7 @@ When we want to reuse a function between unrelated plugins, we have a few
 different approaches available.
 
 ### 1. Standalone plugins
+
 This is the dominant approach. Code from other plugins is copied.
 
 **pro**:
@@ -260,6 +404,7 @@ This is the dominant approach. Code from other plugins is copied.
   with different licences in the same file.
 
 ### 2. Plugins that depend on other plugins
+
 Very few plugins follow this approach. End-users have to install the plugins we
 depend upon. Dare I say this is the most professional one.
 
@@ -286,6 +431,7 @@ depend upon. Dare I say this is the most professional one.
   here.
 
 ### 3. Submodules
+
 We could also introduce our dependencies as submodules.
 
 **pro**
@@ -319,6 +465,7 @@ We could also introduce our dependencies as submodules.
     plugin depends on the same version...
 
 ### My choice on the subject
+
 I'm maintaining something like almost 20 different plugins. A long time ago
 after playing with duplicated functions, I've eventually chosen to define this
 plugin library that other plugins depend upon.
@@ -346,7 +493,6 @@ maintain our plugins.
 I've chosen to not repeat myself and to build more complex solutions by
 stacking layers of thematic and independent features -- which is far from
 being an easy feat.
-
 
   [1]: https://github.com/LucHermitte/lh-cpp#installation
   [2]: https://github.com/LucHermitte/lh-vim-lib
