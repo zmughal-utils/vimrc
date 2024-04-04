@@ -1,9 +1,9 @@
 " asyncrun.vim - Run shell commands in background and output to quickfix
 "
-" Maintainer: skywind3000 (at) gmail.com, 2016-2023
+" Maintainer: skywind3000 (at) gmail.com, 2016-2024
 " Homepage: https://github.com/skywind3000/asyncrun.vim
 "
-" Last Modified: 2023/03/02 21:51
+" Last Modified: 2024/03/23 00:49
 "
 " Run shell command in background and output to quickfix:
 "     :AsyncRun[!] [options] {cmd} ...
@@ -621,7 +621,14 @@ function! s:AsyncRun_Job_OnFinish()
 		exec "norm! \<esc>"
 	endif
 	if s:async_info.post != ''
-		exec s:async_info.post
+		try
+			exec s:async_info.post
+		catch
+			redraw
+			echohl ErrorMsg
+			echo 'AsyncRun: ' . v:exception
+			echohl None
+		endtry
 		let s:async_info.post = ''
 	endif
 	if g:asyncrun_exit != ""
@@ -1074,9 +1081,11 @@ function! asyncrun#fullname(f)
 		let f = expand('%')
 		if &bt == 'terminal'
 			let f = ''
-		elseif &bt == 'nofile'
+		elseif &bt != ''
 			let is_directory = 0
-			if f =~ '[\/\\]$'
+			if f =~ '\v^fugitive\:[\\\/][\\\/][\\\/]'
+				return asyncrun#fullname(f)
+			elseif f =~ '[\/\\]$'
 				if f =~ '^[\/\\]' || f =~ '^.:[\/\\]'
 					let is_directory = isdirectory(f)
 				endif
@@ -1085,6 +1094,13 @@ function! asyncrun#fullname(f)
 		endif
 	elseif f =~ '^\~[\/\\]'
 		let f = expand(f)
+	elseif f =~ '\v^fugitive\:[\\\/][\\\/][\\\/]'
+		let path = strpart(f, s:asyncrun_windows? 12 : 11)
+		let pos = stridx(path, '.git')
+		if pos >= 0
+			let path = strpart(path, 0, pos)
+		endif
+		let f = fnamemodify(path, ':h')
 	endif
 	let f = fnamemodify(f, ':p')
 	if s:asyncrun_windows
@@ -1129,41 +1145,37 @@ function! s:path_join(home, name)
 	endif
 endfunc
 
-" find project root
-function! s:find_root(path, markers, strict)
-	function! s:guess_root(filename, markers)
-		let fullname = asyncrun#fullname(a:filename)
-		if fullname =~ '^fugitive:/'
-			if exists('b:git_dir')
-				return fnamemodify(b:git_dir, ':h')
-			endif
-			return '' " skip any fugitive buffers early
-		endif
-		let pivot = fullname
-		if !isdirectory(pivot)
-			let pivot = fnamemodify(pivot, ':h')
-		endif
-		while 1
-			let prev = pivot
-			for marker in a:markers
-				let newname = s:path_join(pivot, marker)
-				if newname =~ '[\*\?\[\]]'
-					if glob(newname) != ''
-						return pivot
-					endif
-				elseif filereadable(newname)
-					return pivot
-				elseif isdirectory(newname)
+" guess root
+function! s:guess_root(filename, markers)
+	let fullname = asyncrun#fullname(a:filename)
+	let pivot = fullname
+	if !isdirectory(pivot)
+		let pivot = fnamemodify(pivot, ':h')
+	endif
+	while 1
+		let prev = pivot
+		for marker in a:markers
+			let newname = s:path_join(pivot, marker)
+			if newname =~ '[\*\?\[\]]'
+				if glob(newname) != ''
 					return pivot
 				endif
-			endfor
-			let pivot = fnamemodify(pivot, ':h')
-			if pivot == prev
-				break
+			elseif filereadable(newname)
+				return pivot
+			elseif isdirectory(newname)
+				return pivot
 			endif
-		endwhile
-		return ''
-	endfunc
+		endfor
+		let pivot = fnamemodify(pivot, ':h')
+		if pivot == prev
+			break
+		endif
+	endwhile
+	return ''
+endfunc
+
+" find project root
+function! s:find_root(path, markers, strict)
 	if a:path == '%'
 		if exists('b:asyncrun_root') && b:asyncrun_root != ''
 			return b:asyncrun_root
@@ -1171,6 +1183,11 @@ function! s:find_root(path, markers, strict)
 			return t:asyncrun_root
 		elseif exists('g:asyncrun_root') && g:asyncrun_root != ''
 			return g:asyncrun_root
+		elseif exists('g:asyncrun_locator')
+			let root = call(g:asyncrun_locator, [])
+			if root != ''
+				return root
+			endif
 		endif
 	endif
 	let root = s:guess_root(a:path, a:markers)
@@ -1204,6 +1221,10 @@ function! asyncrun#get_root(path, ...)
 		let l:hr = s:StringReplace(l:hr, '/', "\\")
 	endif
 	return l:hr
+endfunc
+
+function! asyncrun#current_root()
+	return asyncrun#get_root('%')
 endfunc
 
 function! asyncrun#path_join(home, name)
@@ -1285,6 +1306,7 @@ function! s:terminal_init(opts)
 			let command = args
 		endif
 	endif
+	let g:asyncrun_term = 1
 	if has('nvim') == 0
 		if pos != 'hide'
 			let opts = {'curwin':1, 'norestore':1, 'term_finish':'open'}
@@ -1346,6 +1368,7 @@ function! s:terminal_init(opts)
 		let pid = (success)? jid : -1
 		let processid = (success)? jobpid(jid) : -1
 	endif
+	let g:asyncrun_term = 0
 	if success == 0
 		call s:ErrorMsg('Process creation failed')
 		return -1
@@ -1356,7 +1379,8 @@ function! s:terminal_init(opts)
 		let b:asyncrun_cmd = a:opts.cmd
 		let b:asyncrun_name = get(a:opts, 'name', '')
 		let b:asyncrun_bid = bid
-		if get(a:opts, 'listed', 1) == 0
+		let listed = get(g:, 'asyncrun_term_listed', 1)
+		if get(a:opts, 'listed', listed) == 0
 			setlocal nobuflisted
 		endif
 		let hidden = get(g:, 'asyncrun_term_hidden', '')
@@ -1426,6 +1450,28 @@ function! s:terminal_open(opts)
 				if name != ''
 					" echom 'name: ' . name
 					exec 'file! ' . name
+				endif
+			endif
+		endif
+		if &bt == 'terminal'
+			if has_key(a:opts, 'hint')
+				let b:asyncrun_hint = get(a:opts, 'hint', '')
+			endif
+			if has_key(a:opts, 'init')
+				let init = get(a:opts, 'init', '')
+				try
+					exec init
+				catch
+					redraw
+					echohl ErrorMsg
+					echo 'AsyncRun: ' . v:exception
+					echohl None
+				endtry
+			endif
+			if has_key(a:opts, 'ft')
+				let ft = get(a:opts, 'ft', '')
+				if ft != ''
+					exec 'setlocal ft='. ft
 				endif
 			endif
 		endif
@@ -1839,9 +1885,29 @@ function! s:run(opts)
 	let g:asyncrun_cmd = l:command
 	let t = s:StringStrip(l:command)
 
-	if strpart(t, 0, 1) == ':' && g:asyncrun_strict == 0
-		exec strpart(t, 1)
-		return ''
+	if strpart(t, 0, 1) == ':'
+		if t !~ '^:\s*\!\!\+'
+			try
+				if g:asyncrun_strict == 0
+					exec strpart(t, 1)
+				endif
+			catch
+				redraw
+				echohl ErrorMsg
+				echo 'AsyncRun: ' . v:exception
+				echohl None
+			endtry
+			return ''
+		else
+			let b = matchstr(t, '^:\s*\!\zs\!\+')
+			let t = matchstr(t, '^:\s*\!\!\+\zs.*$')
+			let t = s:StringStrip(t)
+			if t == ''
+				return ''
+			endif
+			let l:command = t
+			let l:mode = (strlen(b) == 1)? 4 : 5
+		endif
 	elseif l:runner != ''
 		let obj = deepcopy(l:opts)
 		let obj.cmd = command
@@ -2239,7 +2305,7 @@ endfunc
 " asyncrun - version
 "----------------------------------------------------------------------
 function! asyncrun#version()
-	return '2.11.16'
+	return '2.12.5'
 endfunc
 
 
