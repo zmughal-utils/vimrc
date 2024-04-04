@@ -133,3 +133,4 @@ refresh_git https://github.com/vim-vdebug/vdebug.git vdebug
 refresh_git https://github.com/joeytwiddle/git_shade.vim.git git_shade.vim
 
 refresh_git https://github.com/tpope/vim-sleuth.git vim-sleuth
+refresh_git https://github.com/niklasl/vim-rdf.git vim-rdf
