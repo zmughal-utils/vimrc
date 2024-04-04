@@ -943,7 +943,7 @@ function! dispatch#compile_command(bang, args, count, mods, ...) abort
 
     call writefile([], request.file)
 
-    if exists(':chistory')
+    if has('patch-8.0.1023')
       let result = s:dispatch(request)
     else
       let result = 0
@@ -1223,7 +1223,7 @@ function! dispatch#complete(file, ...) abort
     let request = s:request(a:file)
     let request.completed = 1
     try
-      let status = readfile(request.file . '.complete', 1)[0]
+      let status = +readfile(request.file . '.complete', 1)[0]
     catch
       let status = -1
       call writefile([-1], request.file . '.complete')
