@@ -602,8 +602,8 @@ function! projectionist#activate() abort
 
   for [root, command] in projectionist#query_exec('console')
     let offset = index(s:roots(), root) + 1
-    let b:start = '-dir=' . fnameescape(root) .
-          \ ' -title=' . escape(fnamemodify(root, ':t'), '\ ') . '\ console ' .
+    let b:start = '++dir=' . fnameescape(root) .
+          \ ' ++title=' . escape(fnamemodify(root, ':t'), '\ ') . '\ console ' .
           \ command
     execute 'command! -bar -bang -buffer -nargs=* Console ' .
           \ (has('patch-7.4.1898') ? '<mods> ' : '') .
@@ -615,12 +615,12 @@ function! projectionist#activate() abort
 
   for [root, command] in projectionist#query_exec('start')
     let offset = index(s:roots(), root) + 1
-    let b:start = '-dir=' . fnameescape(root) . ' ' . command
+    let b:start = '++dir=' . fnameescape(root) . ' ' . command
     break
   endfor
 
   for [root, command] in s:query_exec_with_alternate('dispatch')
-    let b:dispatch = '-dir=' . fnameescape(root) . ' ' . command
+    let b:dispatch = '++dir=' . fnameescape(root) . ' ' . command
     break
   endfor
 
@@ -636,7 +636,9 @@ function! projectionist#activate() abort
     if len(tags) && stridx(','.&l:tags.',', ','.escape(tags, ', ').',') < 0
       let &l:tags = &tags . ',' . escape(tags, ', ')
     endif
+    let outermost = root
   endfor
+  let b:workspace_folder = outermost
 
   if exists('#User#ProjectionistActivate')
     doautocmd User ProjectionistActivate
@@ -802,17 +804,15 @@ endfunction
 " Section: :A
 
 function! s:jumpopt(file) abort
-  let pattern = '!$\|:\d\+:\d\+$\|[:@#]\d\+$\|[@#].*$'
+  let pattern = '!$\|:\d\+:\d\+$\|:\d\+$'
   let file = substitute(a:file, pattern, '', '')
   let jump = matchstr(a:file, pattern)
   if jump =~# '^:\d\+:\d\+$'
     return [file, '+call\ cursor('.tr(jump[1:-1], ':', ',') . ') ']
-  elseif jump =~# '^[:+@#]\d\+$'
+  elseif jump =~# '^:\d\+$'
     return [file, '+'.jump[1:-1].' ']
   elseif jump ==# '!'
     return [file, '+AD ']
-  elseif !empty(jump)
-    return [file, '+A'.escape(jump, ' ').' ']
   else
     return [file, '']
   endif
