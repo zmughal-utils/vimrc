@@ -198,14 +198,72 @@ function! nerdtree#postSourceActions() abort
     runtime! nerdtree_plugin/**/*.vim
 endfunction
 
-"FUNCTION: nerdtree#runningWindows(dir) {{{2
+"FUNCTION: nerdtree#runningWindows() {{{2
 function! nerdtree#runningWindows() abort
     return has('win16') || has('win32') || has('win64')
 endfunction
 
-"FUNCTION: nerdtree#runningCygwin(dir) {{{2
+"FUNCTION: nerdtree#runningCygwin() {{{2
 function! nerdtree#runningCygwin() abort
     return has('win32unix')
+endfunction
+
+"FUNCTION: nerdtree#runningMac() {{{2
+function! nerdtree#runningMac() abort
+    return has('gui_mac') || has('gui_macvim') || has('mac') || has('osx')
+endfunction
+
+" FUNCTION: nerdtree#osDefaultCaseSensitiveFS() {{{2
+function! nerdtree#osDefaultCaseSensitiveFS() abort
+    return s:osDefaultCaseSensitiveFS
+endfunction
+
+" FUNCTION: nerdtree#caseSensitiveFS() {{{2
+function! nerdtree#caseSensitiveFS() abort
+    return g:NERDTreeCaseSensitiveFS == 1 ||
+                \((g:NERDTreeCaseSensitiveFS == 2 || g:NERDTreeCaseSensitiveFS == 3) &&
+                \nerdtree#osDefaultCaseSensitiveFS())
+endfunction
+
+"FUNCTION: nerdtree#pathEquals(lhs, rhs) {{{2
+function! nerdtree#pathEquals(lhs, rhs) abort
+    if nerdtree#caseSensitiveFS()
+        return a:lhs ==# a:rhs
+    else
+        return a:lhs ==? a:rhs
+    endif
+endfunction
+
+"FUNCTION: nerdtree#onBufLeave() {{{2
+" used for handling the nerdtree BufLeave/WinLeave events.
+function! nerdtree#onBufLeave() abort
+    " detect whether we are in the middle of sourcing a session.
+    " if it is a buffer from the sourced session we need to restore it.
+    if exists('g:SessionLoad') && !exists('b:NERDTree')
+        let bname = bufname('%')
+        " is the buffer for a tab tree?
+        if bname =~# '^' . g:NERDTreeCreator.BufNamePrefix() . 'tab_\d\+$'
+            " rename loaded buffer and mark it as trash to prevent this event
+            " getting fired again
+            exec 'file TRASH_' . bname
+            " delete the trash buffer
+            exec 'bwipeout!'
+            " rescue the tab tree at the current working directory
+            call g:NERDTreeCreator.CreateTabTree(getcwd())
+        " is the buffer for a window tree?
+        elseif bname =~# '^' . g:NERDTreeCreator.BufNamePrefix(). 'win_\d\+$'
+            " rescue the window tree at the current working directory
+            call g:NERDTreeCreator.CreateWindowTree(getcwd())
+        else " unknown buffer type
+            " rename buffer to mark it as broken.
+            exec 'file BROKEN_' . bname
+            call nerdtree#echoError('Failed to restore "' . bname . '" from session. Is this session created with an older version of NERDTree?')
+        endif
+    else
+        if g:NERDTree.IsOpen()
+            call b:NERDTree.ui.saveScreenState()
+        endif
+    endif
 endfunction
 
 " SECTION: View Functions {{{1
@@ -245,5 +303,13 @@ endfunction
 function! nerdtree#renderView() abort
     call b:NERDTree.render()
 endfunction
+
+if nerdtree#runningWindows()
+    let s:osDefaultCaseSensitiveFS = 0
+elseif nerdtree#runningMac()
+    let s:osDefaultCaseSensitiveFS = 0
+else
+    let s:osDefaultCaseSensitiveFS = 1
+endif
 
 " vim: set sw=4 sts=4 et fdm=marker:
