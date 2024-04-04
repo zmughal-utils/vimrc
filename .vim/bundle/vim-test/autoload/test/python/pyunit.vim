@@ -1,5 +1,5 @@
 if !exists('g:test#python#pyunit#file_pattern')
-  let g:test#python#pyunit#file_pattern = '\v^test.*\.py$'
+  let g:test#python#pyunit#file_pattern = '\v(^test.*|test)\.py$'
 endif
 
 function! test#python#pyunit#test_file(file) abort
@@ -7,7 +7,7 @@ function! test#python#pyunit#test_file(file) abort
     if exists('g:test#python#runner')
       return g:test#python#runner ==# 'pyunit'
     else
-      return executable('python')
+      return test#python#has_import(a:file, 'unittest')
     endif
   endif
 endfunction
@@ -39,11 +39,7 @@ function! test#python#pyunit#executable() abort
     let pipenv_prefix = "pipenv run "
   endif
 
-  if strlen(system('command -v python3'))
-    return pipenv_prefix . 'python3 -m unittest'
-  else
-    return pipenv_prefix . 'python -m unittest'
-  endif
+  return pipenv_prefix . test#python#executable() . ' -m unittest'
 endfunction
 
 function! s:get_import_path(filepath) abort

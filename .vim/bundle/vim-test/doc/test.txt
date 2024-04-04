@@ -9,6 +9,7 @@ License: Same terms as Vim itself (see |license|)
 |test-quickfix-strategies|        QUICKFIX STRATEGIES
 |test-custom-strategies|          CUSTOM STRATEGIES
 |test-configuration|              CONFIGURATION
+|test-python|                     PYTHON SPECIFIC CONFIG
 |test-projectionist|              PROJECTIONIST INTEGRATION
 |test-about|                      ABOUT
 |test-credits|                    CREDITS
@@ -70,8 +71,13 @@ In all commands [args] are forwarded to the underlying test runner.
 
 RUNNER COMMANDS                                 *test-runner_commands*
 
-In all commands [args] are forwarded to the underlying test runner.
+In all commands [args] are forwarded to the underlying test runner. To avoid
+pollution they are not defined by default, instead you can choose the ones you want,
+for example:
 
+>
+  let g:test#runner_commands = ['Minitest', 'Mocha']
+<
                                                 *test-:RSpec*
 :RSpec [args]                Uses the `rspec` command.
 
@@ -297,6 +303,9 @@ In all commands [args] are forwarded to the underlying test runner.
                                                 *test-:StackTest*
 :StackTest [args]            Uses the `stack test` command.
 
+                                                *test-:CabalTest*
+:CabalTest [args]            Uses the `cabal test` command.
+
                                                 *test-:NgTest*
 :NgTest [args]  	         Uses the Angular `ng test` command.
 
@@ -375,6 +384,12 @@ Neovim ~
 Runs test commands with `:terminal`, which spawns a terminal inside Neovim.
 >
   let test#strategy = 'neovim'
+<
+Neovim sticky~
+
+Runs test commands with `:terminal`, but keeps it open for subsequent runs.
+>
+  let test#strategy = 'neovim_sticky'
 <
 Vim8 Terminal ~
 
@@ -544,6 +559,25 @@ let g:test#harpoon_term = 2
 By default this strategy will also open the terminal in the current window.  To disable
 this behavior set `g:test#harpoon#gototerminal = 0`.
 
+WezTerm ~
+
+This strategy lets you send commands to an adjacent WezTerm pane. You must have
+the `wezterm` CLI available. You can override its location with
+`g:test#wezterm#executable`.
+
+>
+  let test#strategy = 'wezterm'
+<
+
+This strategy will send the command to the pane determined by the output of
+`wezterm cli get-pane-direction next`, or if only one pane exists, it will
+create a new one with `wezterm cli split-pane --right`. The latter can be
+overriden with `g:test#wezterm#split_direction`.
+
+>
+  let g:test#wezterm#split_direction = 'bottom'
+<
+
 QUICKFIX STRATEGIES                               *test-quickfix-strategies*
 
 If you want your test results to appear in the |quickfix| window, use one of the
@@ -621,6 +655,16 @@ By default, vim-test will echo the test command before running it. You can
 disable this behavior with
 >
   let g:test#echo_command = 0
+<
+To have the Neovim sticky strategy abort any currently running tests before
+scheduling a new one, use:
+>
+  let g:test#neovim_sticky#kill_previous = 1
+<
+To have the Neovim sticky strategy open an existing terminal in a new split
+when it is not currently visible, use:
+>
+    let test#neovim_sticky#reopen_window = 1
 <
 You may find yourself specifying certain options for your test runners in
 certain situations. You can configure your preferred options with
@@ -700,6 +744,24 @@ you would prefer to open the terminal in normal mode:
 <
 
 
+PYTHON SPECIFIC CONFIG                         *test-python*
+
+If your project has a pytest configuration file, then pytest will automatically be detected.
+For other Python test runners, test.vim has no way of detecting which one did you intend
+to use. By default, the first available will be chosen, but you can force a specific one:
+>
+  let test#python#runner = "pytest"
+<
+Runners available are 'pytest', 'nose', 'nose2', 'djangotest', 'djangonose', 'mamba',
+and Python's built-in unittest as 'pyunit'
+
+The `pytest` and `djangotest` runner optionally supports pipenv. If you have a `Pipfile`,
+it will use `pipenv run pytest` instead of just `python -m pytest`. They also support poetry
+and will use `poetry run pytest` if it detects a `poetry.lock`. The pyunit and nose runner
+supports pipenv as well and will respectively use `pipenv run python -m unittest` or
+`pipenv run python -m nosetests` if there is a `Pipfile`. It also supports pdm as well and will
+use `poetry run pytest` if there is a `pdm.lock` file.
+
 PROJECTIONIST INTEGRATION                       *test-projectionist*
 
 If the |projectionist| plug-in is present, you can run a test command from an
@@ -737,3 +799,6 @@ Thanks to Gary Bernhardt, the person who invented this kind of testing.
 I also want to thank vim-rspec (https://github.com/thoughtbot/vim-rspec), from
 which I borrowed GUI support for OS X, and Windows support. Also thanks to
 vim-vroom (https://github.com/skalnik/vim-vroom).
+
+===============================================================================
+vim:tw=78:ts=2:sts=2:sw=2:ft=help:norl:
