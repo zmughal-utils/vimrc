@@ -5,7 +5,7 @@
 " Version:      2.0.0
 let s:k_version = 2000
 " Created:      31st May 2010
-" Last Update:  20th Feb 2018
+" Last Update:  09th Apr 2021
 "------------------------------------------------------------------------
 " Description:
 "       Overridden functions from lh#dev#function, for C and derived languages
@@ -15,6 +15,8 @@ let s:k_version = 2000
 "       2.0.0
 "       (*) Fix call to lh#dev#c#function#get_prototype(..., 1)
 "       (*) Fix lh#dev#c#function#_build_param_call/decl
+"       (*) Support template types in lh#dev#c#function#_analyse_parameter
+"           when the expected parameter name is known
 "       1.6.2
 "       (*) Fix :GOTOIMPL to support operators like +=
 "       1.5.1
@@ -192,14 +194,25 @@ endfunction
 " [X] multiple tokens types (e.g. "unsigned long long int")
 " [X] default value
 " [X] new line before (when analysing non ctags-signatures, but real text)
-" [/] TU
+" [/] UT
 " [X] variadic parameter "..."
-function! lh#dev#c#function#_analyse_parameter( param, ...) abort
-  let mustCleanSpace = a:0 > 0 ? a:1 : 0
+function! lh#dev#c#function#_analyse_parameter(param, ...) abort
+  if a:0 > 0 && type(a:1) != type({})
+    " Old API...
+    let must_clean_space    = a:1
+    let expected_param_name = '[^=]{-}'
+  else
+    let opts = get(a:, 1, {})
+    let must_clean_space    = get(opts, 'must_clean_space', 0)
+    let expected_param_name = get(opts, 'expected_param_name', '[^=]{-}')
+  endif
+  let param = a:param
   let res = {}
 
   " Merge spaces
-  let param = substitute(a:param, '\v\_s+', ' ', 'g')
+  if must_clean_space
+    let param = substitute(param, '\v\_s+', ' ', 'g')
+  endif
   " variadic ?
   if param == '...'
     let res.type    = 'va_list'
@@ -208,8 +221,11 @@ function! lh#dev#c#function#_analyse_parameter( param, ...) abort
     return res
   endif
   " Default Value: after = sign
-  if stridx(param, '=') != -1
-    let [all, param, res.default ; rest] = matchlist(param, '\v^\s*([^=]{-})\s*\=\s*(.{-})\s*$')
+  let match_res = matchlist(param, '\v^\s*(.{-}<'.expected_param_name.'>)\s*\=\s*(.{-})\s*$')
+  if !empty(match_res)
+    " Cannot use stridx for types likes `sometype<I==42>`
+    " let [all, param, res.default ; rest] = matchlist(param, '\v^\s*([^=]{-})\s*\=\s*(.{-})\s*$')
+    let [all, param, res.default ; rest] = match_res
   else
     " trim spaces
     let param = matchstr(param, '\v^\s*\zs.{-}\ze\s*$')
@@ -252,7 +268,7 @@ function! lh#dev#c#function#_analyse_parameter( param, ...) abort
     endif
     " Remove spaces around *, &
     " TODO: remove space around < and > (in C++11 only?)
-    if mustCleanSpace
+    if must_clean_space
       let res.type = substitute(res.type, '\v\s*([*&]+)\s*', '\1', 'g')
     endif
   endif

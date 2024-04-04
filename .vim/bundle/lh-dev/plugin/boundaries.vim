@@ -7,7 +7,7 @@
 " Version:      2.0.0
 let s:k_version = '2.0.0'
 " Created:      25th May 2016
-" Last Update:  16th Jan 2019
+" Last Update:  23rd Feb 2024
 "------------------------------------------------------------------------
 " Description:
 "       Select function boundaries
@@ -27,8 +27,11 @@ let g:loaded_boundaries = s:k_version
 " Avoid global reinclusion }}}1
 "------------------------------------------------------------------------
 " Commands and Mappings {{{1
-onoremap <silent> if :<c-u>call lh#dev#_select_current_function()<cr>
-xnoremap <silent> if :<c-u>call lh#dev#_select_current_function()<cr><esc>gv
+onoremap <silent> <Plug>(lhdev-select-function) :<c-u>call lh#dev#_select_current_function()<cr>
+xnoremap <silent> <Plug>(lhdev-select-function) :<c-u>call lh#dev#_select_current_function()<cr><esc>gv
+
+silent call lh#mapping#plug('if', '<Plug>(lhdev-select-function)', 'ox')
+
 " Commands and Mappings }}}1
 "------------------------------------------------------------------------
 " Functions {{{1

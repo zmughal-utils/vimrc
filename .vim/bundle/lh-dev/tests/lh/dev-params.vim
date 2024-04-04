@@ -4,7 +4,7 @@
 "		<URL:http://github.com/LucHermitte/lh-dev>
 " Version:      1.5.1
 " Created:      31st May 2010
-" Last Update:  23rd May 2016
+" Last Update:  07th Apr 2021
 "------------------------------------------------------------------------
 " Description:
 "       Unit Tests for lh#dev#c#function# functions
@@ -140,6 +140,12 @@ function! s:Test_Param_data()
   let pa = lh#dev#c#function#_analyse_parameter('int (*foo)(int, double)[42]')
   AssertEqual(pa.name, 'foo')
   AssertEqual(pa.type, 'int (*)(int, double)[]')
+
+  let pa = lh#dev#c#function#_analyse_parameter('type<i==42, j, int> i = 12', {'expected_param_name': 'i'})
+  AssertEqual(pa.name,    'i')
+  AssertEqual(pa.type,    'type<i==42, j, int>')
+  AssertEqual(pa.default, '12')
+
 
   " todo: add pointer to functions, lambdas
 endfunction
