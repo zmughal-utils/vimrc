@@ -579,6 +579,19 @@
       ]
     }
   ],
+  "hy": [
+    {
+      "command": "hyuga",
+      "url": "https://github.com/sakuraiyuta/hyuga",
+      "description": "Yet another hy language server",
+      "requires": [
+        "python3"
+      ],
+      "root_uri_patterns": [
+        "__pycache__"
+      ]
+    }
+  ],
   "java": [
     {
       "command": "eclipse-jdt-ls",
@@ -588,7 +601,7 @@
         "java"
       ],
       "config": {
-        "refresh_pattern": "\\([.a-zA-Z0-9_-]\\+\\|/\\|\\k\\+\\)$"
+        "refresh_pattern": "\\([a-zA-Z0-9_-]\\+\\|/\\|\\k\\+\\)$"
       },
       "root_uri_patterns": [
         "pom.xml",
@@ -674,6 +687,17 @@
         "package.json",
         ".flowconfig"
       ]
+    },
+    {
+      "command": "vscode-eslint-language-server",
+      "url": "https://github.com/hrsh7th/vscode-langservers-extracted",
+      "description": "HTML/CSS/JSON/ESLint language servers extracted from vscode.",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ]
     }
   ],
   "javascriptreact": [
@@ -731,6 +755,17 @@
       "root_uri_patterns": [
         "package.json",
         ".flowconfig"
+      ]
+    },
+    {
+      "command": "vscode-eslint-language-server",
+      "url": "https://github.com/hrsh7th/vscode-langservers-extracted",
+      "description": "HTML/CSS/JSON/ESLint language servers extracted from vscode.",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json"
       ]
     }
   ],
@@ -1335,6 +1370,28 @@
       "requires": [
         "gem"
       ]
+    },
+    {
+      "command": "rubocop-lsp-mode",
+      "url": "https://github.com/rubocop/rubocop",
+      "description": "A Ruby static code analyzer and formatter, based on the community Ruby style guide.",
+      "requires": [
+        "bundle"
+      ],
+      "root_uri_patterns": [
+        "Gemfile"
+      ]
+    },
+    {
+      "command": "sorbet",
+      "url": "https://sorbet.org/",
+      "description": "Sorbet is a fast, powerful type checker designed for Ruby.",
+      "requires": [
+        "bundle"
+      ],
+      "root_uri_patterns": [
+        "Gemfile"
+      ]
     }
   ],
   "rust": [
@@ -1449,6 +1506,17 @@
         ],
         "name": "evanleck/vim-svelte"
       }
+    },
+    {
+      "command": "tailwindcss-intellisense",
+      "url": "https://github.com/tailwindlabs/tailwindcss-intellisense",
+      "description": "Intelligent Tailwind CSS tooling for Visual Studio Code",
+      "config": {
+        "refresh_pattern": "\\(@[a-zA-Z0-9_]*\\|[a-zA-Z0-9_-]\\+\\)$"
+      },
+      "requires": [
+        "npm"
+      ]
     }
   ],
   "swift": [
@@ -1590,6 +1658,17 @@
       "url": "https://deno.land/",
       "description": "A modern runtime for JavaScript and TypeScript.",
       "requires": []
+    },
+    {
+      "command": "vscode-eslint-language-server",
+      "url": "https://github.com/hrsh7th/vscode-langservers-extracted",
+      "description": "HTML/CSS/JSON/ESLint language servers extracted from vscode.",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ]
     }
   ],
   "typescriptreact": [
@@ -1630,6 +1709,33 @@
       "url": "https://deno.land/",
       "description": "A modern runtime for JavaScript and TypeScript.",
       "requires": []
+    },
+    {
+      "command": "vscode-eslint-language-server",
+      "url": "https://github.com/hrsh7th/vscode-langservers-extracted",
+      "description": "HTML/CSS/JSON/ESLint language servers extracted from vscode.",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json"
+      ]
+    }
+  ],
+  "typ": [
+    {
+      "command": "typst-lsp",
+      "url": "https://github.com/nvarner/typst-lsp",
+      "description": "Language server for Typst",
+      "requires": []
+    }
+  ],
+  "typst": [
+    {
+      "command": "typst-lsp",
+      "url": "https://github.com/nvarner/typst-lsp",
+      "description": "Language server for Typst",
+      "requires": []
     }
   ],
   "vala": [
@@ -1638,18 +1744,14 @@
       "url": "https://github.com/Prince781/vala-language-server",
       "description": "Code Intelligence for Vala & Genie",
       "requires": [
-        "meson",
         "valac"
-      ],
-      "root_uri_patterns": [
-        "meson.build"
       ]
     }
   ],
   "veryl": [
     {
       "command": "veryl-ls",
-      "url": "https://github.com/dalance/veryl",
+      "url": "https://github.com/veryl-lang/veryl",
       "description": "Veryl language server",
       "requires": []
     }
@@ -1685,6 +1787,17 @@
   ],
   "vlang": [
     {
+      "command": "v-analyzer",
+      "url": "https://github.com/v-analyzer/v-analyzer",
+      "description": "Bring IDE features for V programming languages in VS Code, Vim and other editors",
+      "requires": [
+        "v"
+      ],
+      "root_uri_patterns": [
+        "v.mod"
+      ]
+    },
+    {
       "command": "vlang-vls",
       "url": "https://github.com/vlang/vls",
       "description": "V language server",
@@ -1717,6 +1830,18 @@
         ],
         "name": "leafOfTree/vim-vue-plugin"
       }
+    },
+    {
+      "command": "typescript-language-server",
+      "url": "https://github.com/typescript-language-server/typescript-language-server",
+      "description": "TypeScript & JavaScript Language Server",
+      "requires": [
+        "npm"
+      ],
+      "root_uri_patterns": [
+        "package.json",
+        "tsconfig.json"
+      ]
     },
     {
       "command": "vls",

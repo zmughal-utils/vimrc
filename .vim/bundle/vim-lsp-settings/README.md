@@ -113,6 +113,7 @@ You can change the directory to install servers by set `g:lsp_settings_servers_d
 | HTML              | html-languageserver                 |    Yes    |      Yes      |
 | HTML              | angular-language-server             |    Yes    |      Yes      |
 | HTML              | tailwindcss-intellisense            |    Yes    |      Yes      |
+| Hy                | hyuga                               |    Yes    |      No       |
 | JSON              | json-languageserver                 |    Yes    |      Yes      |
 | JSON              | rome                                |    Yes    |      Yes      |
 | Jsonnet           | jsonnet-language-server             |    Yes    |      Yes      |
@@ -155,6 +156,8 @@ You can change the directory to install servers by set `g:lsp_settings_servers_d
 | Ruby              | solargraph                          |    Yes    |      Yes      |
 | Ruby              | steep                               |    Yes    |      Yes      |
 | Ruby              | typeprof                            |    Yes    |      Yes      |
+| Ruby              | rubocop (lsp mode)                  |    Yes    |      No       |
+| Ruby              | sorbet                              |    Yes    |      No       |
 | Rust              | rls                                 |    Yes    |      No       |
 | Rust              | rust-analyzer                       |    Yes    |      Yes      |
 | Sphinx            | esbonio                             |    Yes    |      Yes      |
@@ -163,6 +166,7 @@ You can change the directory to install servers by set `g:lsp_settings_servers_d
 | SQL               | plpgsql-server                      | UNIX Only |      Yes      |
 | Scala             | Metals                              |    Yes    |      Yes      |
 | Svelte            | svelte-language-server              |    Yes    |      Yes      |
+| Svelte            | tailwindcss-intellisense            |    Yes    |      Yes      |
 | Swift             | sourcekit-lsp                       |    Yes    |      No       |
 | SystemVerilog     | svls                                |    Yes    |      Yes      |
 | TeX               | texlab                              |    Yes    |      Yes      |
@@ -175,11 +179,13 @@ You can change the directory to install servers by set `g:lsp_settings_servers_d
 | TypeScript        | deno                                |    Yes    |      Yes      |
 | TypeScript        | rome                                |    Yes    |      Yes      |
 | TypeScript        | eslint-language-server              |    Yes    |      Yes      |
+| Typst             | typst-lsp                           |    Yes    |      Yes      |
 | Vim               | vim-language-server                 |    Yes    |      Yes      |
 | Vala              | vala-language-server                |    No     |      No       |
 | Veryl             | veryl-ls                            |    Yes    |      Yes      |
-| Vue               | volar-server                        |    Yes    |      Yes      |
+| Vue               | volar-server (Vue Language Tools)   |    Yes    |      Yes      |
 | Vue               | vls                                 |    Yes    |      Yes      |
+| V                 | v-analyzer                          |    Yes    |      Yes      |
 | V                 | vlang-vls                           |    Yes    |      Yes      |
 | XML               | lemminx                             |    Yes    |      Yes      |
 | YAML              | yaml-language-server                |    Yes    |      Yes      |
@@ -297,6 +303,24 @@ To use older version `golangci-lint`, please run `:LspSettingsGlobalEdit` and pu
         ]
     }
 }
+```
+
+### [rubocop lsp mode (Ruby)](https://docs.rubocop.org/rubocop/usage/lsp.html)
+
+To use rubocop-lsp-mode, you need to install rubocop in your Ruby project using bundler.
+
+### [sorbet (Ruby)](https://sorbet.org/docs/vscode)
+
+To use sorbet, you need to install rubocop in your Ruby project using bundler.
+Also, [Watchman](https://facebook.github.io/watchman/) is required to watch file changes.
+For more details, please see [Sorbet](https://sorbet.org/docs/vscode#installing-and-enabling-the-sorbet-extension) and [Watchman](https://facebook.github.io/watchman/docs/install.html) documentations.
+
+### [volar (Vue Language Tools)](https://github.com/vuejs/language-tools)
+
+To enable full Vue support, both `typescript-language-server` and `volar-server` should be installed and enabled in `vue` filetype.
+
+```vim
+let g:lsp_settings_filetype_vue = ['typescript-language-server', 'volar-server']
 ```
 
 ## Extra Configurations
