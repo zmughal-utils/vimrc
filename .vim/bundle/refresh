@@ -134,3 +134,4 @@ refresh_git https://github.com/joeytwiddle/git_shade.vim.git git_shade.vim
 
 refresh_git https://github.com/tpope/vim-sleuth.git vim-sleuth
 refresh_git https://github.com/niklasl/vim-rdf.git vim-rdf
+refresh_git https://github.com/jpalardy/vim-slime.git vim-slime
