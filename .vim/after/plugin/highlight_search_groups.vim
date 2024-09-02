@@ -29,7 +29,11 @@ function! HighlightSearchGroups()
         let l:end = match(l:pattern, '\\)', l:start) + 1
 
         " Construct the full pattern with \zs and \ze around the capturing group
-        let l:group_pattern = l:pattern[:l:start-1] . '\zs' . l:pattern[l:start:l:end] . '\ze' . l:pattern[l:end+1:]
+        let l:group_pattern_prefix = ''
+        if l:start > 0
+            let l:group_pattern_prefix = l:pattern[:l:start-1]
+        endif
+        let l:group_pattern = l:group_pattern_prefix . '\zs' . l:pattern[l:start:l:end] . '\ze' . l:pattern[l:end+1:]
 	"echo l:group_pattern
 
         " Add the match for this group in its full context
@@ -54,7 +58,11 @@ function! HighlightSearchGroups()
         let l:ref_num = matchstr(l:pattern, '\d\+', l:ref_start + 1)
 
         " Construct the full pattern with \zs and \ze around the backreference
-        let l:ref_pattern = l:pattern[:l:ref_start-1] . '\zs' . l:pattern[l:ref_start:l:ref_end-1] . '\ze' . l:pattern[l:ref_end:]
+        let l:ref_pattern_prefix = ''
+        if l:ref_start > 0
+            let l:ref_pattern_prefix = l:pattern[:l:ref_start-1]
+        endif
+        let l:ref_pattern = l:ref_pattern_prefix . '\zs' . l:pattern[l:ref_start:l:ref_end-1] . '\ze' . l:pattern[l:ref_end:]
 	"echo l:ref_pattern
 
         " Add the match for this backreference in its full context
